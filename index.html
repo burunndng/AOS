@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aura ILP</title>
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.3/index.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.3/index.css" rel="stylesheet">
+    <style>
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes popIn {
+        0% { transform: scale(0.5); opacity: 0; }
+        70% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+      @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(217, 170, 239, 0.4); }
+        50% { box-shadow: 0 0 0 12px rgba(217, 170, 239, 0); }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+      .animate-fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+      }
+      .animate-pop-in {
+        animation: popIn 0.3s ease-out forwards;
+      }
+      .animate-pulse-glow {
+        animation: pulse 2s infinite;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1e293b; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+      
+      /* Typography Rules */
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Geist Mono', monospace;
+        letter-spacing: -0.03em;
+      }
+      
+      /* Luminous UI Elements */
+      .btn-luminous {
+        background-color: transparent;
+        border: 1px solid var(--accent-gold-faded);
+        color: var(--accent-luminous);
+        transition: all 0.3s ease;
+      }
+      .btn-luminous:hover {
+        border-color: var(--accent-luminous);
+        background-color: var(--accent-luminous-dark);
+        box-shadow: 0 0 15px var(--accent-luminous-dark);
+        color: #fff;
+      }
+
+      .card-luminous-hover {
+        transition: all 0.3s ease;
+      }
+      .card-luminous-hover:hover {
+        border-color: var(--accent-luminous-faded);
+        box-shadow: 0 0 20px var(--accent-luminous-dark);
+      }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    // Define CSS variables for colors to use in styles
+    const style = document.createElement('style');
+    style.innerHTML = `
+      :root {
+        --accent-luminous: #d9aaef;
+        --accent-luminous-faded: rgba(217, 170, 239, 0.5);
+        --accent-luminous-dark: rgba(217, 170, 239, 0.1);
+        --accent-gold: #f59e0b;
+        --accent-gold-faded: rgba(245, 158, 11, 0.4);
+      }
+    `;
+    document.head.appendChild(style);
+
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+             sans: ['Geist Sans', 'Inter', 'sans-serif'],
+             mono: ['Geist Mono', 'monospace'],
+          },
+          colors: {
+            'module-body': '#10b981',
+            'module-mind': '#3b82f6',
+            'module-spirit': '#8b5cf6',
+            'module-shadow': '#f59e0b',
+            'accent': 'var(--accent-luminous)',
+            'accent-gold': 'var(--accent-gold)',
+            'success': '#10b981',
+            'warning': '#f59e0b',
+            'error': '#f43f5e',
+          }
+        }
+      }
+    }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.552.0",
+    "d3": "https://aistudiocdn.com/d3@^7.9.0",
+    "d3-force": "https://aistudiocdn.com/d3-force@^3.0.0",
+    "d3-drag": "https://aistudiocdn.com/d3-drag@^3.0.0",
+    "d3-selection": "https://aistudiocdn.com/d3-selection@^3.0.0",
+    "d3-zoom": "https://aistudiocdn.com/d3-zoom@^3.0.0"
+  }
+}
+</script>
+</head>
+  <body class="h-full font-sans" style="background: radial-gradient(ellipse at center, hsl(260 50% 10%) 0%, hsl(222 47% 11%) 100%);">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

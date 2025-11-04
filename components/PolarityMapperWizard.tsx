@@ -1,0 +1,117 @@
+import React, { useState, useEffect } from 'react';
+// FIX: Add file extension to import path.
+import { PolarityMap, PolarityMapperStep } from '../types.ts';
+import { X, ArrowLeft, ArrowRight, Lightbulb } from 'lucide-react';
+
+const ProgressBar = ({ currentStep }: { currentStep: number }) => {
+  const steps = ['Intro', 'Dilemma', 'Pole A', 'Pole B', 'Review'];
+  const stepMap = [0, 1, 2, 2, 3, 3, 4, 4]; // Map wizard step to progress bar step
+  const activeProgressStep = stepMap[currentStep];
+
+  return (
+    <div className="flex items-center">
+      {steps.map((step, index) => (
+        <React.Fragment key={step}>
+          <div className="flex flex-col items-center">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${index < activeProgressStep ? 'bg-green-500 text-white' : index === activeProgressStep ? 'bg-green-600 text-white ring-4 ring-green-500/50' : 'bg-slate-700 text-slate-400'}`}>
+              {index < activeProgressStep ? '✓' : index + 1}
+            </div>
+            <p className={`mt-2 text-xs text-center ${index === activeProgressStep ? 'text-green-300 font-bold' : 'text-slate-400'}`}>{step}</p>
+          </div>
+          {index < steps.length - 1 && <div className={`flex-1 h-1 mx-2 transition-colors ${index < activeProgressStep ? 'bg-green-500' : 'bg-slate-700'}`}></div>}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+const PlaceholderTextarea = ({ value, onChange, placeholder, rows }: { value: string, onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void, placeholder: string, rows: number }) => {
+    const [isPristine, setIsPristine] = useState(value === '');
+    const handleFocus = () => {
+        if (isPristine) {
+            onChange({ target: { value: '' } } as React.ChangeEvent<HTMLTextAreaElement>);
+            setIsPristine(false);
+        }
+    };
+    const effectiveValue = isPristine ? placeholder : value;
+    return (
+        <textarea
+            value={effectiveValue}
+            onChange={onChange}
+            onFocus={handleFocus}
+            rows={rows}
+            className={`w-full bg-slate-900/50 border border-slate-700 rounded-md p-3 transition-colors focus:outline-none focus:ring-2 focus:ring-accent ${isPristine ? 'text-slate-500 italic' : 'text-slate-100'}`}
+        />
+    );
+};
+
+
+interface PolarityMapperWizardProps {
+  onClose: () => void;
+  onSave: (map: PolarityMap) => void;
+  draft: Partial<PolarityMap> | null;
+  setDraft: (draft: Partial<PolarityMap> | null) => void;
+}
+
+export default function PolarityMapperWizard({ onClose, onSave, draft, setDraft }: PolarityMapperWizardProps) {
+    const [map, setMap] = useState<Partial<PolarityMap>>(draft || {});
+    const [currentStep, setCurrentStep] = useState<PolarityMapperStep>(draft && Object.keys(draft).length > 1 ? 'DEFINE_DILEMMA' : 'INTRODUCTION');
+    
+    useEffect(() => { if (draft) setMap(draft) }, [draft]);
+
+    const handleSaveDraftAndClose = () => { setDraft(map); onClose(); };
+    const updateMap = (field: keyof PolarityMap, value: string) => setMap(prev => ({ ...prev, [field]: value }));
+    
+    const handleNext = () => {
+        const order: PolarityMapperStep[] = ['INTRODUCTION', 'DEFINE_DILEMMA', 'POLE_A_UPSIDE', 'POLE_A_DOWNSIDE', 'POLE_B_UPSIDE', 'POLE_B_DOWNSIDE', 'REVIEW'];
+        const index = order.indexOf(currentStep);
+        if (index < order.length - 1) setCurrentStep(order[index + 1]);
+        else handleSave();
+    };
+    
+    const handleBack = () => {
+        const order: PolarityMapperStep[] = ['INTRODUCTION', 'DEFINE_DILEMMA', 'POLE_A_UPSIDE', 'POLE_A_DOWNSIDE', 'POLE_B_UPSIDE', 'POLE_B_DOWNSIDE', 'REVIEW'];
+        const index = order.indexOf(currentStep);
+        if (index > 0) setCurrentStep(order[index - 1]);
+    };
+    
+    const handleSave = () => {
+        const finalMap: PolarityMap = {
+            id: map.id || `map-${Date.now()}`, date: new Date().toISOString(),
+            dilemma: map.dilemma || '', poleA_name: map.poleA_name || 'Pole A', poleA_upside: map.poleA_upside || '',
+            poleA_downside: map.poleA_downside || '', poleB_name: map.poleB_name || 'Pole B', poleB_upside: map.poleB_upside || '',
+            poleB_downside: map.poleB_downside || '',
+        };
+        onSave(finalMap);
+        onClose();
+    };
+
+    const stepNumber: Record<PolarityMapperStep, number> = { INTRODUCTION: 0, DEFINE_DILEMMA: 1, POLE_A_UPSIDE: 2, POLE_A_DOWNSIDE: 3, POLE_B_UPSIDE: 4, POLE_B_DOWNSIDE: 5, REVIEW: 6, COMPLETE: 7 };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
+          <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]">
+            <header className="p-4 border-b border-slate-700 flex justify-between items-center"><h2 className="text-2xl font-bold font-mono tracking-tight text-green-300">Polarity Mapper</h2><button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={24} /></button></header>
+            <div className="p-6"><ProgressBar currentStep={stepNumber[currentStep]} /></div>
+            <main className="p-6 flex-grow overflow-y-auto">
+                {currentStep === 'INTRODUCTION' && <div className="space-y-4 text-slate-300 leading-relaxed"><h3 className="font-mono">Welcome to the Polarity Mapper</h3><p>Some challenges aren't "problems to be solved," but "polarities to be managed." These are ongoing tensions between two opposing but equally valuable poles.</p><div className="bg-slate-700/50 p-3 rounded-lg border border-slate-600"><p className="font-bold mb-2">Examples:</p><ul className="list-disc list-inside text-sm"><li>Activity ↔ Rest</li><li>Planning ↔ Spontaneity</li><li>Individual ↔ Team</li><li>Candor ↔ Diplomacy</li></ul></div><p>This wizard will help you map your own polarity to gain clarity and manage it more effectively.</p></div>}
+                {currentStep === 'DEFINE_DILEMMA' && <div className="space-y-4"><h3 className="font-mono">Step 2: Define Your Dilemma</h3><p className="text-slate-400 mb-4">What's a recurring choice you go back and forth on?</p><input type="text" placeholder="e.g., Career Ambition vs. Family Time" value={map.dilemma || ''} onChange={e => updateMap('dilemma', e.target.value)} className="w-full bg-slate-900/50 p-2 rounded-md border-slate-700 focus:outline-none focus:ring-2 focus:ring-accent" /><div className="grid grid-cols-2 gap-4"><input type="text" placeholder="Name of Pole A (e.g., Ambition)" value={map.poleA_name || ''} onChange={e => updateMap('poleA_name', e.target.value)} className="w-full bg-slate-900/50 p-2 rounded-md border-slate-700 focus:outline-none focus:ring-2 focus:ring-accent" /><input type="text" placeholder="Name of Pole B (e.g., Presence)" value={map.poleB_name || ''} onChange={e => updateMap('poleB_name', e.target.value)} className="w-full bg-slate-900/50 p-2 rounded-md border-slate-700 focus:outline-none focus:ring-2 focus:ring-accent" /></div></div>}
+                {currentStep === 'POLE_A_UPSIDE' && <div><h3 className="font-mono">Upside of {map.poleA_name || 'Pole A'}</h3><p className="text-slate-400 mb-4">What's valuable about this? What are the benefits of focusing on it?</p><PlaceholderTextarea value={map.poleA_upside || ''} onChange={e => updateMap('poleA_upside', e.target.value)} rows={8} placeholder="e.g., Growth and learning, Sense of accomplishment, Financial security..." /></div>}
+                {currentStep === 'POLE_A_DOWNSIDE' && <div><h3 className="font-mono">Downside of {map.poleA_name || 'Pole A'}</h3><p className="text-slate-400 mb-4">What happens when you over-emphasize this? What's the cost?</p><PlaceholderTextarea value={map.poleA_downside || ''} onChange={e => updateMap('poleA_downside', e.target.value)} rows={8} placeholder="e.g., Burnout, Missing family moments, Anxiety, Strained relationships..." /></div>}
+                {currentStep === 'POLE_B_UPSIDE' && <div><h3 className="font-mono">Upside of {map.poleB_name || 'Pole B'}</h3><p className="text-slate-400 mb-4">What's valuable about this? What are the benefits of focusing on it?</p><PlaceholderTextarea value={map.poleB_upside || ''} onChange={e => updateMap('poleB_upside', e.target.value)} rows={8} placeholder="e.g., Peace and rest, Connection with loved ones, Reduced stress..." /></div>}
+                {currentStep === 'POLE_B_DOWNSIDE' && <div><h3 className="font-mono">Downside of {map.poleB_name || 'Pole B'}</h3><p className="text-slate-400 mb-4">What happens when you over-emphasize this? What's the cost?</p><PlaceholderTextarea value={map.poleB_downside || ''} onChange={e => updateMap('poleB_downside', e.target.value)} rows={8} placeholder="e.g., Stagnation, Feeling purposeless, Financial stress, Boredom..." /></div>}
+                {currentStep === 'REVIEW' && <div><h3 className="font-mono">Step 5: Review Your Map</h3><p className="text-slate-400 mb-4">Here is your completed polarity map. The goal is to get the upsides of BOTH poles while avoiding the downsides of BOTH.</p><div className="grid grid-cols-2 gap-4 text-sm"><div className="bg-slate-700/50 p-3 rounded-md border border-slate-600"><h4 className="font-bold font-mono text-green-400 mb-1">UPSIDE of {map.poleA_name}</h4><p className="text-slate-300 whitespace-pre-wrap">{map.poleA_upside}</p></div><div className="bg-slate-700/50 p-3 rounded-md border border-slate-600"><h4 className="font-bold font-mono text-green-400 mb-1">UPSIDE of {map.poleB_name}</h4><p className="text-slate-300 whitespace-pre-wrap">{map.poleB_upside}</p></div><div className="bg-slate-700/50 p-3 rounded-md border border-slate-600"><h4 className="font-bold font-mono text-red-400 mb-1">DOWNSIDE of {map.poleA_name}</h4><p className="text-slate-300 whitespace-pre-wrap">{map.poleA_downside}</p></div><div className="bg-slate-700/50 p-3 rounded-md border border-slate-600"><h4 className="font-bold font-mono text-red-400 mb-1">DOWNSIDE of {map.poleB_name}</h4><p className="text-slate-300 whitespace-pre-wrap">{map.poleB_downside}</p></div></div></div>}
+            </main>
+            <footer className="p-4 border-t border-slate-700 flex justify-between items-center">
+                <button onClick={handleSaveDraftAndClose} className="text-sm text-slate-400 hover:text-white transition">Save Draft & Close</button>
+                <div className="flex gap-4">
+                    {currentStep !== 'INTRODUCTION' && <button onClick={handleBack} className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md font-medium"><ArrowLeft size={16}/></button>}
+                    <button onClick={handleNext} className="btn-luminous px-4 py-2 rounded-md font-medium flex items-center gap-2">
+                        {currentStep === 'REVIEW' ? 'Finish & Save' : 'Next'} <ArrowRight size={16}/>
+                    </button>
+                </div>
+            </footer>
+          </div>
+        </div>
+    );
+}
