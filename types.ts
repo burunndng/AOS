@@ -1,3 +1,6 @@
+// FIX: Removed erroneous file separator from the beginning of the file content.
+// FIX: Removed self-import of 'ModuleKey' which was causing a name conflict.
+
 export type ModuleKey = 'body' | 'mind' | 'spirit' | 'shadow';
 
 export interface Practice {
@@ -80,6 +83,7 @@ export interface ThreeTwoOneSession {
     embodiment: string; // Step 3
     integration: string;
     aiSummary?: string;
+    linkedInsightId?: string; // NEW: Link to an IntegratedInsight
 }
 
 // IFS
@@ -113,10 +117,11 @@ export interface IFSSession {
     partPositiveIntent?: string;
     summary?: string;
     aiIndications?: string[];
+    linkedInsightId?: string; // NEW: Link to an IntegratedInsight
 }
 
 // Bias Detective
-export type BiasDetectiveStep = 'DECISION' | 'REASONING' | 'DIAGNOSTIC' | 'TESTING_BIASES' | 'FRAMINGS' | 'SHIFT' | 'LEARNING' | 'COMPLETE';
+export type BiasDetectiveStep = 'DECISION' | 'REASONING' | 'DISCOVERY' | 'DISCOVERING' | 'DIAGNOSIS' | 'SCENARIOS' | 'COMMITMENT' | 'LEARNING' | 'COMPLETE';
 export interface IdentifiedBias {
     name: string;
     howItWorks: string;
@@ -124,6 +129,19 @@ export interface IdentifiedBias {
     userTestAnswer?: string;
     llmTestResponse?: string;
     isOperating?: boolean;
+}
+export interface DiscoveryAnswers {
+  alternativesConsidered: string;
+  informationSources: string;
+  timePressure: string;
+  emotionalState: string;
+  influencers: string;
+}
+export interface BiasScenario {
+  biasName: string;
+  howItInfluenced: string;
+  scenario: string;
+  alternativeDecision: string;
 }
 export interface BiasDetectiveSession {
     id: string;
@@ -137,6 +155,10 @@ export interface BiasDetectiveSession {
     decisionShift?: string;
     oneThingToRemember?: string;
     nextTimeAction?: string;
+    // NEW: Fields to store full context
+    discoveryAnswers?: DiscoveryAnswers;
+    diagnosis?: string;
+    scenarios?: BiasScenario[];
 }
 
 // Subject-Object Explorer
@@ -193,3 +215,26 @@ export interface PolarityMap {
     poleB_downside: string;
 }
 export type PolarityMapperStep = 'INTRODUCTION' | 'DEFINE_DILEMMA' | 'POLE_A_UPSIDE' | 'POLE_A_DOWNSIDE' | 'POLE_B_UPSIDE' | 'POLE_B_DOWNSIDE' | 'REVIEW' | 'COMPLETE';
+
+// NEW: Integrated Insight interface
+export interface IntegratedInsight {
+  id: string; // Unique ID for the insight
+  mindToolType: 'BiasDetective' | 'PerspectiveShifter' | 'SubjectObject' | 'PolarityMapper';
+  mindToolSessionId: string;
+  mindToolName: string; // e.g., "Bias Detective Session on 'Candidate A'"
+  mindToolReport: string; // The full markdown report from the mind tool session
+  mindToolShortSummary: string; // A concise, one-sentence summary for UI display
+  detectedPattern: string; // The pattern detected by AI
+  suggestedShadowWork: {
+    practiceId: string; // e.g., 'three-two-one'
+    practiceName: string; // e.g., '3-2-1 Process'
+    rationale: string; // why it's relevant
+  }[];
+  dateCreated: string; // ISO string
+  status: 'pending' | 'addressed' | 'deferred'; // pending, addressed (completed), or deferred (ignored)
+  shadowWorkSessionsAddressed?: {
+    shadowToolType: string; // e.g., '3-2-1 Process' or 'IFS'
+    sessionId: string;
+    dateCompleted: string; // ISO string
+  }[];
+}

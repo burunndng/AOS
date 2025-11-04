@@ -1,6 +1,7 @@
+// FIX: Removed erroneous file separator from the beginning of the file content.
 import React, { useState, useEffect, useRef } from 'react';
-import { IFSSession, IFSPart, IFSDialogueEntry, WizardPhase } from '../types.ts';
-import { X, Mic, MicOff, Sparkles, Save } from 'lucide-react';
+import { IFSSession, IFSPart, IFSDialogueEntry, WizardPhase, IntegratedInsight } from '../types.ts';
+import { X, Mic, MicOff, Sparkles, Save, Lightbulb } from 'lucide-react';
 import { getCoachResponse, extractPartInfo, summarizeIFSSession } from '../services/geminiService.ts';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, Content } from "@google/genai";
 import { MerkabaIcon } from './MerkabaIcon.tsx';
@@ -56,9 +57,26 @@ function createBlob(data: Float32Array): Blob {
     };
 }
 
-const getComprehensiveSystemInstruction = (): Content => ({
-    parts: [{
-        text: `## CORE DIRECTIVE
+const getDynamicSystemInstruction = (context: IntegratedInsight | null): Content => {
+    let contextText = '';
+    if (context) {
+        contextText = `
+---
+## IMPORTANT SESSION CONTEXT
+
+The user is starting this session based on an insight from a previous tool. Your primary goal is to help them explore this specific context with their parts.
+
+- **Originating Tool:** ${context.mindToolType}
+- **Full Report from that Session:** 
+  ${context.mindToolReport}
+- **AI-Detected Pattern to Explore:** "${context.detectedPattern}"
+
+**Your Opening Move:** Acknowledge this context. Ask the user which part of them holds feelings or beliefs related to this detected pattern. For example: "I see you're here to explore the pattern of '${context.detectedPattern}', which came up in your recent ${context.mindToolType} session. Let's start by connecting with that. When you think about this pattern, which part of you feels it the most? What do you notice inside?"
+---
+        `;
+    }
+
+    const baseInstruction = `## CORE DIRECTIVE
 
 You facilitate IFS self-work. Reflect accurately, ask genuinely, facilitate emergence. Move parts from explaining to experiencing.
 
@@ -214,9 +232,9 @@ Emergence over agenda - follow what appears.
 **Before responding: Execute all gates. Trust the process.**
 
 ---
-`
-    }]
-});
+`;
+    return { parts: [{ text: contextText + baseInstruction }] };
+};
 
 interface IFSWizardProps {
   isOpen: boolean;
@@ -224,9 +242,11 @@ interface IFSWizardProps {
   onSaveSession: (session: IFSSession) => void;
   draft: IFSSession | null;
   partsLibrary: IFSPart[];
+  insightContext?: IntegratedInsight | null;
+  markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void;
 }
 
-export default function IFSWizard({ isOpen, onClose, onSaveSession, draft, partsLibrary }: IFSWizardProps) {
+export default function IFSWizard({ isOpen, onClose, onSaveSession, draft, partsLibrary, insightContext, markInsightAsAddressed }: IFSWizardProps) {
   const [session, setSession] = useState<IFSSession | null>(null);
   const [currentPhase, setCurrentPhase] = useState<WizardPhase>('IDENTIFY');
   const [connectionState, setConnectionState] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
@@ -248,6 +268,9 @@ export default function IFSWizard({ isOpen, onClose, onSaveSession, draft, parts
 
   const handleSaveAndClose = (finalSession: IFSSession) => {
       onSaveSession(finalSession);
+      if (finalSession.linkedInsightId) {
+        markInsightAsAddressed(finalSession.linkedInsightId, 'Internal Family Systems', finalSession.id);
+      }
       onClose(null);
   };
 
@@ -296,6 +319,7 @@ export default function IFSWizard({ isOpen, onClose, onSaveSession, draft, parts
         setSession({
           id: newId, date: new Date().toISOString(), partId: '', partName: '',
           transcript: [initialBotMessage], integrationNote: '', currentPhase: initialPhase,
+          linkedInsightId: insightContext?.id
         });
         setCurrentPhase(initialPhase);
       }
@@ -306,7 +330,7 @@ export default function IFSWizard({ isOpen, onClose, onSaveSession, draft, parts
     return () => {
         stopSession();
     };
-  }, [isOpen, draft]);
+  }, [isOpen, draft, insightContext]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -366,7 +390,7 @@ export default function IFSWizard({ isOpen, onClose, onSaveSession, draft, parts
           responseModalities: [Modality.AUDIO],
           inputAudioTranscription: {},
           outputAudioTranscription: {},
-          systemInstruction: getComprehensiveSystemInstruction(),
+          systemInstruction: getDynamicSystemInstruction(insightContext),
         },
         callbacks: {
           onopen: () => {
@@ -505,6 +529,16 @@ export default function IFSWizard({ isOpen, onClose, onSaveSession, draft, parts
       </header>
 
       <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+        {insightContext && (
+            <div className="bg-blue-900/30 border border-blue-700 rounded-md p-3 text-sm text-blue-200 flex items-start gap-3">
+                <Lightbulb size={20} className="text-blue-400 flex-shrink-0 mt-0.5"/> 
+                <div>
+                    <p><strong className="font-semibold text-blue-300">Starting from an insight on your {insightContext.mindToolType} session.</strong></p>
+                    <p className="mt-1">{insightContext.mindToolShortSummary}</p>
+                    <p className="mt-2 text-xs"><strong className="text-blue-300">Detected Pattern to Explore:</strong> "{insightContext.detectedPattern}"</p>
+                </div>
+            </div>
+        )}
         {session?.transcript.map((msg, idx) => (
           <div key={idx} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <p className={`inline-block px-3 py-2 rounded-lg max-w-[85%] text-sm shadow ${msg.role === 'user' ? 'bg-blue-600 text-blue-100 rounded-br-none' : 'bg-slate-700 text-slate-200 rounded-bl-none'}`}>

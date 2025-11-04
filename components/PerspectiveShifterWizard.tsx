@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-// FIX: Correct import paths for types and services.
-import { PerspectiveShifterSession, PerspectiveShifterStep, Perspective } from '../types.ts';
-import { X, ArrowLeft, ArrowRight } from 'lucide-react';
-import * as geminiService from '../services/geminiService.ts';
+import { PerspectiveShifterSession, Perspective } from '../types.ts';
+import { X, ArrowLeft, ArrowRight, Download, Check } from 'lucide-react';
+import { 
+  generatePerspectiveReflection, 
+  synthesizeAllPerspectives, 
+  generateActionPlanFromPerspectives 
+} from '../services/perspectiveShifterService.ts';
 
-// FIX: Define the PerspectiveShifterWizardProps interface for type safety.
 interface PerspectiveShifterWizardProps {
   onClose: () => void;
   onSave: (session: PerspectiveShifterSession) => void;
@@ -12,174 +14,492 @@ interface PerspectiveShifterWizardProps {
   setDraft: (session: PerspectiveShifterSession | null) => void;
 }
 
-const ProgressBar = ({ currentStep }: { currentStep: number }) => {
-  const steps = ['Situation', 'Your View', 'Their View', 'Observer', 'Witness', 'Integrate'];
+type SimplifiedStep = 'SITUATION' | 'FIRST_PERSON' | 'SECOND_PERSON' | 'THIRD_PERSON' | 'WITNESS' | 'MAP' | 'ACTION' | 'COMPLETE';
+
+const STEP_LABELS: Record<SimplifiedStep, string> = {
+  SITUATION: 'The Stuck Situation',
+  FIRST_PERSON: 'Your Perspective',
+  SECOND_PERSON: 'Their Perspective',
+  THIRD_PERSON: 'Observer View',
+  WITNESS: 'Witness View',
+  MAP: 'Perspective Map',
+  ACTION: 'Your Action Plan',
+  COMPLETE: 'Complete'
+};
+
+const STEPS: SimplifiedStep[] = ['SITUATION', 'FIRST_PERSON', 'SECOND_PERSON', 'THIRD_PERSON', 'WITNESS', 'MAP', 'ACTION'];
+
+// Guiding questions for each perspective
+const GUIDANCE: Record<string, string[]> = {
+  FIRST_PERSON: [
+    'What do I need or want in this situation?',
+    'What am I afraid of?',
+    'What am I protecting?',
+    'What would feel fair or right to me?'
+  ],
+  SECOND_PERSON: [
+    'What might they need or want?',
+    'What might they be afraid of?',
+    'What are they protecting?',
+    'What would feel fair or right to them?'
+  ],
+  THIRD_PERSON: [
+    'What is the pattern I notice?',
+    'What are both sides defending?',
+    'Where is there real disagreement vs. misunderstanding?',
+    'What is each side not seeing?'
+  ],
+  WITNESS: [
+    'What is shared humanity here?',
+    'What is the deeper need beneath the conflict?',
+    'How could both be right?',
+    'What wisdom is available from this wider view?'
+  ]
+};
+
+const PerspectiveCard = ({ 
+  type, 
+  description, 
+  reflection,
+  isActive 
+}: { 
+  type: Perspective['type']; 
+  description: string;
+  reflection?: string;
+  isActive: boolean;
+}) => {
+  const colors: Record<Perspective['type'], { bg: string; border: string; text: string }> = {
+    'First Person (You)': { bg: 'bg-blue-900/40', border: 'border-blue-600', text: 'text-blue-300' },
+    'Second Person (Them)': { bg: 'bg-emerald-900/40', border: 'border-emerald-600', text: 'text-emerald-300' },
+    'Third Person (Observer)': { bg: 'bg-amber-900/40', border: 'border-amber-600', text: 'text-amber-300' },
+    'Witness (Pure Awareness)': { bg: 'bg-purple-900/40', border: 'border-purple-600', text: 'text-purple-300' }
+  };
+  
+  const color = colors[type];
+  
   return (
-    <div className="flex items-center">
-      {steps.map((step, index) => (
-        <React.Fragment key={step}>
-          <div className={`flex flex-col items-center`}>
-             <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${index < currentStep ? 'bg-orange-500 text-white' : index === currentStep ? 'bg-orange-600 text-white ring-4 ring-orange-500/50' : 'bg-slate-700 text-slate-400'}`}>
-              {index < currentStep ? '✓' : index + 1}
-            </div>
-            <p className={`mt-2 text-xs text-center ${index === currentStep ? 'text-orange-300 font-bold' : 'text-slate-400'}`}>{step}</p>
-          </div>
-          {index < steps.length - 1 && <div className={`flex-1 h-1 mx-2 transition-colors ${index < currentStep ? 'bg-orange-500' : 'bg-slate-700'}`}></div>}
-        </React.Fragment>
-      ))}
+    <div className={`${color.bg} border-2 ${color.border} rounded-lg p-4 ${isActive ? 'ring-2 ring-offset-2 ring-offset-slate-800' : ''}`}>
+      <h4 className={`font-bold text-sm mb-2 ${color.text}`}>{type}</h4>
+      <p className="text-slate-300 text-sm mb-3 leading-relaxed">{description || '[Empty]'}</p>
+      {reflection && (
+        <div className="bg-slate-900/50 p-2 rounded border border-slate-700">
+          <p className="text-xs text-slate-400 italic">Aura: {reflection}</p>
+        </div>
+      )}
     </div>
   );
 };
 
+export default function PerspectiveShifterWizard({ 
+  onClose, 
+  onSave, 
+  session: draft, 
+  setDraft 
+}: PerspectiveShifterWizardProps) {
+  const [step, setStep] = useState<SimplifiedStep>('SITUATION');
+  const [situation, setSituation] = useState('');
+  const [perspectives, setPerspectives] = useState<Record<string, { description: string; reflection?: string }>>({
+    'First Person (You)': { description: '' },
+    'Second Person (Them)': { description: '' },
+    'Third Person (Observer)': { description: '' },
+    'Witness (Pure Awareness)': { description: '' }
+  });
+  const [synthesis, setSynthesis] = useState('');
+  const [actionPlan, setActionPlan] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-const PerspectiveInput = ({
-    title,
-    description,
-    value,
-    onChange,
-    aiReflection,
-    isLoading
-}: {
-    title: string;
-    description: string;
-    value: string;
-    onChange: (value: string) => void;
-    aiReflection?: string;
-    isLoading: boolean;
-}) => (
-    <div className="space-y-4 animate-fade-in">
-        <h3 className="text-lg font-semibold font-mono text-slate-100">{title}</h3>
-        <p className="text-slate-400">{description}</p>
-        <textarea
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            rows={8}
-            className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-accent"
-            disabled={isLoading}
-        />
-        {aiReflection && (
-             <div className="bg-slate-700/50 p-3 rounded-lg border border-slate-600">
-                <p className="text-sm text-slate-300 italic">{aiReflection}</p>
-            </div>
-        )}
-    </div>
-);
+  useEffect(() => {
+    if (draft) {
+      setSituation(draft.stuckSituation);
+      if (draft.perspectives.length > 0) {
+        const perspectiveMap: Record<string, { description: string; reflection?: string }> = {};
+        draft.perspectives.forEach(p => {
+          perspectiveMap[p.type] = { description: p.description, reflection: p.llmReflection };
+        });
+        setPerspectives(perspectiveMap);
+      }
+      if (draft.synthesis) setSynthesis(draft.synthesis);
+      if (draft.realityCheckRefinement) setActionPlan(draft.realityCheckRefinement);
+    }
+  }, [draft]);
 
-
-export default function PerspectiveShifterWizard({ onClose, onSave, session: draft, setDraft }: PerspectiveShifterWizardProps) {
-    const [session, setSession] = useState<PerspectiveShifterSession>(draft || {
-        id: `ps-${Date.now()}`, date: new Date().toISOString(), currentStep: 'CHOOSE_SITUATION', stuckSituation: '', perspectives: [], dailyTracking: {}
-    });
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [suggestedApproaches, setSuggestedApproaches] = useState<string[]>([]);
+  const handleSaveDraft = () => {
+    const perspectivesList: Perspective[] = Object.entries(perspectives).map(([type, data]) => ({
+      type: type as Perspective['type'],
+      description: data.description,
+      llmReflection: data.reflection
+    }));
     
-    useEffect(() => { if (draft) setSession(draft); }, [draft]);
+    const session: PerspectiveShifterSession = {
+      id: draft?.id || `ps-${Date.now()}`,
+      date: draft?.date || new Date().toISOString(),
+      currentStep: 'CHOOSE_SITUATION',
+      stuckSituation: situation,
+      perspectives: perspectivesList,
+      synthesis,
+      realityCheckRefinement: actionPlan,
+      dailyTracking: {}
+    };
+    setDraft(session);
+    onClose();
+  };
 
-    const handleSaveDraftAndClose = () => { setDraft(session); onClose(); };
+  const currentPerspectiveType = (): Perspective['type'] | null => {
+    const map: Record<SimplifiedStep, Perspective['type'] | null> = {
+      SITUATION: null,
+      FIRST_PERSON: 'First Person (You)',
+      SECOND_PERSON: 'Second Person (Them)',
+      THIRD_PERSON: 'Third Person (Observer)',
+      WITNESS: 'Witness (Pure Awareness)',
+      MAP: null,
+      ACTION: null,
+      COMPLETE: null
+    };
+    return map[step];
+  };
 
-    const updatePerspective = (type: Perspective['type'], description: string, llmReflection?: string) => {
-        const existingIndex = session.perspectives.findIndex(p => p.type === type);
-        let newPerspectives = [...session.perspectives];
-        if (existingIndex > -1) {
-            newPerspectives[existingIndex] = { ...newPerspectives[existingIndex], description, llmReflection: llmReflection ?? newPerspectives[existingIndex].llmReflection };
+  const handleNext = async () => {
+    setError('');
+    
+    if (step === 'SITUATION' && !situation.trim()) {
+      setError('Please describe your stuck situation.');
+      return;
+    }
+
+    const currentPerspective = currentPerspectiveType();
+    if (['FIRST_PERSON', 'SECOND_PERSON', 'THIRD_PERSON', 'WITNESS'].includes(step) && !perspectives[currentPerspective!]?.description.trim()) {
+      setError(`Please describe the ${currentPerspective} perspective.`);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (['FIRST_PERSON', 'SECOND_PERSON', 'THIRD_PERSON', 'WITNESS'].includes(step)) {
+        const perspectiveType = currentPerspectiveType()!;
+        // Generate AI reflection on their perspective
+        const reflection = await generatePerspectiveReflection(
+          situation,
+          perspectiveType,
+          perspectives[perspectiveType].description
+        );
+        
+        setPerspectives(prev => ({
+          ...prev,
+          [perspectiveType]: { ...prev[perspectiveType], reflection }
+        }));
+
+        // Move to next step
+        if (step === 'WITNESS') {
+          // Generate synthesis of all perspectives
+          const perspectivesList = Object.entries(perspectives).map(([type, data]) => ({
+            type: type as Perspective['type'],
+            description: data.description,
+            llmReflection: data.reflection
+          }));
+          const synth = await synthesizeAllPerspectives(situation, perspectivesList);
+          setSynthesis(synth);
+          setStep('MAP');
         } else {
-            newPerspectives.push({ type, description, llmReflection });
+          const stepOrder: SimplifiedStep[] = ['FIRST_PERSON', 'SECOND_PERSON', 'THIRD_PERSON', 'WITNESS'];
+          const nextIdx = stepOrder.indexOf(step as SimplifiedStep) + 1;
+          setStep(stepOrder[nextIdx]);
         }
-        setSession(prev => ({ ...prev, perspectives: newPerspectives }));
-    };
-
-    const getPerspective = (type: Perspective['type']) => session.perspectives.find(p => p.type === type) || { type, description: '' };
-    
-    const handleNext = async () => {
-        setError('');
-        setIsLoading(true);
-        try {
-            const currentDesc = getPerspective(
-                session.currentStep === 'FIRST_PERSON' ? 'First Person (You)' :
-                session.currentStep === 'SECOND_PERSON' ? 'Second Person (Them)' :
-                session.currentStep === 'THIRD_PERSON' ? 'Third Person (Observer)' : 'Witness (Pure Awareness)'
-            ).description;
-
-            const order: PerspectiveShifterStep[] = ['CHOOSE_SITUATION', 'FIRST_PERSON', 'SECOND_PERSON', 'THIRD_PERSON', 'WITNESS', 'INTEGRATION_MAP', 'SHIFT', 'NEW_POSSIBILITY', 'REALITY_CHECK', 'TRACK_CONVERSATION'];
-            const currentIndex = order.indexOf(session.currentStep);
-            let nextStep: PerspectiveShifterStep = currentIndex < order.length - 1 ? order[currentIndex + 1] : session.currentStep;
-
-            if (['FIRST_PERSON', 'SECOND_PERSON', 'THIRD_PERSON', 'WITNESS'].includes(session.currentStep)) {
-                const perspectiveType = getPerspective(
-                    session.currentStep === 'FIRST_PERSON' ? 'First Person (You)' :
-                    session.currentStep === 'SECOND_PERSON' ? 'Second Person (Them)' :
-                    session.currentStep === 'THIRD_PERSON' ? 'Third Person (Observer)' : 'Witness (Pure Awareness)'
-                ).type;
-
-                // Only generate reflection if it doesn't exist yet for this description
-                if(currentDesc && !getPerspective(perspectiveType).llmReflection){
-                    const reflection = await geminiService.guidePerspectiveReflection(session.stuckSituation, perspectiveType, currentDesc, session.perspectives);
-                    updatePerspective(perspectiveType, currentDesc, reflection);
-                }
-                
-                if (session.currentStep === 'WITNESS') {
-                    const synthesis = await geminiService.synthesizePerspectives(session.stuckSituation, session.perspectives);
-                    setSession(s => ({...s, synthesis, currentStep: 'INTEGRATION_MAP'}));
-                } else {
-                    setSession(s => ({...s, currentStep: nextStep}));
-                }
-            } else if (session.currentStep === 'SHIFT') {
-                const approaches = await geminiService.suggestPerspectiveShifterApproach(session.stuckSituation, session.perspectives, session.synthesis || '', session.shiftInsight || '');
-                setSuggestedApproaches(approaches);
-                setSession(s => ({...s, currentStep: 'NEW_POSSIBILITY'}));
-            } else if (session.currentStep === 'TRACK_CONVERSATION') {
-                onSave({ ...session, currentStep: 'COMPLETE' });
-                onClose();
-            } else {
-                setSession(s => ({...s, currentStep: nextStep}));
-            }
-        } catch(e) {
-            setError(e instanceof Error ? e.message : 'An AI error occurred.');
-        } finally {
-            setIsLoading(false);
+      } else if (step === 'MAP') {
+        // Generate action plan based on synthesis
+        const plan = await generateActionPlanFromPerspectives(situation, synthesis);
+        setActionPlan(plan);
+        setStep('ACTION');
+      } else if (step === 'ACTION') {
+        // Save and complete
+        const perspectivesList: Perspective[] = Object.entries(perspectives).map(([type, data]) => ({
+          type: type as Perspective['type'],
+          description: data.description,
+          llmReflection: data.reflection
+        }));
+        
+        const session: PerspectiveShifterSession = {
+          id: `ps-${Date.now()}`,
+          date: new Date().toISOString(),
+          currentStep: 'COMPLETE',
+          stuckSituation: situation,
+          perspectives: perspectivesList,
+          synthesis,
+          realityCheckRefinement: actionPlan,
+          dailyTracking: {}
+        };
+        onSave(session);
+        setStep('COMPLETE');
+      } else {
+        const currentIndex = STEPS.indexOf(step);
+        if (currentIndex < STEPS.length - 1) {
+            setStep(STEPS[currentIndex + 1]);
         }
-    };
-    
-    const handleBack = () => {
-      const order: PerspectiveShifterStep[] = ['CHOOSE_SITUATION', 'FIRST_PERSON', 'SECOND_PERSON', 'THIRD_PERSON', 'WITNESS', 'INTEGRATION_MAP', 'SHIFT', 'NEW_POSSIBILITY', 'REALITY_CHECK', 'TRACK_CONVERSATION'];
-      const index = order.indexOf(session.currentStep);
-      if (index > 0) setSession(s => ({...s, currentStep: order[index - 1]}));
-    };
-    
-    const stepNumber: Record<PerspectiveShifterStep, number> = { CHOOSE_SITUATION: 0, FIRST_PERSON: 1, SECOND_PERSON: 2, THIRD_PERSON: 3, WITNESS: 4, INTEGRATION_MAP: 5, SHIFT: 5, NEW_POSSIBILITY: 5, REALITY_CHECK: 5, TRACK_CONVERSATION: 5, COMPLETE: 6};
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'An error occurred.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
-          <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]">
-            <header className="p-4 border-b border-slate-700 flex justify-between items-center"><h2 className="text-2xl font-bold font-mono tracking-tight text-orange-300">Perspective Shifter</h2><button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={24} /></button></header>
-            <div className="p-6"><ProgressBar currentStep={stepNumber[session.currentStep]} /></div>
-            <main className="p-6 flex-grow overflow-y-auto">
-                {error && <p className="text-red-400 text-sm mb-4 bg-red-900/50 p-3 rounded-md">{error}</p>}
-                {isLoading && session.currentStep !== 'INTEGRATION_MAP' && <p className="text-slate-400 text-sm animate-pulse mb-4">Aura is thinking...</p>}
+  const handleBack = () => {
+    const currentIdx = STEPS.indexOf(step);
+    if (currentIdx > 0) {
+      setStep(STEPS[currentIdx - 1]);
+    }
+  };
 
-                {session.currentStep === 'CHOOSE_SITUATION' && <PerspectiveInput title="Step 1: Choose Your Stuck Situation" description="Describe a situation where you feel stuck or can't see the other side." value={session.stuckSituation} onChange={val => setSession(s=>({...s, stuckSituation: val}))} isLoading={isLoading} />}
-                {session.currentStep === 'FIRST_PERSON' && <PerspectiveInput title="Step 2: 1st Person Perspective (Your View)" description="From your own eyes, what's true about this situation? What do you feel and need?" value={getPerspective('First Person (You)').description} onChange={val => updatePerspective('First Person (You)', val)} aiReflection={getPerspective('First Person (You)').llmReflection} isLoading={isLoading} />}
-                {session.currentStep === 'SECOND_PERSON' && <PerspectiveInput title="Step 3: 2nd Person Perspective (Their View)" description="Genuinely imagine you are them. What is their experience? What might they be needing or fearing?" value={getPerspective('Second Person (Them)').description} onChange={val => updatePerspective('Second Person (Them)', val)} aiReflection={getPerspective('Second Person (Them)').llmReflection} isLoading={isLoading} />}
-                {session.currentStep === 'THIRD_PERSON' && <PerspectiveInput title="Step 4: 3rd Person Perspective (Observer)" description="Step back and view the situation as a caring, neutral observer. What is the pattern? What is the system dynamic at play?" value={getPerspective('Third Person (Observer)').description} onChange={val => updatePerspective('Third Person (Observer)', val)} aiReflection={getPerspective('Third Person (Observer)').llmReflection} isLoading={isLoading} />}
-                {session.currentStep === 'WITNESS' && <PerspectiveInput title="Step 5: Witness Perspective (Pure Awareness)" description="From a place of pure awareness and compassion, what is visible? No blame, no judgment. What is the shared humanity here?" value={getPerspective('Witness (Pure Awareness)').description} onChange={val => updatePerspective('Witness (Pure Awareness)', val)} aiReflection={getPerspective('Witness (Pure Awareness)').llmReflection} isLoading={isLoading} />}
-                
-                {session.currentStep === 'INTEGRATION_MAP' && <div className="space-y-4 animate-fade-in"><h3>Step 6: Integration</h3><p className="text-slate-400 mb-4">Here are all four perspectives. Aura's synthesis highlights how they can all be true at once.</p>{isLoading ? <p className="text-slate-400 animate-pulse">Synthesizing...</p> : <div className="bg-slate-700/50 p-4 rounded-lg border border-slate-600"><p className="text-slate-300 italic">{session.synthesis}</p></div>}</div>}
-                {session.currentStep === 'SHIFT' && <div className="space-y-4 animate-fade-in"><h3>How does seeing all perspectives change things?</h3><p className="text-slate-400 mb-4">What becomes possible now that you can hold all four?</p><textarea value={session.shiftInsight || ''} onChange={e => setSession(s => ({...s, shiftInsight: e.target.value}))} rows={5} className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent" /></div>}
-                {session.currentStep === 'NEW_POSSIBILITY' && <div className="space-y-4 animate-fade-in"><h3>New Possibilities</h3><p className="text-slate-400 mb-4">Based on your insight, here are some new approaches. Choose one or write your own.</p>{suggestedApproaches.map((app, i) => <div key={i} className="bg-slate-700/50 p-3 rounded-md">{app}</div>)}<textarea value={session.newPossibility || ''} onChange={e => setSession(s => ({...s, newPossibility: e.target.value}))} rows={3} placeholder="Copy & paste or write your own new approach..." className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 mt-4 focus:outline-none focus:ring-2 focus:ring-accent" /></div>}
-                {session.currentStep === 'REALITY_CHECK' && <div className="space-y-4 animate-fade-in"><h3>Reality Check</h3><p className="text-slate-400 mb-4">This doesn't mean you minimize your needs. It means you can advocate for yourself FROM compassion. Refine your chosen approach into a clear, actionable communication.</p><textarea value={session.realityCheckRefinement || ''} onChange={e => setSession(s => ({...s, realityCheckRefinement: e.target.value}))} rows={5} className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent" /></div>}
-                {session.currentStep === 'TRACK_CONVERSATION' && <div className="space-y-4 animate-fade-in"><h3>Track the Conversation</h3><p className="text-slate-400 mb-4">This week, try this new approach. You can add notes here to track how it goes.</p><textarea value={Object.values(session.dailyTracking)[0]?.[0] || ''} onChange={e => setSession(s => ({...s, dailyTracking: { [new Date().toISOString().split('T')[0]]: [e.target.value] }}))} rows={5} className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent" /></div>}
-            </main>
-            <footer className="p-4 border-t border-slate-700 flex justify-between items-center">
-                <button onClick={handleSaveDraftAndClose} className="text-sm text-slate-400 hover:text-white transition">Save Draft & Close</button>
-                <div className="flex gap-4">
-                    {session.currentStep !== 'CHOOSE_SITUATION' && <button onClick={handleBack} disabled={isLoading} className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md font-medium"><ArrowLeft size={16}/></button>}
-                    <button onClick={handleNext} disabled={isLoading} className="btn-luminous px-4 py-2 rounded-md font-medium flex items-center gap-2">
-                        {session.currentStep === 'TRACK_CONVERSATION' ? 'Finish & Save' : 'Next'} <ArrowRight size={16}/>
-                    </button>
-                </div>
-            </footer>
+  const handleDownload = () => {
+    const content = `# Perspective Shifter Session
+Date: ${new Date().toLocaleDateString()}
+
+## The Stuck Situation
+${situation}
+
+---
+
+## Perspectives
+
+### Your Perspective (1st Person)
+${perspectives['First Person (You)'].description}
+
+**Aura's Reflection**: ${perspectives['First Person (You)'].reflection || 'None yet'}
+
+---
+
+### Their Perspective (2nd Person)
+${perspectives['Second Person (Them)'].description}
+
+**Aura's Reflection**: ${perspectives['Second Person (Them)'].reflection || 'None yet'}
+
+---
+
+### Observer Perspective (3rd Person)
+${perspectives['Third Person (Observer)'].description}
+
+**Aura's Reflection**: ${perspectives['Third Person (Observer)'].reflection || 'None yet'}
+
+---
+
+### Witness Perspective (Pure Awareness)
+${perspectives['Witness (Pure Awareness)'].description}
+
+**Aura's Reflection**: ${perspectives['Witness (Pure Awareness)'].reflection || 'None yet'}
+
+---
+
+## Synthesis
+${synthesis}
+
+---
+
+## Your Action Plan
+${actionPlan}
+
+---
+
+Generated by Aura ILP
+`;
+
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `perspective-shifter-report-${new Date().toISOString().split('T')[0]}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const stepIndex = STEPS.indexOf(step);
+  const canProceed = 
+    (step === 'SITUATION' && !!situation.trim()) ||
+    (step === 'FIRST_PERSON' && !!perspectives['First Person (You)'].description.trim()) ||
+    (step === 'SECOND_PERSON' && !!perspectives['Second Person (Them)'].description.trim()) ||
+    (step === 'THIRD_PERSON' && !!perspectives['Third Person (Observer)'].description.trim()) ||
+    (step === 'WITNESS' && !!perspectives['Witness (Pure Awareness)'].description.trim()) ||
+    step === 'MAP' ||
+    (step === 'ACTION' && !!actionPlan.trim());
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh]">
+        <header className="p-4 border-b border-slate-700 flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold font-mono text-orange-300">Perspective Shifter</h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Step {stepIndex + 1} of {STEPS.length}: {STEP_LABELS[step]}
+            </p>
           </div>
-        </div>
-    );
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition">
+            <X size={24} />
+          </button>
+        </header>
+
+        <main className="p-6 flex-grow overflow-y-auto space-y-4">
+          {error && (
+            <div className="bg-red-900/30 border border-red-700 rounded-md p-3">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {step === 'SITUATION' && (
+            <>
+              <h3 className="text-lg font-semibold text-slate-100">Describe Your Stuck Situation</h3>
+              <p className="text-slate-400 text-sm">A situation where you feel stuck or misunderstood. Who is involved? What's the conflict or confusion?</p>
+              <textarea
+                value={situation}
+                onChange={e => setSituation(e.target.value)}
+                rows={6}
+                placeholder="E.g., 'I want to set boundaries with my partner about work stress, but they think I'm being cold...'"
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-slate-100"
+              />
+            </>
+          )}
+
+          {['FIRST_PERSON', 'SECOND_PERSON', 'THIRD_PERSON', 'WITNESS'].includes(step) && (
+            <>
+              <h3 className="text-lg font-semibold text-slate-100">
+                {step === 'FIRST_PERSON' && 'Your Perspective'}
+                {step === 'SECOND_PERSON' && 'Their Perspective'}
+                {step === 'THIRD_PERSON' && 'Observer View'}
+                {step === 'WITNESS' && 'Witness View'}
+              </h3>
+              <p className="text-slate-400 text-sm">
+                {step === 'FIRST_PERSON' && 'From your own eyes, what is true? What do you need?'}
+                {step === 'SECOND_PERSON' && 'Genuinely imagine you are them. What is their experience?'}
+                {step === 'THIRD_PERSON' && 'Step back as a caring observer. What is the pattern?'}
+                {step === 'WITNESS' && 'From pure awareness and compassion, what is visible?'}
+              </p>
+
+              <div className="bg-slate-900/30 border border-slate-700 rounded-lg p-4 mb-4">
+                <p className="text-xs text-slate-400 font-semibold mb-2">Guiding questions:</p>
+                <ul className="space-y-1">
+                  {GUIDANCE[step]?.map((q, i) => (
+                    <li key={i} className="text-xs text-slate-400">• {q}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <textarea
+                value={perspectives[currentPerspectiveType()!]?.description || ''}
+                onChange={e => {
+                  const type = currentPerspectiveType()!;
+                  setPerspectives(prev => ({
+                    ...prev,
+                    [type]: { ...prev[type], description: e.target.value }
+                  }));
+                }}
+                rows={6}
+                placeholder="Write from this perspective..."
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-slate-100"
+              />
+
+              {perspectives[currentPerspectiveType()!]?.reflection && !isLoading && (
+                <div className="bg-orange-900/30 border border-orange-700 rounded-lg p-4 animate-fade-in">
+                  <p className="text-xs text-orange-300 font-semibold mb-1">Aura's Reflection</p>
+                  <p className="text-sm text-slate-300">{perspectives[currentPerspectiveType()!].reflection}</p>
+                </div>
+              )}
+               {isLoading && <p className="text-slate-400 text-sm animate-pulse">Aura is reflecting...</p>}
+            </>
+          )}
+
+          {step === 'MAP' && (
+            <>
+              <h3 className="text-lg font-semibold text-slate-100">Your Perspective Map</h3>
+              <p className="text-slate-400 text-sm mb-4">All four perspectives, showing how they fit together:</p>
+              
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-slate-400 animate-pulse">Synthesizing perspectives...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <PerspectiveCard type="First Person (You)" description={perspectives['First Person (You)'].description} reflection={perspectives['First Person (You)'].reflection} isActive={false} />
+                    <PerspectiveCard type="Second Person (Them)" description={perspectives['Second Person (Them)'].description} reflection={perspectives['Second Person (Them)'].reflection} isActive={false} />
+                    <PerspectiveCard type="Third Person (Observer)" description={perspectives['Third Person (Observer)'].description} reflection={perspectives['Third Person (Observer)'].reflection} isActive={false} />
+                    <PerspectiveCard type="Witness (Pure Awareness)" description={perspectives['Witness (Pure Awareness)'].description} reflection={perspectives['Witness (Pure Awareness)'].reflection} isActive={false} />
+                  </div>
+
+                  <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                    <h4 className="font-semibold text-slate-200 mb-2">Integration Synthesis</h4>
+                    <p className="text-slate-300 text-sm leading-relaxed">{synthesis}</p>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {step === 'ACTION' && (
+            <>
+              <h3 className="text-lg font-semibold text-slate-100">Your Action Plan</h3>
+              <p className="text-slate-400 text-sm mb-3">
+                Now that you can hold all perspectives, here's a concrete approach:
+              </p>
+              
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-slate-400 animate-pulse">Generating action plan...</p>
+                </div>
+              ) : (
+                <>
+                  {actionPlan && (
+                    <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4 mb-4">
+                      <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{actionPlan}</p>
+                    </div>
+                  )}
+                  
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Refine it or write your own:</label>
+                  <textarea
+                    value={actionPlan}
+                    onChange={e => setActionPlan(e.target.value)}
+                    rows={5}
+                    placeholder="E.g., 'I will tell them: I value our connection. When work gets stressful, I need some quiet time to recharge—not because I don't care about you, but because it helps me be present for us. Can we...'"
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-slate-100"
+                  />
+                </>
+              )}
+            </>
+          )}
+
+          {step === 'COMPLETE' && (
+            <div className="text-center py-12 space-y-4">
+              <Check size={48} className="mx-auto text-green-400" />
+              <h3 className="text-2xl font-bold text-slate-100">Session Complete</h3>
+              <p className="text-slate-400 max-w-md mx-auto">
+                You've mapped all perspectives and created an action plan. Download it to remember this shift.
+              </p>
+              <button
+                onClick={handleDownload}
+                className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition"
+              >
+                <Download size={18} /> Download Session
+              </button>
+            </div>
+          )}
+        </main>
+
+        <footer className="p-4 border-t border-slate-700 flex justify-between items-center">
+          <button onClick={handleSaveDraft} className="text-sm text-slate-400 hover:text-white transition"> Save & Exit </button>
+          <div className="flex gap-3">
+            {step !== 'SITUATION' && step !== 'COMPLETE' && (
+              <button onClick={handleBack} disabled={isLoading} className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 transition"> <ArrowLeft size={16} /> Back </button>
+            )}
+            {step !== 'COMPLETE' && (
+              <button onClick={handleNext} disabled={isLoading || !canProceed}
+                className={`px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 transition ${ isLoading || !canProceed ? 'bg-slate-600 text-slate-400 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-700 text-white' }`}
+              >
+                {isLoading ? 'Processing...' : step === 'ACTION' ? 'Complete & Save' : 'Next'} <ArrowRight size={16} />
+              </button>
+            )}
+            {step === 'COMPLETE' && (
+              <button onClick={onClose} className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 transition"> <Check size={16} /> Done </button>
+            )}
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
 }

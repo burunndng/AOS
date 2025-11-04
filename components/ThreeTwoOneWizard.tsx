@@ -1,6 +1,7 @@
+// FIX: Removed erroneous file separator from the beginning of the file content.
 import React, { useState, useEffect } from 'react';
-import { ThreeTwoOneSession } from '../types.ts';
-import { X, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ThreeTwoOneSession, IntegratedInsight } from '../types.ts';
+import { X, ArrowLeft, ArrowRight, Lightbulb } from 'lucide-react';
 import { summarizeThreeTwoOneSession } from '../services/geminiService.ts';
 
 type Step = 'TRIGGER' | 'FACE_IT' | 'TALK_TO_IT' | 'BE_IT' | 'INTEGRATE' | 'SUMMARY';
@@ -9,10 +10,17 @@ interface ThreeTwoOneWizardProps {
   onClose: () => void;
   onSave: (session: ThreeTwoOneSession) => void;
   session: Partial<ThreeTwoOneSession> | null;
+  insightContext?: IntegratedInsight | null;
+  markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void;
 }
 
-export default function ThreeTwoOneWizard({ onClose, onSave, session: draft }: ThreeTwoOneWizardProps) {
-  const [session, setSession] = useState<Partial<ThreeTwoOneSession>>(draft || {});
+export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, insightContext, markInsightAsAddressed }: ThreeTwoOneWizardProps) {
+  const [session, setSession] = useState<Partial<ThreeTwoOneSession>>(() => {
+    if (insightContext && (!draft || !draft.linkedInsightId)) {
+      return { ...draft, linkedInsightId: insightContext.id };
+    }
+    return draft || {};
+  });
   const [step, setStep] = useState<Step>('TRIGGER');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -25,7 +33,10 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft }: T
       else if (!draft.embodiment) setStep('BE_IT');
       else if (!draft.integration) setStep('INTEGRATE');
     }
-  }, [draft]);
+    if (insightContext && session.linkedInsightId !== insightContext.id) {
+        setSession(prev => ({ ...prev, linkedInsightId: insightContext.id }));
+    }
+  }, [draft, insightContext]);
 
   const updateSession = (field: keyof ThreeTwoOneSession, value: string) => {
     setSession(prev => ({ ...prev, [field]: value }));
@@ -39,7 +50,7 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft }: T
       case 'BE_IT': setStep('INTEGRATE'); break;
       case 'INTEGRATE':
         setIsLoading(true);
-        const finalSession: ThreeTwoOneSession = {
+        const finalSessionData: ThreeTwoOneSession = {
           id: session.id || `321-${Date.now()}`,
           date: session.date || new Date().toISOString(),
           trigger: session.trigger || '',
@@ -47,20 +58,35 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft }: T
           dialogue: session.dialogue || '',
           embodiment: session.embodiment || '',
           integration: session.integration || '',
+          linkedInsightId: session.linkedInsightId // Persist the linked insight ID
         };
         try {
-          const summary = await summarizeThreeTwoOneSession(finalSession);
-          setSession({ ...finalSession, aiSummary: summary });
+          const summary = await summarizeThreeTwoOneSession(finalSessionData);
+          setSession({ ...finalSessionData, aiSummary: summary });
         } catch (e) {
             console.error("Error generating summary:", e);
-             setSession({ ...finalSession, aiSummary: "Could not generate summary." });
+             setSession({ ...finalSessionData, aiSummary: "Could not generate summary." });
         } finally {
             setIsLoading(false);
             setStep('SUMMARY');
         }
         break;
       case 'SUMMARY':
-        onSave(session as ThreeTwoOneSession);
+        const sessionToSave: ThreeTwoOneSession = {
+            id: session.id || `321-${Date.now()}`,
+            date: session.date || new Date().toISOString(),
+            trigger: session.trigger || '',
+            triggerDescription: session.triggerDescription || '',
+            dialogue: session.dialogue || '',
+            embodiment: session.embodiment || '',
+            integration: session.integration || '',
+            aiSummary: session.aiSummary,
+            linkedInsightId: session.linkedInsightId // Ensure linkedInsightId is saved
+        };
+        onSave(sessionToSave);
+        if (sessionToSave.linkedInsightId) {
+            markInsightAsAddressed(sessionToSave.linkedInsightId, '3-2-1 Process', sessionToSave.id);
+        }
         break;
     }
   };
@@ -71,6 +97,7 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft }: T
       case 'TALK_TO_IT': setStep('FACE_IT'); break;
       case 'BE_IT': setStep('TALK_TO_IT'); break;
       case 'INTEGRATE': setStep('BE_IT'); break;
+      case 'SUMMARY': setStep('INTEGRATE'); break; // Allow going back from summary
     }
   };
   
@@ -80,6 +107,20 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft }: T
         return (
           <>
             <h3 className="text-lg font-semibold font-mono text-slate-100">Step 1: The Trigger</h3>
+            {insightContext && (
+                <div className="bg-blue-900/30 border border-blue-700 rounded-md p-4 my-4 text-sm text-blue-200 space-y-3">
+                    <p className="font-bold flex items-center gap-2"><Lightbulb size={16}/> Starting from an Insight:</p>
+                    <p><strong className="text-blue-300">Session Context:</strong> {insightContext.mindToolShortSummary}</p>
+                    <p><strong className="text-blue-300">Detected Pattern:</strong> "{insightContext.detectedPattern}"</p>
+                    <div className="mt-2">
+                      <p className="text-xs text-blue-400 mb-1">Full context from your {insightContext.mindToolType} session:</p>
+                      <div className="bg-slate-900/50 p-3 rounded-md max-h-48 overflow-y-auto text-xs whitespace-pre-wrap font-mono">
+                        {insightContext.mindToolReport}
+                      </div>
+                    </div>
+                    <p className="text-xs text-blue-400 mt-2">Use this context to define the quality that triggers you below.</p>
+                </div>
+            )}
             <p className="text-slate-400">What person or situation is bothering you? Name the quality that triggers you in one or two words.</p>
             <input
               type="text"
@@ -164,12 +205,12 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft }: T
             </header>
             <main className="p-6 flex-grow overflow-y-auto space-y-4">
                 {renderStep()}
-                {isLoading && <p className="text-slate-400">Aura is generating your summary...</p>}
+                {isLoading && <p className="text-slate-400 animate-pulse">Aura is generating your summary...</p>}
             </main>
             <footer className="p-4 border-t border-slate-700 flex justify-between items-center">
                 <button onClick={onClose} className="text-sm text-slate-400 hover:text-white transition">Save Draft & Close</button>
                 <div className="flex gap-4">
-                    {step !== 'TRIGGER' && step !== 'SUMMARY' && <button onClick={handleBack} className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md font-medium"><ArrowLeft size={16}/></button>}
+                    {step !== 'TRIGGER' && <button onClick={handleBack} className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-md font-medium" disabled={isLoading}><ArrowLeft size={16}/></button>}
                     <button onClick={handleNext} disabled={isLoading} className="btn-luminous px-4 py-2 rounded-md font-medium flex items-center gap-2">
                          {step === 'INTEGRATE' ? 'Generate Summary' : step === 'SUMMARY' ? 'Finish & Save' : 'Next'} <ArrowRight size={16}/>
                     </button>

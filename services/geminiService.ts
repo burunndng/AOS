@@ -1,7 +1,8 @@
+// FIX: Removed erroneous file separator from the beginning of the file content.
 // services/geminiService.ts
 // FIX: Add `ThreeTwoOneSession` and `CustomPractice` to type imports.
-import { GoogleGenAI, Type, Modality, Content } from "@google/genai";
-import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey } from '../types.ts';
+import { GoogleGenAI, Type, Modality, Blob, Content } from "@google/genai";
+import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey, IntegratedInsight } from '../types.ts';
 import { practices as corePractaces } from '../constants.ts';
 
 
@@ -22,11 +23,23 @@ export async function generateText(prompt: string): Promise<string> {
 
 // FIX: Added missing `explainPractice` function called from `App.tsx`.
 export async function explainPractice(practice: Practice): Promise<string> {
-    const prompt = `Explain the practice "${practice.name}" in 2-3 concise sentences for a beginner.
-    Focus on the core benefit and what it involves.
-    The existing description is: "${practice.description}".
-    The reason for it is: "${practice.why}".
-    Return only the explanation as a string.`;
+    const prompt = `Generate a concise explanation of the practice "${practice.name}" for a beginner, formatted using Markdown for clarity. The explanation should be 2-3 *short* paragraphs, providing very clear, condensed information.
+
+**Paragraph 1: Introduction and Mechanics**
+Begin with a brief **History/Origin** of the practice, then describe **What it Involves** in simple terms, outlining the basic actions a beginner would take.
+
+**Paragraph 2: Impact and Validation**
+Detail the **Core Benefits** and positive impacts for someone practicing it. Conclude with a mention of its **Research/Sources** or key supporting concepts.
+
+Use the following information as context:
+- Practice Name: "${practice.name}"
+- Description: "${practice.description}"
+- Why it's valuable (Core Benefit): "${practice.why}"
+- How to do it (Basic Steps): "${practice.how.join('\n- ')}"
+- Evidence/Research: "${practice.evidence}"
+
+Ensure the language is accessible and encouraging for a beginner.
+Return ONLY the explanation as a string.`;
     return await generateText(prompt);
 }
 
@@ -159,91 +172,6 @@ export async function generateSpeechFromText(text: string): Promise<string> {
     return base64Audio;
 }
 
-// Functions for BiasDetectiveWizard.tsx
-export async function diagnoseBiases(decision: string, reasoning: string): Promise<IdentifiedBias[]> {
-    const prompt = `A user made a decision: "${decision}" with this reasoning: "${reasoning}".
-    Identify the top 3-4 most likely cognitive biases at play.
-    For each bias, provide its name, a brief explanation of how it works, and a powerful, open-ended question to help the user test if that bias is active.
-    
-    Return a JSON array of objects with keys: "name", "howItWorks", "questionToTest".
-    Example: [{"name": "Confirmation Bias", "howItWorks": "...", "questionToTest": "..."}]
-    Return ONLY the JSON array.`;
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        name: { type: Type.STRING },
-                        howItWorks: { type: Type.STRING },
-                        questionToTest: { type: Type.STRING },
-                    },
-                    required: ['name', 'howItWorks', 'questionToTest']
-                }
-            }
-        }
-    });
-    return JSON.parse(response.text);
-}
-
-export async function testBiasAnalysis(biasName: string, howItWorks: string, originalReasoning: string, question: string, userAnswer: string): Promise<{ llmTestResponse: string, isOperating: boolean }> {
-     const prompt = `I am testing for a cognitive bias.
-    - Bias: ${biasName} (${howItWorks})
-    - My original reasoning was: "${originalReasoning}"
-    - The test question was: "${question}"
-    - My answer is: "${userAnswer}"
-
-    Analyze my answer. In one sentence, reflect on how my answer might reveal the bias in action. Then, determine if the bias is likely operating.
-    Return a JSON object with keys: "llmTestResponse" (string) and "isOperating" (boolean).
-    
-    Example: {"llmTestResponse": "Your focus on confirming evidence suggests...", "isOperating": true}
-    Return ONLY the JSON object.`;
-    
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    llmTestResponse: { type: Type.STRING },
-                    isOperating: { type: Type.BOOLEAN },
-                },
-                required: ['llmTestResponse', 'isOperating']
-            }
-        }
-    });
-
-    return JSON.parse(response.text);
-}
-
-export async function generateAlternativeFramings(decision: string, reasoning: string): Promise<string[]> {
-    const prompt = `A user made a decision: "${decision}" with this reasoning: "${reasoning}".
-    Generate 3 alternative ways to frame or think about this decision that challenge the initial reasoning.
-    Return a JSON array of strings.
-    Example: ["What if the goal was learning, not success?", "How would you decide this for a friend?"]
-    Return ONLY the JSON array.`;
-    
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-            }
-        }
-    });
-    return JSON.parse(response.text);
-}
-
 
 // Functions for SubjectObjectWizard.tsx
 export async function articulateSubjectTo(pattern: string, feelings: string): Promise<string> {
@@ -307,57 +235,6 @@ export async function generateIntegrationInsight(pattern: string, subjectToState
 
     Return ONLY the insight as a string.`;
     return await generateText(prompt);
-}
-
-
-// Functions for PerspectiveShifterWizard.tsx
-export async function guidePerspectiveReflection(situation: string, perspectiveType: Perspective['type'], description: string, allPerspectives: Perspective[]): Promise<string> {
-    const context = allPerspectives.map(p => `- ${p.type}: ${p.description}`).join('\n');
-    const prompt = `A user is exploring a situation: "${situation}".
-    They are now describing the ${perspectiveType} perspective: "${description}".
-    
-    Previous perspectives described:
-    ${context}
-
-    As a wise, compassionate guide, provide a 1-2 sentence reflection on their description. What is the key insight or feeling in this perspective?
-    Return ONLY the reflection as a string.`;
-    return await generateText(prompt);
-}
-
-export async function synthesizePerspectives(situation: string, perspectives: Perspective[]): Promise<string> {
-    const context = perspectives.map(p => `- ${p.type}: "${p.description}"`).join('\n');
-    const prompt = `A user is exploring a situation: "${situation}". They have described it from multiple perspectives:
-    ${context}
-
-    Synthesize these perspectives. In 2-3 sentences, explain how all of them can be true at once and what greater truth emerges from holding them all.
-    Return ONLY the synthesis as a string.`;
-    return await generateText(prompt);
-}
-
-export async function suggestPerspectiveShifterApproach(situation: string, perspectives: Perspective[], synthesis: string, insight: string): Promise<string[]> {
-    const context = perspectives.map(p => `- ${p.type}: "${p.description}"`).join('\n');
-    const prompt = `A user explored a situation: "${situation}".
-    Perspectives:
-    ${context}
-    Synthesis: "${synthesis}"
-    Their insight: "${insight}"
-
-    Suggest 3 concrete, compassionate next steps or new ways to approach the situation.
-    Return a JSON array of strings.
-    Example: ["Could you share your 'first-person' feelings using an 'I' statement?", "Acknowledge the 'second-person's' need for security before stating your own."]
-    Return ONLY the JSON array.`;
-     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
-            }
-        }
-    });
-    return JSON.parse(response.text);
 }
 
 
@@ -675,4 +552,124 @@ export async function refinePractice(name: string, description: string, why: str
         }
     });
     return JSON.parse(response.text);
+}
+
+/**
+ * Detects patterns from a Mind tool session and suggests relevant Shadow work practices.
+ * @param mindToolType The type of Mind tool used (e.g., 'BiasDetective').
+ * @param mindToolSessionId The ID of the completed Mind tool session.
+ * @param mindToolSessionReport A full markdown report of the Mind tool session's key findings.
+ * @param availableShadowPractices The list of available shadow practices.
+ * @returns An IntegratedInsight object with detected patterns and suggested shadow work, or null if no suggestions.
+ */
+export async function detectPatternsAndSuggestShadowWork(
+  mindToolType: IntegratedInsight['mindToolType'],
+  mindToolSessionId: string,
+  mindToolSessionReport: string,
+  availableShadowPractices: Practice[]
+): Promise<IntegratedInsight | null> {
+  const shadowPracticeList = availableShadowPractices
+    .map(p => `- ID: ${p.id}, Name: ${p.name}, Description: ${p.description}`)
+    .join('\n');
+
+  const prompt = `
+    As an Integral Coach specializing in shadow work integration, analyze the following report from a user's "${mindToolType}" session.
+
+    **Mind Tool Session Report:**
+    "${mindToolSessionReport}"
+
+    **Your Task:**
+    1.  **Generate Short Summary:** Create a very concise, one-sentence summary of the session report. This should capture the essence of the user's work.
+    2.  **Identify Core Patterns:** Based on the full report, articulate 1-2 core underlying psychological patterns, beliefs, or emotional drivers that seem to be operating for the user. These should be framed in terms of potential shadow material (e.g., a disowned quality, a reactive pattern, a limiting belief).
+    3.  **Suggest Shadow Work:** From the provided list of available shadow work practices, recommend 1-3 highly relevant practices that could help the user deepen their insight and work with the detected pattern. **Crucially, for 'practiceId', you MUST use one of the exact IDs provided in the list below.**
+    4.  **Provide Rationale:** For each suggested practice, briefly explain (1-2 sentences) *why* it is relevant and *how* it would help address the detected pattern.
+
+    **Available Shadow Work Practices (choose relevant IDs only):**
+    ${shadowPracticeList}
+
+    **Output Format:**
+    Return a JSON object with the following structure. If no clear shadow-related pattern is detected, return 'null'.
+
+    {
+      "shortSummary": "string (a concise one-sentence summary of the session)",
+      "detectedPattern": "string (1-2 sentences describing the core shadow-related pattern)",
+      "suggestedShadowWork": [
+        {
+          "practiceId": "MUST be one of the IDs from the 'Available Shadow Work Practices' list (e.g., 'three-two-one' or 'parts-dialogue')",
+          "practiceName": "string (use the 'Name' from the list for the corresponding practiceId)",
+          "rationale": "string (1-2 sentences explaining relevance)"
+        }
+      ]
+    }
+    Return ONLY the JSON object or 'null'.
+    `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-pro',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            shortSummary: { type: Type.STRING },
+            detectedPattern: { type: Type.STRING },
+            suggestedShadowWork: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  practiceId: { type: Type.STRING },
+                  practiceName: { type: Type.STRING },
+                  rationale: { type: Type.STRING },
+                },
+                required: ['practiceId', 'practiceName', 'rationale'],
+              },
+            },
+          },
+          required: ['shortSummary', 'detectedPattern', 'suggestedShadowWork'],
+        },
+      },
+    });
+
+    const result = JSON.parse(response.text);
+
+    if (!result || !result.detectedPattern || !result.shortSummary || !Array.isArray(result.suggestedShadowWork)) {
+        return null;
+    }
+
+    const validSuggestions = result.suggestedShadowWork
+      .map((s: any) => {
+        const normalizedPracticeId = s.practiceId?.toLowerCase().trim();
+        const foundPractice = availableShadowPractices.find(p => p.id === normalizedPracticeId);
+        if (foundPractice) {
+          return {
+            practiceId: foundPractice.id,
+            practiceName: foundPractice.name,
+            rationale: s.rationale,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (validSuggestions.length === 0) return null;
+
+    return {
+      id: `integrated-insight-${Date.now()}`,
+      mindToolType,
+      mindToolSessionId,
+      mindToolName: `${mindToolType} session on "${result.shortSummary.substring(0, 50)}${result.shortSummary.length > 50 ? '...' : ''}"`,
+      mindToolReport: mindToolSessionReport,
+      mindToolShortSummary: result.shortSummary,
+      detectedPattern: result.detectedPattern,
+      suggestedShadowWork: validSuggestions as IntegratedInsight['suggestedShadowWork'],
+      dateCreated: new Date().toISOString(),
+      status: 'pending',
+    };
+  } catch (error) {
+    console.error("Error in detectPatternsAndSuggestShadowWork:", error);
+    return null;
+  }
 }

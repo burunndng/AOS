@@ -8,8 +8,26 @@ interface PracticeExplanationModalProps {
   explanation: string;
 }
 
+// Simple Markdown to HTML converter for bolding and paragraphs
+const renderMarkdown = (markdown: string) => {
+  let html = markdown
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+    .replace(/__(.*?)__/g, '<u>$1</u>') // Underline text (optional, but good for consistency)
+    .replace(/\n\n/g, '</p><p>') // Double newline for paragraphs
+    .replace(/\n/g, '<br/>'); // Single newline for line breaks
+
+  // Wrap in paragraph tags if it's not already
+  if (!html.startsWith('<p>') && !html.startsWith('<br/>') && html.trim() !== '') {
+    html = `<p>${html}</p>`;
+  }
+  
+  return html;
+};
+
 export default function PracticeExplanationModal({ isOpen, onClose, title, explanation }: PracticeExplanationModalProps) {
   if (!isOpen) return null;
+
+  const formattedExplanation = renderMarkdown(explanation);
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4" onClick={onClose}>
@@ -23,8 +41,8 @@ export default function PracticeExplanationModal({ isOpen, onClose, title, expla
             <X size={24} />
           </button>
         </div>
-        <div className="mt-4">
-          <p className="text-slate-300 leading-relaxed">{explanation}</p>
+        <div className="mt-4 text-slate-300 leading-relaxed custom-explanation-content">
+          <div dangerouslySetInnerHTML={{ __html: formattedExplanation }} />
         </div>
       </div>
     </div>

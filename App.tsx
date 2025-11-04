@@ -1,4 +1,3 @@
-// App.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import NavSidebar from './components/NavSidebar.tsx';
 import DashboardTab from './components/DashboardTab.tsx';
@@ -29,7 +28,7 @@ import IFSWizard from './components/IFSWizard.tsx';
 import { 
     AllPractice, ActiveTab, Practice, CustomPractice, ModuleKey, AqalReportData,
     ThreeTwoOneSession, IFSSession, IFSPart, BiasDetectiveSession, SubjectObjectSession,
-    PerspectiveShifterSession, PolarityMap
+    PerspectiveShifterSession, PolarityMap, IntegratedInsight
 } from './types.ts';
 import { starterStacks, practices as corePractices, modules } from './constants.ts';
 import * as geminiService from './services/geminiService.ts';
@@ -57,6 +56,77 @@ const usePersistentState = <T,>(key: string, defaultValue: T): [T, React.Dispatc
     return [state, setState];
 };
 
+// --- Report Generation Utilities ---
+const generateBiasReport = (s: BiasDetectiveSession): string => {
+  const scenariosText = s.scenarios?.map((sc, i) => `### Scenario ${i + 1}: ${sc.biasName}\n*   How it Influenced: ${sc.howItInfluenced}\n*   What if?: ${sc.scenario}\n*   Alternative Decision: ${sc.alternativeDecision}`).join('\n\n') || 'No scenarios generated.';
+  return `
+# Bias Detective Session Report
+- **Decision**: ${s.decisionText}
+- **Reasoning**: ${s.reasoning}
+- **Discovery Answers**:
+  - Alternatives: ${s.discoveryAnswers?.alternativesConsidered || 'N/A'}
+  - Info Sources: ${s.discoveryAnswers?.informationSources || 'N/A'}
+  - Time Pressure: ${s.discoveryAnswers?.timePressure || 'N/A'}
+  - Emotional State: ${s.discoveryAnswers?.emotionalState || 'N/A'}
+  - Influencers: ${s.discoveryAnswers?.influencers || 'N/A'}
+- **Aura's Diagnosis**: ${s.diagnosis || 'N/A'}
+- **Scenarios**: 
+${scenariosText}
+- **Commitment**: ${s.nextTimeAction || 'N/A'}
+- **Key Takeaway**: ${s.oneThingToRemember || 'N/A'}
+  `.trim();
+};
+
+const generateSOReport = (s: SubjectObjectSession): string => {
+  const experimentsText = s.ongoingPracticePlan?.join('\n- ') || 'N/A';
+  return `
+# Subject-Object Explorer Session Report
+- **Pattern**: ${s.pattern}
+- **The 'Truth'**: ${s.truthFeelings}
+- **Subject To**: ${s.subjectToStatement}
+- **Evidence FOR**: ${s.evidenceChecks?.pro || 'N/A'}
+- **Evidence AGAINST**: ${s.evidenceChecks?.con || 'N/A'}
+- **Origin**: ${s.origin || 'N/A'}
+- **Cost**: ${s.cost || 'N/A'}
+- **First Observation**: ${s.firstObservation || 'N/A'}
+- **Chosen Experiment**: ${s.smallExperimentChosen || 'N/A'}
+- **Suggested Experiments**:
+  - ${experimentsText}
+- **Integration Shift**: ${s.integrationShift || 'N/A'}
+  `.trim();
+};
+
+const generatePSReport = (s: PerspectiveShifterSession): string => {
+    const perspectivesText = s.perspectives.map(p => `### ${p.type}\n${p.description}\n**Aura's Reflection**: ${p.llmReflection || 'N/A'}`).join('\n\n---\n\n');
+    return `
+# Perspective Shifter Session Report
+- **Stuck Situation**: ${s.stuckSituation}
+---
+## Perspectives
+${perspectivesText}
+---
+## Synthesis
+${s.synthesis || 'N/A'}
+---
+## Action Plan
+${s.realityCheckRefinement || 'N/A'}
+    `.trim();
+};
+
+const generatePolarityReport = (m: PolarityMap): string => {
+    return `
+# Polarity Map Report
+- **Dilemma**: ${m.dilemma}
+- **Pole A**: ${m.poleA_name}
+  - **Upside**: ${m.poleA_upside}
+  - **Downside**: ${m.poleA_downside}
+- **Pole B**: ${m.poleB_name}
+  - **Upside**: ${m.poleB_upside}
+  - **Downside**: ${m.poleB_downside}
+    `.trim();
+};
+
+
 export default function App() {
     const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
     const [practiceStack, setPracticeStack] = usePersistentState<AllPractice[]>('practiceStack', []);
@@ -79,6 +149,7 @@ export default function App() {
     
     // Tool Wizards State
     const [activeWizard, setActiveWizard] = useState<string | null>(null);
+    const [activeInsightContext, setActiveInsightContext] = useState<IntegratedInsight | null>(null);
     // -- 3-2-1
     const [sessionHistory321, setSessionHistory321] = usePersistentState<ThreeTwoOneSession[]>('sessionHistory321', []);
     const [draft321Session, setDraft321Session] = usePersistentState<Partial<ThreeTwoOneSession> | null>('draft321', null);
@@ -99,6 +170,9 @@ export default function App() {
     const [polarityMapHistory, setPolarityMapHistory] = usePersistentState<PolarityMap[]>('polarityMapHistory', []);
     const [draftPolarityMap, setDraftPolarityMap] = usePersistentState<Partial<PolarityMap> | null>('draftPolarity', null);
     
+    // NEW: Integrated Insights State
+    const [integratedInsights, setIntegratedInsights] = usePersistentState<IntegratedInsight[]>('integratedInsights', []);
+
     // --- Practice Management ---
     const addToStack = (practice: Practice) => {
         if (!practiceStack.some(p => p.id === practice.id)) {
@@ -136,7 +210,7 @@ export default function App() {
 
     const handleExplainPractice = async (practice: Practice) => {
         setIsAiLoading(true);
-        setExplanationModal({ practice, explanation: 'Aura is thinking...' });
+        setExplanationModal({ practice, explanation: 'Aura is thinking...' }); // Initial thinking message
         try {
             // FIX: Corrected function call to `geminiService.explainPractice` which was missing.
             const explanation = await geminiService.explainPractice(practice);
@@ -204,6 +278,26 @@ export default function App() {
         }
     };
     
+    // NEW: Integrated Insight Management
+    const addIntegratedInsight = (insight: IntegratedInsight) => {
+        setIntegratedInsights(prev => [insight, ...prev]); // Add to the beginning to show new ones first
+    };
+
+    const markInsightAsAddressed = (insightId: string, shadowToolType: string, shadowSessionId: string) => {
+        setIntegratedInsights(prev => prev.map(insight =>
+            insight.id === insightId
+                ? {
+                    ...insight,
+                    status: 'addressed',
+                    shadowWorkSessionsAddressed: [
+                        ...(insight.shadowWorkSessionsAddressed || []),
+                        { shadowToolType, sessionId: shadowSessionId, dateCompleted: new Date().toISOString() }
+                    ]
+                }
+                : insight
+        ));
+    };
+
     // --- Data Management ---
     const handleExport = () => {
         const data = {
@@ -213,7 +307,8 @@ export default function App() {
             sessionHistoryBias, draftBiasSession,
             sessionHistorySO, draftSOSession,
             sessionHistoryPS, draftPSSession,
-            polarityMapHistory, draftPolarityMap
+            polarityMapHistory, draftPolarityMap,
+            integratedInsights // NEW: Export integrated insights
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -237,14 +332,15 @@ export default function App() {
                         const data = JSON.parse(event.target?.result as string);
                         if (window.confirm("This will overwrite all your current data. This action cannot be undone. Are you sure?")) {
                             
-                            const allKeys = ['practiceStack', 'completionHistory', 'practiceNotes', 'dailyNotes', 'sessionHistory321', 'draft321', 'sessionHistoryIFS', 'draftIFS', 'partsLibrary', 'sessionHistoryBias', 'draftBias', 'sessionHistorySO', 'draftSO', 'sessionHistoryPS', 'draftPS', 'polarityMapHistory', 'draftPolarity'];
+                            const allKeys = ['practiceStack', 'completionHistory', 'practiceNotes', 'dailyNotes', 'sessionHistory321', 'draft321', 'sessionHistoryIFS', 'draftIFS', 'partsLibrary', 'sessionHistoryBias', 'draftBias', 'sessionHistorySO', 'draftSO', 'sessionHistoryPS', 'draftPS', 'polarityMapHistory', 'draftPolarity', 'integratedInsights']; // NEW: Include integratedInsights
                             
                             allKeys.forEach(key => {
-                                const storageKey = key.replace(/Session|History/g, ''); // a bit of a hack to match the hook keys
+                                // A bit of a hack to match the hook keys as some persistent hooks use different keys than the raw data object
+                                const localStorageKey = key.replace(/Session|History|Map/g, '').replace('integratedInsights', 'integratedInsights'); // adjust for new key
                                 if(data[key] !== undefined) {
-                                     window.localStorage.setItem(key, JSON.stringify(data[key]));
+                                     window.localStorage.setItem(localStorageKey, JSON.stringify(data[key]));
                                 } else {
-                                     window.localStorage.removeItem(key); // remove if not in backup
+                                     window.localStorage.removeItem(localStorageKey); // remove if not in backup
                                 }
                             });
                             
@@ -269,11 +365,23 @@ export default function App() {
         }
     };
     
+    // Function to start Shadow Tool Wizards, now passing full context
+    const startShadowWizard = (wizardName: string | null, linkedInsightId?: string) => {
+        if (linkedInsightId) {
+            const insight = integratedInsights.find(i => i.id === linkedInsightId);
+            setActiveInsightContext(insight || null);
+        } else {
+            setActiveInsightContext(null); // Clear context if no ID
+        }
+        setActiveWizard(wizardName);
+    };
+
     // --- Wizard Save Handlers ---
     const handleSave321 = (session: ThreeTwoOneSession) => {
         setSessionHistory321(prev => [...prev.filter(s => s.id !== session.id), session]);
         setDraft321Session(null);
         setActiveWizard(null);
+        setActiveInsightContext(null);
     };
     const handleSaveIFS = (session: IFSSession) => {
         setSessionHistoryIFS(prev => [...prev.filter(s => s.id !== session.id), session]);
@@ -292,26 +400,93 @@ export default function App() {
         }
         setDraftIFSSession(null);
         setActiveWizard(null);
+        setActiveInsightContext(null);
     };
-    const handleSaveBias = (session: BiasDetectiveSession) => {
+
+    // Modified Mind tool save handlers to trigger AI for shadow work suggestions
+    const handleSaveBias = async (session: BiasDetectiveSession) => {
         setSessionHistoryBias(prev => [...prev.filter(s => s.id !== session.id), session]);
         setDraftBiasSession(null);
         setActiveWizard(null);
+        
+        setIsAiLoading(true);
+        try {
+            const wizardEnabledShadowPractices = corePractices.shadow.filter(
+                p => p.id === 'three-two-one' || p.id === 'parts-dialogue'
+            );
+            const reportContent = generateBiasReport(session);
+            const insight = await geminiService.detectPatternsAndSuggestShadowWork(
+                'BiasDetective', session.id, reportContent, wizardEnabledShadowPractices
+            );
+            if (insight) addIntegratedInsight(insight);
+        } catch (error) {
+            console.error("Failed to generate shadow work suggestions for Bias Detective:", error);
+        } finally {
+            setIsAiLoading(false);
+        }
     };
-    const handleSaveSO = (session: SubjectObjectSession) => {
+    const handleSaveSO = async (session: SubjectObjectSession) => {
         setSessionHistorySO(prev => [...prev.filter(s => s.id !== session.id), session]);
         setDraftSOSession(null);
         setActiveWizard(null);
+
+        setIsAiLoading(true);
+        try {
+            const wizardEnabledShadowPractices = corePractices.shadow.filter(
+                p => p.id === 'three-two-one' || p.id === 'parts-dialogue'
+            );
+            const reportContent = generateSOReport(session);
+            const insight = await geminiService.detectPatternsAndSuggestShadowWork(
+                'SubjectObject', session.id, reportContent, wizardEnabledShadowPractices
+            );
+            if (insight) addIntegratedInsight(insight);
+        } catch (error) {
+            console.error("Failed to generate shadow work suggestions for Subject-Object Explorer:", error);
+        } finally {
+            setIsAiLoading(false);
+        }
     };
-    const handleSavePS = (session: PerspectiveShifterSession) => {
+    const handleSavePS = async (session: PerspectiveShifterSession) => {
         setSessionHistoryPS(prev => [...prev.filter(s => s.id !== session.id), session]);
         setDraftPSSession(null);
         setActiveWizard(null);
+
+        setIsAiLoading(true);
+        try {
+            const wizardEnabledShadowPractices = corePractices.shadow.filter(
+                p => p.id === 'three-two-one' || p.id === 'parts-dialogue'
+            );
+            const reportContent = generatePSReport(session);
+            const insight = await geminiService.detectPatternsAndSuggestShadowWork(
+                'PerspectiveShifter', session.id, reportContent, wizardEnabledShadowPractices
+            );
+            if (insight) addIntegratedInsight(insight);
+        } catch (error) {
+            console.error("Failed to generate shadow work suggestions for Perspective Shifter:", error);
+        } finally {
+            setIsAiLoading(false);
+        }
     };
-    const handleSavePolarity = (map: PolarityMap) => {
+    const handleSavePolarity = async (map: PolarityMap) => {
         setPolarityMapHistory(prev => [...prev.filter(m => m.id !== map.id), map]);
         setDraftPolarityMap(null);
         setActiveWizard(null);
+
+        setIsAiLoading(true);
+        try {
+            const wizardEnabledShadowPractices = corePractices.shadow.filter(
+                p => p.id === 'three-two-one' || p.id === 'parts-dialogue'
+            );
+            const reportContent = generatePolarityReport(map);
+            const insight = await geminiService.detectPatternsAndSuggestShadowWork(
+                'PolarityMapper', map.id, reportContent, wizardEnabledShadowPractices
+            );
+            if (insight) addIntegratedInsight(insight);
+        } catch (error) {
+            console.error("Failed to generate shadow work suggestions for Polarity Mapper:", error);
+        } finally {
+            setIsAiLoading(false);
+        }
     };
 
     // --- Render logic ---
@@ -320,7 +495,13 @@ export default function App() {
 
     const renderActiveTab = () => {
         switch (activeTab) {
-            case 'dashboard': return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeModalOpen(true)} setActiveTab={setActiveTab} />;
+            case 'dashboard': return <DashboardTab
+                openGuidedPracticeGenerator={() => setIsGuidedPracticeModalOpen(true)}
+                setActiveTab={setActiveTab}
+                integratedInsights={integratedInsights}
+                markInsightAsAddressed={markInsightAsAddressed}
+                setActiveWizard={startShadowWizard}
+            />;
             case 'stack': return <StackTab practiceStack={practiceStack} removeFromStack={removeFromStack} practiceNotes={practiceNotes} updatePracticeNote={updatePracticeNote} openCustomPracticeModal={() => setIsCustomPracticeModalOpen(true)} openGuidedPracticeGenerator={() => setIsGuidedPracticeModalOpen(true)} />;
             case 'browse': return <BrowseTab practiceStack={practiceStack} addToStack={addToStack} onExplainClick={handleExplainPractice} onPersonalizeClick={setCustomizationPractice} />;
             case 'tracker': return <TrackerTab practiceStack={practiceStack} completedPractices={completedPractices} togglePracticeCompletion={togglePracticeCompletion} dailyNotes={dailyNotes} updateDailyNote={updateDailyNote} findModuleKey={findModuleKey} />;
@@ -329,8 +510,16 @@ export default function App() {
             case 'aqal': return <AqalTab report={aqalReport} isLoading={isAiLoading} error={aiError} onGenerate={() => generateAiContent('aqal')} />;
             case 'library': return <LibraryTab />;
             case 'mind-tools': return <MindToolsTab onStartBiasDetective={() => setActiveWizard('bias')} sessionHistoryBias={sessionHistoryBias} draftBiasSession={draftBiasSession} onStartSubjectObject={()=>setActiveWizard('so')} sessionHistorySO={sessionHistorySO} draftSOSession={draftSOSession} onStartPerspectiveShifter={()=>setActiveWizard('ps')} sessionHistoryPS={sessionHistoryPS} draftPSSession={draftPSSession} onStartPolarityMapper={()=>setActiveWizard('polarity')} polarityMapHistory={polarityMapHistory} draftPolarityMap={draftPolarityMap} />;
-            case 'shadow-tools': return <ShadowToolsTab onStart321={()=>setActiveWizard('321')} onStartIFS={()=>setActiveWizard('ifs')} sessionHistory321={sessionHistory321} sessionHistoryIFS={sessionHistoryIFS} draft321Session={draft321Session} draftIFSSession={draftIFSSession} setDraft321Session={setDraft321Session} setDraftIFSSession={setDraftIFSSession} partsLibrary={partsLibrary} />;
-            default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeModalOpen(true)} setActiveTab={setActiveTab} />;
+            case 'shadow-tools': return <ShadowToolsTab
+                onStart321={(linkedInsightId) => startShadowWizard('321', linkedInsightId)}
+                onStartIFS={(linkedInsightId) => startShadowWizard('ifs', linkedInsightId)}
+                sessionHistory321={sessionHistory321} sessionHistoryIFS={sessionHistoryIFS}
+                draft321Session={draft321Session} draftIFSSession={draftIFSSession}
+                setDraft321Session={setDraft321Session} setDraftIFSSession={setDraftIFSSession}
+                partsLibrary={partsLibrary}
+                markInsightAsAddressed={markInsightAsAddressed}
+            />;
+            default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeModalOpen(true)} setActiveTab={setActiveTab} integratedInsights={integratedInsights} markInsightAsAddressed={markInsightAsAddressed} setActiveWizard={startShadowWizard}/>;
         }
     };
     
@@ -357,8 +546,22 @@ export default function App() {
             {isGuidedPracticeModalOpen && <GuidedPracticeGenerator isOpen={isGuidedPracticeModalOpen} onClose={() => setIsGuidedPracticeModalOpen(false)} onLogPractice={() => { /* Implement logging */ }} />}
             
             {/* Wizards */}
-            {activeWizard === '321' && <ThreeTwoOneWizard onClose={() => setActiveWizard(null)} onSave={handleSave321} session={draft321Session} />}
-            {activeWizard === 'ifs' && <IFSWizard isOpen={true} onClose={(draft)=> { setDraftIFSSession(draft); setActiveWizard(null); }} onSaveSession={handleSaveIFS} draft={draftIFSSession} partsLibrary={partsLibrary} />}
+            {activeWizard === '321' && <ThreeTwoOneWizard
+                onClose={() => { setActiveInsightContext(null); setActiveWizard(null); }}
+                onSave={handleSave321}
+                session={draft321Session}
+                insightContext={activeInsightContext}
+                markInsightAsAddressed={markInsightAsAddressed}
+            />}
+            {activeWizard === 'ifs' && <IFSWizard
+                isOpen={true}
+                onClose={(draft)=> { setDraftIFSSession(draft); setActiveInsightContext(null); setActiveWizard(null); }}
+                onSaveSession={handleSaveIFS}
+                draft={draftIFSSession}
+                partsLibrary={partsLibrary}
+                insightContext={activeInsightContext}
+                markInsightAsAddressed={markInsightAsAddressed}
+            />}
             {activeWizard === 'bias' && <BiasDetectiveWizard onClose={() => setActiveWizard(null)} onSave={handleSaveBias} session={draftBiasSession} setDraft={setDraftBiasSession} />}
             {activeWizard === 'so' && <SubjectObjectWizard onClose={() => setActiveWizard(null)} onSave={handleSaveSO} session={draftSOSession} setDraft={setDraftSOSession} />}
             {activeWizard === 'ps' && <PerspectiveShifterWizard onClose={() => setActiveWizard(null)} onSave={handleSavePS} session={draftPSSession} setDraft={setDraftPSSession} />}
