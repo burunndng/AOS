@@ -1,4 +1,4 @@
-// FIX: Removed erroneous file separator from the beginning of the file content.
+
 // services/geminiService.ts
 // FIX: Add `ThreeTwoOneSession` and `CustomPractice` to type imports.
 import { GoogleGenAI, Type, Modality, Blob, Content } from "@google/genai";
@@ -612,6 +612,7 @@ export async function detectPatternsAndSuggestShadowWork(
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
+          nullable: true,
           properties: {
             shortSummary: { type: Type.STRING },
             detectedPattern: { type: Type.STRING },

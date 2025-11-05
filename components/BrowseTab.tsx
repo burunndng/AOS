@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Practice, ModuleKey, AllPractice } from '../types.ts';
 import { practices, modules } from '../constants.ts';
@@ -53,16 +54,16 @@ export default function BrowseTab({ practiceStack, addToStack, onExplainClick, o
         {Object.keys(filteredPractices).length === 0 && (
           <p className="text-slate-500 text-center py-10">No practices found for "{searchTerm}".</p>
         )}
-        {Object.entries(filteredPractices).map(([moduleKey, modulePractices]) => (
+        {(Object.entries(filteredPractices) as [ModuleKey, Practice[]][]).map(([moduleKey, modulePractices]) => (
           <div key={moduleKey}>
-            <h2 className={`text-3xl font-bold tracking-tight mb-4 ${modules[moduleKey as ModuleKey].textColor}`}>
-              {modules[moduleKey as ModuleKey].name}
+            <h2 className={`text-3xl font-bold tracking-tight mb-4 ${modules[moduleKey].textColor}`}>
+              {modules[moduleKey].name}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {modulePractices.map(practice => {
                 const isInStack = stackIds.has(practice.id);
                 return (
-                  <div key={practice.id} className={`card-luminous-hover bg-slate-800/50 border border-slate-800 border-l-4 ${modules[moduleKey as ModuleKey].borderColor} rounded-r-lg p-4 flex flex-col justify-between cursor-pointer`} onClick={() => setSelectedPractice(practice)}>
+                  <div key={practice.id} className={`card-luminous-hover bg-slate-800/50 border border-slate-800 border-l-4 ${modules[moduleKey].borderColor} rounded-r-lg p-4 flex flex-col justify-between cursor-pointer`} onClick={() => setSelectedPractice(practice)}>
                     <div>
                       <h3 className="font-bold font-mono text-slate-200">{practice.name}</h3>
                       <p className="text-sm text-slate-400 mt-1">{practice.description}</p>

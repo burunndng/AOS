@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Practice } from '../types.ts';
 // FIX: Import Sparkles and Lightbulb icons for the new AI feature buttons.

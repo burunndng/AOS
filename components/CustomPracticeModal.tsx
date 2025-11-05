@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 // FIX: Add `Practice` to the type imports to resolve errors on lines 29 and 36.
 import { CustomPractice, ModuleKey, Practice } from '../types.ts';
@@ -66,7 +67,8 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
     }
     setIsLoading(true);
     try {
-      const allPractices = Object.values(corePractices).flat();
+      // FIX: Cast the result of flat() to Practice[] to ensure type safety.
+      const allPractices: Practice[] = Object.values(corePractices).flat();
       const similar = allPractices
         .filter(p =>
             p.name.toLowerCase().includes(goal.toLowerCase()) ||

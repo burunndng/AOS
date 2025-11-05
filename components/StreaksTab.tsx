@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AllPractice, ModuleKey } from '../types.ts';
 // FIX: Add file extension to import path.
@@ -24,30 +25,38 @@ const calculateStreaks = (dates: string[]): { current: number, longest: number }
   if (sortedDates.length === 0) return { current: 0, longest: 0 };
 
   let longestStreak = 0;
-  let tempStreak = 0;
-  for (let i = 0; i < sortedDates.length; i++) {
-    if (i === 0) {
-      tempStreak = 1;
-    } else {
-      const diff = (sortedDates[i - 1].getTime() - sortedDates[i].getTime()) / (1000 * 3600 * 24);
-      if (diff === 1) {
-        tempStreak++;
-      } else {
-        tempStreak = 1;
+  let currentLongestRun = 0;
+  if (sortedDates.length > 0) {
+      currentLongestRun = 1;
+      longestStreak = 1;
+      for (let i = 1; i < sortedDates.length; i++) {
+          const diff = (sortedDates[i - 1].getTime() - sortedDates[i].getTime()) / (1000 * 3600 * 24);
+          if (diff === 1) {
+              currentLongestRun++;
+          } else {
+              currentLongestRun = 1;
+          }
+          if (currentLongestRun > longestStreak) {
+              longestStreak = currentLongestRun;
+          }
       }
-    }
-    if (tempStreak > longestStreak) {
-      longestStreak = tempStreak;
-    }
   }
+
 
   let currentStreak = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  // Current streak can only start from today.
-  if (sortedDates.length > 0 && sortedDates[0].getTime() === today.getTime()) {
-      let expectedDate = today;
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+
+  const mostRecentCompletion = sortedDates[0];
+  
+  if (mostRecentCompletion.getTime() === today.getTime() || mostRecentCompletion.getTime() === yesterday.getTime()) {
+      let expectedDate = new Date(mostRecentCompletion);
+      expectedDate.setHours(0,0,0,0);
+
       for (const date of sortedDates) {
           if (date.getTime() === expectedDate.getTime()) {
               currentStreak++;
@@ -57,6 +66,11 @@ const calculateStreaks = (dates: string[]): { current: number, longest: number }
           }
       }
   }
+
+  // If the last completion was not today, the current streak is 0.
+  if (mostRecentCompletion.getTime() !== today.getTime()) {
+      currentStreak = 0;
+  }
   
   return { current: currentStreak, longest: longestStreak };
 };
@@ -65,7 +79,7 @@ export default function StreaksTab({ practiceStack, completionHistory, findModul
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-bold text-slate-100">Practice Streaks</h1>
+        <h1 className="text-3xl font-bold font-mono text-slate-100 tracking-tighter">Practice Streaks</h1>
         <p className="text-slate-400 mt-2">Consistency is key. Here's a look at your current and longest streaks for each practice.</p>
       </header>
 
@@ -75,7 +89,7 @@ export default function StreaksTab({ practiceStack, completionHistory, findModul
             const streaks = calculateStreaks(completionHistory[practice.id] || []);
             const moduleInfo = modules[findModuleKey(practice.id)];
             return (
-              <div key={practice.id} className={`bg-slate-800 border-l-4 ${moduleInfo.borderColor} rounded-r-lg p-4 flex items-center justify-between`}>
+              <div key={practice.id} className={`bg-slate-800/50 border-l-4 ${moduleInfo.borderColor} rounded-r-lg p-4 flex items-center justify-between`}>
                 <div>
                   <h3 className="font-medium text-slate-100">{practice.name}</h3>
                   <p className="text-sm text-slate-400">{moduleInfo.name} Practice</p>

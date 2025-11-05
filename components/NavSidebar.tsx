@@ -15,6 +15,7 @@ import {
     Upload,
     Trash2,
     Library,
+    Hand, // NEW: Import Hand icon
 } from 'lucide-react';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
 
@@ -36,6 +37,7 @@ const navItems = [
     { id: 'aqal', label: 'AQAL Report', icon: BookOpen },
     { id: 'mind-tools', label: 'Mind Tools', icon: BrainCircuit, group: 'Toolkits' },
     { id: 'shadow-tools', label: 'Shadow Tools', icon: Shield },
+    { id: 'body-tools', label: 'Body Tools', icon: Hand, group: 'Toolkits' }, // NEW: Body Tools tab
     { id: 'library', label: 'Library', icon: Library, group: 'Resources' },
 ];
 

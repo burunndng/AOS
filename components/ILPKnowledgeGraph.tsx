@@ -1,10 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-// FIX: Replace single D3 import with modular imports to resolve TypeScript errors with the d3 namespace.
 import { drag } from 'd3-drag';
 import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from 'd3-force';
-import { select, Selection } from 'd3-selection';
-import { zoom, zoomIdentity } from 'd3-zoom';
-import { X, Link as LinkIcon, Shuffle, MapPin, PlusCircle, MinusCircle } from 'lucide-react';
+// FIX: Replace single D3 import with modular imports to resolve TypeScript errors with the d3 namespace.
+import { select, Selection, BaseType } from 'd3-selection';
+import { zoom, zoomIdentity, ZoomBehavior } from 'd3-zoom';
+import { transition, Transition } from 'd3-transition';
+// FIX: Import the X icon
+import { X } from 'lucide-react';
+
+// FIX: The declare module block is unnecessary when d3-transition is imported,
+// as d3-transition already augments d3-selection with the .transition() method.
+// Removing it resolves conflicts and "Cannot find namespace 'd3'" errors.
 
 // Graph data moved outside the component to prevent re-initialization on re-renders
 const graphData = {
@@ -92,745 +98,365 @@ const graphData = {
     { id: 'meaning', label: 'Meaning-Making', category: 'spirit', description: 'The active process of finding purpose and significance in one\'s life experiences, especially challenging ones. It is a core spiritual practice that transforms suffering into growth and builds a resilient sense of identity.', importance: 7 },
     { id: 'transcendence', label: 'Transcendence', category: 'spirit', description: 'The experience of going beyond your ordinary sense of self and ego. It involves a shift in identity from a separate individual to a feeling of connection with a larger whole, be it humanity, nature, or the cosmos.', importance: 6 },
     { id: 'devotion', label: 'Devotion', category: 'spirit', description: 'A spiritual path (Bhakti) that emphasizes love, surrender, and a heartfelt connection to a divine source. It uses emotion and relationship as the primary vehicles for spiritual opening and transformation.', importance: 5 },
-    { id: 'service', label: 'Selfless Service', category: 'spirit', description: 'The practice of acting for the benefit of others without expecting personal reward (Karma Yoga or Seva). It helps to purify the ego by shifting focus from "what\'s in it for me?" to "how can I help?"', importance: 6 },
-    { id: 'retreat', label: 'Meditation Retreat', category: 'spirit', description: 'A period of dedicated, intensive practice away from one\'s ordinary life. Retreats provide a powerful container to deepen meditation, gain insight, and stabilize awareness in a supportive, distraction-free environment.', importance: 5 },
-    { id: 'attention', label: 'Attention Training', category: 'spirit', description: 'The cognitive faculty of selectively concentrating on one aspect of the environment while ignoring other things. Formal meditation is the primary method for training and strengthening this fundamental capacity of the mind.', importance: 7 },
-    { id: 'compassion', label: 'Compassion', category: 'spirit', description: 'The ability to feel for the suffering of another and be moved to help. It combines empathy (feeling with) and loving-kindness (wishing well) into an active expression of care.', importance: 7 },
+    { id: 'service', label: 'Selfless Service', category: 'spirit', description: 'The practice of acting for the benefit of others without expecting personal reward. It purifies the ego by shifting focus from "what\'s in it for me?" to "how can I help?", cultivating compassion and interconnectedness.', importance: 5 },
     
-    // ========== SHADOW MODULE (20) ==========
-    { id: 'shadow-work', label: 'Shadow Work', category: 'shadow', description: 'The courageous process of bringing unconscious and disowned parts of your personality into conscious awareness. This act of integration reclaims projected energy, reduces emotional reactivity, and leads to greater wholeness.', importance: 9 },
-    { id: '3-2-1-process', label: '3-2-1 Process', category: 'shadow', description: 'A core Integral practice for working with projections. It uses a three-step journaling process (Face It, Talk to It, Be It) to identify and reintegrate a disowned quality that you see in another person.', importance: 8 },
-    { id: 'projection', label: 'Projection', category: 'shadow', description: 'The unconscious defense mechanism of attributing your own unacknowledged qualities—both positive and negative—onto another person. What intensely irritates or fascinates you in others often points to a disowned part of yourself.', importance: 8 },
-    { id: 'disowned-self', label: 'Disowned Self', category: 'shadow', description: 'Aspects of your personality that you have rejected or repressed, usually because they were not approved of in your early environment. These parts don\'t disappear; they live in the unconscious as your "shadow."', importance: 7 },
-    { id: 'golden-shadow', label: 'Golden Shadow', category: 'shadow', description: 'The positive or "golden" qualities that you have disowned and projected onto others. This often manifests as intense admiration, envy, or idealization of people who express traits you haven\'t owned in yourself.', importance: 6 },
-    { id: 'dark-shadow', label: 'Dark Shadow', category: 'shadow', description: 'The negative or "dark" qualities that you have repressed and disowned. These are the traits you judge harshly in yourself and others, and they often surface as intense irritation, anger, or moral indignation.', importance: 6 },
-    { id: 'voice-dialogue', label: 'Voice Dialogue', category: 'shadow', description: 'A therapeutic technique that involves speaking directly to and from various sub-personalities or "parts" within you. This allows you to understand the role, function, and needs of each part from its own perspective.', importance: 6 },
-    { id: 'journaling', label: 'Shadow Journaling', category: 'shadow', description: 'Using writing as a tool to explore unconscious material without judgment. Free-writing with specific prompts can help externalize shadow content, making it visible and easier to work with consciously.', importance: 7 },
-    { id: 'triggers', label: 'Triggers', category: 'shadow', description: 'Intense emotional reactions to a person or situation that are disproportionate to the actual event. These triggers are valuable signals, pointing directly to an unexamined wound or a disowned part of your shadow that needs attention.', importance: 7 },
-    { id: 'integration', label: 'Shadow Integration', category: 'shadow', description: 'The process of making the unconscious conscious and re-owning disowned parts of yourself. Integration doesn\'t mean acting out negative traits, but rather acknowledging their presence and wisdom, which frees up vital energy.', importance: 8 },
-    { id: 'defense-mechanisms', label: 'Defense Mechanisms', category: 'shadow', description: 'Unconscious psychological strategies used to cope with anxiety and protect a fragile ego. Common mechanisms include projection, denial, and repression, all of which keep shadow material out of awareness.', importance: 6 },
-    { id: 'repression', label: 'Repression', category: 'shadow', description: 'The psychological defense mechanism of involuntarily pushing unwanted thoughts, feelings, or memories into the unconscious. While protective, it consumes significant psychic energy and keeps parts of the self disowned.', importance: 6 },
-    { id: 'dreams', label: 'Dream Work', category: 'shadow', description: 'The practice of analyzing dreams to gain insight into the unconscious. Dreams often speak in a symbolic language, revealing disowned parts, unresolved conflicts, and hidden wisdom from the shadow.', importance: 5 },
-    { id: 'inner-critic', label: 'Inner Critic', category: 'shadow', description: 'A harsh internal voice that judges, shames, and attacks you. This is often a "manager" part (in IFS terms) that is trying to protect you by preventing you from making mistakes or being judged by others.', importance: 7 },
-    { id: 'self-compassion', label: 'Self-Compassion', category: 'shadow', description: 'The practice of treating yourself with the same kindness and understanding you would offer a good friend when you fail or suffer. It is a powerful antidote to the shame and self-judgment fueled by the inner critic.', importance: 8 },
-    { id: 'authentic-self', label: 'Authentic Self', category: 'shadow', description: 'The true, genuine you that exists beneath the layers of social conditioning, defense mechanisms, and disowned shadow parts. Shadow work is the process of clearing what obscures this authentic Self.', importance: 7 },
-    { id: 'shame', label: 'Shame', category: 'shadow', description: 'The intensely painful feeling or experience of believing that we are flawed and therefore unworthy of love and belonging. It is a core emotion often held in the shadow by exiled parts.', importance: 7 },
-    { id: 'vulnerability', label: 'Vulnerability', category: 'shadow', description: 'The state of emotional exposure that comes with uncertainty and risk. Embracing vulnerability is essential for connection and is often a prerequisite for doing meaningful shadow work and healing shame.', importance: 7 },
-    { id: 'blind-spots', label: 'Blind Spots', category: 'shadow', description: 'Aspects of our own personality and behavior that are obvious to others but completely invisible to us. These are often part of our shadow, and feedback from trusted others is a key way to discover them.', importance: 6 },
-    { id: 'wholeness', label: 'Wholeness', category: 'shadow', description: 'The state of being that emerges from integrating all aspects of yourself—light and dark, masculine and feminine, strengths and weaknesses. It is the ultimate goal of shadow work and the path to true authenticity.', importance: 7 },
-    // NEW NODES
-    // Spirit
-    { id: 'shamatha', label: 'Shamatha', category: 'spirit', description: 'A type of meditation focused on calming the mind and developing sustained, single-pointed concentration. It is the foundational practice for stabilizing attention, creating a mental platform from which deeper insight can arise.', importance: 7 },
-    { id: 'vipassana', label: 'Vipassana', category: 'spirit', description: 'A form of insight meditation that involves observing reality as it truly is, without judgment or attachment. It cultivates wisdom by directly perceiving the impermanent, unsatisfactory, and selfless nature of all phenomena.', importance: 7 },
-    { id: 'metta', label: 'Metta', category: 'spirit', description: 'The Pali word for loving-kindness. Metta meditation is the specific practice of cultivating unconditional goodwill for oneself, for loved ones, and ultimately for all beings, which serves as a powerful antidote to anger and fear.', importance: 7 },
-    { id: 'mantra', label: 'Mantra', category: 'spirit', description: 'The practice of repeating a sacred sound, word, or phrase to focus the mind and invoke a particular state of consciousness. It can be a powerful tool for concentration, devotion, and energetic transformation.', importance: 6 },
-    // Body
-    { id: 'pranayama', label: 'Pranayama', category: 'body', description: 'Yogic breath-control techniques designed to direct and expand prana, or life-force energy, in the subtle body. These practices can be used to energize, calm, or balance the entire nervous system.', importance: 7 },
-    { id: 'microcosmic-orbit', label: 'Microcosmic Orbit', category: 'body', description: 'An advanced Taoist Qigong practice that involves circulating chi (life force) up the spine and down the front of the torso. This meditation is said to harmonize energies and promote profound health and vitality.', importance: 5 },
-    // Shadow
-    { id: 'memory-reconsolidation', label: 'Memory Reconsolidation', category: 'shadow', description: 'The neurological process by which old emotional learnings can be updated. Therapeutic techniques that create a "mismatch experience" can permanently rewrite the implicit emotional grammar underlying long-standing issues, effectively healing trauma.', importance: 8 },
-    { id: 'maladaptive-schemas', label: 'Maladaptive Schemas', category: 'shadow', description: 'Pervasive, self-defeating life patterns or themes that we developed in childhood (from Schema Therapy). These core beliefs, like "Abandonment" or "Defectiveness," operate unconsciously, shaping our feelings, thoughts, and behaviors throughout life.', importance: 7 }
+    // ========== SHADOW MODULE (15) ==========
+    { id: '3-2-1', label: '3-2-1 Process', category: 'shadow', description: 'A core ILP practice for integrating projections. It involves facing, talking to, and then becoming a person or quality that triggers you, in order to reclaim that disowned energy as part of yourself.', importance: 9 },
+    { id: 'shadow-journaling', label: 'Shadow Journaling', category: 'shadow', description: 'Using specific, targeted prompts to explore your unconscious patterns, hidden beliefs, and internal conflicts. It externalizes shadow material so it can be examined with curiosity rather than judgment.', importance: 7 },
+    { id: 'self-compassion-break', label: 'Self-Compassion Break', category: 'shadow', description: 'A brief, in-the-moment practice to counter self-criticism and shame. It involves mindfully acknowledging your suffering, recognizing it as part of the shared human experience, and offering yourself kindness.', importance: 8 },
+    { id: 'parts-dialogue', label: 'Parts Dialogue', category: 'shadow', description: 'A technique, central to the IFS model, for communicating with your internal sub-personalities ("parts"). The goal is to understand their positive intent and heal internal conflicts by fostering a relationship from the core Self.', importance: 8 },
+    { id: 'shadow-archetypes', label: 'Shadow Archetypes', category: 'shadow', description: 'Universal, primal patterns of the unconscious mind, such as the Victim, the Saboteur, or the Prostitute. Identifying which archetypes are active in your shadow provides a powerful map for understanding your core patterns.', importance: 7 },
+    { id: 'golden-shadow', label: 'Golden Shadow', category: 'shadow', description: 'The positive, brilliant qualities that you disown and project onto others through admiration or envy. Reclaiming your golden shadow involves recognizing and embodying these dormant strengths and potentials.', importance: 7 },
+    { id: 'dark-shadow', label: 'Dark Shadow', category: 'shadow', description: 'The negative, "unacceptable" qualities that you repress and project onto others as blame or judgment. Integrating the dark shadow involves acknowledging these traits and understanding their protective function, leading to greater wholeness.', importance: 7 },
+    { id: 'projection', label: 'Projection', category: 'shadow', description: 'An unconscious defense mechanism where you attribute your own unacceptable thoughts, feelings, or qualities to another person. The 3-2-1 process is a direct method for identifying and withdrawing these projections.', importance: 6 },
+    { id: 'triggers', label: 'Triggers', category: 'shadow', description: 'An emotional reaction that is out of proportion to the current situation. Triggers are signals that an unhealed wound or an unintegrated shadow part has been activated, offering a direct doorway into shadow work.', importance: 6 },
+    { id: 'defense-mechanisms', label: 'Defense Mechanisms', category: 'shadow', description: 'Unconscious psychological strategies used to cope with reality and maintain self-image. Becoming aware of your go-to defenses (like denial, rationalization, or projection) is a key part of shadow work.', importance: 6 },
+    { id: 'inner-critic', label: 'Inner Critic', category: 'shadow', description: 'An internal voice that attacks, judges, and shames you. It is often a "manager" part (in IFS terms) that is trying to protect you by preventing you from making mistakes or being rejected, albeit with a harmful strategy.', importance: 7 },
+    { id: 're-owning', label: 'Re-Owning', category: 'shadow', description: 'The process of consciously accepting and integrating a previously disowned part of yourself. This is the final and most crucial step of shadow work, turning a source of internal conflict into a source of strength.', importance: 6 },
+    { id: 'shame', label: 'Shame', category: 'shadow', description: 'The painful feeling that you are fundamentally flawed or unworthy. Shame is often held by young, "exiled" parts of our system, and healing it is a central goal of deep shadow and trauma work.', importance: 6 },
+    { id: 'envy', label: 'Envy', category: 'shadow', description: 'The painful feeling of wanting what another person has. In shadow work, envy is seen as a powerful signpost pointing directly to a disowned positive quality—your Golden Shadow—that is waiting to be reclaimed.', importance: 5 },
+    { id: 'resentment', label: 'Resentment', category: 'shadow', description: 'The feeling of bitter indignation at having been treated unfairly. Resentment often indicates a boundary that was crossed or a need that was not met, and can be a doorway to understanding your values and asserting your needs.', importance: 5 },
+    
+    // ========== AQAL & INTEGRAL THEORY (15) ==========
+    { id: 'aqal', label: 'AQAL Framework', category: 'integral', description: '"All Quadrants, All Levels," the core map of Integral Theory. It provides a comprehensive framework for understanding reality by considering the subjective (I), intersubjective (We), objective (It), and interobjective (Its) dimensions.', importance: 9 },
+    { id: 'quadrants', label: 'Quadrants', category: 'integral', description: 'The four fundamental perspectives on any occasion: the "I" (subjective experience), "We" (intersubjective culture), "It" (objective behavior), and "Its" (interobjective systems). A truly integral approach considers all four.', importance: 8 },
+    { id: 'levels', label: 'Levels of Development', category: 'integral', description: 'The stages of consciousness that individuals and cultures move through over time, such as those mapped by Spiral Dynamics or Kegan\'s Orders. These represent increasingly complex and inclusive worldviews.', importance: 8 },
+    { id: 'lines', label: 'Lines of Development', category: 'integral', description: 'The multiple intelligences that develop through the levels, such as cognitive, emotional, interpersonal, and moral. People can be at different levels in different lines, creating a unique psycho-spiritual profile.', importance: 7 },
+    { id: 'types', label: 'Types', category: 'integral', description: 'The enduring patterns or styles that can be present at any stage of development. This includes personality typologies like the Enneagram or masculine/feminine dynamics, which color how we experience each stage.', importance: 7 },
+    { id: 'transcend-include', label: 'Transcend & Include', category: 'integral', description: 'The fundamental mechanism of evolution and development. Each new stage of growth must both go beyond ("transcend") the limitations of the previous stage while also incorporating ("including") its essential functions.', importance: 7 },
+    { id: 'upper-left', label: 'Upper Left (I)', category: 'integral', description: 'The quadrant of individual, subjective experience. This is the realm of your personal thoughts, feelings, and immediate awareness. It is explored through practices like meditation and shadow work.', importance: 7 },
+    { id: 'lower-left', label: 'Lower Left (We)', category: 'integral', description: 'The quadrant of collective, intersubjective culture. This is the realm of shared values, language, and relationships. It is explored through practices like perspective-taking and authentic communication.', importance: 7 },
+    { id: 'upper-right', label: 'Upper Right (It)', category: 'integral', description: 'The quadrant of individual, objective behavior. This is the realm of what can be seen and measured from the outside, such as your body, brain, and observable actions. It is addressed through Body module practices.', importance: 7 },
+    { id: 'lower-right', label: 'Lower Right (Its)', category: 'integral', description: 'The quadrant of collective, interobjective systems. This is the realm of social structures, economic forces, and environmental networks. It is the context in which all other quadrants exist.', importance: 7 },
+    { id: 'integral-method-pluralism', label: 'Integral Methodological Pluralism', category: 'integral', description: 'The idea that each quadrant has its own valid ways of gathering knowledge. It advocates for using different methods (e.g., meditation for the UL, scientific method for the UR) to gain a more complete picture of reality.', importance: 6 },
+    { id: 'pre-trans-fallacy', label: 'Pre/Trans Fallacy', category: 'integral', description: 'The common error of confusing pre-rational states (childlike, magical thinking) with trans-rational states (transcendent, non-dual awareness) because neither is purely rational. It\'s crucial to elevate, not regress.', importance: 6 },
+    { id: 'fulcrums', label: 'Fulcrums of Self', category: 'integral', description: 'In developmental theory, a fulcrum represents a critical "1-2-3" process of growth. 1: Fusing with a new stage. 2: Differentiating from it. 3: Integrating it into a higher, more complex self-identity.', importance: 5 },
+    { id: 'wilber-commons-lattice', label: 'Wilber-Commons Lattice', category: 'integral', description: 'An academic model that correlates stages of development (like Kegan\'s or Spiral Dynamics) with states of consciousness (like waking, dreaming, deep sleep), providing a highly detailed map of human potential.', importance: 5 },
+    { id: 'integral-psychograph', label: 'Integral Psychograph', category: 'integral', description: 'A visual tool for mapping one\'s own development. It charts your estimated level of development across various lines (cognitive, emotional, etc.), revealing your unique strengths and areas for growth.', importance: 5 },
   ],
   links: [
-    // Core structure
-    { source: 'ilp', target: 'body-module' },
-    { source: 'ilp', target: 'mind-module' },
-    { source: 'ilp', target: 'spirit-module' },
-    { source: 'ilp', target: 'shadow-module' },
+    // ILP Core to Modules
+    { source: 'ilp', target: 'body-module', value: 10 },
+    { source: 'ilp', target: 'mind-module', value: 10 },
+    { source: 'ilp', target: 'spirit-module', value: 10 },
+    { source: 'ilp', target: 'shadow-module', value: 10 },
     
-    // Body Module
-    { source: 'body-module', target: 'sleep' },
-    { source: 'body-module', target: 'resistance-training' },
-    { source: 'body-module', target: 'zone2-cardio' },
-    { source: 'body-module', target: 'nutrition' },
-    { source: 'body-module', target: '3-body-workout' },
-    { source: '3-body-workout', target: 'physical-body' },
-    { source: '3-body-workout', target: 'subtle-body' },
-    { source: '3-body-workout', target: 'causal-body' },
-    { source: 'physical-body', target: 'resistance-training' },
-    { source: 'physical-body', target: 'zone2-cardio' },
-    { source: 'physical-body', target: 'mobility' },
-    { source: 'subtle-body', target: 'yoga' },
-    { source: 'subtle-body', target: 'tai-chi' },
-    { source: 'subtle-body', target: 'qigong' },
-    { source: 'subtle-body', target: 'breathwork' },
-    { source: 'causal-body', target: 'meditation' },
-    { source: 'sleep', target: 'circadian' },
-    { source: 'sleep', target: 'recovery' },
-    { source: 'zone2-cardio', target: 'mitochondria' },
-    { source: 'zone2-cardio', target: 'hrv' },
-    { source: 'breathwork', target: 'nervous-system' },
-    { source: 'breathwork', target: 'hrv' },
-    { source: 'nutrition', target: 'protein' },
-    { source: 'nutrition', target: 'micronutrients' },
-    { source: 'nutrition', target: 'hydration' },
-    { source: 'resistance-training', target: 'hormones' },
-    { source: 'cold-exposure', target: 'hormones' },
-    { source: 'heat-exposure', target: 'hrv' },
-    { source: 'mobility', target: 'posture' },
+    // Body Module Connections
+    { source: 'body-module', target: 'sleep', value: 10 },
+    { source: 'body-module', target: 'resistance-training', value: 8 },
+    { source: 'body-module', target: 'zone2-cardio', value: 8 },
+    { source: 'body-module', target: 'nutrition', value: 8 },
+    { source: 'body-module', target: '3-body-workout', value: 7 },
+    { source: '3-body-workout', target: 'physical-body', value: 8 },
+    { source: '3-body-workout', target: 'subtle-body', value: 8 },
+    { source: '3-body-workout', target: 'causal-body', value: 8 },
+    { source: 'physical-body', target: 'resistance-training', value: 8 },
+    { source: 'subtle-body', target: 'breathwork', value: 8 },
+    { source: 'subtle-body', target: 'yoga', value: 7 },
+    { source: 'subtle-body', target: 'tai-chi', value: 6 },
+    { source: 'subtle-body', target: 'qigong', value: 6 },
+    { source: 'causal-body', target: 'meditation', value: 8 },
+    { source: 'zone2-cardio', target: 'hrv', value: 7 },
+    { source: 'zone2-cardio', target: 'mitochondria', value: 7 },
+    { source: 'sleep', target: 'circadian', value: 9 },
+    { source: 'sleep', target: 'recovery', value: 9 },
+    { source: 'sleep', target: 'hormones', value: 8 },
+    { source: 'nutrition', target: 'protein', value: 8 },
+    { source: 'nutrition', target: 'micronutrients', value: 7 },
+    { source: 'nutrition', target: 'hydration', value: 7 },
+    { source: 'resistance-training', target: 'hormones', value: 7 },
+    { source: 'resistance-training', target: 'protein', value: 7 },
+    { source: 'breathwork', target: 'nervous-system', value: 8 },
+    { source: 'hrv', target: 'nervous-system', value: 7 },
+    { source: 'cold-exposure', target: 'nervous-system', value: 6 },
+    { source: 'mobility', target: 'posture', value: 7 },
     
-    // Mind Module
-    { source: 'mind-module', target: 'vertical' },
-    { source: 'mind-module', target: 'horizontal' },
-    { source: 'vertical', target: 'kegan' },
-    { source: 'vertical', target: 'spiral-dynamics' },
-    { source: 'kegan', target: 'subject-object' },
-    { source: 'kegan', target: 'order3' },
-    { source: 'kegan', target: 'order4' },
-    { source: 'kegan', target: 'order5' },
-    { source: 'order3', target: 'order4' },
-    { source: 'order4', target: 'order5' },
-    { source: 'spiral-dynamics', target: 'blue' },
-    { source: 'spiral-dynamics', target: 'orange' },
-    { source: 'spiral-dynamics', target: 'green' },
-    { source: 'spiral-dynamics', target: 'yellow' },
-    { source: 'spiral-dynamics', target: 'second-tier' },
-    { source: 'blue', target: 'orange' },
-    { source: 'orange', target: 'green' },
-    { source: 'green', target: 'yellow' },
-    { source: 'yellow', target: 'second-tier' },
-    { source: 'order4', target: 'orange' },
-    { source: 'order5', target: 'yellow' },
-    { source: 'horizontal', target: 'enneagram' },
-    { source: 'horizontal', target: 'ifs' },
-    { source: 'ifs', target: 'self' },
-    { source: 'ifs', target: 'parts' },
-    { source: 'parts', target: 'managers' },
-    { source: 'parts', target: 'exiles' },
-    { source: 'mind-module', target: 'mental-models' },
-    { source: 'mind-module', target: 'systems-thinking' },
-    { source: 'mind-module', target: 'metacognition' },
-    { source: 'mental-models', target: 'cognitive-biases' },
-    { source: 'mental-models', target: 'polarity' },
-    { source: 'systems-thinking', target: 'polarity' },
-    { source: 'metacognition', target: 'cognitive-biases' },
-    { source: 'perspective-taking', target: 'second-tier' },
+    // Mind Module Connections
+    { source: 'mind-module', target: 'vertical', value: 9 },
+    { source: 'mind-module', target: 'horizontal', value: 9 },
+    { source: 'mind-module', target: 'cognitive-biases', value: 8 },
+    { source: 'mind-module', target: 'metacognition', value: 8 },
+    { source: 'vertical', target: 'kegan', value: 9 },
+    { source: 'vertical', target: 'spiral-dynamics', value: 9 },
+    { source: 'vertical', target: 'subject-object', value: 9 },
+    { source: 'kegan', target: 'subject-object', value: 10 },
+    { source: 'kegan', target: 'order3', value: 8 },
+    { source: 'kegan', target: 'order4', value: 8 },
+    { source: 'kegan', target: 'order5', value: 8 },
+    { source: 'spiral-dynamics', target: 'blue', value: 7 },
+    { source: 'spiral-dynamics', target: 'orange', value: 7 },
+    { source: 'spiral-dynamics', target: 'green', value: 7 },
+    { source: 'spiral-dynamics', target: 'yellow', value: 7 },
+    { source: 'spiral-dynamics', target: 'second-tier', value: 8 },
+    { source: 'yellow', target: 'second-tier', value: 9 },
+    { source: 'horizontal', target: 'enneagram', value: 8 },
+    { source: 'horizontal', target: 'ifs', value: 8 },
+    { source: 'horizontal', target: 'mental-models', value: 8 },
+    { source: 'ifs', target: 'self', value: 9 },
+    { source: 'ifs', target: 'parts', value: 9 },
+    { source: 'parts', target: 'managers', value: 8 },
+    { source: 'parts', target: 'exiles', value: 8 },
+    { source: 'yellow', target: 'systems-thinking', value: 8 },
+    { source: 'systems-thinking', target: 'polarity', value: 7 },
+    { source: 'vertical', target: 'perspective-taking', value: 7 },
     
-    // Spirit Module
-    { source: 'spirit-module', target: 'meditation' },
-    { source: 'spirit-module', target: 'gratitude' },
-    { source: 'spirit-module', target: 'nature-exposure' },
-    { source: 'meditation', target: 'mindfulness' },
-    { source: 'meditation', target: 'witness' },
-    { source: 'meditation', target: 'attention' },
-    { source: 'meditation', target: 'mbsr' },
-    { source: 'mindfulness', target: 'presence' },
-    { source: 'mindfulness', target: 'equanimity' },
-    { source: 'meditation', target: 'loving-kindness' },
-    { source: 'loving-kindness', target: 'compassion' },
-    { source: 'gratitude', target: 'meaning' },
-    { source: 'prayer', target: '2nd-person' },
-    { source: 'contemplation', target: '3rd-person' },
-    { source: 'meditation', target: '1st-person' },
-    { source: 'big-mind', target: '1st-person' },
-    { source: 'witness', target: '1st-person' },
-    { source: 'meditation', target: 'states' },
-    { source: 'states', target: 'stages' },
-    { source: 'nature-exposure', target: 'awe' },
-    { source: 'awe', target: 'transcendence' },
-    { source: 'devotion', target: 'prayer' },
-    { source: 'service', target: 'compassion' },
-    { source: 'retreat', target: 'meditation' },
+    // Spirit Module Connections
+    { source: 'spirit-module', target: 'meditation', value: 10 },
+    { source: 'spirit-module', target: 'mindfulness', value: 9 },
+    { source: 'spirit-module', target: 'witness', value: 9 },
+    { source: 'spirit-module', target: 'gratitude', value: 8 },
+    { source: 'spirit-module', target: 'states', value: 8 },
+    { source: 'meditation', target: 'mindfulness', value: 9 },
+    { source: 'meditation', target: 'witness', value: 9 },
+    { source: 'meditation', target: 'presence', value: 9 },
+    { source: 'meditation', target: 'equanimity', value: 8 },
+    { source: 'meditation', target: 'mbsr', value: 7 },
+    { source: 'witness', target: 'big-mind', value: 7 },
+    { source: 'witness', target: '1st-person', value: 8 },
+    { source: 'prayer', target: '2nd-person', value: 8 },
+    { source: 'prayer', target: 'devotion', value: 8 },
+    { source: 'contemplation', target: '3rd-person', value: 8 },
+    { source: 'contemplation', target: 'meaning', value: 7 },
+    { source: 'loving-kindness', target: 'devotion', value: 7 },
+    { source: 'nature-exposure', target: 'awe', value: 7 },
+    { source: 'states', target: 'transcendence', value: 7 },
+    { source: 'stages', target: 'vertical', value: 9 },
+    { source: 'states', target: 'stages', value: 8 },
+    { source: 'service', target: 'devotion', value: 6 },
     
-    // Shadow Module
-    { source: 'shadow-module', target: 'shadow-work' },
-    { source: 'shadow-module', target: '3-2-1-process' },
-    { source: 'shadow-work', target: 'projection' },
-    { source: 'shadow-work', target: 'integration' },
-    { source: 'projection', target: 'disowned-self' },
-    { source: 'disowned-self', target: 'golden-shadow' },
-    { source: 'disowned-self', target: 'dark-shadow' },
-    { source: '3-2-1-process', target: 'projection' },
-    { source: 'shadow-work', target: 'voice-dialogue' },
-    { source: 'shadow-work', target: 'journaling' },
-    { source: 'triggers', target: 'projection' },
-    { source: 'triggers', target: 'defense-mechanisms' },
-    { source: 'defense-mechanisms', target: 'repression' },
-    { source: 'journaling', target: 'dreams' },
-    { source: 'inner-critic', target: 'parts' },
-    { source: 'self-compassion', target: 'inner-critic' },
-    { source: 'integration', target: 'wholeness' },
-    { source: 'authentic-self', target: 'wholeness' },
-    { source: 'shame', target: 'self-compassion' },
-    { source: 'vulnerability', target: 'authentic-self' },
-    { source: 'blind-spots', target: 'projection' },
+    // Shadow Module Connections
+    { source: 'shadow-module', target: '3-2-1', value: 9 },
+    { source: 'shadow-module', target: 'parts-dialogue', value: 9 },
+    { source: 'shadow-module', target: 'shadow-journaling', value: 8 },
+    { source: 'shadow-module', target: 'self-compassion-break', value: 8 },
+    { source: 'shadow-module', target: 'projection', value: 8 },
+    { source: '3-2-1', target: 'projection', value: 9 },
+    { source: '3-2-1', target: 're-owning', value: 8 },
+    { source: 'parts-dialogue', target: 'ifs', value: 10 },
+    { source: 'self-compassion-break', target: 'inner-critic', value: 8 },
+    { source: 'self-compassion-break', target: 'shame', value: 8 },
+    { source: 'shadow-archetypes', target: 'inner-critic', value: 7 },
+    { source: 'projection', target: 'dark-shadow', value: 8 },
+    { source: 'projection', target: 'golden-shadow', value: 8 },
+    { source: 'triggers', target: 'defense-mechanisms', value: 8 },
+    { source: 'envy', target: 'golden-shadow', value: 7 },
+    { source: 'resentment', target: 'triggers', value: 7 },
     
-    // Cross-module integrations
-    { source: 'sleep', target: 'metacognition' },
-    { source: 'nervous-system', target: 'equanimity' },
-    { source: 'breathwork', target: 'meditation' },
-    { source: 'yoga', target: 'meditation' },
-    { source: 'tai-chi', target: 'mindfulness' },
-    { source: 'zone2-cardio', target: 'nature-exposure' },
-    { source: 'breathwork', target: 'triggers' },
-    { source: 'witness', target: 'metacognition' },
-    { source: 'meditation', target: 'order5' },
-    { source: 'perspective-taking', target: 'compassion' },
-    { source: 'subject-object', target: 'shadow-work' },
-    { source: 'parts', target: 'disowned-self' },
-    { source: 'enneagram', target: 'blind-spots' },
-    { source: 'meditation', target: 'integration' },
-    { source: 'compassion', target: 'self-compassion' },
-    { source: 'witness', target: 'projection' },
-    { source: 'wholeness', target: 'ilp' },
-    { source: 'equanimity', target: 'integration' },
-    { source: 'presence', target: 'authentic-self' },
-    // NEW LINKS
-    // Spirit
-    { source: 'meditation', target: 'shamatha' },
-    { source: 'attention', target: 'shamatha' },
-    { source: 'meditation', target: 'vipassana' },
-    { source: 'mindfulness', target: 'vipassana' },
-    { source: 'loving-kindness', target: 'metta' },
-    { source: 'compassion', target: 'metta' },
-    { source: 'contemplation', target: 'meaning' },
-    { source: 'meditation', target: 'mantra' },
-    { source: 'devotion', target: 'mantra' },
-    // Body
-    { source: 'breathwork', target: 'pranayama' },
-    { source: 'yoga', target: 'pranayama' },
-    { source: 'qigong', target: 'microcosmic-orbit' },
-    { source: 'subtle-body', target: 'microcosmic-orbit' },
-    // Shadow (corrected from misplaced nodes)
-    { source: 'shadow-work', target: 'memory-reconsolidation' },
-    { source: 'shadow-work', target: 'maladaptive-schemas' },
-    { source: 'maladaptive-schemas', target: 'repression' },
-    { source: 'memory-reconsolidation', target: 'shame' },
-    { source: 'memory-reconsolidation', target: 'triggers' }
-  ]
+    // AQAL & Integral Theory Connections
+    { source: 'aqal', target: 'quadrants', value: 10 },
+    { source: 'aqal', target: 'levels', value: 10 },
+    { source: 'aqal', target: 'lines', value: 10 },
+    { source: 'aqal', target: 'states', value: 10 },
+    { source: 'aqal', target: 'types', value: 10 },
+    { source: 'quadrants', target: 'upper-left', value: 9 },
+    { source: 'quadrants', target: 'lower-left', value: 9 },
+    { source: 'quadrants', target: 'upper-right', value: 9 },
+    { source: 'quadrants', target: 'lower-right', value: 9 },
+    { source: 'levels', target: 'vertical', value: 10 },
+    { source: 'types', target: 'enneagram', value: 8 },
+    { source: 'ilp', target: 'aqal', value: 9 },
+    { source: 'vertical', target: 'transcend-include', value: 8 },
+    { source: 'upper-left', target: 'spirit-module', value: 8 },
+    { source: 'upper-left', target: 'shadow-module', value: 8 },
+    { source: 'upper-right', target: 'body-module', value: 8 },
+    { source: 'lower-left', target: 'perspective-taking', value: 7 },
+    { source: 'lower-right', target: 'systems-thinking', value: 7 },
+    { source: 'integral-method-pluralism', target: 'quadrants', value: 8 },
+    { source: 'pre-trans-fallacy', target: 'levels', value: 7 },
+    { source: 'fulcrums', target: 'kegan', value: 7 },
+    { source: 'wilber-commons-lattice', target: 'levels', value: 6 },
+    { source: 'wilber-commons-lattice', target: 'states', value: 6 },
+    { source: 'integral-psychograph', target: 'lines', value: 7 },
+    
+    // Cross-Module Connections
+    { source: 'body-module', target: 'spirit-module', value: 5 }, // Embodied spirituality
+    { source: 'sleep', target: 'mind-module', value: 7 }, // Sleep for cognition
+    { source: 'meditation', target: 'nervous-system', value: 7 },
+    { source: 'shadow-module', target: 'mind-module', value: 6 }, // psychological models
+    { source: 'ifs', target: 'shadow-module', value: 8 },
+    { source: 'subject-object', target: 'shadow-module', value: 7 },
+  ],
 };
 
-// Interactive Diagram Definitions
-const diagramGroups = [
-    { parentId: '3-body-workout', childIds: ['physical-body', 'subtle-body', 'causal-body'], type: 'three-bodies' },
-    { parentId: 'kegan', childIds: ['order3', 'order4', 'order5'], type: 'kegan-orders' },
-];
 
-const categoryColors: Record<string, string> = {
-  'core': '#ec4899', // Pink
-  'body': '#10b981', // Emerald
-  'mind': '#3b82f6', // Blue
-  'spirit': '#8b5cf6', // Violet
-  'shadow': '#f59e0b' // Amber
-};
-
-// FIX: Use Selection type from modular import.
-const createGlowAndGradients = (svg: Selection<SVGSVGElement, unknown, null, undefined>, categoryColors: Record<string, string>) => {
-    const defs = svg.append('defs');
-  
-    Object.entries(categoryColors).forEach(([category, color]) => {
-      const filter = defs.append('filter')
-        .attr('id', `glow-${category}`)
-        .attr('width', '300%')
-        .attr('height', '300%')
-        .attr('x', '-100%')
-        .attr('y', '-100%');
-  
-      filter.append('feGaussianBlur')
-        .attr('stdDeviation', '4') 
-        .attr('result', 'coloredBlur');
-  
-      const feMerge = filter.append('feMerge');
-      feMerge.append('feMergeNode').attr('in', 'coloredBlur');
-      feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
-    });
-  
-    Object.entries(categoryColors).forEach(([category, color]) => {
-      const gradient = defs.append('radialGradient')
-        .attr('id', `gradient-${category}`);
-  
-      gradient.append('stop')
-        .attr('offset', '0%')
-        .attr('stop-color', color)
-        .attr('stop-opacity', 1);
-  
-      gradient.append('stop')
-        .attr('offset', '100%')
-        .attr('stop-color', color)
-        .attr('stop-opacity', 0.6);
-    });
-};
-
-function forceCluster() {
-    let nodes: any[] = [];
-    let strength = 0.1;
-  
-    function force(alpha: number) {
-      const clusters: any = {};
-  
-      nodes.forEach(d => {
-        if (!clusters[d.category] || d.importance > (clusters[d.category] ? clusters[d.category].importance : -1)) {
-          clusters[d.category] = d;
-        }
-      });
-  
-      nodes.forEach(d => {
-        const cluster = clusters[d.category];
-        if (cluster && cluster !== d) {
-          const k = strength * alpha;
-          d.vx -= (d.x - cluster.x) * k;
-          d.vy -= (d.y - cluster.y) * k;
-        }
-      });
-    }
-  
-    force.initialize = (_: any[]) => nodes = _;
-    force.strength = (_?: number): any => { strength = _ !== undefined ? _ : strength; return force; };
-  
-    return force;
+// FIX: Type annotations added for D3 selections and nodes, ensuring all 5 generic arguments are provided for Selection.
+interface Node {
+  id: string;
+  label: string;
+  category: string;
+  description: string;
+  importance: number;
+  x?: number;
+  y?: number;
+  fx?: number | null;
+  fy?: number | null;
 }
 
-const findPath = (startId: string, endId: string) => {
-    const adj: any = {};
-    graphData.nodes.forEach(node => adj[node.id] = []);
-    graphData.links.forEach(link => {
-        const sourceId = (link.source as any).id || link.source;
-        const targetId = (link.target as any).id || link.target;
-        adj[sourceId].push(targetId);
-        adj[targetId].push(sourceId);
-    });
+interface Link {
+  source: string | Node;
+  target: string | Node;
+  value: number;
+}
 
-    const queue = [[startId]];
-    const visited = new Set([startId]);
-
-    while (queue.length > 0) {
-        const path = queue.shift()!;
-        const node = path[path.length - 1];
-
-        if (node === endId) return path;
-
-        for (const neighbor of adj[node]) {
-            if (!visited.has(neighbor)) {
-                visited.add(neighbor);
-                const newPath = [...path, neighbor];
-                queue.push(newPath);
-            }
-        }
-    }
-    return null; // No path found
-};
-
-const styles = `
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-  }
-  .important-node {
-    animation: pulse 2.5s infinite ease-in-out;
-    transform-origin: center center;
-  }
-`;
-
-const ILPKnowledgeGraph = () => {
+export const ILPKnowledgeGraph: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [currentFilter, setCurrentFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [tooltip, setTooltip] = useState<any>({ show: false, x: 0, y: 0, data: null });
-  const [selectedNode, setSelectedNode] = useState<any | null>(null);
-  const [layoutType, setLayoutType] = useState<'force' | 'hierarchical'>('force'); 
-  const [startNodeId, setStartNodeId] = useState<string | null>(null);
-  const [endNodeId, setEndNodeId] = useState<string | null>(null);
-  const [selectedPath, setSelectedPath] = useState<string[]>([]);
-  const [pathMode, setPathMode] = useState(false);
-  const [expandedDiagrams, setExpandedDiagrams] = useState<Record<string, boolean>>({});
+  const [activeNode, setActiveNode] = useState<Node | null>(null);
 
-  const resetPath = () => {
-    setStartNodeId(null);
-    setEndNodeId(null);
-    setSelectedPath([]);
-    setPathMode(false);
-  };
-  
   useEffect(() => {
-    if (!svgRef.current || !containerRef.current) return;
+    const width = 800;
+    const height = 600;
 
-    const width = (containerRef.current as HTMLDivElement).clientWidth;
-    const height = (containerRef.current as HTMLDivElement).clientHeight;
-    if (width === 0 || height === 0) return;
+    // Make a deep copy to avoid modifying the original data
+    const nodes: Node[] = JSON.parse(JSON.stringify(graphData.nodes));
+    const links: Link[] = JSON.parse(JSON.stringify(graphData.links));
 
-    // FIX: Use select function from modular import.
-    select(svgRef.current).selectAll('*').remove();
-    
-    // FIX: Use select function from modular import.
-    const svg = select(svgRef.current)
-      .attr('width', width)
-      .attr('height', height)
-      .on('click', (event) => {
-        if (event.target === svg.node()) {
-          setSelectedNode(null);
-          if (!pathMode) resetPath(); 
-        }
-      });
-
-    createGlowAndGradients(svg, categoryColors);
-
-    const g = svg.append('g');
-    const diagramChildIds = new Set(diagramGroups.flatMap(g => g.childIds));
-    const diagramParentIds = new Set(diagramGroups.map(g => g.parentId));
-
-    // FIX: Use zoom function from modular import.
-    const zoomBehavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4])
-      .on('zoom', (event) => {
-        g.attr('transform', event.transform);
-      });
-
-    svg.call(zoomBehavior as any);
-    // FIX: Use zoomIdentity function from modular import.
-    svg.call(zoomBehavior.transform as any, zoomIdentity.translate(width / 2, height / 2).scale(0.3).translate(-width/2, -height/2));
-
-    // FIX: Use forceSimulation function from modular import.
-    const simulation = forceSimulation(graphData.nodes as any)
-      // FIX: Use forceLink function from modular import.
-      .force('link', forceLink(graphData.links).id((d: any) => d.id).distance(100).strength(0.5))
-      // FIX: Use forceManyBody function from modular import.
-      .force('charge', forceManyBody().strength(-400))
-      // FIX: Use forceCenter function from modular import.
+    // FIX: Use `forceSimulation` from `d3-force`.
+    const simulation = forceSimulation(nodes)
+      .force('link', forceLink(links).id((d: any) => d.id).distance(d => 150 - d.value * 10))
+      .force('charge', forceManyBody().strength(-150))
       .force('center', forceCenter(width / 2, height / 2))
-      // FIX: Use forceCollide function from modular import.
-      .force('collision', forceCollide().radius((d: any) => 25 + d.importance * 2))
-      .force('cluster', forceCluster().strength(0.2));
+      .force('collide', forceCollide().radius((d: any) => d.importance * 2.5 + 5));
 
-    const link = g.append('g').selectAll('path').data(graphData.links).join('path').attr('fill', 'none');
-    const node = g.append('g').selectAll('circle').data(graphData.nodes).join('circle');
-    const label = g.append('g').selectAll('text').data(graphData.nodes).join('text');
-    const diagramOverlays = g.append('g').attr('class', 'diagram-overlay-layer');
+    // FIX: Use `select` from `d3-selection` and add type annotation for 5 generic arguments.
+    // GElement: SVGSVGElement, Datum: unknown, PElement: BaseType, PDatum: undefined, G: BaseType
+    const svg: Selection<SVGSVGElement, unknown, BaseType, undefined> = select(svgRef.current!)
+      .attr('viewBox', `0 0 ${width} ${height}`);
 
-    const handleNodeClick = (event: any, d: any) => {
-        event.stopPropagation();
-        if (diagramParentIds.has(d.id)) {
-            setExpandedDiagrams(prev => ({ ...prev, [d.id]: !prev[d.id] }));
-            return;
-        }
-        if (pathMode) {
-            if (!startNodeId) { setStartNodeId(d.id); setEndNodeId(null); setSelectedPath([]); }
-            else if (!endNodeId) {
-                if (d.id === startNodeId) { resetPath(); } 
-                else { setEndNodeId(d.id); const path = findPath(startNodeId, d.id); setSelectedPath(path || []); }
-            } else { setStartNodeId(d.id); setEndNodeId(null); setSelectedPath([]); }
-        } else {
-            setSelectedNode((prev: any) => (prev?.id === d.id ? null : d));
-        }
+    const container = svg.append('g');
+
+    const link = container.append('g')
+      .attr('stroke-opacity', 0.15)
+      .selectAll('line')
+      .data(links)
+      .join('line')
+      .attr('stroke', '#475569')
+      .attr('stroke-width', d => Math.sqrt(d.value) * 0.5);
+
+    const node = container.append('g')
+      .selectAll('circle')
+      .data(nodes)
+      .join('g')
+      .attr('class', 'cursor-pointer');
+      
+    const categoryColors: Record<string, string> = {
+        core: '#d9aaef',
+        body: '#10b981',
+        mind: '#3b82f6',
+        spirit: '#8b5cf6',
+        shadow: '#f59e0b',
+        integral: '#f43f5e'
     };
 
-    node
-      .attr('r', (d: any) => 6 + d.importance * 1.2)
-      .attr('fill', (d: any) => `url(#gradient-${d.category})`)
-      .style('cursor', 'pointer')
-      .style('visibility', (d:any) => diagramChildIds.has(d.id) ? 'hidden' : 'visible')
-      .attr('filter', (d: any) => d.importance >= 8 ? `url(#glow-${d.category})` : null)
-      .classed('important-node', (d: any) => d.importance >= 8)
-      .on('click', handleNodeClick)
-      // FIX: Use drag function from modular import.
-      .call(drag<SVGCircleElement, any>()
-        .on('start', (event, d: any) => { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-        .on('drag', (event, d: any) => { d.fx = event.x; d.fy = event.y; })
-        .on('end', (event, d: any) => { if (!event.active) simulation.alphaTarget(0); if (layoutType === 'force') { d.fx = null; d.fy = null; } }) as any)
-      .on('mouseenter', (event, d: any) => {
-        if (!selectedNode && !pathMode && !diagramParentIds.has(d.id) && !diagramChildIds.has(d.id)) { 
-          const connectedLinks = graphData.links.filter((l: any) => (l.source as any).id === d.id || (l.target as any).id === d.id);
-          const connectedNodes = new Set<string>();
-          connectedLinks.forEach((l: any) => { connectedNodes.add((l.source as any).id); connectedNodes.add((l.target as any).id); });
-          setTooltip({ show: true, x: event.pageX, y: event.pageY, data: { ...d, connections: connectedNodes.size -1 } });
-        }
-      })
-      .on('mouseleave', () => setTooltip({ show: false, x: 0, y: 0, data: null }));
+    node.append('circle')
+        .attr('r', d => d.importance * 1.5 + 4)
+        .attr('fill', d => categoryColors[d.category] || '#94a3b8')
+        .attr('stroke', '#1e293b')
+        .attr('stroke-width', 2);
 
-    label
-      .attr('dx', (d: any) => 10 + d.importance)
-      .attr('dy', 4)
-      .attr('font-size', (d: any) => d.importance > 8 ? '13px' : '11px')
-      .attr('font-weight', (d: any) => d.importance > 8 ? 600 : 500)
-      .attr('fill', '#e2e8f0')
-      .style('pointer-events', 'none')
-      .style('text-shadow', '1px 1px 2px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.9)')
-      .style('visibility', (d:any) => diagramChildIds.has(d.id) ? 'hidden' : 'visible')
-      .text((d: any) => d.label);
-    
-    // Interactive Diagrams Logic
-    const diagramGroupsSelection = diagramOverlays.selectAll('g.diagram-group').data(diagramGroups, (d:any) => d.parentId).join('g').attr('class', 'diagram-group');
+    node.append('text')
+        .text(d => d.label)
+        .attr('x', d => d.importance * 1.5 + 8)
+        .attr('y', 4)
+        .attr('class', 'text-xs')
+        .attr('fill', '#cbd5e1');
 
-    const pathSet = new Set(selectedPath);
-    let neighbors: Set<string> = new Set();
-    if (selectedNode && !pathMode) {
-      neighbors.add(selectedNode.id);
-      graphData.links.forEach((link: any) => {
-        const sourceId = (link.source as any).id || link.source;
-        const targetId = (link.target as any).id || link.target;
-        if (sourceId === selectedNode.id) neighbors.add(targetId);
-        else if (targetId === selectedNode.id) neighbors.add(sourceId);
-      });
-    }
-    
-    node
-      .attr('stroke', (d: any) => {
-        if (diagramParentIds.has(d.id)) return expandedDiagrams[d.id] ? '#fde047' : categoryColors[d.category];
-        if (pathMode) {
-            if (d.id === startNodeId) return '#67e8f9';
-            if (d.id === endNodeId) return '#a78bfa';
-        }
-        return selectedNode?.id === d.id ? '#fde047' : '#1e293b';
-      })
-      .attr('stroke-width', (d: any) => diagramParentIds.has(d.id) ? 4 : (selectedNode?.id === d.id || d.id === startNodeId || d.id === endNodeId) ? 4 : 2)
-      .style('opacity', (d: any) => {
-        if (selectedPath.length > 0) return pathSet.has(d.id) ? 1 : 0.1;
-        if (selectedNode) return neighbors.has(d.id) ? 1 : 0.1; 
-        const categoryMatch = currentFilter === 'all' || d.category === currentFilter;
-        const searchMatch = searchTerm === '' || d.label.toLowerCase().includes(searchTerm.toLowerCase()) || d.description.toLowerCase().includes(searchTerm.toLowerCase());
-        return (categoryMatch && searchMatch) ? 1 : 0.1;
+    node.on('mouseover', (event, d) => {
+        setActiveNode(d as Node);
     });
 
-    link.attr('stroke-width', (d: any) => {
-        const sourceId = (d.source as any).id; const targetId = (d.target as any).id;
-        if (selectedPath.length > 0) {
-            const index1 = selectedPath.indexOf(sourceId);
-            const index2 = selectedPath.indexOf(targetId);
-            if (Math.abs(index1 - index2) === 1) return 4;
-        }
-        const importance = ((d.source as any).importance + (d.target as any).importance) / 2;
-        return Math.max(1, importance / 4);
-    })
-    .attr('stroke', (d: any) => {
-        const sourceId = (d.source as any).id; const targetId = (d.target as any).id;
-        if (selectedPath.length > 0) {
-            const index1 = selectedPath.indexOf(sourceId);
-            const index2 = selectedPath.indexOf(targetId);
-            if (index1 > -1 && index2 > -1 && Math.abs(index1-index2) === 1) return '#fde047';
-        }
-        if (selectedNode && ((sourceId === selectedNode.id && neighbors.has(targetId)) || (targetId === selectedNode.id && neighbors.has(sourceId)))) return '#94a3b8';
-        return '#334155';
-    })
-    .attr('stroke-opacity', (d: any) => {
-        const sourceId = (d.source as any).id; const targetId = (d.target as any).id;
-        if (diagramChildIds.has(sourceId) || diagramChildIds.has(targetId)) return 0.05;
-        if (selectedPath.length > 0) {
-            const index1 = selectedPath.indexOf(sourceId);
-            const index2 = selectedPath.indexOf(targetId);
-            return (index1 > -1 && index2 > -1 && Math.abs(index1-index2) === 1) ? 1 : 0.05;
-        }
-        if (selectedNode) return ((sourceId === selectedNode.id && neighbors.has(targetId)) || (targetId === selectedNode.id && neighbors.has(sourceId))) ? 0.9 : 0.05;
-        const sourceMatch = currentFilter === 'all' || (d.source as any).category === currentFilter;
-        const targetMatch = currentFilter === 'all' || (d.target as any).category === currentFilter;
-        return (sourceMatch && targetMatch) ? 0.4 : 0.05;
+    node.on('mouseout', () => {
+        // We can keep the active node on screen after mouseout for better UX
     });
 
-    label.style('opacity', (d: any) => {
-        if (selectedPath.length > 0) return pathSet.has(d.id) ? 1 : 0.1;
-        if (selectedNode) return neighbors.has(d.id) ? 1 : 0.1;
-        const categoryMatch = currentFilter === 'all' || d.category === currentFilter;
-        const searchMatch = searchTerm === '' || d.label.toLowerCase().includes(searchTerm.toLowerCase()) || d.description.toLowerCase().includes(searchTerm.toLowerCase());
-        return (categoryMatch && searchMatch) ? 1 : 0.1;
-    });
-
-    if (layoutType === 'force') {
-        graphData.nodes.forEach((node: any) => { node.fx = null; node.fy = null; });
-        simulation.alpha(0.3).restart();
-    } else {
-        const modulePositions: any = {
-            'ilp': { x: width / 2, y: 100 },
-            'body-module': { x: width / 5, y: 350 },
-            'mind-module': { x: 2 * width / 5, y: 350 },
-            'spirit-module': { x: 3 * width / 5, y: 350 },
-            'shadow-module': { x: 4 * width / 5, y: 350 }
-        };
-        graphData.nodes.forEach((node: any) => {
-            if (modulePositions[node.id]) {
-                node.fx = modulePositions[node.id].x;
-                node.fy = modulePositions[node.id].y;
-            } else if (node.category !== 'core') {
-                const moduleNodeId = `${node.category}-module`;
-                if (modulePositions[moduleNodeId]) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const radius = 100 + Math.random() * 150;
-                    node.fx = modulePositions[moduleNodeId].x + Math.cos(angle) * radius;
-                    node.fy = modulePositions[moduleNodeId].y + Math.sin(angle) * radius;
-                }
-            }
-        });
-        simulation.alpha(0.3).restart();
-    }
+    // FIX: Use `drag` from `d3-drag`.
+    node.call(drag<any, Node>()
+        .on('start', dragstarted)
+        .on('drag', dragged)
+        .on('end', dragended));
 
     simulation.on('tick', () => {
-      link.attr('d', (d: any) => `M${d.source.x},${d.source.y} Q${(d.source.x + d.target.x) / 2 + (d.target.y - d.source.y)/4},${(d.source.y + d.target.y) / 2 - (d.target.x - d.source.x)/4} ${d.target.x},${d.target.y}`);
-      node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y);
-      label.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y);
-      
-      diagramGroupsSelection.each(function(d) {
-        // FIX: Use select function from modular import.
-        const group = select(this);
-        const parentNode = graphData.nodes.find(n => n.id === d.parentId) as any;
-        if (!parentNode) return;
-        group.attr('transform', `translate(${parentNode.x}, ${parentNode.y})`);
-        
-        const isExpanded = !!expandedDiagrams[d.parentId];
-        
-        if (d.type === 'kegan-orders') {
-            const childNodes = d.childIds.map((id:string) => graphData.nodes.find(n => n.id === id));
-            
-            const rects = group.selectAll('rect').data(childNodes, (cn:any) => cn.id)
-                .join(
-                    enter => enter.append('rect').attr('x', -60).attr('width', 120).attr('height', 0).attr('y', 0).attr('rx', 4),
-                    update => update,
-                    exit => exit.transition().duration(300).attr('height', 0).attr('y', 0).remove()
-                )
-                .attr('fill', (cn:any) => categoryColors[cn.category]).attr('fill-opacity', 0.5)
-                .attr('stroke', (cn:any) => categoryColors[cn.category]).attr('stroke-width', 2);
-            
-            rects.transition().duration(500).attr('y', (cn, i) => isExpanded ? 30 * (i + 1) : 0).attr('height', isExpanded ? 25 : 0);
-            
-            const texts = group.selectAll('text').data(childNodes, (cn:any) => cn.id)
-                .join('text').attr('x', 0).attr('text-anchor', 'middle').attr('fill', 'white').attr('font-size', '10px').style('pointer-events', 'none')
-                .text((cn:any) => cn.label);
-            
-            texts.transition().duration(500).attr('y', (cn, i) => isExpanded ? 30 * (i + 1) + 17 : 10).style('opacity', isExpanded ? 1 : 0);
-        }
+      link
+        .attr('x1', (d: any) => d.source.x)
+        .attr('y1', (d: any) => d.source.y)
+        .attr('x2', (d: any) => d.target.x)
+        .attr('y2', (d: any) => d.target.y);
 
-        if (d.type === 'three-bodies') {
-            const childNodes = d.childIds.slice().reverse().map((id:string) => graphData.nodes.find(n => n.id === id)); // Reverse for drawing order
-            
-            const circles = group.selectAll('circle').data(childNodes, (cn:any) => cn.id)
-                .join(
-                    enter => enter.append('circle').attr('r', 0),
-                    update => update,
-                    exit => exit.transition().duration(300).attr('r', 0).remove()
-                )
-                .attr('fill', (cn:any) => categoryColors[cn.category]).attr('fill-opacity', 0.2)
-                .attr('stroke', (cn:any) => categoryColors[cn.category]).attr('stroke-width', 2);
-
-            circles.transition().duration(500).attr('r', (cn, i) => isExpanded ? 60 - i * 20 : 0);
-
-            const texts = group.selectAll('text').data(childNodes, (cn:any) => cn.id)
-                .join('text').attr('text-anchor', 'middle').attr('fill', 'white').attr('font-size', '10px').style('pointer-events', 'none')
-                .text((cn:any) => cn.label);
-            
-            texts.transition().duration(500).attr('y', (cn, i) => isExpanded ? -(40 - i * 20) : 0).style('opacity', isExpanded ? 1 : 0);
-        }
-      });
+      node.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
-  }, [currentFilter, searchTerm, selectedNode, layoutType, startNodeId, endNodeId, selectedPath, pathMode, expandedDiagrams]);
+    // FIX: Use `zoom` from `d3-zoom`.
+    const zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> = zoom<SVGSVGElement, unknown>().scaleExtent([0.3, 5])
+        .on('zoom', (event) => {
+            container.attr('transform', event.transform);
+        });
+    
+    svg.call(zoomBehavior);
 
-  const directConnections = selectedNode ? graphData.links
-    .filter((l: any) => (l.source as any).id === selectedNode.id || (l.target as any).id === selectedNode.id)
-    .map((l: any) => {
-        const neighborId = (l.source as any).id === selectedNode.id ? (l.target as any).id : (l.source as any).id;
-        return graphData.nodes.find(n => n.id === neighborId);
-    }).filter(Boolean) : [];
+    function dragstarted(event: any, d: Node) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(event: any, d: Node) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+
+    function dragended(event: any, d: Node) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+
+    // Zoom controls
+    // FIX: Add explicit type annotation for D3 selection with 5 generic arguments.
+    // GElement: HTMLDivElement, Datum: unknown, PElement: BaseType, PDatum: undefined, G: BaseType
+    const controls: Selection<HTMLDivElement, unknown, BaseType, undefined> = select(svgRef.current!.parentElement!).append('div')
+        .attr('class', 'absolute bottom-2 right-2 flex flex-col gap-1');
+
+    controls.append('button')
+        .attr('class', 'bg-slate-700/50 p-1.5 rounded-md text-slate-300 hover:bg-slate-700')
+        // FIX: Call `transition` on the SVG selection.
+        .on('click', () => svg.transition().call(zoomBehavior.scaleBy, 1.2))
+        .html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`);
+    
+    controls.append('button')
+        .attr('class', 'bg-slate-700/50 p-1.5 rounded-md text-slate-300 hover:bg-slate-700')
+        // FIX: Call `transition` on the SVG selection.
+        .on('click', () => svg.transition().call(zoomBehavior.scaleBy, 0.8))
+        .html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`);
+
+    controls.append('button')
+        .attr('class', 'bg-slate-700/50 p-1.5 rounded-md text-slate-300 hover:bg-slate-700 mt-1')
+        // FIX: Call `transition` on the SVG selection.
+        .on('click', () => svg.transition().call(zoomBehavior.transform, zoomIdentity))
+        .html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1v6h6"/><path d="M23 23v-6h-6"/><path d="M1 7l5-5"/><path d="M23 17l-5 5"/></svg>`);
+
+    return () => {
+      simulation.stop();
+      svg.selectAll('*').remove();
+      controls.remove();
+    };
+  }, []);
 
   return (
-    <div ref={containerRef} style={{ 
-      width: '100%', 
-      height: '80vh', 
-      background: '#0f172a',
-      position: 'relative',
-      overflow: 'hidden',
-      borderRadius: '12px',
-      border: '1px solid #334155'
-    }}>
-      <style>{styles}</style>
-      <div className="absolute top-5 left-5 bg-slate-900/80 backdrop-blur-md p-4 rounded-lg border border-slate-700 z-10 space-y-3 max-w-xs">
-          <input type="text" placeholder="Search concepts..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 border border-slate-600 rounded-md bg-slate-800 text-slate-200 text-sm"/>
-          <div className="space-y-1">
-            {['all', 'body', 'mind', 'spirit', 'shadow'].map(cat => (
-              <button key={cat} onClick={() => setCurrentFilter(cat)} 
-                className={`w-full text-left p-2 rounded text-sm transition-colors ${currentFilter === cat ? 'bg-purple-600 text-white font-semibold' : 'bg-slate-700/50 hover:bg-slate-700 text-slate-300'}`}>
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
-            ))}
-          </div>
-          <div className="pt-2 border-t border-slate-700 space-y-2">
-            <button onClick={() => {
-              setLayoutType(t => t === 'force' ? 'hierarchical' : 'force');
-              setSelectedNode(null);
-              resetPath();
-            }} 
-              className="w-full flex items-center justify-center gap-2 p-2 rounded text-sm bg-slate-700/50 hover:bg-slate-700 text-slate-300">
-              {layoutType === 'force' ? <Shuffle size={14}/> : <MapPin size={14}/>}
-              <span>{layoutType === 'force' ? 'Dynamic Layout' : 'Static Layout'}</span>
-            </button>
-            <button onClick={() => { 
-                setPathMode(!pathMode); 
-                resetPath(); 
-                setSelectedNode(null);
-              }}
-              className={`w-full flex items-center justify-center gap-2 p-2 rounded text-sm transition-colors ${pathMode ? 'bg-yellow-500 text-black font-semibold' : 'bg-slate-700/50 hover:bg-slate-700 text-slate-300'}`}>
-              <LinkIcon size={14}/>
-              <span>{pathMode ? 'Exit Path Mode' : 'Find Path'}</span>
-            </button>
-            {pathMode && (
-                <div className="text-xs text-slate-400 p-2 bg-slate-800 rounded">
-                    <p><strong>1. Click start node</strong> {startNodeId && <span className="text-cyan-400">(Selected: {graphData.nodes.find(n => n.id === startNodeId)?.label})</span>}</p>
-                    <p><strong>2. Click end node</strong> {endNodeId && <span className="text-purple-400">(Selected: {graphData.nodes.find(n => n.id === endNodeId)?.label})</span>}</p>
-                    {selectedPath.length > 0 && <p className="text-yellow-400 mt-1">Path found! ({selectedPath.length - 1} steps)</p>}
-                    <button onClick={resetPath} className="text-red-400 hover:underline mt-1">Reset Path</button>
-                </div>
-            )}
-          </div>
-      </div>
-
-      <div className="absolute bottom-5 left-5 bg-slate-900/80 backdrop-blur-md p-3 rounded-lg border border-slate-700 z-10">
-        {Object.entries(categoryColors).map(([key, color]) => (
-          <div key={key} className="flex items-center my-1">
-            <div className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: color as string}}></div>
-            <span className="text-xs text-slate-400">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
-          </div>
-        ))}
-      </div>
-
-      {tooltip.show && tooltip.data && !selectedNode && (
-        <div style={{
-          position: 'fixed', left: tooltip.x + 15, top: tooltip.y + 15, background: 'rgba(15, 23, 42, 0.98)',
-          color: '#e2e8f0', padding: '15px', borderRadius: '8px', fontSize: '13px', maxWidth: '350px',
-          zIndex: 2000, border: '1px solid rgba(99, 102, 241, 0.5)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)', pointerEvents: 'none'
-        }}>
-          <h3 style={{ color: categoryColors[tooltip.data.category], marginBottom: '8px', fontSize: '16px' }}>{tooltip.data.label}</h3>
-          <div className="text-slate-300 leading-relaxed mb-2">{tooltip.data.description}</div>
-          <div className="text-xs text-slate-500 pt-2 border-t border-slate-700">Connections: {tooltip.data.connections} | Importance: {tooltip.data.importance}/10</div>
-        </div>
-      )}
-
-      <svg ref={svgRef} />
-
-      <div className={`absolute top-0 right-0 w-96 h-full bg-slate-900/80 backdrop-blur-md border-l border-slate-700 z-20 transition-transform duration-300 ease-in-out ${selectedNode ? 'translate-x-0' : 'translate-x-full'}`}>
-          {selectedNode && (
-              <div className="flex flex-col h-full">
-                <div className="p-4 border-b border-slate-700 flex justify-between items-center flex-shrink-0">
-                  <h2 className="text-xl font-bold" style={{color: categoryColors[selectedNode.category]}}>{selectedNode.label}</h2>
-                  <button onClick={() => setSelectedNode(null)} className="text-slate-500 hover:text-white"><X size={24}/></button>
-                </div>
-                <div className="p-4 overflow-y-auto space-y-4">
-                    <p className="text-sm text-slate-300">{selectedNode.description}</p>
-                    <div className="text-sm grid grid-cols-2 gap-2">
-                       <div className="bg-slate-800 p-2 rounded-md">
-                            <p className="text-xs text-slate-400">Module</p>
-                            <p className="font-semibold" style={{color: categoryColors[selectedNode.category]}}>{selectedNode.category.charAt(0).toUpperCase() + selectedNode.category.slice(1)}</p>
-                       </div>
-                       <div className="bg-slate-800 p-2 rounded-md">
-                            <p className="text-xs text-slate-400">Importance</p>
-                            <p className="font-semibold">{selectedNode.importance}/10</p>
-                       </div>
-                    </div>
+    <div className="w-full bg-slate-900/50 rounded-lg border border-slate-700 shadow-lg relative">
+        <svg ref={svgRef} className="w-full h-auto" style={{ minHeight: '600px' }}></svg>
+        {activeNode && (
+            <div className="absolute top-2 left-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 p-4 rounded-lg max-w-sm w-full animate-fade-in shadow-xl">
+                <div className="flex justify-between items-start">
                     <div>
-                        <h3 className="text-lg font-semibold text-slate-200 mb-2 flex items-center gap-2"><LinkIcon size={16}/> Connections ({directConnections.length})</h3>
-                        <div className="space-y-1 max-h-96 overflow-y-auto pr-2">
-                            {directConnections.map((node: any) => (
-                                <button key={node.id} onClick={() => setSelectedNode(node)} className="w-full text-left p-2 bg-slate-800 hover:bg-slate-700 rounded-md transition-colors flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: categoryColors[node.category]}}></div>
-                                    <span className="text-sm text-slate-300">{node.label}</span>
-                                </button>
-                            ))}
-                        </div>
+                        <h3 className="font-bold text-lg" style={{ color: { core: '#d9aaef', body: '#10b981', mind: '#3b82f6', spirit: '#8b5cf6', shadow: '#f59e0b', integral: '#f43f5e' }[activeNode.category] || '#cbd5e1' }}>
+                            {activeNode.label}
+                        </h3>
+                        <p className="text-xs font-mono uppercase text-slate-400">{activeNode.category}</p>
                     </div>
+                    <button onClick={() => setActiveNode(null)} className="text-slate-500 hover:text-slate-300"><X size={18}/></button>
                 </div>
-              </div>
-          )}
-      </div>
-
+                <p className="text-sm text-slate-300 mt-2">{activeNode.description}</p>
+            </div>
+        )}
     </div>
   );
 };
-
-export default ILPKnowledgeGraph;

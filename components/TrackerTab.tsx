@@ -1,4 +1,4 @@
-// FIX: Create the TrackerTab.tsx component file to resolve the module not found error.
+
 import React, { useState } from 'react';
 import { AllPractice, ModuleKey } from '../types.ts';
 import { modules } from '../constants.ts';
@@ -13,7 +13,6 @@ interface PracticeTrackerItemProps {
   moduleKey: ModuleKey;
 }
 
-// FIX: Explicitly type PracticeTrackerItem as a React.FC to resolve the incorrect TypeScript error where the 'key' prop was being considered part of the component's props.
 const PracticeTrackerItem: React.FC<PracticeTrackerItemProps> = ({ practice, isComplete, onToggle, dailyNote, onNoteChange, moduleKey }) => {
   const [isNoteOpen, setIsNoteOpen] = useState(false);
   const moduleInfo = modules[moduleKey];

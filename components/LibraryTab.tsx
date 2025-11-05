@@ -1,5 +1,6 @@
 import React from 'react';
-import ILPKnowledgeGraph from './ILPKnowledgeGraph.tsx';
+// FIX: Use a named import for ILPKnowledgeGraph as it is not a default export.
+import { ILPKnowledgeGraph } from './ILPKnowledgeGraph.tsx';
 
 export default function LibraryTab() {
   return (

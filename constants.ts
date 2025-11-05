@@ -1,5 +1,5 @@
 // FIX: Corrected import path for types
-import { PracticesData, ModuleInfo, StarterStacksData, ModuleKey } from './types.ts';
+import { PracticesData, ModuleInfo, StarterStacksData, ModuleKey, SomaticPracticeType, PracticeTypeInfo, SomaticPreset } from './types.ts';
 
 export const practices: PracticesData = {
     body: [
@@ -125,7 +125,7 @@ export const practices: PracticesData = {
         difficulty: 'Medium-High',
         affectsSystem: ['nervous-system', 'subtle-body', 'focus', 'balance'],
         how: [
-          'Setup: Sit comfortably with a straight spine, tongue on the roof of your mouth, breathing through your nose.',
+          'Setup: Sit comfortably upright with a straight spine, tongue on the roof of your mouth, breathing through your nose.',
           'Path Awareness: Visualize the Front Channel (up the front) and Back Channel (up the spine) forming a loop.',
           '1. Gather Energy: Focus on your navel (lower dantian), feeling warmth gather as you breathe.',
           '2. Inhale (Up the Back): Mentally guide the energy from your perineum, up your spine, over your head to your upper lip.',
@@ -519,3 +519,149 @@ export const practices: PracticesData = {
     spirit: { name: 'Spirit', color: 'bg-purple-900', textColor: 'text-purple-200', borderColor: 'border-purple-700', lightBg: 'bg-purple-950' },
     shadow: { name: 'Shadow', color: 'bg-amber-900', textColor: 'text-amber-200', borderColor: 'border-amber-700', lightBg: 'bg-amber-950' }
   };
+  
+  export const PRACTICE_TYPES: PracticeTypeInfo[] = [
+    {
+      name: 'Breath-Centered',
+      description: 'Focus on respiratory patterns with minimal movement. Emphasizes diaphragmatic breathing, breath pacing, and breath awareness.',
+      primaryMechanism: 'Vagal tone modulation via respiratory sinus arrhythmia',
+      bestFor: ['Anxiety', 'Stress', 'Nervous system regulation', 'Sleep preparation'],
+      evidenceBase: 'Strong (HRV biofeedback, resonance frequency breathing)',
+      contraindications: ['Active panic attacks', 'Severe respiratory conditions', 'Breath-triggered trauma'],
+      exampleTechniques: ['Resonance breathing (~6 bpm)', 'Box breathing', 'Extended exhales', 'Diaphragmatic breathing']
+    },
+    {
+      name: 'Progressive Relaxation',
+      description: 'Systematic tension-release cycles through different muscle groups, coordinated with breath.',
+      primaryMechanism: 'Neuromuscular reeducation, contrast awareness, parasympathetic activation',
+      bestFor: ['Muscle tension', 'Sleep issues', 'Stress', 'Body awareness'],
+      evidenceBase: 'Strong (Jacobson PMR, clinical trials for anxiety/insomnia)',
+      contraindications: ['Acute muscle injuries', 'Severe chronic pain'],
+      exampleTechniques: ['Tense-release cycles', 'Body scan with micro-movements', 'Contrast awareness']
+    },
+    {
+      name: 'Gentle Movement',
+      description: 'Slow, exploratory movements to release habitual tension patterns. Emphasizes sensory awareness over performance.',
+      primaryMechanism: 'Sensorimotor reeducation, interoceptive awareness, fascial release',
+      bestFor: ['Chronic tension', 'Movement restrictions', 'Body-mind connection', 'Recovery'],
+      evidenceBase: 'Moderate (Hanna Somatics, Feldenkrais research)',
+      contraindications: ['Acute injuries', 'Post-surgical (without clearance)'],
+      exampleTechniques: ['Pandiculation', 'Micro-movements', 'Somatic exploration', 'Arc and dome movements']
+    },
+    {
+      name: 'Mindful Flow',
+      description: 'Continuous, meditative movement sequences. Combines breath coordination, balance, and fluid transitions.',
+      primaryMechanism: 'Attention regulation, proprioceptive training, rhythmic movement',
+      bestFor: ['Mind-body integration', 'Focus', 'Balance', 'Meditative states'],
+      evidenceBase: 'Moderate-Strong (Tai Chi research, mindful movement studies)',
+      contraindications: ['Severe balance issues', 'Acute joint problems'],
+      exampleTechniques: ['Slow continuous sequences', 'Weight shifting', 'Spiraling movements', 'Breath-synchronized forms']
+    },
+    {
+      name: 'Grounding & Stability',
+      description: 'Emphasizes connection to earth/support, postural stability, and feeling anchored. Often static or minimal movement.',
+      primaryMechanism: 'Proprioceptive anchoring, vestibular orientation, ventral vagal activation',
+      bestFor: ['Anxiety', 'Dissociation', 'Feeling uncentered', 'Nervous energy'],
+      evidenceBase: 'Moderate (grounding techniques in trauma therapy, proprioceptive research)',
+      contraindications: ['Minimal - generally very safe'],
+      exampleTechniques: ['Standing practices', 'Sensation of contact', 'Weight dropping', 'Root and rise']
+    },
+    {
+      name: 'Dynamic Activation',
+      description: 'Rhythmic, energizing movements to stimulate circulation and vitality. More active pacing.',
+      primaryMechanism: 'Cardiovascular activation, lymphatic circulation, sympathetic mobilization',
+      bestFor: ['Low energy', 'Circulation', 'Invigoration', 'Morning practices'],
+      evidenceBase: 'Moderate (exercise physiology, Qigong studies)',
+      contraindications: ['Cardiovascular issues', 'Acute fatigue', 'Injury'],
+      exampleTechniques: ['Bouncing', 'Shaking', 'Rhythmic swinging', 'Joint rotations', 'Breath of fire']
+    }
+  ];
+  
+  export const SOMATIC_PRESETS: SomaticPreset[] = [
+    {
+      name: "Anxiety Relief Breathing",
+      intention: "To support my nervous system through slow breathing, which may help reduce anxiety symptoms.",
+      practiceType: 'Breath-Centered', // Changed from 'style'
+      duration: 10,
+      focusArea: "diaphragm and breath awareness",
+      pacing: "slow",
+      description: "Resonance frequency breathing (~6 breaths/min) to promote parasympathetic activation.",
+      evidenceLevel: 'strong',
+      contraindications: ["Active panic attacks (may worsen in some individuals)", "Severe COPD without clearance"],
+      safetyNotes: ["If breath focus increases anxiety, shift to grounding practice"],
+      citations: ["Lehrer, P. M., & Gevirtz, R. (2014). HRV biofeedback. Biofeedback, 42(3), 96-103."]
+    },
+    {
+      name: "Shoulder & Neck Release",
+      intention: "To gently release tension in my shoulders and neck through exploratory movement.",
+      practiceType: 'Gentle Movement',
+      duration: 15,
+      focusArea: "shoulders, neck, and upper back",
+      pacing: "slow",
+      description: "Slow, awareness-based movements to release habitual tension patterns.",
+      evidenceLevel: 'moderate',
+      contraindications: ["Acute neck injury", "Severe cervical issues"],
+      safetyNotes: ["Move very slowly within pain-free range", "Stop if any sharp pain"]
+    },
+    {
+      name: "Deep Relaxation",
+      intention: "To systematically release tension throughout my body and prepare for rest.",
+      practiceType: 'Progressive Relaxation',
+      duration: 15,
+      focusArea: "progressive muscle groups",
+      pacing: "slow",
+      description: "Systematic tension-release cycles based on Jacobson's PMR.",
+      evidenceLevel: 'strong',
+      contraindications: ["Acute muscle injuries"],
+      safetyNotes: ["Tense gently (70% max)", "Emphasize the release phase"],
+      citations: ["Jacobson, E. (1938). Progressive Relaxation. University of Chicago Press."]
+    },
+    {
+      name: "Grounding for Anxiety",
+      intention: "To feel more anchored and stable in my body, reducing scattered or anxious energy.",
+      practiceType: 'Grounding & Stability',
+      duration: 10,
+      focusArea: "feet, legs, and connection to support",
+      pacing: "slow",
+      description: "Focuses on proprioceptive anchoring and felt sense of stability.",
+      evidenceLevel: 'moderate',
+      safetyNotes: ["Can be done seated if standing is challenging"]
+    },
+    {
+      name: "Morning Energizer",
+      intention: "To awaken energy and stimulate circulation, feeling invigorated and alert.",
+      practiceType: 'Dynamic Activation',
+      duration: 10,
+      focusArea: "whole body, especially joints and breath",
+      pacing: "dynamic",
+      description: "Rhythmic, energizing movements to boost vitality.",
+      evidenceLevel: 'moderate',
+      contraindications: ["Cardiovascular issues", "Acute injuries"],
+      safetyNotes: ["Start gently and build intensity", "Stay within comfortable range"]
+    },
+    {
+      name: "Meditative Movement",
+      intention: "To deepen mind-body connection through flowing, breath-synchronized movement.",
+      practiceType: 'Mindful Flow',
+      duration: 15,
+      focusArea: "breath-movement coordination, balance",
+      pacing: "fluid",
+      description: "Continuous, meditative sequences emphasizing presence and coordination.",
+      evidenceLevel: 'moderate',
+      contraindications: ["Severe balance issues"],
+      citations: ["Wayne, P. M., & Kaptchuk, T. J. (2008). Tai Chi research review. AJPH, 98(5), 828-840."]
+    },
+    {
+      name: "Lower Back Relief",
+      intention: "To gently mobilize my lower back and release stiffness through gentle exploration.",
+      practiceType: 'Gentle Movement',
+      duration: 12,
+      focusArea: "lower back, hips, pelvis",
+      pacing: "slow",
+      description: "Small, exploratory movements for spinal flexibility.",
+      evidenceLevel: 'moderate',
+      contraindications: ["Acute disc herniation", "Severe sciatica"],
+      safetyNotes: ["Use only small, gentle movements", "Stop if sharp pain"]
+    }
+  ];
+  

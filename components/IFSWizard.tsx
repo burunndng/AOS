@@ -1,3 +1,4 @@
+
 // FIX: Removed erroneous file separator from the beginning of the file content.
 import React, { useState, useEffect, useRef } from 'react';
 import { IFSSession, IFSPart, IFSDialogueEntry, WizardPhase, IntegratedInsight } from '../types.ts';

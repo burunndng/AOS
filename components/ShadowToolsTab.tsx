@@ -12,7 +12,8 @@ interface ShadowToolsTabProps {
   draft321Session: Partial<ThreeTwoOneSession> | null;
   draftIFSSession: IFSSession | null;
   setDraft321Session: (draft: Partial<ThreeTwoOneSession> | null) => void;
-  setDraftIFSSession: (draft: IFSSession | null) => void;
+  // FIX: Renamed prop `setDraftIFSSession` to `setDraftIFS` to match the state setter in `App.tsx`.
+  setDraftIFS: (draft: IFSSession | null) => void;
   partsLibrary: IFSPart[];
   markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void; // NEW
 }
@@ -41,6 +42,9 @@ export default function ShadowToolsTab({
   onStart321, onStartIFS,
   sessionHistory321, sessionHistoryIFS,
   draft321Session, draftIFSSession,
+  setDraft321Session, 
+  // FIX: Renamed prop from `setDraftIFSSession` to `setDraftIFS`.
+  setDraftIFS,
   markInsightAsAddressed // Not directly used here, but passed through App.tsx
 }: ShadowToolsTabProps) {
 

@@ -2,6 +2,7 @@
   "name": "Copy of ILP Aura OS v4 nov 25",
   "description": "An application to build and track an Integrated Life Practice (ILP) across Body, Mind, Spirit, and Shadow modules, featuring an AI coach for guidance.",
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "camera"
   ]
 }
