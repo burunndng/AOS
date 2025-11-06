@@ -31,6 +31,7 @@ import PolarityMapperWizard from './components/PolarityMapperWizard.tsx';
 import SomaticGeneratorWizard from './components/SomaticGeneratorWizard.tsx';
 import KeganAssessmentWizard from './components/KeganAssessmentWizard.tsx';
 import RelationalPatternChatbot from './components/RelationalPatternChatbot.tsx';
+import JhanaTracker from './components/JhanaTracker.tsx';
 
 
 // Constants & Types
@@ -52,7 +53,8 @@ import {
   SomaticPracticeSession,
   PolarityMapDraft, // FIX: Imported PolarityMapDraft
   KeganAssessmentSession,
-  RelationalPatternSession
+  RelationalPatternSession,
+  JhanaSession
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -114,6 +116,7 @@ export default function App() {
   const [historyPM, setHistoryPM] = useLocalStorage<PolarityMap[]>('historyPM', []);
   const [historyKegan, setHistoryKegan] = useLocalStorage<KeganAssessmentSession[]>('historyKegan', []);
   const [historyRelational, setHistoryRelational] = useLocalStorage<RelationalPatternSession[]>('historyRelational', []);
+  const [historyJhana, setHistoryJhana] = useLocalStorage<JhanaSession[]>('historyJhana', []);
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   
@@ -330,6 +333,11 @@ export default function App() {
     setActiveWizard(null);
   };
 
+  const handleSaveJhanaSession = (session: JhanaSession) => {
+    setHistoryJhana(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setActiveWizard(null);
+  };
+
   const handleSave321Session = (session: ThreeTwoOneSession) => {
     setHistory321(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraft321(null);
@@ -490,6 +498,7 @@ export default function App() {
       {activeWizard === 'pm' && <PolarityMapperWizard onClose={() => setActiveWizard(null)} onSave={handleSavePMSession} draft={draftPM} setDraft={setDraftPM} />}
       {activeWizard === 'kegan' && <KeganAssessmentWizard onClose={() => setActiveWizard(null)} onSave={handleSaveKeganSession} session={draftKegan} setDraft={setDraftKegan} />}
       {activeWizard === 'relational' && <RelationalPatternChatbot onClose={() => setActiveWizard(null)} onSave={handleSaveRelationalSession} session={draftRelational} setDraft={setDraftRelational} />}
+      {activeWizard === 'jhana' && <JhanaTracker onClose={() => setActiveWizard(null)} onSave={handleSaveJhanaSession} />}
       {activeWizard === 'somatic' && <SomaticGeneratorWizard onClose={() => setActiveWizard(null)} onSave={handleSaveSomaticPractice} />}
     </div>
   );
