@@ -235,8 +235,19 @@ export default function KeganAssessmentWizard({ onClose, onSave, session: draft,
   const performAnalysis = async () => {
     setIsAnalyzing(true);
     setAnalysisError(null);
+
+    // Create a timeout promise
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Analysis timed out after 60 seconds')), 60000);
+    });
+
     try {
-      const interpretation = await geminiService.analyzeKeganStage(session.responses);
+      // Race between the analysis and timeout
+      const interpretation = await Promise.race([
+        geminiService.analyzeKeganStage(session.responses),
+        timeoutPromise
+      ]) as Awaited<ReturnType<typeof geminiService.analyzeKeganStage>>;
+
       setSession(prev => ({
         ...prev,
         overallInterpretation: interpretation
@@ -439,21 +450,29 @@ ${session.selfReflection || 'Not yet completed'}
           <div className="bg-red-900/20 border border-red-700/50 rounded-lg p-6 max-w-2xl mx-auto">
             <p className="text-red-300">{analysisError}</p>
           </div>
-          <button
-            onClick={() => {
-              setAnalysisError(null);
-              performAnalysis();
-            }}
-            className="px-6 py-3 btn-luminous rounded-lg font-semibold mx-auto"
-          >
-            Try Again
-          </button>
-          <button
-            onClick={() => setCurrentStep('IDENTITY_SELF')}
-            className="block mx-auto text-slate-400 hover:text-slate-300 text-sm underline"
-          >
-            Go back to review your responses
-          </button>
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={() => {
+                setAnalysisError(null);
+                performAnalysis();
+              }}
+              className="px-6 py-3 btn-luminous rounded-lg font-semibold"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => setCurrentStep('REFLECTION')}
+              className="px-6 py-3 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition"
+            >
+              Skip Analysis & Continue
+            </button>
+            <button
+              onClick={() => setCurrentStep('IDENTITY_SELF')}
+              className="text-slate-400 hover:text-slate-300 text-sm underline"
+            >
+              Go back to review your responses
+            </button>
+          </div>
         </>
       ) : (
         <>
@@ -464,6 +483,20 @@ ${session.selfReflection || 'Not yet completed'}
             subject (embedded in) vs. object (can observe), and developmental center of gravity...
           </p>
           <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto"></div>
+          {isAnalyzing && (
+            <div className="space-y-3 mt-8">
+              <p className="text-sm text-slate-400">This may take up to 60 seconds...</p>
+              <button
+                onClick={() => {
+                  setIsAnalyzing(false);
+                  setAnalysisError('Analysis was cancelled. You can try again or skip to view your responses.');
+                }}
+                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition text-sm"
+              >
+                Cancel Analysis
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -476,16 +509,24 @@ ${session.selfReflection || 'Not yet completed'}
           <div className="mx-auto w-16 h-16 bg-amber-900/20 rounded-full flex items-center justify-center">
             <Sparkles size={32} className="text-amber-400" />
           </div>
-          <h2 className="text-3xl font-bold text-slate-100">No Analysis Results</h2>
+          <h2 className="text-3xl font-bold text-slate-100">No Analysis Available</h2>
           <p className="text-slate-300 max-w-2xl mx-auto">
-            Your responses haven't been analyzed yet, or the analysis failed. Please go back to complete the assessment or retry the analysis.
+            Your responses haven't been analyzed yet, or the analysis failed. You can try running the analysis again, or skip to the reflection step to complete the assessment without AI analysis.
           </p>
-          <button
-            onClick={() => setCurrentStep('ANALYSIS')}
-            className="px-6 py-3 btn-luminous rounded-lg font-semibold mx-auto"
-          >
-            Go to Analysis
-          </button>
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={() => setCurrentStep('ANALYSIS')}
+              className="px-6 py-3 btn-luminous rounded-lg font-semibold"
+            >
+              Try Analysis Again
+            </button>
+            <button
+              onClick={() => setCurrentStep('REFLECTION')}
+              className="px-6 py-3 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition"
+            >
+              Skip to Reflection
+            </button>
+          </div>
         </div>
       );
     }
