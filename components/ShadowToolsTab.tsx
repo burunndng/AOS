@@ -2,12 +2,13 @@
 // FIX: Add file content for components/ShadowToolsTab.tsx
 import React, { useState } from 'react';
 import { ThreeTwoOneSession, IFSSession, IFSPart } from '../types.ts';
-import { ChevronDown, ChevronUp, Shield, GitMerge, Users } from 'lucide-react';
+import { ChevronDown, ChevronUp, Shield, GitMerge, Users, MessageCircle } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 
 interface ShadowToolsTabProps {
   onStart321: (linkedInsightId?: string) => void; // Modified to accept linkedInsightId
   onStartIFS: (linkedInsightId?: string) => void; // Modified to accept linkedInsightId
+  setActiveWizard: (wizardName: string | null) => void;
   sessionHistory321: ThreeTwoOneSession[];
   sessionHistoryIFS: IFSSession[];
   draft321Session: Partial<ThreeTwoOneSession> | null;
@@ -39,11 +40,11 @@ const ToolCard = ({ icon, title, description, onStart, onResume, hasDraft }: { i
     </div>
 );
 
-export default function ShadowToolsTab({ 
-  onStart321, onStartIFS,
+export default function ShadowToolsTab({
+  onStart321, onStartIFS, setActiveWizard,
   sessionHistory321, sessionHistoryIFS,
   draft321Session, draftIFSSession,
-  setDraft321Session, 
+  setDraft321Session,
   // FIX: Renamed prop from `setDraftIFSSession` to `setDraftIFS`.
   setDraftIFS,
   markInsightAsAddressed // Not directly used here, but passed through App.tsx
@@ -55,11 +56,11 @@ export default function ShadowToolsTab({
         <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter">Shadow Tools</h1>
         <p className="text-slate-400 mt-2">Guided processes to uncover, understand, and integrate unconscious patterns.</p>
       </header>
-      
+
       <SectionDivider />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ToolCard 
+        <ToolCard
           icon={<GitMerge size={28} className="text-amber-400"/>}
           title="3-2-1 Process"
           description="Integrate parts of yourself you've projected onto others by facing them, talking to them, and being them."
@@ -67,7 +68,7 @@ export default function ShadowToolsTab({
           onResume={() => onStart321(draft321Session?.linkedInsightId)} // Pass linkedInsightId if resuming
           hasDraft={!!draft321Session}
         />
-        <ToolCard 
+        <ToolCard
           icon={<Users size={28} className="text-cyan-400"/>}
           title="Internal Family Systems"
           description="Connect with your internal 'parts' with curiosity and compassion to understand their positive intent."
@@ -75,6 +76,24 @@ export default function ShadowToolsTab({
           onResume={() => onStartIFS(draftIFSSession?.linkedInsightId)} // Pass linkedInsightId if resuming
           hasDraft={!!draftIFSSession}
         />
+        <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-2 border-purple-500/40 rounded-lg p-6 flex flex-col lg:col-span-2">
+          <div className="flex items-center gap-4 mb-3">
+            <MessageCircle size={32} className="text-purple-400"/>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-100">Relational Pattern Tracker</h2>
+            <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full font-semibold">AI Chatbot</span>
+          </div>
+          <p className="text-slate-300 mb-5 flex-grow">
+            Explore how you show up in different relationships through an interactive conversation.
+            Identify reactive patterns across romantic, family, work, and social contexts. Uncover the unconscious
+            fears and needs driving your automatic behaviors.
+          </p>
+          <button
+            onClick={() => setActiveWizard('relational')}
+            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm self-start"
+          >
+            Start Conversation
+          </button>
+        </div>
       </div>
     </div>
   );

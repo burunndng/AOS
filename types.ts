@@ -361,3 +361,85 @@ export type KeganAssessmentStep =
   | 'ANALYSIS'
   | 'RESULTS'
   | 'REFLECTION';
+
+// Relational Pattern Tracking Types
+export type RelationshipType = 'Romantic Partner' | 'Parent' | 'Child' | 'Sibling' | 'Friend' | 'Boss/Authority' | 'Colleague' | 'Direct Report' | 'Stranger/Public';
+
+export interface RelationalPatternMessage {
+  role: 'user' | 'bot';
+  text: string;
+  timestamp: string;
+}
+
+export interface RelationshipContext {
+  type: RelationshipType;
+  personDescription?: string; // "my mother", "my partner Sarah", etc.
+  triggerSituation?: string;
+  yourReaction?: string;
+  underlyingFear?: string;
+  pattern?: string;
+}
+
+export interface RelationalPatternSession {
+  id: string;
+  date: string;
+  conversation: RelationalPatternMessage[];
+  relationships: RelationshipContext[];
+  analysis?: {
+    corePatterns: string[]; // Recurring themes across relationships
+    reactiveSignatures: string[]; // How reactivity shows up (withdrawal, anger, people-pleasing, etc.)
+    relationshipSpecificPatterns: Record<RelationshipType, string>; // Different patterns in different contexts
+    developmentalHypothesis: string; // Where this might come from
+    shadowWork: string; // What needs integration
+    recommendations: string[];
+  };
+  notes?: string;
+}
+
+// Jhana/Samadhi Tracking Types
+export type JhanaLevel = '1st Jhana' | '2nd Jhana' | '3rd Jhana' | '4th Jhana' | '5th Jhana' | '6th Jhana' | '7th Jhana' | '8th Jhana' | 'Access Concentration' | 'Momentary Concentration';
+
+export interface JhanaFactor {
+  name: string;
+  present: boolean;
+  intensity: number; // 1-10
+  notes?: string;
+}
+
+export type NimittaType = 'Visual Light' | 'Tactile Sensation' | 'Auditory' | 'Whole-Body' | 'Spatial' | 'None Yet' | 'Other';
+
+export interface JhanaSession {
+  id: string;
+  date: string;
+  practice: string; // What meditation practice
+  duration: number; // minutes
+  jhanaLevel: JhanaLevel;
+  timeInState: number; // minutes in jhana/absorption
+
+  // Five Jhana Factors (for 1st-4th)
+  factors: {
+    appliedAttention: JhanaFactor; // vitakka - directing attention
+    sustainedAttention: JhanaFactor; // vicara - sustaining attention
+    joy: JhanaFactor; // piti - energetic joy
+    happiness: JhanaFactor; // sukha - contentment
+    unification: JhanaFactor; // ekaggata - one-pointedness
+  };
+
+  // Nimitta/Sign
+  nimittaPresent: boolean;
+  nimittaType?: NimittaType;
+  nimittaDescription?: string;
+  nimittaStability?: number; // 1-10
+
+  // Phenomenology
+  bodyExperience: string; // How did body feel?
+  mindQuality: string; // Quality of mind (bright, stable, spacious, etc.)
+  hindrances?: string[]; // Any hindrances encountered
+
+  // Progress Notes
+  comparison?: string; // How does this compare to previous sits?
+  insights?: string;
+  difficulties?: string;
+  questions?: string;
+}
+

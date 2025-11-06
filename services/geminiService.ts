@@ -4,7 +4,7 @@
 // services/geminiService.ts
 // FIX: Add `ThreeTwoOneSession` and `CustomPractice` to type imports.
 import { GoogleGenAI, Type, Modality, Blob, Content } from "@google/genai";
-import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey, IntegratedInsight, KeganResponse, KeganStage, KeganDomain } from '../types.ts';
+import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey, IntegratedInsight, KeganResponse, KeganStage, KeganDomain, RelationshipContext, RelationshipType } from '../types.ts';
 import { practices as corePractaces } from '../constants.ts';
 
 
@@ -53,7 +53,7 @@ export async function populateCustomPractice(practiceName: string): Promise<{ de
     Return ONLY the JSON object.`;
     
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -133,7 +133,7 @@ export async function generatePracticeScript(userPrompt: string): Promise<{ titl
 
     // FIX: Use `gemini-2.5-pro` for complex JSON generation and define the response schema correctly.
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -251,7 +251,7 @@ export async function extractPartInfo(transcript: string): Promise<{ role: strin
     Be concise.
     Return ONLY the JSON object.`;
      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -284,7 +284,7 @@ export async function summarizeIFSSession(transcript: string, partInfo: { role: 
     Return a JSON object with keys: "summary" (string) and "aiIndications" (array of strings).
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -342,7 +342,7 @@ export async function generateAqalReport(context: string): Promise<AqalReportDat
     Return ONLY the JSON object.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -381,7 +381,7 @@ export async function generatePracticeResearch(goal: string): Promise<{ why: str
     Return a JSON object with keys: "why" (string), "evidence" (string), and "roi" ('HIGH', 'VERY HIGH', or 'EXTREME').
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -409,7 +409,7 @@ export async function generatePracticeStructure(goal: string, why: string, timeP
     Return a JSON object with these keys.
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -435,7 +435,7 @@ export async function generateShadowPatternInsights(pattern: string): Promise<{ 
     Return a JSON object with keys: "origin" (string) and "framework" (string).
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -461,7 +461,7 @@ export async function generateShadowWorkStructure(pattern: string, origin: strin
     Return a JSON object with these keys.
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -486,7 +486,7 @@ export async function generateSpiritualContext(aspiration: string): Promise<{ tr
     Return a JSON object with keys: "tradition" (string) and "teachings" (string).
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -512,7 +512,7 @@ export async function generateSpiritualPracticeStructure(aspiration: string, tra
     Return a JSON object with these keys.
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -543,7 +543,7 @@ export async function refinePractice(name: string, description: string, why: str
     Return a JSON array of strings.
     Return ONLY the JSON array.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-1.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -608,7 +608,7 @@ export async function detectPatternsAndSuggestShadowWork(
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-1.5-pro',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -755,7 +755,7 @@ Important:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-1.5-pro',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -808,6 +808,178 @@ Important:
         'Consider working with a developmental coach or therapist',
         'Read "Immunity to Change" by Kegan & Lahey'
       ]
+    };
+  }
+}
+
+// Relational Pattern Tracking - Chatbot Conversation
+export async function getRelationalPatternResponse(
+  conversationContext: string,
+  userMessage: string,
+  exploredRelationships: RelationshipContext[]
+): Promise<{
+  message: string;
+  extractedRelationship?: RelationshipContext;
+  shouldOfferAnalysis: boolean;
+}> {
+  const prompt = `You are a compassionate relational pattern guide helping someone explore how they show up in different relationships and where they're reactive.
+
+# Conversation Context
+${conversationContext}
+
+# User's Latest Message
+${userMessage}
+
+# Relationships Already Explored
+${exploredRelationships.map((r, i) => `${i + 1}. ${r.type}: ${r.pattern || 'In progress'}`).join('\n')}
+
+# Your Role
+- Ask gentle, probing questions to help them see patterns
+- Help them identify: the trigger situation, their automatic reaction, and the underlying fear/need
+- Once you have those three things for a relationship, extract the pattern and move to another relationship type
+- Guide them to explore different relationship types (romantic, parent, boss, friend, etc.)
+- Look for reactivity: withdrawal, anger, people-pleasing, defensiveness, collapse, controlling behavior
+- Be curious, not judgmental
+- Keep responses conversational and under 4 sentences
+
+# Instructions
+1. Respond to their message
+2. If they've given enough info about a relationship (trigger + reaction + fear), summarize the pattern and suggest exploring a different relationship type
+3. Ask one clear question to deepen understanding
+4. Track whether this conversation has extracted a complete relationship pattern
+
+Return JSON:
+{
+  "message": "Your conversational response",
+  "extractedRelationship": {
+    "type": "Boss/Authority" | "Romantic Partner" | etc.,
+    "personDescription": "my boss",
+    "triggerSituation": "what triggers the reaction",
+    "yourReaction": "how they react automatically",
+    "underlyingFear": "the fear or need driving it",
+    "pattern": "1-2 sentence pattern summary"
+  } | null,
+  "shouldOfferAnalysis": true if 3+ relationships explored AND user seems ready
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            message: { type: Type.STRING },
+            extractedRelationship: {
+              type: Type.OBJECT,
+              properties: {
+                type: { type: Type.STRING },
+                personDescription: { type: Type.STRING },
+                triggerSituation: { type: Type.STRING },
+                yourReaction: { type: Type.STRING },
+                underlyingFear: { type: Type.STRING },
+                pattern: { type: Type.STRING }
+              },
+              nullable: true
+            },
+            shouldOfferAnalysis: { type: Type.BOOLEAN }
+          },
+          required: ['message', 'shouldOfferAnalysis']
+        }
+      }
+    });
+
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error('Error getting relational response:', error);
+    return {
+      message: "Could you tell me more about that?",
+      shouldOfferAnalysis: false
+    };
+  }
+}
+
+// Analyze Relational Patterns Across Relationships
+export async function analyzeRelationalPatterns(
+  relationships: RelationshipContext[],
+  conversation: any[]
+): Promise<{
+  corePatterns: string[];
+  reactiveSignatures: string[];
+  relationshipSpecificPatterns: Record<string, string>;
+  developmentalHypothesis: string;
+  shadowWork: string;
+  recommendations: string[];
+}> {
+  const prompt = `Analyze relational patterns from this shadow work session.
+
+# Relationships Explored
+${relationships.map((r, i) => `
+${i + 1}. **${r.type}**${r.personDescription ? ` (${r.personDescription})` : ''}
+   - Trigger: ${r.triggerSituation}
+   - Reaction: ${r.yourReaction}
+   - Fear/Need: ${r.underlyingFear}
+   - Pattern: ${r.pattern}
+`).join('\n')}
+
+# Analysis Task
+
+Look for:
+1. **Core patterns that repeat across multiple relationships** (e.g., "fear of abandonment driving people-pleasing," "collapse when criticized")
+2. **Reactive signatures** - HOW reactivity shows up (withdrawal, anger, freeze, fawn, control, etc.)
+3. **Relationship-specific patterns** - Different behaviors in different contexts (e.g., "compliant with authority, controlling with subordinates")
+4. **Developmental hypothesis** - Where might this come from? Early attachment? Developmental trauma? Cultural conditioning?
+5. **Shadow work needed** - What's being disowned or projected?
+6. **Recommendations** - Specific practices to work with these patterns
+
+Return JSON with thoughtful, psychologically sophisticated analysis:
+{
+  "corePatterns": ["pattern 1", "pattern 2", ...],
+  "reactiveSignatures": ["how reactivity shows up 1", "how it shows up 2", ...],
+  "relationshipSpecificPatterns": {
+    "Romantic Partner": "pattern in romantic contexts",
+    "Boss/Authority": "pattern with authority figures",
+    etc.
+  },
+  "developmentalHypothesis": "2-3 sentences about developmental origins",
+  "shadowWork": "2-3 sentences about what needs integration",
+  "recommendations": ["specific practice 1", "specific practice 2", ...]
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-pro',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            corePatterns: { type: Type.ARRAY, items: { type: Type.STRING } },
+            reactiveSignatures: { type: Type.ARRAY, items: { type: Type.STRING } },
+            relationshipSpecificPatterns: { type: Type.OBJECT },
+            developmentalHypothesis: { type: Type.STRING },
+            shadowWork: { type: Type.STRING },
+            recommendations: { type: Type.ARRAY, items: { type: Type.STRING } }
+          },
+          required: ['corePatterns', 'reactiveSignatures', 'relationshipSpecificPatterns', 'developmentalHypothesis', 'shadowWork', 'recommendations']
+        }
+      }
+    });
+
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error('Error analyzing relational patterns:', error);
+    // Fallback
+    return {
+      corePatterns: ['Analysis could not be completed'],
+      reactiveSignatures: ['Please try again'],
+      relationshipSpecificPatterns: {},
+      developmentalHypothesis: 'Analysis pending',
+      shadowWork: 'Analysis pending',
+      recommendations: ['Retake the session with more detail', 'Work with a therapist or relational coach']
     };
   }
 }
