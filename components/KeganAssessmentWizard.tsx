@@ -258,7 +258,7 @@ export default function KeganAssessmentWizard({ onClose, onSave, session: draft,
         await performAnalysis();
     }
   };
-
+  
   const handleBack = () => {
     const currentStepIndex = STEPS.indexOf(currentStep);
     if (currentStepIndex > 0) {
@@ -309,7 +309,7 @@ ${session.selfReflection || 'Not yet completed'}
     setIsAnalyzing(true);
     setAnalysisError(null);
     try {
-      const interpretation = await geminiService.analyzeKeganStage(session.responses);
+      const interpretation = await geminiService.analyzeKeganStage(session.responses); 
       setSession(prev => ({
         ...prev,
         overallInterpretation: interpretation
@@ -534,7 +534,7 @@ ${session.selfReflection || 'Not yet completed'}
 
         <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-accent/30 rounded-lg p-8 text-center">
           <p className="text-sm text-slate-400 mb-2">Center of Gravity</p>
-          <h3 className={`text-4xl font-bold mb-3 ${stageColors[centerOfGravity]}`}>
+          <h3 className={`text-4xl font-bold mb-3 ${stageColors[centerOfGravity]}`}> 
             {centerOfGravity}
           </h3>
           <p className="text-sm text-slate-400">Confidence: {confidence}</p>
@@ -551,7 +551,7 @@ ${session.selfReflection || 'Not yet completed'}
             You may show different stages in different life areas. This is normal.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {Object.entries(domainVariation).map(([domain, stage]) => {
+            {Object.entries(domainVariation).map(([domain, stage]) => { 
               const Icon = domainIcons[domain as KeganDomain];
               return (
                 <div key={domain} className="bg-slate-900/50 rounded-lg p-4 flex items-center gap-3">
