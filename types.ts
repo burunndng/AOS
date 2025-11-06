@@ -361,3 +361,37 @@ export type KeganAssessmentStep =
   | 'ANALYSIS'
   | 'RESULTS'
   | 'REFLECTION';
+
+// Relational Pattern Tracking Types
+export type RelationshipType = 'Romantic Partner' | 'Parent' | 'Child' | 'Sibling' | 'Friend' | 'Boss/Authority' | 'Colleague' | 'Direct Report' | 'Stranger/Public';
+
+export interface RelationalPatternMessage {
+  role: 'user' | 'bot';
+  text: string;
+  timestamp: string;
+}
+
+export interface RelationshipContext {
+  type: RelationshipType;
+  personDescription?: string; // "my mother", "my partner Sarah", etc.
+  triggerSituation?: string;
+  yourReaction?: string;
+  underlyingFear?: string;
+  pattern?: string;
+}
+
+export interface RelationalPatternSession {
+  id: string;
+  date: string;
+  conversation: RelationalPatternMessage[];
+  relationships: RelationshipContext[];
+  analysis?: {
+    corePatterns: string[]; // Recurring themes across relationships
+    reactiveSignatures: string[]; // How reactivity shows up (withdrawal, anger, people-pleasing, etc.)
+    relationshipSpecificPatterns: Record<RelationshipType, string>; // Different patterns in different contexts
+    developmentalHypothesis: string; // Where this might come from
+    shadowWork: string; // What needs integration
+    recommendations: string[];
+  };
+  notes?: string;
+}

@@ -30,6 +30,7 @@ import PerspectiveShifterWizard from './components/PerspectiveShifterWizard.tsx'
 import PolarityMapperWizard from './components/PolarityMapperWizard.tsx';
 import SomaticGeneratorWizard from './components/SomaticGeneratorWizard.tsx';
 import KeganAssessmentWizard from './components/KeganAssessmentWizard.tsx';
+import RelationalPatternChatbot from './components/RelationalPatternChatbot.tsx';
 
 
 // Constants & Types
@@ -50,7 +51,8 @@ import {
   IntegratedInsight,
   SomaticPracticeSession,
   PolarityMapDraft, // FIX: Imported PolarityMapDraft
-  KeganAssessmentSession
+  KeganAssessmentSession,
+  RelationalPatternSession
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -101,6 +103,7 @@ export default function App() {
   // FIX: Updated draftPM to use PolarityMapDraft type.
   const [draftPM, setDraftPM] = useLocalStorage<PolarityMapDraft | null>('draftPM', null);
   const [draftKegan, setDraftKegan] = useLocalStorage<KeganAssessmentSession | null>('draftKegan', null);
+  const [draftRelational, setDraftRelational] = useLocalStorage<RelationalPatternSession | null>('draftRelational', null);
 
   // Session History
   const [history321, setHistory321] = useLocalStorage<ThreeTwoOneSession[]>('history321', []);
@@ -110,6 +113,7 @@ export default function App() {
   const [historyPS, setHistoryPS] = useLocalStorage<PerspectiveShifterSession[]>('historyPS', []);
   const [historyPM, setHistoryPM] = useLocalStorage<PolarityMap[]>('historyPM', []);
   const [historyKegan, setHistoryKegan] = useLocalStorage<KeganAssessmentSession[]>('historyKegan', []);
+  const [historyRelational, setHistoryRelational] = useLocalStorage<RelationalPatternSession[]>('historyRelational', []);
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   
@@ -319,7 +323,13 @@ export default function App() {
     setDraftKegan(null);
     setActiveWizard(null);
   };
-  
+
+  const handleSaveRelationalSession = (session: RelationalPatternSession) => {
+    setHistoryRelational(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftRelational(null);
+    setActiveWizard(null);
+  };
+
   const handleSave321Session = (session: ThreeTwoOneSession) => {
     setHistory321(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraft321(null);
@@ -438,7 +448,7 @@ export default function App() {
       case 'aqal': return <AqalTab report={aqalReport} isLoading={aiLoading} error={aiError} onGenerate={generateAqalReport} />;
       case 'mind-tools': return <MindToolsTab setActiveWizard={setActiveWizardAndLink} />;
       // FIX: Changed prop `setDraftIFSSession` to `setDraftIFS` to match the updated ShadowToolsTabProps interface.
-      case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} sessionHistory321={history321} sessionHistoryIFS={historyIFS} draft321Session={draft321} draftIFSSession={draftIFS} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;
+      case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} draft321Session={draft321} draftIFSSession={draftIFS} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;
       case 'body-tools': return <BodyToolsTab setActiveWizard={setActiveWizardAndLink} />; // NEW: BodyToolsTab
       case 'library': return <LibraryTab />;
       default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} integratedInsights={integratedInsights} markInsightAsAddressed={markInsightAsAddressed} setActiveWizard={setActiveWizardAndLink} />;
@@ -479,6 +489,7 @@ export default function App() {
       {activeWizard === 'ps' && <PerspectiveShifterWizard onClose={() => setActiveWizard(null)} onSave={handleSavePSSession} session={draftPS} setDraft={setDraftPS} />}
       {activeWizard === 'pm' && <PolarityMapperWizard onClose={() => setActiveWizard(null)} onSave={handleSavePMSession} draft={draftPM} setDraft={setDraftPM} />}
       {activeWizard === 'kegan' && <KeganAssessmentWizard onClose={() => setActiveWizard(null)} onSave={handleSaveKeganSession} session={draftKegan} setDraft={setDraftKegan} />}
+      {activeWizard === 'relational' && <RelationalPatternChatbot onClose={() => setActiveWizard(null)} onSave={handleSaveRelationalSession} session={draftRelational} setDraft={setDraftRelational} />}
       {activeWizard === 'somatic' && <SomaticGeneratorWizard onClose={() => setActiveWizard(null)} onSave={handleSaveSomaticPractice} />}
     </div>
   );
