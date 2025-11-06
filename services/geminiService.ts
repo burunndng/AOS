@@ -53,7 +53,7 @@ export async function populateCustomPractice(practiceName: string): Promise<{ de
     Return ONLY the JSON object.`;
     
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -133,7 +133,7 @@ export async function generatePracticeScript(userPrompt: string): Promise<{ titl
 
     // FIX: Use `gemini-2.5-pro` for complex JSON generation and define the response schema correctly.
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -284,7 +284,7 @@ export async function summarizeIFSSession(transcript: string, partInfo: { role: 
     Return a JSON object with keys: "summary" (string) and "aiIndications" (array of strings).
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -342,7 +342,7 @@ export async function generateAqalReport(context: string): Promise<AqalReportDat
     Return ONLY the JSON object.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -381,7 +381,7 @@ export async function generatePracticeResearch(goal: string): Promise<{ why: str
     Return a JSON object with keys: "why" (string), "evidence" (string), and "roi" ('HIGH', 'VERY HIGH', or 'EXTREME').
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -409,7 +409,7 @@ export async function generatePracticeStructure(goal: string, why: string, timeP
     Return a JSON object with these keys.
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -435,7 +435,7 @@ export async function generateShadowPatternInsights(pattern: string): Promise<{ 
     Return a JSON object with keys: "origin" (string) and "framework" (string).
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -461,7 +461,7 @@ export async function generateShadowWorkStructure(pattern: string, origin: strin
     Return a JSON object with these keys.
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -512,7 +512,7 @@ export async function generateSpiritualPracticeStructure(aspiration: string, tra
     Return a JSON object with these keys.
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -543,7 +543,7 @@ export async function refinePractice(name: string, description: string, why: str
     Return a JSON array of strings.
     Return ONLY the JSON array.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-pro',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -608,7 +608,7 @@ export async function detectPatternsAndSuggestShadowWork(
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
+      model: 'gemini-2.5-pro',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -1334,7 +1334,7 @@ Return JSON with thoughtful, psychologically sophisticated analysis:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-pro',
+      model: 'gemini-2.5-pro',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
