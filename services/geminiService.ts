@@ -131,7 +131,7 @@ export async function generatePracticeScript(userPrompt: string): Promise<{ titl
     
     Return ONLY the JSON object.`;
 
-    // FIX: Use `gemini-2.5-pro` for complex JSON generation and define the response schema correctly.
+    // FIX: Use `gemini-2.5-flash` for complex JSON generation and define the response schema correctly.
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-pro',
         contents: prompt,
@@ -251,7 +251,7 @@ export async function extractPartInfo(transcript: string): Promise<{ role: strin
     Be concise.
     Return ONLY the JSON object.`;
      const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -486,7 +486,7 @@ export async function generateSpiritualContext(aspiration: string): Promise<{ tr
     Return a JSON object with keys: "tradition" (string) and "teachings" (string).
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-pro',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
