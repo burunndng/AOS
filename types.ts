@@ -397,7 +397,9 @@ export interface RelationalPatternSession {
 }
 
 // Jhana/Samadhi Tracking Types
-export type JhanaLevel = '1st Jhana' | '2nd Jhana' | '3rd Jhana' | '4th Jhana' | '5th Jhana' | '6th Jhana' | '7th Jhana' | '8th Jhana' | 'Access Concentration' | 'Momentary Concentration';
+export type JhanaLevel = '1st Jhana' | '2nd Jhana' | '3rd Jhana' | '4th Jhana' | '5th Jhana' | '6th Jhana' | '7th Jhana' | '8th Jhana' | 'Access Concentration' | 'Momentary Concentration' | 'Just Practicing' | 'Not Sure';
+
+export type MeditationType = 'Samatha (Concentration)' | 'Vipassana (Insight)' | 'Metta (Loving-Kindness)' | 'Mixed/Other';
 
 export interface JhanaFactor {
   name: string;
@@ -411,10 +413,12 @@ export type NimittaType = 'Visual Light' | 'Tactile Sensation' | 'Auditory' | 'W
 export interface JhanaSession {
   id: string;
   date: string;
+  meditationType: MeditationType;
   practice: string; // What meditation practice
   duration: number; // minutes
   jhanaLevel: JhanaLevel;
   timeInState: number; // minutes in jhana/absorption
+  isBeginnerMode?: boolean;
 
   // Five Jhana Factors (for 1st-4th)
   factors: {

@@ -1,73 +1,163 @@
 import React, { useState } from 'react';
-import { JhanaSession, JhanaLevel, JhanaFactor, NimittaType } from '../types.ts';
-import { X, ArrowRight, Info, Sparkles, Download } from 'lucide-react';
+import { JhanaSession, JhanaLevel, JhanaFactor, NimittaType, MeditationType } from '../types.ts';
+import { X, ArrowRight, Info, Sparkles, Download, HelpCircle, Lightbulb, AlertCircle } from 'lucide-react';
 
 interface JhanaTrackerProps {
   onClose: () => void;
   onSave: (session: JhanaSession) => void;
 }
 
-const JHANA_INFO: Record<JhanaLevel, { description: string; markers: string[] }> = {
+const MEDITATION_TYPE_INFO: Record<MeditationType, { description: string; focus: string; tips: string[] }> = {
+  'Samatha (Concentration)': {
+    description: 'Concentration practice developing sustained attention and jhana states.',
+    focus: 'Single-pointed focus on one object (breath, kasina, mantra)',
+    tips: [
+      'Stay with one object the whole session',
+      'Let the mind gather naturally - don\'t force',
+      'Jhanas arise when concentration deepens',
+      'Notice joy, happiness, and stillness building'
+    ]
+  },
+  'Vipassana (Insight)': {
+    description: 'Insight practice investigating the nature of experience.',
+    focus: 'Observing changing phenomena, impermanence, patterns',
+    tips: [
+      'Note what arises and passes',
+      'Concentration supports but isn\'t the goal',
+      'Momentary concentration is common here',
+      'Look for impermanence, unsatisfactoriness, non-self'
+    ]
+  },
+  'Metta (Loving-Kindness)': {
+    description: 'Heart practice cultivating unconditional goodwill.',
+    focus: 'Generating warm feelings toward self and others',
+    tips: [
+      'Start with someone easy to love',
+      'Use phrases or feelings that work for you',
+      'Can develop deep concentration and joy',
+      'Piti (joy) often very strong in metta practice'
+    ]
+  },
+  'Mixed/Other': {
+    description: 'Combination of practices or other meditation styles.',
+    focus: 'Your unique approach',
+    tips: [
+      'Track what actually happens in your practice',
+      'No wrong answers - be honest about your experience',
+      'Different practices develop different states'
+    ]
+  }
+};
+
+const JHANA_INFO: Record<JhanaLevel, { description: string; markers: string[]; beginnerNote?: string }> = {
+  'Just Practicing': {
+    description: 'Regular meditation without deep absorption states. This is completely normal and valuable!',
+    markers: ['Mind somewhat settled', 'Some periods of focus', 'Maybe some pleasant sensations', 'Still experiencing thoughts'],
+    beginnerNote: 'Most meditation sessions are like this. Building consistency matters more than states.'
+  },
+  'Not Sure': {
+    description: 'You experienced something but aren\'t sure what to call it. That\'s okay!',
+    markers: ['Something felt different', 'More concentrated than usual', 'Unusual experiences', 'Hard to describe'],
+    beginnerNote: 'Concentration develops gradually. Keep practicing and the signs will become clearer.'
+  },
   'Access Concentration': {
-    description: 'The threshold state before jhana. Mind is relatively stable, hindrances are suppressed, nimitta may appear.',
-    markers: ['Hindrances quieted', 'Sense of gathering/unification beginning', 'Breath becomes subtle', 'Pleasant sensations arising']
+    description: 'The threshold before jhana. Mind is stable, hindrances quieted, pleasant sensations.',
+    markers: ['Hindrances quieted', 'Mind gathering', 'Breath very subtle', 'Pleasant feelings building'],
+    beginnerNote: 'This is the doorway! With more practice, jhana becomes accessible from here.'
   },
   'Momentary Concentration': {
-    description: 'Brief moments of strong concentration during insight practice, not sustained absorption.',
-    markers: ['Flashes of clarity', 'Momentary stillness', 'Brief perceptual shifts', 'Not sustained']
+    description: 'Brief moments of strong focus during insight practice.',
+    markers: ['Flashes of clarity', 'Momentary stillness', 'Brief but strong', 'Not sustained'],
+    beginnerNote: 'Common in vipassana. Supports seeing clearly even without sustained jhana.'
   },
   '1st Jhana': {
-    description: 'Sustained absorption with all five factors present. Characterized by thinking about the object, joy (piti), and happiness (sukha).',
-    markers: ['Applied & sustained attention to object', 'Piti (energetic joy, tingling, waves)', 'Sukha (contentment, ease)', 'Unification (one-pointed)', 'Can still think/reflect']
+    description: 'Sustained absorption with joy, happiness, and some thinking still present.',
+    markers: ['Mind locked on object', 'Strong joy/tingling', 'Deep contentment', 'Can still think', 'Feels effortless'],
+    beginnerNote: 'First real jhana! The mind has unified. This is a significant milestone.'
   },
   '2nd Jhana': {
-    description: 'Thinking drops away. Stronger unification with piti and sukha. More absorbed, less doing.',
-    markers: ['No more applied/sustained thought', 'Piti and sukha increase', 'Greater ease and confidence', 'Mind very bright', 'Less effort needed']
+    description: 'Thinking drops away. Stronger absorption with joy and happiness.',
+    markers: ['No more thinking', 'Joy intensifies', 'Mind very bright', 'Even less effort', 'Deep confidence'],
+    beginnerNote: 'Deeper than 1st jhana. The mental chatter has stopped.'
   },
   '3rd Jhana': {
-    description: 'Energetic piti fades, leaving pure contentment (sukha). Equanimous happiness.',
-    markers: ['Piti subsides', 'Deep contentment remains', 'Equanimity begins', 'Very refined pleasure', 'Profoundly peaceful']
+    description: 'Energetic joy fades, leaving pure contentment and equanimity.',
+    markers: ['Joy subsides', 'Pure contentment', 'Equanimity grows', 'Refined pleasure', 'Profound peace'],
+    beginnerNote: 'Calmer than 2nd jhana. The excitement settles into deep peace.'
   },
   '4th Jhana': {
-    description: 'Even sukha fades into pure equanimity. Effortless, spacious, neutral-toned absorption.',
-    markers: ['Neither pleasant nor unpleasant', 'Perfect equanimity', 'Total ease', 'Mind extremely refined', 'Minimal body sensation']
+    description: 'Pure equanimity. Neither pleasant nor unpleasant. Perfectly balanced.',
+    markers: ['No joy or pleasure', 'Perfect equanimity', 'Effortless ease', 'Mind very refined', 'Body barely felt'],
+    beginnerNote: 'The deepest of the material jhanas. Extremely subtle and balanced.'
   },
   '5th Jhana': {
-    description: 'Infinite Space - perception of boundless space after dropping attention to material form.',
-    markers: ['Boundless space', 'No form perception', 'Vast openness', 'Spacious awareness']
+    description: 'Infinite Space - boundless spatial awareness.',
+    markers: ['Boundless space', 'No solid form', 'Vast openness'],
+    beginnerNote: 'First formless jhana. Usually requires mastery of 4th jhana first.'
   },
   '6th Jhana': {
-    description: 'Infinite Consciousness - awareness aware of itself, boundless knowing.',
-    markers: ['Boundless consciousness', 'Aware of awareness', 'No space, just knowing', 'Very refined']
+    description: 'Infinite Consciousness - awareness of boundless knowing.',
+    markers: ['Pure consciousness', 'Aware of awareness', 'No space, just knowing'],
+    beginnerNote: 'Very refined formless state. Consciousness without objects.'
   },
   '7th Jhana': {
-    description: 'Nothingness - perception that there is nothing, no thing-ness.',
-    markers: ['Perception of nothingness', 'Absence', 'Very subtle', 'Neither something nor nothing clearly']
+    description: 'Nothingness - perception of nothing.',
+    markers: ['Nothingness', 'Absence', 'Very subtle'],
+    beginnerNote: 'Extremely subtle formless jhana.'
   },
   '8th Jhana': {
-    description: 'Neither Perception Nor Non-Perception - the most refined material state, nearly imperceptible.',
-    markers: ['Extremely subtle', 'Hard to describe', 'Perception barely present', 'At the edge of cessation']
+    description: 'Neither Perception Nor Non-Perception - the most refined state.',
+    markers: ['Almost imperceptible', 'Barely there', 'At edge of cessation'],
+    beginnerNote: 'The subtlest concentration state before cessation.'
   }
 };
 
 const FACTOR_EXPLANATIONS = {
-  appliedAttention: 'Vitakka - Directing attention to the meditation object. The initial placement of mind.',
-  sustainedAttention: 'Vicara - Keeping attention on the object. Rubbing, sustaining contact.',
-  joy: 'Piti - Energetic joy. Can feel like tingling, waves, rapture, energy flowing through body.',
-  happiness: 'Sukha - Contentment, ease, bliss. Softer than piti, more like deep satisfaction.',
-  unification: 'Ekaggata - One-pointedness. Mind collected, undistracted, absorbed in object.'
+  appliedAttention: {
+    pali: 'Vitakka',
+    simple: 'Directing attention',
+    full: 'The initial placement of mind on the meditation object. Like hitting a nail with a hammer.',
+    example: 'Finding the breath and putting attention on it'
+  },
+  sustainedAttention: {
+    pali: 'Vicara',
+    simple: 'Staying with it',
+    full: 'Keeping attention on the object. Like rubbing the head of the nail.',
+    example: 'Staying with the breath, feeling each sensation'
+  },
+  joy: {
+    pali: 'Piti',
+    simple: 'Energetic joy',
+    full: 'Energetic excitement, rapture. Can be subtle or overwhelming.',
+    example: 'Tingling, waves of energy, goosebumps, feeling uplifted'
+  },
+  happiness: {
+    pali: 'Sukha',
+    simple: 'Contentment',
+    full: 'Ease, bliss, satisfaction. Softer than piti.',
+    example: 'Feeling content, at ease, deeply satisfied'
+  },
+  unification: {
+    pali: 'Ekaggata',
+    simple: 'One-pointedness',
+    full: 'Mind collected, undistracted, absorbed in the object.',
+    example: 'Mind very steady, not wandering, locked in'
+  }
 };
 
 export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
-  const [step, setStep] = useState<'basic' | 'jhana' | 'factors' | 'nimitta' | 'phenomenology' | 'notes'>('basic');
+  const [step, setStep] = useState<'type' | 'basic' | 'jhana' | 'factors' | 'nimitta' | 'phenomenology' | 'notes'>('type');
+  const [beginnerMode, setBeginnerMode] = useState(true);
 
   const [session, setSession] = useState<JhanaSession>({
     id: `jhana-${Date.now()}`,
     date: new Date().toISOString(),
+    meditationType: 'Samatha (Concentration)',
     practice: '',
     duration: 30,
-    jhanaLevel: '1st Jhana',
-    timeInState: 5,
+    jhanaLevel: 'Just Practicing',
+    timeInState: 0,
+    isBeginnerMode: true,
     factors: {
       appliedAttention: { name: 'Applied Attention (Vitakka)', present: false, intensity: 5 },
       sustainedAttention: { name: 'Sustained Attention (Vicara)', present: false, intensity: 5 },
@@ -79,6 +169,8 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
     bodyExperience: '',
     mindQuality: ''
   });
+
+  const [showHelp, setShowHelp] = useState<string | null>(null);
 
   const updateFactor = (key: keyof typeof session.factors, updates: Partial<JhanaFactor>) => {
     setSession(prev => ({
@@ -96,27 +188,101 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
     return true;
   };
 
+  const getProactiveTip = () => {
+    // Proactive suggestions based on current state
+    if (step === 'jhana' && session.jhanaLevel === 'Just Practicing') {
+      return 'Remember: Most sessions are just practice! Building consistency is what matters.';
+    }
+    if (step === 'factors' && !Object.values(session.factors).some(f => f.present)) {
+      return 'If none of these factors were strong, that\'s okay! You might have been in "Just Practicing" mode.';
+    }
+    if (step === 'phenomenology' && session.meditationType === 'Vipassana (Insight)') {
+      return 'In vipassana, notice what arose and passed. Did you see impermanence clearly?';
+    }
+    return null;
+  };
+
   const handleSave = () => {
-    onSave(session);
+    onSave({ ...session, isBeginnerMode: beginnerMode });
     onClose();
   };
+
+  const renderMeditationType = () => (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-slate-100">What type of meditation?</h2>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={beginnerMode}
+              onChange={(e) => {
+                setBeginnerMode(e.target.checked);
+                setSession(prev => ({ ...prev, isBeginnerMode: e.target.checked }));
+              }}
+              className="w-4 h-4 rounded border-slate-600 text-accent focus:ring-accent/50"
+            />
+            <span className="text-slate-300">Beginner mode (simpler language)</span>
+          </label>
+        </div>
+        <p className="text-slate-400 text-sm mb-6">This helps us give you relevant guidance.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {(Object.keys(MEDITATION_TYPE_INFO) as MeditationType[]).map(type => (
+          <button
+            key={type}
+            onClick={() => setSession(prev => ({ ...prev, meditationType: type }))}
+            className={`text-left p-5 rounded-lg border-2 transition ${
+              session.meditationType === type
+                ? 'border-accent bg-accent/10'
+                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+            }`}
+          >
+            <h3 className="font-bold text-slate-100 mb-2">{type}</h3>
+            <p className="text-sm text-slate-400 mb-3">{MEDITATION_TYPE_INFO[type].description}</p>
+            <p className="text-xs text-slate-500"><strong>Focus:</strong> {MEDITATION_TYPE_INFO[type].focus}</p>
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <Lightbulb size={20} className="text-blue-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <h4 className="font-semibold text-blue-300 mb-2">Tips for {session.meditationType}</h4>
+            <ul className="text-sm text-slate-300 space-y-1">
+              {MEDITATION_TYPE_INFO[session.meditationType].tips.map((tip, i) => (
+                <li key={i}>• {tip}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   const renderBasic = () => (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-slate-100 mb-2">Meditation Session Details</h2>
-        <p className="text-slate-400 text-sm">Start by logging the basics of your sit.</p>
+        <h2 className="text-2xl font-bold text-slate-100 mb-2">Session Details</h2>
+        <p className="text-slate-400 text-sm">Tell us about your sit.</p>
       </div>
 
       <div>
         <label className="block text-sm font-semibold text-slate-200 mb-2">
-          What practice were you doing?
+          {beginnerMode ? 'What were you doing?' : 'Specific practice/technique'}
         </label>
         <input
           type="text"
           value={session.practice}
           onChange={(e) => setSession(prev => ({ ...prev, practice: e.target.value }))}
-          placeholder="e.g., Breath meditation, Metta, Kasina, Body scanning..."
+          placeholder={
+            session.meditationType === 'Samatha (Concentration)' ? 'e.g., Breath at nose, Kasina, Body scanning' :
+            session.meditationType === 'Metta (Loving-Kindness)' ? 'e.g., Metta phrases, Heart opening' :
+            session.meditationType === 'Vipassana (Insight)' ? 'e.g., Noting, Body scan, Choiceless awareness' :
+            'e.g., Breath meditation'
+          }
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
         />
       </div>
@@ -124,7 +290,7 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-semibold text-slate-200 mb-2">
-            Total Duration (minutes)
+            {beginnerMode ? 'How long did you sit?' : 'Total duration'} (minutes)
           </label>
           <input
             type="number"
@@ -135,7 +301,13 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-200 mb-2">
-            Time in Jhana/Absorption (minutes)
+            {beginnerMode ? 'Time in deep state' : 'Time in jhana/absorption'} (min)
+            <button
+              onClick={() => setShowHelp('timeInState')}
+              className="ml-2 text-slate-500 hover:text-slate-300"
+            >
+              <HelpCircle size={14} className="inline" />
+            </button>
           </label>
           <input
             type="number"
@@ -143,56 +315,97 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
             onChange={(e) => setSession(prev => ({ ...prev, timeInState: parseInt(e.target.value) || 0 }))}
             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
+          {showHelp === 'timeInState' && (
+            <p className="text-xs text-slate-400 mt-2">
+              How long you were in a deeper state (if any). Put 0 if you were just practicing normally.
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
 
-  const renderJhanaSelection = () => (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-100 mb-2">Which Jhana/State?</h2>
-        <p className="text-slate-400 text-sm">Select the deepest state you reached. Hover for details.</p>
-      </div>
+  const renderJhanaSelection = () => {
+    const tip = getProactiveTip();
+    const relevantLevels: JhanaLevel[] = beginnerMode
+      ? ['Just Practicing', 'Not Sure', 'Access Concentration', '1st Jhana', '2nd Jhana', '3rd Jhana', '4th Jhana']
+      : Object.keys(JHANA_INFO) as JhanaLevel[];
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {(Object.keys(JHANA_INFO) as JhanaLevel[]).map(jhana => (
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">
+            {beginnerMode ? 'How was your meditation?' : 'Which state did you reach?'}
+          </h2>
+          <p className="text-slate-400 text-sm">
+            {beginnerMode ? 'Be honest - most sessions are just practice!' : 'Select the deepest state you reached.'}
+          </p>
+        </div>
+
+        {tip && (
+          <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4 flex items-start gap-3">
+            <Lightbulb size={20} className="text-blue-400 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-slate-300">{tip}</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-2">
+          {relevantLevels.map(jhana => (
+            <button
+              key={jhana}
+              onClick={() => setSession(prev => ({ ...prev, jhanaLevel: jhana }))}
+              className={`text-left p-4 rounded-lg border-2 transition group ${
+                session.jhanaLevel === jhana
+                  ? 'border-accent bg-accent/10'
+                  : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+              }`}
+            >
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-bold text-slate-100">{jhana}</h3>
+                <Info size={16} className="text-slate-500 group-hover:text-accent transition flex-shrink-0 ml-2" />
+              </div>
+              <p className="text-xs text-slate-400 mb-2">{JHANA_INFO[jhana].description}</p>
+              {beginnerMode && JHANA_INFO[jhana].beginnerNote && (
+                <p className="text-xs text-blue-400 mb-2">💡 {JHANA_INFO[jhana].beginnerNote}</p>
+              )}
+              <ul className="text-xs text-slate-500 space-y-1">
+                {JHANA_INFO[jhana].markers.slice(0, beginnerMode ? 3 : 4).map((marker, i) => (
+                  <li key={i}>• {marker}</li>
+                ))}
+              </ul>
+            </button>
+          ))}
+        </div>
+
+        {!beginnerMode && (
           <button
-            key={jhana}
-            onClick={() => setSession(prev => ({ ...prev, jhanaLevel: jhana }))}
-            className={`text-left p-4 rounded-lg border-2 transition group ${
-              session.jhanaLevel === jhana
-                ? 'border-accent bg-accent/10'
-                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-            }`}
+            onClick={() => setBeginnerMode(true)}
+            className="text-sm text-slate-400 hover:text-slate-300 flex items-center gap-2"
           >
-            <div className="flex items-start justify-between">
-              <h3 className="font-bold text-slate-100">{jhana}</h3>
-              <Info size={16} className="text-slate-500 group-hover:text-accent transition" />
-            </div>
-            <p className="text-xs text-slate-400 mt-1">{JHANA_INFO[jhana].description}</p>
-            <ul className="text-xs text-slate-500 mt-2 space-y-1">
-              {JHANA_INFO[jhana].markers.map((marker, i) => (
-                <li key={i}>• {marker}</li>
-              ))}
-            </ul>
+            <AlertCircle size={16} />
+            Feeling overwhelmed? Switch to beginner mode
           </button>
-        ))}
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderFactors = () => {
     const relevantFactors = ['1st Jhana', '2nd Jhana', '3rd Jhana', '4th Jhana'].includes(session.jhanaLevel);
+    const tip = getProactiveTip();
 
     if (!relevantFactors) {
+      const message = session.jhanaLevel === 'Just Practicing'
+        ? 'These factors apply when you reach jhana states. For regular practice, skip to the next step!'
+        : session.jhanaLevel === 'Not Sure'
+        ? 'If you\'re not sure about these factors, that\'s okay! Skip ahead or mark what you noticed.'
+        : 'The five jhana factors apply mainly to the first four jhanas. The formless states (5-8) work differently.';
+
       return (
         <div className="space-y-6 animate-fade-in">
           <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-6 text-center">
             <Info size={32} className="mx-auto text-blue-400 mb-3" />
-            <p className="text-slate-300">
-              The five jhana factors apply primarily to the first four jhanas. The formless jhanas (5-8) are characterized differently.
-            </p>
+            <p className="text-slate-300">{message}</p>
           </div>
         </div>
       );
@@ -201,9 +414,23 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
     return (
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h2 className="text-2xl font-bold text-slate-100 mb-2">The Five Jhana Factors</h2>
-          <p className="text-slate-400 text-sm">Rate the presence and intensity of each factor in your {session.jhanaLevel}.</p>
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">
+            {beginnerMode ? 'What did you notice?' : 'The Five Jhana Factors'}
+          </h2>
+          <p className="text-slate-400 text-sm">
+            {beginnerMode
+              ? 'Check what was present in your meditation. Don\'t worry if you\'re not sure!'
+              : 'Rate the presence and intensity of each factor.'
+            }
+          </p>
         </div>
+
+        {tip && (
+          <div className="bg-amber-900/20 border border-amber-700/50 rounded-lg p-4 flex items-start gap-3">
+            <AlertCircle size={20} className="text-amber-400 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-slate-300">{tip}</p>
+          </div>
+        )}
 
         {(Object.keys(session.factors) as Array<keyof typeof session.factors>).map(key => {
           const factor = session.factors[key];
@@ -219,16 +446,33 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
                   className="mt-1 w-5 h-5 rounded border-slate-600 text-accent focus:ring-accent/50"
                 />
                 <div className="flex-1">
-                  <h3 className="font-bold text-slate-100">{factor.name}</h3>
-                  <p className="text-xs text-slate-400 mt-1">{explanation}</p>
+                  <h3 className="font-bold text-slate-100">
+                    {beginnerMode ? explanation.simple : `${explanation.simple} (${explanation.pali})`}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {beginnerMode ? explanation.example : explanation.full}
+                  </p>
                 </div>
+                <button
+                  onClick={() => setShowHelp(showHelp === key ? null : key)}
+                  className="text-slate-500 hover:text-slate-300 flex-shrink-0"
+                >
+                  <HelpCircle size={16} />
+                </button>
               </div>
+
+              {showHelp === key && (
+                <div className="ml-8 mb-3 p-3 bg-blue-900/20 border border-blue-700/50 rounded text-xs text-slate-300">
+                  <p className="mb-1"><strong>Full explanation:</strong> {explanation.full}</p>
+                  <p><strong>Example:</strong> {explanation.example}</p>
+                </div>
+              )}
 
               {factor.present && (
                 <div className="ml-8 space-y-3 animate-fade-in">
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-slate-300">Intensity</span>
+                      <span className="text-slate-300">{beginnerMode ? 'How strong?' : 'Intensity'}</span>
                       <span className="text-accent font-semibold">{factor.intensity}/10</span>
                     </div>
                     <input
@@ -244,7 +488,7 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
                     type="text"
                     value={factor.notes || ''}
                     onChange={(e) => updateFactor(key, { notes: e.target.value })}
-                    placeholder="Any specific notes about this factor?"
+                    placeholder="Any specific notes? (optional)"
                     className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-accent/50"
                   />
                 </div>
@@ -259,8 +503,15 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
   const renderNimitta = () => (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-slate-100 mb-2">Nimitta (Sign)</h2>
-        <p className="text-slate-400 text-sm">The nimitta is a mental image/sensation that can arise as concentration deepens.</p>
+        <h2 className="text-2xl font-bold text-slate-100 mb-2">
+          {beginnerMode ? 'Did you see or feel anything unusual?' : 'Nimitta (Sign)'}
+        </h2>
+        <p className="text-slate-400 text-sm">
+          {beginnerMode
+            ? 'Sometimes lights, sensations, or images appear when concentrating. This is normal!'
+            : 'The nimitta is a mental image/sensation that arises as concentration deepens.'
+          }
+        </p>
       </div>
 
       <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-5">
@@ -271,41 +522,48 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
             onChange={(e) => setSession(prev => ({ ...prev, nimittaPresent: e.target.checked }))}
             className="w-5 h-5 rounded border-slate-600 text-accent focus:ring-accent/50"
           />
-          <span className="font-semibold text-slate-100">A nimitta was present</span>
+          <span className="font-semibold text-slate-100">
+            {beginnerMode ? 'Yes, I noticed something' : 'A nimitta was present'}
+          </span>
         </label>
       </div>
 
       {session.nimittaPresent && (
         <div className="space-y-4 animate-fade-in">
           <div>
-            <label className="block text-sm font-semibold text-slate-200 mb-2">Type of Nimitta</label>
+            <label className="block text-sm font-semibold text-slate-200 mb-2">
+              {beginnerMode ? 'What kind?' : 'Type of nimitta'}
+            </label>
             <select
               value={session.nimittaType || 'Visual Light'}
               onChange={(e) => setSession(prev => ({ ...prev, nimittaType: e.target.value as NimittaType }))}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent/50"
             >
-              <option value="Visual Light">Visual Light (bright spot, color, glow)</option>
-              <option value="Tactile Sensation">Tactile Sensation (pressure, tingling, warmth)</option>
-              <option value="Auditory">Auditory (internal sound)</option>
-              <option value="Whole-Body">Whole-Body (suffused sensation)</option>
-              <option value="Spatial">Spatial (sense of space/openness)</option>
-              <option value="Other">Other</option>
+              <option value="Visual Light">Light or color</option>
+              <option value="Tactile Sensation">Pressure, tingling, warmth</option>
+              <option value="Auditory">Sound or vibration</option>
+              <option value="Whole-Body">Whole body sensation</option>
+              <option value="Spatial">Sense of space or openness</option>
+              <option value="Other">Something else</option>
+              <option value="None Yet">Nothing specific yet</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-200 mb-2">Describe the Nimitta</label>
+            <label className="block text-sm font-semibold text-slate-200 mb-2">
+              {beginnerMode ? 'Can you describe it?' : 'Describe the nimitta'}
+            </label>
             <textarea
               value={session.nimittaDescription || ''}
               onChange={(e) => setSession(prev => ({ ...prev, nimittaDescription: e.target.value }))}
-              placeholder="What did it look/feel like? How did it change?"
+              placeholder={beginnerMode ? 'What did you see, feel, or experience?' : 'What did it look/feel like? How did it change?'}
               className="w-full h-24 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
             />
           </div>
 
           <div>
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-slate-300">Stability (how steady was it?)</span>
+              <span className="text-slate-300">{beginnerMode ? 'How steady was it?' : 'Stability'}</span>
               <span className="text-accent font-semibold">{session.nimittaStability || 5}/10</span>
             </div>
             <input
@@ -316,116 +574,146 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
               onChange={(e) => setSession(prev => ({ ...prev, nimittaStability: parseInt(e.target.value) }))}
               className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-accent"
             />
+            <div className="flex justify-between text-xs text-slate-500 mt-1">
+              <span>Very flickering</span>
+              <span>Rock solid</span>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 
-  const renderPhenomenology = () => (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-100 mb-2">Phenomenology</h2>
-        <p className="text-slate-400 text-sm">Describe the direct experience of body and mind.</p>
-      </div>
+  const renderPhenomenology = () => {
+    const tip = getProactiveTip();
 
-      <div>
-        <label className="block text-sm font-semibold text-slate-200 mb-2">
-          Body Experience
-        </label>
-        <textarea
-          value={session.bodyExperience}
-          onChange={(e) => setSession(prev => ({ ...prev, bodyExperience: e.target.value }))}
-          placeholder="How did the body feel? Dissolved? Heavy? Light? Tingling? Still?"
-          className="w-full h-24 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
-        />
-      </div>
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-2">
+            {beginnerMode ? 'How did it feel?' : 'Phenomenology'}
+          </h2>
+          <p className="text-slate-400 text-sm">
+            {beginnerMode ? 'Describe what you actually experienced.' : 'Describe the direct experience of body and mind.'}
+          </p>
+        </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-slate-200 mb-2">
-          Mind Quality
-        </label>
-        <textarea
-          value={session.mindQuality}
-          onChange={(e) => setSession(prev => ({ ...prev, mindQuality: e.target.value }))}
-          placeholder="Bright? Stable? Spacious? Dull? Restless? Unified?"
-          className="w-full h-24 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
-        />
-      </div>
+        {tip && (
+          <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4 flex items-start gap-3">
+            <Lightbulb size={20} className="text-blue-400 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-slate-300">{tip}</p>
+          </div>
+        )}
 
-      <div>
-        <label className="block text-sm font-semibold text-slate-200 mb-2">
-          Hindrances Encountered (optional)
-        </label>
-        <input
-          type="text"
-          value={session.hindrances?.join(', ') || ''}
-          onChange={(e) => setSession(prev => ({ ...prev, hindrances: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
-          placeholder="e.g., restlessness, doubt, drowsiness..."
-          className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
-        />
+        <div>
+          <label className="block text-sm font-semibold text-slate-200 mb-2">
+            {beginnerMode ? 'Body sensations' : 'Body experience'}
+          </label>
+          <textarea
+            value={session.bodyExperience}
+            onChange={(e) => setSession(prev => ({ ...prev, bodyExperience: e.target.value }))}
+            placeholder={beginnerMode ? 'Heavy? Light? Tingling? Dissolved? Relaxed?' : 'How did the body feel? Dissolved? Heavy? Light? Tingling? Still?'}
+            className="w-full h-24 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-200 mb-2">
+            {beginnerMode ? 'Mind quality' : 'Quality of mind'}
+          </label>
+          <textarea
+            value={session.mindQuality}
+            onChange={(e) => setSession(prev => ({ ...prev, mindQuality: e.target.value }))}
+            placeholder={beginnerMode ? 'Clear? Foggy? Calm? Busy? Bright?' : 'Bright? Stable? Spacious? Dull? Restless? Unified?'}
+            className="w-full h-24 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-200 mb-2">
+            {beginnerMode ? 'Any difficulties?' : 'Hindrances encountered'} (optional)
+          </label>
+          <input
+            type="text"
+            value={session.hindrances?.join(', ') || ''}
+            onChange={(e) => setSession(prev => ({ ...prev, hindrances: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+            placeholder={beginnerMode ? 'Sleepy, distracted, restless, doubting...' : 'e.g., restlessness, doubt, drowsiness...'}
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderNotes = () => (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="text-2xl font-bold text-slate-100 mb-2">Progress Notes</h2>
-        <p className="text-slate-400 text-sm">Reflect on this session in context of your practice.</p>
+        <h2 className="text-2xl font-bold text-slate-100 mb-2">
+          {beginnerMode ? 'Final reflections' : 'Progress notes'}
+        </h2>
+        <p className="text-slate-400 text-sm">
+          {beginnerMode ? 'Any thoughts about this session? (All optional)' : 'Reflect on this session in context of your practice.'}
+        </p>
       </div>
 
       <div>
         <label className="block text-sm font-semibold text-slate-200 mb-2">
-          Comparison to Previous Sits
+          {beginnerMode ? 'Compared to other sessions' : 'Comparison to previous sits'}
         </label>
         <textarea
           value={session.comparison || ''}
           onChange={(e) => setSession(prev => ({ ...prev, comparison: e.target.value }))}
-          placeholder="How does this compare to recent meditation sessions? Deeper? Shallower? Different quality?"
+          placeholder={beginnerMode ? 'Better? Worse? Different somehow?' : 'Deeper? Shallower? Different quality?'}
           className="w-full h-20 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
         />
       </div>
 
       <div>
         <label className="block text-sm font-semibold text-slate-200 mb-2">
-          Insights or Realizations
+          {beginnerMode ? 'Any insights or realizations' : 'Insights or realizations'}
         </label>
         <textarea
           value={session.insights || ''}
           onChange={(e) => setSession(prev => ({ ...prev, insights: e.target.value }))}
-          placeholder="Any insights about the practice, the mind, or the nature of experience?"
+          placeholder={beginnerMode ? 'Did you understand something about your mind or experience?' : 'Any insights about the practice, mind, or nature of experience?'}
           className="w-full h-20 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
         />
       </div>
 
       <div>
         <label className="block text-sm font-semibold text-slate-200 mb-2">
-          Difficulties or Challenges
+          {beginnerMode ? 'What was hard' : 'Difficulties or challenges'}
         </label>
         <textarea
           value={session.difficulties || ''}
           onChange={(e) => setSession(prev => ({ ...prev, difficulties: e.target.value }))}
-          placeholder="What was difficult? What's getting in the way?"
+          placeholder={beginnerMode ? 'What made it challenging?' : 'What was difficult? What\'s getting in the way?'}
           className="w-full h-20 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
         />
       </div>
 
       <div>
         <label className="block text-sm font-semibold text-slate-200 mb-2">
-          Questions for Teacher/Sangha
+          {beginnerMode ? 'Questions for teacher' : 'Questions for teacher/sangha'}
         </label>
         <textarea
           value={session.questions || ''}
           onChange={(e) => setSession(prev => ({ ...prev, questions: e.target.value }))}
-          placeholder="What questions do you have about this experience?"
+          placeholder={beginnerMode ? 'Anything you want to ask about?' : 'What questions do you have about this experience?'}
           className="w-full h-20 bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent/50"
         />
+      </div>
+
+      <div className="bg-green-900/20 border border-green-700/50 rounded-lg p-4">
+        <p className="text-sm text-slate-300">
+          <strong className="text-green-300">Great work!</strong> Consistent tracking helps you see patterns over time.
+          {beginnerMode && ' Remember: just showing up to practice is what matters most.'}
+        </p>
       </div>
     </div>
   );
 
-  const steps = ['basic', 'jhana', 'factors', 'nimitta', 'phenomenology', 'notes'] as const;
+  const steps = ['type', 'basic', 'jhana', 'factors', 'nimitta', 'phenomenology', 'notes'] as const;
   const currentStepIndex = steps.indexOf(step);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
@@ -437,7 +725,9 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Sparkles size={28} className="text-accent" />
-              <h1 className="text-2xl font-bold text-slate-100">Jhana/Samadhi Tracker</h1>
+              <h1 className="text-2xl font-bold text-slate-100">
+                {beginnerMode ? 'Meditation Tracker' : 'Jhana/Samadhi Tracker'}
+              </h1>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition">
               <X size={24} className="text-slate-400" />
@@ -458,6 +748,7 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
 
         {/* Content */}
         <div className="p-6">
+          {step === 'type' && renderMeditationType()}
           {step === 'basic' && renderBasic()}
           {step === 'jhana' && renderJhanaSelection()}
           {step === 'factors' && renderFactors()}
@@ -483,7 +774,7 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
               disabled={!canProceed()}
               className="flex items-center gap-2 px-6 py-2 btn-luminous rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
-              Next
+              {beginnerMode ? 'Next' : 'Continue'}
               <ArrowRight size={20} />
             </button>
           ) : (
@@ -492,7 +783,7 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
               className="flex items-center gap-2 px-6 py-2 btn-luminous rounded-lg font-semibold transition"
             >
               <Sparkles size={20} />
-              Save Session
+              {beginnerMode ? 'Save Session' : 'Save'}
             </button>
           )}
         </div>
