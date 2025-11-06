@@ -1,3 +1,4 @@
+
 import React from 'react';
 // FIX: Correct import path for types.
 import { ActiveTab } from '../types.ts';

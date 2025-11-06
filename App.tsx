@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 
 // Core Components
@@ -32,7 +33,6 @@ import SomaticGeneratorWizard from './components/SomaticGeneratorWizard.tsx';
 
 
 // Constants & Types
-import { practices as corePractices, starterStacks, modules } from './constants.ts';
 import { 
   ActiveTab, 
   AllPractice, 
@@ -48,8 +48,11 @@ import {
   PolarityMap,
   AqalReportData,
   IntegratedInsight,
-  SomaticPracticeSession
+  SomaticPracticeSession,
+  PolarityMapDraft // FIX: Imported PolarityMapDraft
 } from './types.ts';
+import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
+
 
 // Services
 import * as geminiService from './services/geminiService.ts';
@@ -94,7 +97,8 @@ export default function App() {
   const [draftBias, setDraftBias] = useLocalStorage<BiasDetectiveSession | null>('draftBias', null);
   const [draftSO, setDraftSO] = useLocalStorage<SubjectObjectSession | null>('draftSO', null);
   const [draftPS, setDraftPS] = useLocalStorage<PerspectiveShifterSession | null>('draftPS', null);
-  const [draftPM, setDraftPM] = useLocalStorage<Partial<PolarityMap> | null>('draftPM', null);
+  // FIX: Updated draftPM to use PolarityMapDraft type.
+  const [draftPM, setDraftPM] = useLocalStorage<PolarityMapDraft | null>('draftPM', null); 
   
   // Session History
   const [history321, setHistory321] = useLocalStorage<ThreeTwoOneSession[]>('history321', []);

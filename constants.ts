@@ -1,3 +1,4 @@
+
 // FIX: Corrected import path for types
 import { PracticesData, ModuleInfo, StarterStacksData, ModuleKey, SomaticPracticeType, PracticeTypeInfo, SomaticPreset } from './types.ts';
 
@@ -664,4 +665,3 @@ export const practices: PracticesData = {
       safetyNotes: ["Use only small, gentle movements", "Stop if sharp pain"]
     }
   ];
-  

@@ -1,3 +1,4 @@
+
 export type ModuleKey = 'body' | 'mind' | 'spirit' | 'shadow';
 
 export interface Practice {
@@ -184,7 +185,8 @@ export interface SubjectObjectSession {
 export interface Perspective {
     type: 'First Person (You)' | 'Second Person (Them)' | 'Third Person (Observer)' | 'Witness (Pure Awareness)';
     description: string;
-    llmReflection?: string;
+    // FIX: Changed 'llmReflection' to 'reflection' for consistency with how the state is managed and passed to components.
+    reflection?: string; 
 }
   
 export interface PerspectiveShifterSession {
@@ -210,6 +212,11 @@ export interface PolarityMap {
     poleB_name: string;
     poleB_upside: string;
     poleB_downside: string;
+}
+
+// FIX: Added PolarityMapDraft interface to include currentStep for wizard state.
+export interface PolarityMapDraft extends Partial<PolarityMap> {
+  currentStep: PolarityMapperStep;
 }
 
 export interface IntegratedInsight {

@@ -1,18 +1,31 @@
-import React, { useEffect, useRef, useState } from 'react';
+
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { drag } from 'd3-drag';
 import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from 'd3-force';
-// FIX: Replace single D3 import with modular imports to resolve TypeScript errors with the d3 namespace.
 import { select, Selection, BaseType } from 'd3-selection';
 import { zoom, zoomIdentity, ZoomBehavior } from 'd3-zoom';
-import { transition, Transition } from 'd3-transition';
-// FIX: Import the X icon
+import { transition } from 'd3-transition';
+import type * as d3 from 'd3'; // FIX: Added type-only import for d3 namespace
 import { X } from 'lucide-react';
 
-// FIX: The declare module block is unnecessary when d3-transition is imported,
-// as d3-transition already augments d3-selection with the .transition() method.
-// Removing it resolves conflicts and "Cannot find namespace 'd3'" errors.
+interface Node {
+  id: string;
+  label: string;
+  category: string;
+  description: string;
+  importance: number;
+  x?: number;
+  y?: number;
+  fx?: number | null;
+  fy?: number | null;
+}
 
-// Graph data moved outside the component to prevent re-initialization on re-renders
+interface Link {
+  source: string | Node;
+  target: string | Node;
+  value: number;
+}
+
 const graphData = {
   nodes: [
     // ========== CORE CONCEPTS (5) ==========
@@ -279,117 +292,128 @@ const graphData = {
 };
 
 
-// FIX: Type annotations added for D3 selections and nodes, ensuring all 5 generic arguments are provided for Selection.
-interface Node {
-  id: string;
-  label: string;
-  category: string;
-  description: string;
-  importance: number;
-  x?: number;
-  y?: number;
-  fx?: number | null;
-  fy?: number | null;
-}
-
-interface Link {
-  source: string | Node;
-  target: string | Node;
-  value: number;
-}
-
 export const ILPKnowledgeGraph: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const linkRef = useRef<Selection<SVGLineElement, Link, SVGGElement, unknown> | null>(null);
+  const nodeRef = useRef<Selection<SVGGElement, Node, SVGGElement, unknown> | null>(null);
+  const simulationRef = useRef<d3.Simulation<Node, Link> | null>(null);
+  const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+
   const [activeNode, setActiveNode] = useState<Node | null>(null);
+
+  // Deep copy nodes and links to ensure they are mutable within D3
+  const nodes: Node[] = useRef(JSON.parse(JSON.stringify(graphData.nodes))).current;
+  const links: Link[] = useRef(JSON.parse(JSON.stringify(graphData.links))).current;
+
+  const categoryColors: Record<string, string> = {
+    core: '#d9aaef',
+    body: '#10b981',
+    mind: '#3b82f6',
+    spirit: '#8b5cf6',
+    shadow: '#f59e0b',
+    integral: '#f43f5e'
+  };
+
+  // Memoize connected nodes/links for efficient lookup
+  const getConnections = useCallback((nodeId: string) => {
+    const connectedNodes = new Set<string>();
+    const connectedLinks = new Set<string>();
+
+    connectedNodes.add(nodeId); // The node itself is connected
+
+    links.forEach(l => {
+      const sourceNode = l.source as Node;
+      const targetNode = l.target as Node;
+
+      if (sourceNode.id === nodeId) {
+        connectedNodes.add(targetNode.id);
+        connectedLinks.add(`${sourceNode.id}-${targetNode.id}`);
+      } else if (targetNode.id === nodeId) {
+        connectedNodes.add(sourceNode.id);
+        connectedLinks.add(`${targetNode.id}-${sourceNode.id}`); // Add reverse for easy lookup
+      }
+    });
+    return { connectedNodes, connectedLinks };
+  }, [links]);
 
   useEffect(() => {
     const width = 800;
     const height = 600;
 
-    // Make a deep copy to avoid modifying the original data
-    const nodes: Node[] = JSON.parse(JSON.stringify(graphData.nodes));
-    const links: Link[] = JSON.parse(JSON.stringify(graphData.links));
-
-    // FIX: Use `forceSimulation` from `d3-force`.
     const simulation = forceSimulation(nodes)
       .force('link', forceLink(links).id((d: any) => d.id).distance(d => 150 - d.value * 10))
       .force('charge', forceManyBody().strength(-150))
       .force('center', forceCenter(width / 2, height / 2))
       .force('collide', forceCollide().radius((d: any) => d.importance * 2.5 + 5));
+    
+    simulationRef.current = simulation;
 
-    // FIX: Use `select` from `d3-selection` and add type annotation for 5 generic arguments.
-    // GElement: SVGSVGElement, Datum: unknown, PElement: BaseType, PDatum: undefined, G: BaseType
     const svg: Selection<SVGSVGElement, unknown, BaseType, undefined> = select(svgRef.current!)
-      .attr('viewBox', `0 0 ${width} ${height}`);
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('class', 'rounded-lg'); // Add class for styling
+
+    // Clear existing elements to prevent duplicates on re-render in dev mode
+    svg.selectAll('g').remove();
 
     const container = svg.append('g');
 
-    const link = container.append('g')
-      .attr('stroke-opacity', 0.15)
+    linkRef.current = container.append('g')
+      .attr('stroke-opacity', 0.6) // Increased opacity for better visibility
       .selectAll('line')
       .data(links)
       .join('line')
       .attr('stroke', '#475569')
-      .attr('stroke-width', d => Math.sqrt(d.value) * 0.5);
+      .attr('stroke-width', d => Math.sqrt(d.value) * 1); // Increased width for better visibility
 
-    const node = container.append('g')
-      .selectAll('circle')
+    nodeRef.current = container.append('g')
+      .selectAll('g')
       .data(nodes)
       .join('g')
-      .attr('class', 'cursor-pointer');
+      .attr('class', 'node-group cursor-pointer');
       
-    const categoryColors: Record<string, string> = {
-        core: '#d9aaef',
-        body: '#10b981',
-        mind: '#3b82f6',
-        spirit: '#8b5cf6',
-        shadow: '#f59e0b',
-        integral: '#f43f5e'
-    };
-
-    node.append('circle')
+    nodeRef.current.append('circle')
         .attr('r', d => d.importance * 1.5 + 4)
         .attr('fill', d => categoryColors[d.category] || '#94a3b8')
         .attr('stroke', '#1e293b')
         .attr('stroke-width', 2);
 
-    node.append('text')
+    nodeRef.current.append('text')
         .text(d => d.label)
         .attr('x', d => d.importance * 1.5 + 8)
         .attr('y', 4)
-        .attr('class', 'text-xs')
+        .attr('class', 'text-xs font-sans pointer-events-none') // Disable pointer events on text so clicks go to circle
         .attr('fill', '#cbd5e1');
 
-    node.on('mouseover', (event, d) => {
-        setActiveNode(d as Node);
+    // Node click handler
+    nodeRef.current.on('click', (event, d) => {
+        event.stopPropagation(); // Prevent the SVG background click from firing
+        setActiveNode(prev => (prev && prev.id === d.id ? null : d as Node));
     });
 
-    node.on('mouseout', () => {
-        // We can keep the active node on screen after mouseout for better UX
-    });
+    // SVG background click handler
+    svg.on('click', () => setActiveNode(null));
 
-    // FIX: Use `drag` from `d3-drag`.
-    node.call(drag<any, Node>()
+    nodeRef.current.call(drag<any, Node>()
         .on('start', dragstarted)
         .on('drag', dragged)
         .on('end', dragended));
 
     simulation.on('tick', () => {
-      link
+      linkRef.current!
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)
         .attr('x2', (d: any) => d.target.x)
         .attr('y2', (d: any) => d.target.y);
 
-      node.attr('transform', d => `translate(${d.x},${d.y})`);
+      nodeRef.current!.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
-    // FIX: Use `zoom` from `d3-zoom`.
     const zoomBehavior: ZoomBehavior<SVGSVGElement, unknown> = zoom<SVGSVGElement, unknown>().scaleExtent([0.3, 5])
         .on('zoom', (event) => {
             container.attr('transform', event.transform);
         });
     
+    zoomBehaviorRef.current = zoomBehavior;
     svg.call(zoomBehavior);
 
     function dragstarted(event: any, d: Node) {
@@ -409,36 +433,108 @@ export const ILPKnowledgeGraph: React.FC = () => {
       d.fy = null;
     }
 
-    // Zoom controls
-    // FIX: Add explicit type annotation for D3 selection with 5 generic arguments.
-    // GElement: HTMLDivElement, Datum: unknown, PElement: BaseType, PDatum: undefined, G: BaseType
-    const controls: Selection<HTMLDivElement, unknown, BaseType, undefined> = select(svgRef.current!.parentElement!).append('div')
-        .attr('class', 'absolute bottom-2 right-2 flex flex-col gap-1');
+    // Zoom controls - re-attach to SVG's parent
+    const controlsContainer = select(svgRef.current!.parentElement!).select('.graph-controls');
+    if (controlsContainer.empty()) {
+        const controls = select(svgRef.current!.parentElement!).append('div')
+            .attr('class', 'graph-controls absolute bottom-2 right-2 flex flex-col gap-1');
 
-    controls.append('button')
-        .attr('class', 'bg-slate-700/50 p-1.5 rounded-md text-slate-300 hover:bg-slate-700')
-        // FIX: Call `transition` on the SVG selection.
-        .on('click', () => svg.transition().call(zoomBehavior.scaleBy, 1.2))
-        .html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`);
-    
-    controls.append('button')
-        .attr('class', 'bg-slate-700/50 p-1.5 rounded-md text-slate-300 hover:bg-slate-700')
-        // FIX: Call `transition` on the SVG selection.
-        .on('click', () => svg.transition().call(zoomBehavior.scaleBy, 0.8))
-        .html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`);
+        controls.append('button')
+            .attr('class', 'bg-slate-700/50 p-1.5 rounded-md text-slate-300 hover:bg-slate-700')
+            .on('click', () => svg.transition().call(zoomBehavior.scaleBy, 1.2))
+            .html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`);
+        
+        controls.append('button')
+            .attr('class', 'bg-slate-700/50 p-1.5 rounded-md text-slate-300 hover:bg-slate-700')
+            .on('click', () => svg.transition().call(zoomBehavior.scaleBy, 0.8))
+            .html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`);
 
-    controls.append('button')
-        .attr('class', 'bg-slate-700/50 p-1.5 rounded-md text-slate-300 hover:bg-slate-700 mt-1')
-        // FIX: Call `transition` on the SVG selection.
-        .on('click', () => svg.transition().call(zoomBehavior.transform, zoomIdentity))
-        .html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1v6h6"/><path d="M23 23v-6h-6"/><path d="M1 7l5-5"/><path d="M23 17l-5 5"/></svg>`);
+        controls.append('button')
+            .attr('class', 'bg-slate-700/50 p-1.5 rounded-md text-slate-300 hover:bg-slate-700 mt-1')
+            .on('click', () => svg.transition().call(zoomBehavior.transform, zoomIdentity))
+            .html(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1v6h6"/><path d="M23 23v-6h-6"/><path d="M1 7l5-5"/><path d="M23 17l-5 5"/></svg>`);
+    }
+
 
     return () => {
       simulation.stop();
-      svg.selectAll('*').remove();
-      controls.remove();
+      // Only remove if this component is truly unmounting to avoid issues with hot-reloading
+      // In production, this cleanup is more straightforward.
+      if (svgRef.current) {
+        select(svgRef.current).selectAll('*').remove();
+        select(svgRef.current!.parentElement!).select('.graph-controls').remove();
+      }
     };
-  }, []);
+  }, []); // Run only once on mount
+
+  // Effect for handling active node highlighting
+  useEffect(() => {
+    if (!nodeRef.current || !linkRef.current) return;
+
+    if (activeNode) {
+      const { connectedNodes, connectedLinks } = getConnections(activeNode.id);
+
+      // Update node styles
+      nodeRef.current.selectAll('circle')
+        .transition().duration(200)
+        .attr('stroke', d => connectedNodes.has((d as Node).id) ? '#d9aaef' : '#1e293b') // Highlighted border
+        .attr('stroke-width', d => (d as Node).id === activeNode.id ? 4 : (connectedNodes.has((d as Node).id) ? 3 : 2)) // Thicker border for active, slightly thicker for connected
+        .attr('opacity', d => connectedNodes.has((d as Node).id) ? 1 : 0.4); // Fade others
+
+      nodeRef.current.selectAll('text')
+          .transition().duration(200)
+          .attr('opacity', d => connectedNodes.has((d as Node).id) ? 1 : 0.4)
+          .attr('fill', d => (d as Node).id === activeNode.id ? '#d9aaef' : '#cbd5e1'); // Active node text brighter
+
+      // Update link styles
+      linkRef.current
+        .transition().duration(200)
+        .attr('stroke', d => {
+          const sourceId = (d.source as Node).id;
+          const targetId = (d.target as Node).id;
+          return (
+            (connectedLinks.has(`${sourceId}-${targetId}`) || connectedLinks.has(`${targetId}-${sourceId}`)) &&
+            (connectedNodes.has(sourceId) && connectedNodes.has(targetId))
+          ) ? '#d9aaef' : '#475569';
+        })
+        .attr('stroke-width', d => {
+          const sourceId = (d.source as Node).id;
+          const targetId = (d.target as Node).id;
+          return (
+            (connectedLinks.has(`${sourceId}-${targetId}`) || connectedLinks.has(`${targetId}-${sourceId}`)) &&
+            (connectedNodes.has(sourceId) && connectedNodes.has(targetId))
+          ) ? 2 : 1; // Thicker link
+        })
+        .attr('opacity', d => {
+          const sourceId = (d.source as Node).id;
+          const targetId = (d.target as Node).id;
+          return (
+            (connectedLinks.has(`${sourceId}-${targetId}`) || connectedLinks.has(`${targetId}-${sourceId}`)) &&
+            (connectedNodes.has(sourceId) && connectedNodes.has(targetId))
+          ) ? 1 : 0.2; // Fade others
+        });
+
+    } else {
+      // Reset styles when no node is active
+      nodeRef.current.selectAll('circle')
+        .transition().duration(200)
+        .attr('stroke', '#1e293b')
+        .attr('stroke-width', 2)
+        .attr('opacity', 1);
+
+      nodeRef.current.selectAll('text')
+          .transition().duration(200)
+          .attr('opacity', 1)
+          .attr('fill', '#cbd5e1');
+
+      linkRef.current
+        .transition().duration(200)
+        .attr('stroke', '#475569')
+        .attr('stroke-width', 1)
+        .attr('opacity', 0.6); // Original opacity
+    }
+  }, [activeNode, getConnections]);
+
 
   return (
     <div className="w-full bg-slate-900/50 rounded-lg border border-slate-700 shadow-lg relative">
@@ -447,7 +543,7 @@ export const ILPKnowledgeGraph: React.FC = () => {
             <div className="absolute top-2 left-2 bg-slate-800/80 backdrop-blur-sm border border-slate-700 p-4 rounded-lg max-w-sm w-full animate-fade-in shadow-xl">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h3 className="font-bold text-lg" style={{ color: { core: '#d9aaef', body: '#10b981', mind: '#3b82f6', spirit: '#8b5cf6', shadow: '#f59e0b', integral: '#f43f5e' }[activeNode.category] || '#cbd5e1' }}>
+                        <h3 className="font-bold text-lg" style={{ color: categoryColors[activeNode.category] || '#cbd5e1' }}>
                             {activeNode.label}
                         </h3>
                         <p className="text-xs font-mono uppercase text-slate-400">{activeNode.category}</p>

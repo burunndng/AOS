@@ -1,3 +1,4 @@
+
 import React from 'react';
 // FIX: Add file extension to import path.
 import { AqalReportData } from '../types.ts';

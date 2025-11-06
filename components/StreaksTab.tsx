@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { AllPractice, ModuleKey } from '../types.ts';
 // FIX: Add file extension to import path.
@@ -27,14 +28,14 @@ const calculateStreaks = (dates: string[]): { current: number, longest: number }
   let longestStreak = 0;
   let currentLongestRun = 0;
   if (sortedDates.length > 0) {
-      currentLongestRun = 1;
+      currentLongestRun = 1; // Start counting from the most recent completion
       longestStreak = 1;
       for (let i = 1; i < sortedDates.length; i++) {
           const diff = (sortedDates[i - 1].getTime() - sortedDates[i].getTime()) / (1000 * 3600 * 24);
-          if (diff === 1) {
+          if (diff === 1) { // Consecutive day
               currentLongestRun++;
-          } else {
-              currentLongestRun = 1;
+          } else if (diff > 1) { // Gap in days
+              currentLongestRun = 1; // Reset longest run for potential new streak
           }
           if (currentLongestRun > longestStreak) {
               longestStreak = currentLongestRun;
@@ -53,6 +54,7 @@ const calculateStreaks = (dates: string[]): { current: number, longest: number }
 
   const mostRecentCompletion = sortedDates[0];
   
+  // Check if most recent completion is today or yesterday
   if (mostRecentCompletion.getTime() === today.getTime() || mostRecentCompletion.getTime() === yesterday.getTime()) {
       let expectedDate = new Date(mostRecentCompletion);
       expectedDate.setHours(0,0,0,0);
@@ -68,10 +70,19 @@ const calculateStreaks = (dates: string[]): { current: number, longest: number }
   }
 
   // If the last completion was not today, the current streak is 0.
-  if (mostRecentCompletion.getTime() !== today.getTime()) {
+  // This logic is for "current streak" meaning active as of today/yesterday.
+  if (mostRecentCompletion.getTime() !== today.getTime() && mostRecentCompletion.getTime() !== yesterday.getTime()) {
       currentStreak = 0;
   }
   
+  // If the current streak is just 1 and it's not today's completion, it also means no active streak.
+  // Example: completed Monday, now Wednesday. Most recent is Monday, not today or yesterday.
+  // The loop above would give 1. We want 0.
+  if (currentStreak === 1 && mostRecentCompletion.getTime() !== today.getTime()) {
+      currentStreak = 0;
+  }
+
+
   return { current: currentStreak, longest: longestStreak };
 };
 

@@ -1,4 +1,5 @@
 
+
 // FIX: Removed erroneous file separator from the beginning of the file content.
 import React, { useState, useEffect, useRef } from 'react';
 import { IFSSession, IFSPart, IFSDialogueEntry, WizardPhase, IntegratedInsight } from '../types.ts';
@@ -436,41 +437,41 @@ export default function IFSWizard({ isOpen, onClose, onSaveSession, draft, parts
             }
 
             // Handle transcriptions
-            if (message.serverContent?.outputTranscription) {
-              currentOutputTranscriptionRef.current += message.serverContent.outputTranscription.text;
-            }
-            if (message.serverContent?.inputTranscription) {
-              currentInputTranscriptionRef.current += message.serverContent.inputTranscription.text;
-            }
-            if (message.serverContent?.turnComplete) {
-              const fullInput = currentInputTranscriptionRef.current;
-              const fullOutput = currentOutputTranscriptionRef.current;
-              currentInputTranscriptionRef.current = '';
-              currentOutputTranscriptionRef.current = '';
+            // Use functional updates to prevent stale closures and ensure latest state is used
+            setSession(prevSession => {
+                if (!prevSession) return null;
 
-              if (fullInput || fullOutput) {
-                const nextPhase = currentPhase;
-                const cleanedOutput = fullOutput;
-                
-                setSession(prev => {
-                    if (!prev) return null;
+                let updatedInputTranscription = currentInputTranscriptionRef.current;
+                let updatedOutputTranscription = currentOutputTranscriptionRef.current;
+                let newTranscriptEntries: IFSDialogueEntry[] = [];
+                let nextPhase = prevSession.currentPhase;
 
-                    const newTranscript: IFSDialogueEntry[] = [];
-                    if (fullInput) newTranscript.push({ role: 'user', text: fullInput, phase: currentPhase });
-                    if (cleanedOutput) newTranscript.push({ role: 'bot', text: cleanedOutput, phase: nextPhase });
+                if (message.serverContent?.outputTranscription) {
+                    updatedOutputTranscription += message.serverContent.outputTranscription.text;
+                }
+                if (message.serverContent?.inputTranscription) {
+                    updatedInputTranscription += message.serverContent.inputTranscription.text;
+                }
 
-                    const updatedSession = { ...prev, transcript: [...prev.transcript, ...newTranscript], currentPhase: nextPhase };
+                if (message.serverContent?.turnComplete) {
+                    const fullInput = updatedInputTranscription;
+                    const fullOutput = updatedOutputTranscription;
+                    updatedInputTranscription = '';
+                    updatedOutputTranscription = '';
+
+                    if (fullInput) newTranscriptEntries.push({ role: 'user', text: fullInput, phase: prevSession.currentPhase });
+                    if (fullOutput) newTranscriptEntries.push({ role: 'bot', text: fullOutput, phase: nextPhase });
 
                     const terminationPhrase = "the session is complete";
                     if (
                         (fullInput && fullInput.toLowerCase().includes(terminationPhrase)) ||
                         (fullOutput && fullOutput.toLowerCase().includes(terminationPhrase))
                     ) {
-                        stopSession();
-                        generateSummaryAndIndications(updatedSession);
+                        stopSession(); // This will prevent further messages, but session object still needs updating
+                        // The summary generation is handled outside this functional update, after the state has settled
                     }
                     
-                    if (prev.transcript.length < 3 && fullInput) {
+                    if (prevSession.transcript.length < 3 && fullInput) {
                         (async () => {
                             const nameExtractionPrompt = `The user is starting an IFS session. From their first statement, extract a potential name for the part they are describing. User statement: "${fullInput}". Respond with only the name. If you cannot find a clear name, invent one like "The Worrier" or "The Angry One".`;
                             const extractedName = await getCoachResponse(nameExtractionPrompt);
@@ -480,12 +481,26 @@ export default function IFSWizard({ isOpen, onClose, onSaveSession, draft, parts
                             setSession(s => s ? {...s, partName: cleanName, partId: newPartId} : null);
                         })();
                     }
-                    
-                    return updatedSession;
-                });
-                setCurrentPhase(nextPhase);
-              }
-            }
+                }
+
+                currentInputTranscriptionRef.current = updatedInputTranscription;
+                currentOutputTranscriptionRef.current = updatedOutputTranscription;
+                
+                // If a turn is complete and it triggered termination, generate summary after this state update
+                if (message.serverContent?.turnComplete && (updatedInputTranscription === '' && updatedOutputTranscription === '')) {
+                    const latestSession = { ...prevSession, transcript: [...prevSession.transcript, ...newTranscriptEntries], currentPhase: nextPhase };
+                    const terminationPhrase = "the session is complete";
+                    if (
+                        (newTranscriptEntries.some(entry => entry.role === 'user' && entry.text.toLowerCase().includes(terminationPhrase))) ||
+                        (newTranscriptEntries.some(entry => entry.role === 'bot' && entry.text.toLowerCase().includes(terminationPhrase)))
+                    ) {
+                        generateSummaryAndIndications(latestSession);
+                    }
+                    return latestSession;
+                } else {
+                    return { ...prevSession, transcript: [...prevSession.transcript, ...newTranscriptEntries], currentPhase: nextPhase };
+                }
+            });
           },
           onerror: (e: ErrorEvent) => {
             console.error('Live session error:', e);

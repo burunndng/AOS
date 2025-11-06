@@ -1,4 +1,4 @@
-// FIX: Removed erroneous file separator from the beginning of the file content.
+
 import React, { useState, useEffect } from 'react';
 import { ThreeTwoOneSession, IntegratedInsight } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Lightbulb } from 'lucide-react';
