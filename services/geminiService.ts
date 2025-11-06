@@ -16,7 +16,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 export async function generateText(prompt: string): Promise<string> {
   // FIX: Use the correct API call `ai.models.generateContent` for text generation.
   const response = await ai.models.generateContent({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.5-flash',
     contents: prompt,
   });
   // FIX: Access the generated text directly from the `text` property of the response.
@@ -197,7 +197,7 @@ export async function suggestSubjectObjectExperiments(pattern: string, subjectTo
     Example: ["For one day, what if you acted as if the opposite were true?", "Notice the physical sensation just before the pattern starts."]
     Return ONLY the JSON array.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -313,7 +313,7 @@ export async function generateRecommendations(context: string): Promise<string[]
     Example: ["You're doing great with Body practices. Consider adding 'Daily Meditation' to bring in the Spirit module.", "Your notes mention feeling overwhelmed. The '3-2-1 Process' could help you work with that feeling."]
     Return ONLY the JSON array.`;
      const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -864,7 +864,7 @@ Return JSON:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
