@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X, ChevronsDown } from 'lucide-react';
 import { CoachMessage, Practice, ModuleKey, ModuleInfo, AllPractice } from '../types.ts';

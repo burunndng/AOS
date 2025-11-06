@@ -1,6 +1,4 @@
-
 import React from 'react';
-// FIX: Add file extension to import path.
 import { AqalReportData } from '../types.ts';
 import { Target, Sparkles, CheckCircle } from 'lucide-react';
 
@@ -23,6 +21,17 @@ export default function AqalTab({ report, isLoading, error, onGenerate }: AqalTa
         <Target size={32} className="mx-auto text-accent mb-4" />
         <h2 className="text-3xl font-bold tracking-tight text-slate-100">Generate Your Integral Analysis</h2>
         <p className="text-slate-400 my-3 max-w-2xl mx-auto">Aura will review your current practice stack, completion data, and notes to provide insights on your development in the "I", "We", "It", and "Its" quadrants.</p>
+        
+        {/* NEW: AQAL Quadrants Image */}
+        <div className="my-6 max-w-4xl mx-auto">
+          <img 
+            src="https://integraleuropeanconference.com/wp-content/uploads/2019/07/FourQuadrants-Humans.jpg" 
+            alt="AQAL Quadrants Diagram" 
+            className="w-full rounded-lg shadow-md border border-slate-700"
+          />
+          <p className="text-xs text-slate-500 mt-2 italic">The AQAL (All Quadrants All Levels) Framework by Ken Wilber</p>
+        </div>
+
         <button
           onClick={onGenerate}
           disabled={isLoading}

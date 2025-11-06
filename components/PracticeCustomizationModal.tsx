@@ -1,6 +1,5 @@
 
 
-
 import React, { useState } from 'react';
 // FIX: Correct import paths for types and services.
 import { Practice } from '../types.ts';
