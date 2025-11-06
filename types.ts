@@ -360,7 +360,42 @@ export type KeganAssessmentStep =
   | 'IDENTITY_SELF'
   | 'ANALYSIS'
   | 'RESULTS'
-  | 'REFLECTION';
+  | 'REFLECTION'
+  | 'POST_DIALOGUE';
+
+// Kegan Post-Dialogue Probe Types
+export type KeganProbeType =
+  | 'CONTRADICTION'      // Probing for contradiction and nuance
+  | 'SUBJECT_OBJECT'     // Testing Subject by making it Object
+  | 'ASSUMPTIONS';       // Exploring boundaries of "Big Assumptions"
+
+export interface KeganProbeExchange {
+  id: string;
+  probeType: KeganProbeType;
+  question: string;
+  userResponse?: string;
+  aiAnalysis?: {
+    subjectObjectReveal: string;  // What became visible about subject-object structure
+    developmentalInsight: string; // What this reveals about current stage
+    nextProbe?: string;           // Follow-up question if needed
+  };
+}
+
+export interface KeganProbeSession {
+  id: string;
+  assessmentSessionId: string;   // Link back to original assessment
+  date: string;
+  exchanges: KeganProbeExchange[];
+  integratedInsights?: {
+    confirmedStage: KeganStage;
+    refinedAnalysis: string;      // Updated understanding after probes
+    edgeOfDevelopment: string;    // More precise developmental edge
+    bigAssumptions: string[];     // Identified limiting assumptions
+    subjectStructure: string[];   // What they're currently subject to
+    objectStructure: string[];    // What they can reflect on
+    recommendations: string[];    // Updated developmental recommendations
+  };
+}
 
 // Relational Pattern Tracking Types
 export type RelationshipType = 'Romantic Partner' | 'Parent' | 'Child' | 'Sibling' | 'Friend' | 'Boss/Authority' | 'Colleague' | 'Direct Report' | 'Stranger/Public';

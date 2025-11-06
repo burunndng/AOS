@@ -5,10 +5,12 @@ import {
   KeganResponse,
   KeganPrompt,
   KeganDomain,
-  KeganCenterOfGravity
+  KeganCenterOfGravity,
+  KeganProbeSession
 } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Sparkles, Brain, Users, Target, MessageSquare, User, Download } from 'lucide-react';
 import * as geminiService from '../services/geminiService.ts';
+import KeganPostDialogueProbe from './KeganPostDialogueProbe.tsx';
 
 interface KeganAssessmentWizardProps {
   onClose: () => void;
@@ -149,6 +151,8 @@ export default function KeganAssessmentWizard({ onClose, onSave, session: draft,
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   // FIX: Added useState for error state
   const [error, setError] = useState<string | null>(null);
+  const [showProbeDialogue, setShowProbeDialogue] = useState(false);
+  const [probeSession, setProbeSession] = useState<KeganProbeSession | null>(null);
 
   useEffect(() => { if (draft) setSession(draft); }, [draft]);
 
@@ -614,6 +618,29 @@ ${session.selfReflection || 'Not yet completed'}
         />
       </div>
 
+      <div className="bg-accent/10 border border-accent/30 rounded-lg p-6 space-y-4">
+        <div className="flex items-start gap-3">
+          <Brain size={24} className="text-accent mt-1" />
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-accent mb-2">Go Deeper: Interactive Developmental Probe</h3>
+            <p className="text-sm text-slate-300 mb-4">
+              Move beyond the static assessment to an interactive dialogue that tests the edges of your meaning-making system.
+              This probe uses three specialized techniques to reveal what you can't yet see about your developmental structure.
+            </p>
+            <button
+              onClick={() => setShowProbeDialogue(true)}
+              className="bg-accent hover:bg-accent/90 text-slate-900 font-semibold py-3 px-6 rounded-lg flex items-center gap-2 transition"
+            >
+              <Brain size={20} />
+              Launch Interactive Probe
+            </button>
+            {probeSession && (
+              <p className="text-xs text-accent mt-2">✓ Probe completed - insights integrated</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
         <h4 className="font-semibold text-blue-300 mb-2">Next Steps</h4>
         <ul className="text-sm text-slate-300 space-y-2">
@@ -702,6 +729,18 @@ ${session.selfReflection || 'Not yet completed'}
           </button>
         </div>
       </div>
+
+      {/* Interactive Probe Dialogue */}
+      {showProbeDialogue && (
+        <KeganPostDialogueProbe
+          assessmentSession={session}
+          onClose={() => setShowProbeDialogue(false)}
+          onComplete={(completedProbeSession) => {
+            setProbeSession(completedProbeSession);
+            setShowProbeDialogue(false);
+          }}
+        />
+      )}
     </div>
   );
 }

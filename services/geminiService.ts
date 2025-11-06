@@ -812,6 +812,390 @@ Important:
   }
 }
 
+// Kegan Post-Dialogue Probe Generation Functions
+
+/**
+ * Generate a probe that explores contradictions and nuances in the assessment responses
+ */
+export async function generateContradictionProbe(
+  assessmentSession: KeganAssessmentSession
+): Promise<string> {
+  const responsesContext = assessmentSession.responses.map(r =>
+    `Domain: ${r.domain}\nResponse: ${r.response}`
+  ).join('\n\n---\n\n');
+
+  const analysisContext = assessmentSession.overallInterpretation
+    ? `Center of Gravity: ${assessmentSession.overallInterpretation.centerOfGravity}\n` +
+      `Domain Variation: ${JSON.stringify(assessmentSession.overallInterpretation.domainVariation)}\n` +
+      `Analysis: ${assessmentSession.overallInterpretation.fullAnalysis}`
+    : '';
+
+  const prompt = `You are a skilled developmental interviewer trained in the Subject-Object Interview method. Your role is to probe for contradictions and nuances to reveal the boundaries of someone's meaning-making system.
+
+# Assessment Context
+
+${responsesContext}
+
+# Current Analysis
+
+${analysisContext}
+
+# Your Task
+
+Examine the responses for areas where values, self-perceptions, or commitments might clash or create internal tension. Generate ONE specific, scenario-based question that:
+
+1. Identifies a potential contradiction between two responses or values
+2. Creates a specific, high-stakes scenario where this tension becomes impossible to ignore
+3. Asks them to resolve the tension and reveal what is ACTUALLY at stake internally
+4. Uses the format: "In one response you described X. In another, you described Y. Let's explore that edge. Imagine [specific high-stakes scenario]. What is *actually* at stake for you in that moment? Walk me through the internal conflict."
+
+Requirements:
+- Be specific and personal (reference their actual words)
+- Make the scenario realistic and emotionally resonant
+- Focus on what they CAN'T see (subject) vs what they CAN see (object)
+- The goal is to reveal their current developmental structure, not to judge it
+
+Return ONLY the probe question as plain text, no JSON or markdown formatting.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    return response.text.trim();
+  } catch (error) {
+    console.error('Error generating contradiction probe:', error);
+    return "Looking at your responses, I notice some interesting tensions. Can you describe a recent situation where you had to choose between meeting others' expectations and protecting your own well-being? What was actually at stake for you in that moment?";
+  }
+}
+
+/**
+ * Generate a probe that helps make "subject" into "object"
+ */
+export async function generateSubjectByObjectProbe(
+  assessmentSession: KeganAssessmentSession
+): Promise<string> {
+  const responsesContext = assessmentSession.responses.map(r =>
+    `Domain: ${r.domain}\nResponse: ${r.response}`
+  ).join('\n\n---\n\n');
+
+  const analysisContext = assessmentSession.overallInterpretation
+    ? `Center of Gravity: ${assessmentSession.overallInterpretation.centerOfGravity}\n` +
+      `Analysis: ${assessmentSession.overallInterpretation.fullAnalysis}`
+    : '';
+
+  const prompt = `You are a skilled developmental interviewer. Your task is to help someone step back from what they are "subject to" (embedded in, fused with) and begin to see it as "object" (something they can observe and reflect on).
+
+# Assessment Context
+
+${responsesContext}
+
+# Current Analysis
+
+${analysisContext}
+
+# Your Task
+
+Identify something the person appears to be "subject to" - embedded in and unable to step back from. This might be:
+- An emotional reaction they describe but can't observe
+- A belief or value they ARE rather than HAVE
+- A role or identity they're fused with
+- A defensive pattern they're inside of
+
+Generate ONE specific probe that:
+1. Identifies the pattern/reaction/belief they're subject to
+2. Invites them to treat it as an object - something separate from themselves
+3. Asks them to analyze its purpose, origin, or protective function
+4. Uses the metaphor of "a part of you" or similar externalizing language
+
+Format: "You mentioned [specific reaction/pattern]. Let's step back from that reaction. Imagine that [the pattern] is an object—like a [metaphor: guard dog, shield, voice]. What is that [metaphor] trying to protect? What does it believe will happen if it fails to protect you? What is its origin story?"
+
+Requirements:
+- Reference their specific words and patterns
+- Use externalizing language ("that part of you" not "you")
+- Make it feel curious and compassionate, not judgmental
+- Aim to create distance between them and the pattern
+
+Return ONLY the probe question as plain text.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    return response.text.trim();
+  } catch (error) {
+    console.error('Error generating subject-object probe:', error);
+    return "You mentioned experiencing strong emotional reactions in certain situations. Let's step back from that. Imagine that reactive part of you is like a guard dog inside your mind. What is that guard dog trying to protect? What does it believe will happen if it fails to protect you?";
+  }
+}
+
+/**
+ * Generate a probe that explores the boundaries of "Big Assumptions"
+ */
+export async function generateAssumptionBoundaryProbe(
+  assessmentSession: KeganAssessmentSession
+): Promise<string> {
+  const responsesContext = assessmentSession.responses.map(r =>
+    `Domain: ${r.domain}\nResponse: ${r.response}`
+  ).join('\n\n---\n\n');
+
+  const analysisContext = assessmentSession.overallInterpretation
+    ? `Center of Gravity: ${assessmentSession.overallInterpretation.centerOfGravity}\n` +
+      `Developmental Edge: ${assessmentSession.overallInterpretation.developmentalEdge}\n` +
+      `Analysis: ${assessmentSession.overallInterpretation.fullAnalysis}`
+    : '';
+
+  const prompt = `You are a skilled developmental interviewer specializing in uncovering "Big Assumptions" - the hidden beliefs that organize someone's current meaning-making system.
+
+# Assessment Context
+
+${responsesContext}
+
+# Current Analysis
+
+${analysisContext}
+
+# Your Task
+
+Identify a potential "Big Assumption" - an unconscious belief that seems to organize their identity, worth, or safety. Common examples:
+- "My value comes from being useful/competent/needed"
+- "If I'm not in control, everything will fall apart"
+- "Conflict means rejection"
+- "I must never be a burden"
+
+Generate ONE specific probe that:
+1. Names the suspected big assumption clearly
+2. Asks them to imagine a world where it's no longer true (through no fault of their own)
+3. Explores what would have to be true for them to still feel okay/whole/worthy
+4. Reveals what their identity/worth is currently dependent on
+
+Format: "Your responses suggest a deep connection between [domain] and [self-worth/identity]. It sounds like you operate from an assumption that '[the big assumption]'. Let's test that. Imagine for a moment you woke up tomorrow and, through no fault of your own, [the assumption is no longer available - you can't be competent, can't be in control, etc.]. After the initial panic, what would have to be true for you to still feel [okay/worthy/whole]? Where would your value come from then?"
+
+Requirements:
+- Be specific about the identified assumption
+- Make the scenario feel impossible but important to explore
+- The question should reveal the foundation of their current system
+- Frame it as a thought experiment, not a threat
+
+Return ONLY the probe question as plain text.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+
+    return response.text.trim();
+  } catch (error) {
+    console.error('Error generating assumption boundary probe:', error);
+    return "Your responses suggest a connection between your competence and your sense of worth. Let's test that assumption. Imagine you woke up tomorrow and, through no fault of your own, you simply couldn't solve problems or be useful anymore. After the initial panic, what would have to be true for you to still feel a sense of self-worth? Where would your value come from then?";
+  }
+}
+
+/**
+ * Analyze a user's response to a probe
+ */
+export async function analyzeProbeResponse(
+  probe: KeganProbeExchange,
+  assessmentSession: KeganAssessmentSession
+): Promise<{
+  subjectObjectReveal: string;
+  developmentalInsight: string;
+  nextProbe?: string;
+}> {
+  if (!probe.userResponse || probe.userResponse.trim() === '') {
+    return {
+      subjectObjectReveal: 'No response provided',
+      developmentalInsight: 'Unable to analyze without a response',
+    };
+  }
+
+  const prompt = `You are analyzing a response from a developmental probe in the Kegan framework.
+
+# Probe Type: ${probe.probeType}
+
+# Question Asked:
+${probe.question}
+
+# User's Response:
+${probe.userResponse}
+
+# Original Assessment Context:
+Center of Gravity: ${assessmentSession.overallInterpretation?.centerOfGravity || 'Unknown'}
+
+# Your Task
+
+Analyze this response for:
+
+1. **Subject-Object Structure**: What did this response reveal about what they're subject to (embedded in, can't see) vs object (can observe and reflect on)?
+
+2. **Developmental Insight**: What does their way of answering reveal about their current stage?
+   - Did they struggle to answer? (might indicate hitting the edge of their system)
+   - Did they quickly resolve the tension with their existing framework? (indicates that framework is subject)
+   - Could they step back and examine the assumption/pattern/belief? (indicates it's becoming object)
+
+3. **Next Probe** (optional): If there's a promising edge to explore further with a follow-up question, suggest it.
+
+Return a JSON object:
+{
+  "subjectObjectReveal": "2-3 sentences about what became visible in terms of subject/object structure",
+  "developmentalInsight": "2-3 sentences about what this reveals about their current developmental stage",
+  "nextProbe": "Optional follow-up question if there's a promising edge to explore further"
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            subjectObjectReveal: { type: Type.STRING },
+            developmentalInsight: { type: Type.STRING },
+            nextProbe: { type: Type.STRING }
+          },
+          required: ['subjectObjectReveal', 'developmentalInsight']
+        }
+      }
+    });
+
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error('Error analyzing probe response:', error);
+    return {
+      subjectObjectReveal: 'Analysis unavailable at this time.',
+      developmentalInsight: 'Please continue with the exploration.',
+    };
+  }
+}
+
+/**
+ * Generate integrated insights after all probes are complete
+ */
+export async function generateProbeIntegratedInsights(
+  assessmentSession: KeganAssessmentSession,
+  probeSession: { exchanges: KeganProbeExchange[] }
+): Promise<{
+  confirmedStage: KeganStage;
+  refinedAnalysis: string;
+  edgeOfDevelopment: string;
+  bigAssumptions: string[];
+  subjectStructure: string[];
+  objectStructure: string[];
+  recommendations: string[];
+}> {
+  const probesContext = probeSession.exchanges.map(ex =>
+    `Type: ${ex.probeType}\nQuestion: ${ex.question}\nResponse: ${ex.userResponse || 'No response'}\n` +
+    `Analysis: ${ex.aiAnalysis ? `${ex.aiAnalysis.subjectObjectReveal}\n${ex.aiAnalysis.developmentalInsight}` : 'Not analyzed'}`
+  ).join('\n\n---\n\n');
+
+  const originalAnalysis = assessmentSession.overallInterpretation
+    ? `Original Center of Gravity: ${assessmentSession.overallInterpretation.centerOfGravity}\n` +
+      `Original Analysis: ${assessmentSession.overallInterpretation.fullAnalysis}`
+    : '';
+
+  const prompt = `You are completing a developmental assessment that used interactive probing to test the boundaries of someone's meaning-making system.
+
+# Original Assessment
+
+${originalAnalysis}
+
+# Interactive Probes and Responses
+
+${probesContext}
+
+# Your Task
+
+Integrate the original assessment with the insights from the probes to provide a refined developmental analysis.
+
+Return a JSON object:
+{
+  "confirmedStage": "Socialized Mind" | "Socialized/Self-Authoring Transition" | "Self-Authoring Mind" | "Self-Authoring/Self-Transforming Transition" | "Self-Transforming Mind",
+  "refinedAnalysis": "3-4 paragraphs integrating original assessment with probe insights. What became clearer through the interactive exploration?",
+  "edgeOfDevelopment": "2-3 sentences describing with more precision where they're growing and what would support that growth",
+  "bigAssumptions": [
+    "First identified limiting assumption",
+    "Second identified limiting assumption",
+    "Third identified limiting assumption (if applicable)"
+  ],
+  "subjectStructure": [
+    "First thing they're currently subject to (embedded in)",
+    "Second thing they're subject to",
+    "Third thing they're subject to (if applicable)"
+  ],
+  "objectStructure": [
+    "First thing they can now hold as object (reflect on)",
+    "Second thing they can hold as object",
+    "Third thing they can hold as object (if applicable)"
+  ],
+  "recommendations": [
+    "Specific developmental recommendation 1",
+    "Specific developmental recommendation 2",
+    "Specific developmental recommendation 3",
+    "Specific developmental recommendation 4"
+  ]
+}
+
+Be specific and reference actual content from their responses. The probes should have revealed more nuanced understanding of their current structure.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            confirmedStage: { type: Type.STRING },
+            refinedAnalysis: { type: Type.STRING },
+            edgeOfDevelopment: { type: Type.STRING },
+            bigAssumptions: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            subjectStructure: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            objectStructure: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            recommendations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          },
+          required: ['confirmedStage', 'refinedAnalysis', 'edgeOfDevelopment', 'bigAssumptions', 'subjectStructure', 'objectStructure', 'recommendations']
+        }
+      }
+    });
+
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error('Error generating integrated insights:', error);
+    return {
+      confirmedStage: assessmentSession.overallInterpretation?.centerOfGravity || 'Self-Authoring Mind',
+      refinedAnalysis: 'The interactive probes provided additional context for understanding your developmental structure.',
+      edgeOfDevelopment: assessmentSession.overallInterpretation?.developmentalEdge || 'Continue exploring the boundaries of your current meaning-making system.',
+      bigAssumptions: ['Unable to determine at this time'],
+      subjectStructure: ['Analysis incomplete'],
+      objectStructure: ['Analysis incomplete'],
+      recommendations: assessmentSession.overallInterpretation?.recommendations || [
+        'Work with the Subject-Object Explorer tool',
+        'Continue developmental practices',
+        'Consider working with a developmental coach'
+      ]
+    };
+  }
+}
+
 // Relational Pattern Tracking - Chatbot Conversation
 export async function getRelationalPatternResponse(
   conversationContext: string,
