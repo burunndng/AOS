@@ -29,15 +29,16 @@ import SubjectObjectWizard from './components/SubjectObjectWizard.tsx';
 import PerspectiveShifterWizard from './components/PerspectiveShifterWizard.tsx';
 import PolarityMapperWizard from './components/PolarityMapperWizard.tsx';
 import SomaticGeneratorWizard from './components/SomaticGeneratorWizard.tsx';
+import KeganAssessmentWizard from './components/KeganAssessmentWizard.tsx';
 
 
 // Constants & Types
-import { 
-  ActiveTab, 
-  AllPractice, 
-  Practice, 
+import {
+  ActiveTab,
+  AllPractice,
+  Practice,
   CustomPractice,
-  ModuleKey, 
+  ModuleKey,
   ThreeTwoOneSession,
   IFSSession,
   IFSPart,
@@ -48,7 +49,8 @@ import {
   AqalReportData,
   IntegratedInsight,
   SomaticPracticeSession,
-  PolarityMapDraft // FIX: Imported PolarityMapDraft
+  PolarityMapDraft, // FIX: Imported PolarityMapDraft
+  KeganAssessmentSession
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -97,8 +99,9 @@ export default function App() {
   const [draftSO, setDraftSO] = useLocalStorage<SubjectObjectSession | null>('draftSO', null);
   const [draftPS, setDraftPS] = useLocalStorage<PerspectiveShifterSession | null>('draftPS', null);
   // FIX: Updated draftPM to use PolarityMapDraft type.
-  const [draftPM, setDraftPM] = useLocalStorage<PolarityMapDraft | null>('draftPM', null); 
-  
+  const [draftPM, setDraftPM] = useLocalStorage<PolarityMapDraft | null>('draftPM', null);
+  const [draftKegan, setDraftKegan] = useLocalStorage<KeganAssessmentSession | null>('draftKegan', null);
+
   // Session History
   const [history321, setHistory321] = useLocalStorage<ThreeTwoOneSession[]>('history321', []);
   const [historyIFS, setHistoryIFS] = useLocalStorage<IFSSession[]>('historyIFS', []);
@@ -106,6 +109,7 @@ export default function App() {
   const [historySO, setHistorySO] = useLocalStorage<SubjectObjectSession[]>('historySO', []);
   const [historyPS, setHistoryPS] = useLocalStorage<PerspectiveShifterSession[]>('historyPS', []);
   const [historyPM, setHistoryPM] = useLocalStorage<PolarityMap[]>('historyPM', []);
+  const [historyKegan, setHistoryKegan] = useLocalStorage<KeganAssessmentSession[]>('historyKegan', []);
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   
@@ -309,6 +313,12 @@ export default function App() {
     );
     if (insight) setIntegratedInsights(prev => [...prev, insight]);
   };
+
+  const handleSaveKeganSession = (session: KeganAssessmentSession) => {
+    setHistoryKegan(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftKegan(null);
+    setActiveWizard(null);
+  };
   
   const handleSave321Session = (session: ThreeTwoOneSession) => {
     setHistory321(prev => [...prev.filter(s => s.id !== session.id), session]);
@@ -359,7 +369,7 @@ export default function App() {
   const handleExport = () => {
     const data = {
         practiceStack, practiceNotes, dailyNotes, completionHistory,
-        history321, historyIFS, historyBias, historySO, historyPS, historyPM,
+        history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan,
         partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -393,6 +403,7 @@ export default function App() {
                         setHistorySO(data.historySO || []);
                         setHistoryPS(data.historyPS || []);
                         setHistoryPM(data.historyPM || []);
+                        setHistoryKegan(data.historyKegan || []);
                         setPartsLibrary(data.partsLibrary || []);
                         setIntegratedInsights(data.integratedInsights || []);
                         setAqalReport(data.aqalReport || null);
@@ -467,6 +478,7 @@ export default function App() {
       {activeWizard === 'so' && <SubjectObjectWizard onClose={() => setActiveWizard(null)} onSave={handleSaveSOSession} session={draftSO} setDraft={setDraftSO} />}
       {activeWizard === 'ps' && <PerspectiveShifterWizard onClose={() => setActiveWizard(null)} onSave={handleSavePSSession} session={draftPS} setDraft={setDraftPS} />}
       {activeWizard === 'pm' && <PolarityMapperWizard onClose={() => setActiveWizard(null)} onSave={handleSavePMSession} draft={draftPM} setDraft={setDraftPM} />}
+      {activeWizard === 'kegan' && <KeganAssessmentWizard onClose={() => setActiveWizard(null)} onSave={handleSaveKeganSession} session={draftKegan} setDraft={setDraftKegan} />}
       {activeWizard === 'somatic' && <SomaticGeneratorWizard onClose={() => setActiveWizard(null)} onSave={handleSaveSomaticPractice} />}
     </div>
   );

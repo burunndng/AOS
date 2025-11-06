@@ -308,3 +308,56 @@ export interface SomaticPreset {
   safetyNotes?: string[];
   citations?: string[];
 }
+
+// Kegan Developmental Stage Assessment Types
+export type KeganStage = 'Socialized Mind' | 'Socialized/Self-Authoring Transition' | 'Self-Authoring Mind' | 'Self-Authoring/Self-Transforming Transition' | 'Self-Transforming Mind';
+
+export type KeganDomain = 'Relationships' | 'Work & Purpose' | 'Values & Beliefs' | 'Conflict & Feedback' | 'Identity & Self';
+
+export interface KeganPrompt {
+  id: string;
+  domain: KeganDomain;
+  prompt: string;
+  instruction: string;
+  stage3Indicator: string; // What Socialized Mind would say/do
+  stage4Indicator: string; // What Self-Authoring Mind would say/do
+  stage5Indicator: string; // What Self-Transforming Mind would say/do
+}
+
+export interface KeganResponse {
+  promptId: string;
+  domain: KeganDomain;
+  response: string;
+  aiAnalysis?: {
+    likelyStage: KeganStage;
+    reasoning: string;
+    subjectObjectStructure: string; // What is subject vs object for this person
+  };
+}
+
+export interface KeganAssessmentSession {
+  id: string;
+  date: string;
+  responses: KeganResponse[];
+  overallInterpretation?: {
+    centerOfGravity: KeganStage;
+    confidence: 'Low' | 'Medium' | 'High';
+    domainVariation: Record<KeganDomain, KeganStage>; // Different stages in different domains
+    developmentalEdge: string; // Where they're growing
+    recommendations: string[];
+    fullAnalysis: string;
+  };
+  selfReflection?: string; // After seeing results, what does the user think?
+  notes?: string;
+}
+
+export type KeganAssessmentStep =
+  | 'INTRODUCTION'
+  | 'RELATIONSHIPS'
+  | 'WORK_PURPOSE'
+  | 'VALUES_BELIEFS'
+  | 'CONFLICT_FEEDBACK'
+  | 'IDENTITY_SELF'
+  | 'ANALYSIS'
+  | 'RESULTS'
+  | 'REFLECTION';
