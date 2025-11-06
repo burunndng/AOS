@@ -4,7 +4,7 @@
 // services/geminiService.ts
 // FIX: Add `ThreeTwoOneSession` and `CustomPractice` to type imports.
 import { GoogleGenAI, Type, Modality, Blob, Content } from "@google/genai";
-import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey, IntegratedInsight } from '../types.ts';
+import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey, IntegratedInsight, KeganResponse, KeganStage, KeganDomain } from '../types.ts';
 import { practices as corePractaces } from '../constants.ts';
 
 
@@ -674,5 +674,140 @@ export async function detectPatternsAndSuggestShadowWork(
   } catch (error) {
     console.error("Error in detectPatternsAndSuggestShadowWork:", error);
     return null;
+  }
+}
+
+// Kegan Developmental Stage Assessment Analysis
+export async function analyzeKeganStage(responses: KeganResponse[]): Promise<{
+  centerOfGravity: KeganStage;
+  confidence: 'Low' | 'Medium' | 'High';
+  domainVariation: Record<KeganDomain, KeganStage>;
+  developmentalEdge: string;
+  recommendations: string[];
+  fullAnalysis: string;
+}> {
+  const responsesContext = responses.map(r =>
+    `Domain: ${r.domain}\nResponse: ${r.response}`
+  ).join('\n\n---\n\n');
+
+  const prompt = `You are a developmental psychologist trained in Robert Kegan's constructive-developmental theory. Analyze these responses from a self-assessment based on Kegan's framework.
+
+# Kegan's Framework Overview
+
+**Socialized Mind (Stage 3):**
+- Subject to: relationships, others' expectations, mutually-reciprocal role consciousness
+- Object: impulses, needs, perceptions
+- Key marker: Cannot step outside relationships to examine them. Identity IS relationships. External validation defines worth.
+
+**Self-Authoring Mind (Stage 4):**
+- Subject to: own ideology, internal system, identity, self-authorship
+- Object: relationships, expectations, social roles
+- Key marker: Has internal compass, can examine relationships objectively, self-governed, but cannot see own ideology as partial.
+
+**Self-Transforming Mind (Stage 5):**
+- Subject to: dialectical process, inter-penetration of systems
+- Object: ideology, identity, authorship
+- Key marker: Can step back from own ideology, holds contradictions, sees all systems as partial, comfort with paradox.
+
+**Transitional Stages:**
+- People are often between stages (3/4 or 4/5), showing elements of both.
+
+# Assessment Responses
+
+${responsesContext}
+
+# Your Task
+
+Analyze these responses for:
+1. What is SUBJECT (embedded in, cannot see) vs OBJECT (can observe, reflect on)
+2. How meaning is being made
+3. Center of gravity (most consistent stage)
+4. Domain variation (different stages in different areas)
+5. Developmental edge (where they're growing)
+
+Return a JSON object with this exact structure:
+{
+  "centerOfGravity": "Socialized Mind" | "Socialized/Self-Authoring Transition" | "Self-Authoring Mind" | "Self-Authoring/Self-Transforming Transition" | "Self-Transforming Mind",
+  "confidence": "Low" | "Medium" | "High",
+  "domainVariation": {
+    "Relationships": [stage],
+    "Work & Purpose": [stage],
+    "Values & Beliefs": [stage],
+    "Conflict & Feedback": [stage],
+    "Identity & Self": [stage]
+  },
+  "fullAnalysis": "A comprehensive 4-6 paragraph analysis explaining:\n- What you notice about subject-object structure\n- Key indicators in their responses\n- Patterns across domains\n- Where they show consistency and variation\n- Evidence for the center of gravity assessment",
+  "developmentalEdge": "2-3 sentences describing where this person appears to be growing and what might support that growth",
+  "recommendations": [
+    "Specific practice recommendation 1 (e.g., 'Work with the Subject-Object Explorer on [specific pattern]')",
+    "Specific practice recommendation 2 (e.g., 'Engage shadow work around [specific theme]')",
+    "Specific practice recommendation 3 (e.g., 'Read [book] or work with [type of practitioner]')",
+    "Specific practice recommendation 4"
+  ]
+}
+
+Important:
+- Be nuanced. Most people are in transition.
+- Look for what they CAN'T see, not just what they say.
+- Later stages aren't "better" - be descriptive, not prescriptive.
+- Base assessment on actual response content, not assumptions.
+- If responses show inconsistency, note lower confidence.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-pro',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            centerOfGravity: { type: Type.STRING },
+            confidence: { type: Type.STRING },
+            domainVariation: {
+              type: Type.OBJECT,
+              properties: {
+                'Relationships': { type: Type.STRING },
+                'Work & Purpose': { type: Type.STRING },
+                'Values & Beliefs': { type: Type.STRING },
+                'Conflict & Feedback': { type: Type.STRING },
+                'Identity & Self': { type: Type.STRING }
+              }
+            },
+            fullAnalysis: { type: Type.STRING },
+            developmentalEdge: { type: Type.STRING },
+            recommendations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          },
+          required: ['centerOfGravity', 'confidence', 'domainVariation', 'fullAnalysis', 'developmentalEdge', 'recommendations']
+        }
+      }
+    });
+
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error('Error analyzing Kegan stage:', error);
+    // Fallback
+    return {
+      centerOfGravity: 'Self-Authoring Mind',
+      confidence: 'Low',
+      domainVariation: {
+        'Relationships': 'Self-Authoring Mind',
+        'Work & Purpose': 'Self-Authoring Mind',
+        'Values & Beliefs': 'Self-Authoring Mind',
+        'Conflict & Feedback': 'Self-Authoring Mind',
+        'Identity & Self': 'Self-Authoring Mind'
+      },
+      fullAnalysis: 'Analysis could not be completed. Please try again.',
+      developmentalEdge: 'Unable to determine at this time.',
+      recommendations: [
+        'Retake the assessment with more detailed responses',
+        'Work with the Subject-Object Explorer tool',
+        'Consider working with a developmental coach or therapist',
+        'Read "Immunity to Change" by Kegan & Lahey'
+      ]
+    };
   }
 }
