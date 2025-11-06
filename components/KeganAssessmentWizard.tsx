@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ElementType } from 'react';
 import {
   KeganAssessmentSession,
   KeganAssessmentStep,
   KeganResponse,
   KeganPrompt,
-  KeganDomain
+  KeganDomain,
+  KeganCenterOfGravity
 } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Sparkles, Brain, Users, Target, MessageSquare, User, Download } from 'lucide-react';
 import * as geminiService from '../services/geminiService.ts';
@@ -127,7 +128,7 @@ const STEPS: KeganAssessmentStep[] = [
   'REFLECTION'
 ];
 
-const domainIcons = {
+const domainIcons: Record<KeganDomain, ElementType> = {
   'Relationships': Users,
   'Work & Purpose': Target,
   'Values & Beliefs': Brain,
@@ -146,6 +147,8 @@ export default function KeganAssessmentWizard({ onClose, onSave, session: draft,
   const [currentResponse, setCurrentResponse] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  // FIX: Added useState for error state
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { if (draft) setSession(draft); }, [draft]);
 
@@ -180,77 +183,79 @@ export default function KeganAssessmentWizard({ onClose, onSave, session: draft,
 
   const canProceedToNext = () => {
     if (isAnalyzing) return false;
+    // For prompt steps, check if response is valid
     if (['RELATIONSHIPS', 'WORK_PURPOSE', 'VALUES_BELIEFS', 'CONFLICT_FEEDBACK', 'IDENTITY_SELF'].includes(currentStep)) {
       return currentResponse.trim().length > 30;
     }
+    // For other steps, always allow proceeding unless currently analyzing
     return true;
   };
 
   const handleNext = async () => {
-    // Save current response if in a prompt step
-    if (currentPrompt && currentResponse.trim()) {
-      const newResponse: KeganResponse = {
-        promptId: currentPrompt.id,
-        domain: currentPrompt.domain,
-        response: currentResponse.trim()
-      };
+    // FIX: Set error state to null at the beginning of the function
+    setError(null);
+    let tempResponses = session.responses; // Use current state as base for mutation in this function call
 
-      setSession(prev => ({
-        ...prev,
-        responses: [...prev.responses, newResponse]
-      }));
-
-      setCurrentResponse('');
-    }
-
-    // Check if we need to move to next domain or analysis
-    const domain = getCurrentDomain();
-    if (domain) {
-      const domainResponses = session.responses.filter(r => r.domain === domain);
-      const totalDomainPrompts = KEGAN_PROMPTS.filter(p => p.domain === domain).length;
-
-      // If we've answered all prompts in this domain, move to next step
-      if (domainResponses.length + 1 >= totalDomainPrompts) {
-        const currentStepIndex = STEPS.indexOf(currentStep);
-        setCurrentStep(STEPS[currentStepIndex + 1]);
+    // 1. If currently on a prompt step, validate and capture response
+    const isPromptStep = ['RELATIONSHIPS', 'WORK_PURPOSE', 'VALUES_BELIEFS', 'CONFLICT_FEEDBACK', 'IDENTITY_SELF'].includes(currentStep);
+    if (isPromptStep) {
+      if (!currentResponse.trim() || currentResponse.trim().length < 30) {
+        // FIX: Set error state when validation fails
+        setError("Please write at least 30 characters for your response.");
         return;
       }
-    } else {
-      // Non-prompt steps
-      if (currentStep === 'INTRODUCTION') {
-        setCurrentStep('RELATIONSHIPS');
-      } else if (currentStep === 'IDENTITY_SELF') {
-        setCurrentStep('ANALYSIS');
-        await performAnalysis();
-      } else if (currentStep === 'ANALYSIS') {
-        setCurrentStep('RESULTS');
-      } else if (currentStep === 'RESULTS') {
-        setCurrentStep('REFLECTION');
-      } else if (currentStep === 'REFLECTION') {
-        onSave(session);
+      if (currentPrompt) { // Ensure currentPrompt is defined before attempting to add response
+        const newResponse: KeganResponse = {
+          promptId: currentPrompt.id,
+          domain: currentPrompt.domain,
+          response: currentResponse.trim()
+        };
+        tempResponses = [...tempResponses, newResponse]; // Add new response to temp array
+        setCurrentResponse(''); // Clear input for next prompt
       }
     }
-  };
 
-  const performAnalysis = async () => {
-    setIsAnalyzing(true);
-    setAnalysisError(null);
-    try {
-      const interpretation = await geminiService.analyzeKeganStage(session.responses);
-      setSession(prev => ({
-        ...prev,
-        overallInterpretation: interpretation
-      }));
-      // Auto-advance to RESULTS after successful analysis
-      setTimeout(() => {
-        setCurrentStep('RESULTS');
-      }, 1000);
-    } catch (error) {
-      console.error('Analysis error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      setAnalysisError(`Analysis failed: ${errorMessage}. Please try again or check your API key configuration.`);
-    } finally {
-      setIsAnalyzing(false);
+    // 2. Determine the next wizard step
+    let nextStep: KeganAssessmentStep = currentStep;
+    const currentStepIndex = STEPS.indexOf(currentStep);
+    const currentDomain = getCurrentDomain(); // Based on currentStep
+
+    if (currentStep === 'INTRODUCTION') {
+        nextStep = 'RELATIONSHIPS';
+    } else if (currentDomain) { // If it's one of the domain-specific prompt steps
+        const domainResponsesCount = tempResponses.filter(r => r.domain === currentDomain).length;
+        const totalDomainPrompts = KEGAN_PROMPTS.filter(p => p.domain === currentDomain).length;
+
+        if (domainResponsesCount === totalDomainPrompts) {
+            // All prompts for the current domain are now collected. Move to the *next sequential major step*.
+            if (currentStep === 'IDENTITY_SELF') {
+                nextStep = 'ANALYSIS';
+            } else {
+                nextStep = STEPS[currentStepIndex + 1]; // Move to next domain step (e.g., WORK_PURPOSE)
+            }
+        } else {
+            // Not all prompts for the current domain are collected yet. Stay on this domain step.
+            // `currentPrompt` will automatically update for the next prompt in the sequence.
+            nextStep = currentStep;
+        }
+    } else if (currentStep === 'RESULTS') {
+        nextStep = 'REFLECTION';
+    } else if (currentStep === 'REFLECTION') {
+        // Final step - save and close
+        setSession(prev => ({ ...prev!, responses: tempResponses })); // Ensure final responses are part of session for onSave
+        onSave({ ...session, responses: tempResponses } as KeganAssessmentSession); // Pass the updated session to onSave
+        onClose();
+        return; // Exit
+    }
+    // No explicit handling for 'ANALYSIS' step here, as `performAnalysis` handles its own `setCurrentStep` to 'RESULTS'
+
+    // 3. Update main session state with new responses and move to next step
+    setSession(prev => ({ ...prev!, responses: tempResponses }));
+    setCurrentStep(nextStep);
+
+    // 4. Trigger analysis if transitioning to the 'ANALYSIS' step
+    if (nextStep === 'ANALYSIS' && currentStep !== 'ANALYSIS') {
+        await performAnalysis();
     }
   };
 
@@ -268,7 +273,7 @@ Date: ${new Date(session.date).toLocaleDateString()}
 ## Your Responses
 
 ${session.responses.map(r => `### ${r.domain}
-**Prompt:** ${KEGAN_PROMPTS.find(p => p.promptId === r.promptId)?.prompt}
+**Prompt:** ${KEGAN_PROMPTS.find(p => p.id === r.promptId)?.prompt}
 **Response:** ${r.response}
 `).join('\n')}
 
@@ -298,6 +303,26 @@ ${session.selfReflection || 'Not yet completed'}
     a.href = url;
     a.download = `kegan-assessment-${new Date().toISOString().split('T')[0]}.md`;
     a.click();
+  };
+
+  const performAnalysis = async () => {
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    try {
+      const interpretation = await geminiService.analyzeKeganStage(session.responses);
+      setSession(prev => ({
+        ...prev,
+        overallInterpretation: interpretation
+      }));
+      // Auto-advance to RESULTS after successful analysis, without artificial delay
+      setCurrentStep('RESULTS');
+    } catch (error) {
+      console.error('Analysis error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+      setAnalysisError(`Analysis failed: ${errorMessage}. Please try again or check your API key configuration.`);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const renderIntroduction = () => (
@@ -492,7 +517,7 @@ ${session.selfReflection || 'Not yet completed'}
 
     const { centerOfGravity, confidence, domainVariation, developmentalEdge, recommendations, fullAnalysis } = session.overallInterpretation;
 
-    const stageColors = {
+    const stageColors: Record<KeganCenterOfGravity, string> = {
       'Socialized Mind': 'text-blue-300',
       'Socialized/Self-Authoring Transition': 'text-blue-300',
       'Self-Authoring Mind': 'text-purple-300',
@@ -643,6 +668,12 @@ ${session.selfReflection || 'Not yet completed'}
 
         {/* Content */}
         <div className="p-6">
+          {/* FIX: Display error message */}
+          {error && (
+            <div className="bg-red-900/30 border border-red-700 rounded-md p-3 mb-4">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
           {currentStep === 'INTRODUCTION' && renderIntroduction()}
           {['RELATIONSHIPS', 'WORK_PURPOSE', 'VALUES_BELIEFS', 'CONFLICT_FEEDBACK', 'IDENTITY_SELF'].includes(currentStep) && renderPromptStep()}
           {currentStep === 'ANALYSIS' && renderAnalysis()}
