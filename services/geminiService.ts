@@ -1367,3 +1367,257 @@ Return JSON with thoughtful, psychologically sophisticated analysis:
     };
   }
 }
+
+// Role Alignment Wizard - Gemini Integration Functions
+
+/**
+ * Generates a personalized action suggestion for a role based on its alignment score and context
+ */
+export async function generateRoleActionSuggestion(
+  roleName: string,
+  why: string,
+  goal: string,
+  valueScore: number,
+  valueNote: string,
+  shadowNudge?: string
+): Promise<string> {
+  const prompt = `You are an integral life coach helping someone align their roles with their deeper values.
+
+# Role Context
+- Role: ${roleName}
+- Why they have this role: ${why}
+- Core goal: ${goal}
+- Value alignment score: ${valueScore}/10
+- Why that score: ${valueNote}
+${shadowNudge ? `- Shadow work note: ${shadowNudge}` : ''}
+
+# Your Task
+Generate ONE specific, actionable, personalized suggestion for this person to either:
+- If score >= 7: Amplify and celebrate this alignment
+- If score < 7: Make a small shift to increase alignment
+
+Requirements:
+- Be specific to THEIR role and context (not generic)
+- Make it small and achievable (can be done this week)
+- Frame it positively and encouragingly
+- Keep it to one sentence
+- Start with an action verb
+
+Examples of good suggestions:
+- "Schedule a 15-minute coffee chat with your team to share one win from this role"
+- "Identify one task this week that doesn't align with your core goal and delegate it"
+- "Write down three ways this role connects to your deeper values and place it where you'll see it daily"
+
+Return ONLY the action suggestion as a string.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+    return response.text.trim();
+  } catch (error) {
+    console.error('Error generating role action suggestion:', error);
+    // Fallback to original template behavior
+    const templates = valueScore >= 7
+      ? [
+          "Share one win in your next interaction",
+          "Amplify: Celebrate this alignment with someone close",
+          "Document what's working to reinforce it"
+        ]
+      : [
+          "Try a 5-min boundary: Delegate one task tomorrow",
+          "Identify one small shift you can make this week",
+          "Say 'no' to one request that doesn't align"
+        ];
+    return templates[Math.floor(Math.random() * templates.length)];
+  }
+}
+
+/**
+ * Analyzes a single role and provides insights about its alignment
+ */
+export async function analyzeRoleAlignment(
+  roleName: string,
+  why: string,
+  goal: string,
+  valueScore: number,
+  valueNote: string
+): Promise<{ insight: string; question: string }> {
+  const prompt = `You are an integral coach analyzing how someone's role aligns with their values.
+
+# Role
+- Name: ${roleName}
+- Why they have it: ${why}
+- Core goal: ${goal}
+- Alignment score: ${valueScore}/10
+- Why that score: ${valueNote}
+
+# Your Task
+Provide:
+1. A brief insight (1-2 sentences) about what this alignment pattern reveals
+2. A probing question (1 sentence) to deepen their reflection
+
+Focus on:
+- What the score reveals about their relationship to this role
+- Any tension between the goal and the alignment
+- Opportunities for growth or celebration
+
+Return a JSON object:
+{
+  "insight": "Your observation about the alignment pattern",
+  "question": "A question to deepen reflection"
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            insight: { type: Type.STRING },
+            question: { type: Type.STRING }
+          },
+          required: ['insight', 'question']
+        }
+      }
+    });
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error('Error analyzing role alignment:', error);
+    return {
+      insight: "Every role carries an opportunity for deeper alignment.",
+      question: "What would it feel like if this role was in perfect harmony with your values?"
+    };
+  }
+}
+
+/**
+ * Generates shadow work insights for low-scoring roles
+ */
+export async function generateShadowWorkInsight(
+  roleName: string,
+  valueScore: number,
+  valueNote: string
+): Promise<string> {
+  const prompt = `You are a depth psychologist helping someone explore shadow material in a role that doesn't align with their values.
+
+# Role Context
+- Role: ${roleName}
+- Alignment score: ${valueScore}/10 (low alignment)
+- Why that score: ${valueNote}
+
+# Your Task
+Generate ONE insightful, compassionate prompt (2 sentences max) that helps them explore what might be underneath this misalignment.
+
+Consider:
+- What might they be avoiding?
+- What need might this role be meeting (even if unconsciously)?
+- What pattern from the past might be playing out?
+- What would it cost them to let go or transform this role?
+
+Be gentle but direct. Use curious language ("I wonder if...", "What if...").
+
+Return ONLY the insight as a string.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt
+    });
+    return response.text.trim();
+  } catch (error) {
+    console.error('Error generating shadow work insight:', error);
+    return "What might this role be protecting you from? Sometimes misalignment reveals an unconscious need for safety or belonging.";
+  }
+}
+
+/**
+ * Generates an integral reflection by analyzing all roles together
+ */
+export async function generateIntegralReflection(
+  roles: Array<{
+    name: string;
+    why: string;
+    goal: string;
+    valueScore: number;
+    valueNote: string;
+    shadowNudge?: string;
+    action?: string;
+  }>
+): Promise<{
+  integralInsight: string;
+  quadrantConnections: string;
+  recommendations: string[];
+}> {
+  const rolesContext = roles.map((r, i) => `
+${i + 1}. **${r.name}** (Alignment: ${r.valueScore}/10)
+   - Why: ${r.why}
+   - Goal: ${r.goal}
+   - Alignment note: ${r.valueNote}
+   ${r.shadowNudge ? `- Shadow note: ${r.shadowNudge}` : ''}
+   ${r.action ? `- Action: ${r.action}` : ''}
+`).join('\n');
+
+  const prompt = `You are an integral coach analyzing someone's role ecosystem through the AQAL framework (I, We, It, Its quadrants).
+
+# Roles Explored
+${rolesContext}
+
+# Your Task
+
+Provide an integral analysis:
+
+1. **Integral Insight** (2-3 sentences): What patterns do you see across their roles? How do the high and low scoring roles relate? What does their role ecosystem reveal about their current life structure?
+
+2. **Quadrant Connections** (2-3 sentences): How do these Its-quadrant roles (external roles in systems) connect to:
+   - I (interior individual): their inner experience, values, consciousness
+   - We (interior collective): their relationships, culture, sense of belonging
+   - It (exterior individual): their behaviors, practices, health
+
+3. **Recommendations** (3-4 specific suggestions): What would create more balance and integration across quadrants?
+
+Return JSON:
+{
+  "integralInsight": "Pattern analysis across roles",
+  "quadrantConnections": "How roles connect to I, We, It quadrants",
+  "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"]
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            integralInsight: { type: Type.STRING },
+            quadrantConnections: { type: Type.STRING },
+            recommendations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            }
+          },
+          required: ['integralInsight', 'quadrantConnections', 'recommendations']
+        }
+      }
+    });
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error('Error generating integral reflection:', error);
+    return {
+      integralInsight: "Your roles form an interconnected system, each influencing your overall alignment.",
+      quadrantConnections: "Consider how your external roles (Its) reflect and shape your inner values (I) and relationships (We).",
+      recommendations: [
+        "Bring more awareness to how your roles affect your inner state",
+        "Notice how your relationships influence your role choices",
+        "Consider which roles deserve more energy and which might need boundaries"
+      ]
+    };
+  }
+}
