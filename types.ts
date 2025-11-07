@@ -222,13 +222,18 @@ export interface PolarityMapDraft extends Partial<PolarityMap> {
 
 export interface IntegratedInsight {
   id: string;
-  mindToolType: 'Bias Detective' | 'Subject-Object Explorer' | 'Perspective-Shifter' | 'Polarity Mapper';
+  mindToolType: 'Bias Detective' | 'Subject-Object Explorer' | 'Perspective-Shifter' | 'Polarity Mapper' | 'Kegan Assessment' | 'Relational Pattern' | 'Role Alignment' | 'Somatic Practice' | 'Jhana Guide' | 'Meditation Finder' | 'Consciousness Graph';
   mindToolSessionId: string;
   mindToolName: string;
   mindToolReport: string;
   mindToolShortSummary: string;
   detectedPattern: string;
   suggestedShadowWork: {
+    practiceId: string;
+    practiceName: string;
+    rationale: string;
+  }[];
+  suggestedNextSteps?: {
     practiceId: string;
     practiceName: string;
     rationale: string;

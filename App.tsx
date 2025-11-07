@@ -325,16 +325,26 @@ export default function App() {
     if (insight) setIntegratedInsights(prev => [...prev, insight]);
   };
 
-  const handleSaveKeganSession = (session: KeganAssessmentSession) => {
+  const handleSaveKeganSession = async (session: KeganAssessmentSession) => {
     setHistoryKegan(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftKegan(null);
     setActiveWizard(null);
+    const report = `# Kegan Assessment\n- Stage: ${session.dominantStage}\n- Key Insights: ${JSON.stringify(session.answers).substring(0, 200)}`;
+    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
+      'Kegan Assessment', session.id, report, Object.values(corePractices.shadow)
+    );
+    if (insight) setIntegratedInsights(prev => [...prev, insight]);
   };
 
-  const handleSaveRelationalSession = (session: RelationalPatternSession) => {
+  const handleSaveRelationalSession = async (session: RelationalPatternSession) => {
     setHistoryRelational(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftRelational(null);
     setActiveWizard(null);
+    const report = `# Relational Pattern: ${session.patternName}\n- Context: ${session.conversation.slice(-3).map(m => m.content).join(' ')}`;
+    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
+      'Relational Pattern', session.id, report, Object.values(corePractices.shadow)
+    );
+    if (insight) setIntegratedInsights(prev => [...prev, insight]);
   };
 
   const handleSaveJhanaSession = (session: JhanaSession) => {
