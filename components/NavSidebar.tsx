@@ -47,13 +47,14 @@ const navItems = [
 const NavButton = ({ item, isActive, onClick }: { item: any, isActive: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 group ${
             isActive
-                ? 'bg-accent/10 text-accent font-semibold shadow-[0_0_15px_rgba(217,170,239,0.2)]'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                ? 'bg-gradient-to-r from-accent/15 to-accent/5 text-accent font-semibold shadow-[0_0_20px_rgba(217,170,239,0.25)] border border-accent/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:border hover:border-accent/20'
         }`}
+        style={isActive ? { backdropFilter: 'blur(10px)' } : {}}
     >
-        <item.icon size={18} />
+        <item.icon size={18} className="group-hover:scale-110 transition-transform duration-300" />
         <span>{item.label}</span>
     </button>
 );
@@ -63,11 +64,14 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
     let lastGroup: string | undefined = undefined;
 
     return (
-        <aside className="w-64 bg-slate-900/50 border-r border-slate-800/70 p-4 flex flex-col sticky top-0 h-screen">
-            <div className="flex items-center gap-3 px-2 flex-shrink-0">
+        <aside className="w-64 p-4 flex flex-col sticky top-0 h-screen" style={{background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(26, 40, 71, 0.6) 100%)', backdropFilter: 'blur(10px)', borderRight: '1px solid rgba(217, 170, 239, 0.1)'}}>
+            <div className="flex items-center gap-3 px-2 flex-shrink-0 group cursor-pointer">
                 {/* FIX: MerkabaIcon now accepts 'size' prop for explicit sizing. */}
-                <MerkabaIcon className="text-accent" size={28} />
-                <h1 className="text-2xl font-bold font-mono tracking-tighter text-slate-100">Aura OS</h1>
+                <MerkabaIcon className="text-accent group-hover:animate-spin" size={28} style={{transition: 'all 0.3s ease'}} />
+                <div>
+                    <h1 className="text-2xl font-bold font-mono tracking-tighter bg-gradient-to-r from-accent to-accent-gold bg-clip-text text-transparent">Aura OS</h1>
+                    <p className="text-xs text-slate-500 mt-0.5">Integral Life Practice</p>
+                </div>
             </div>
             <nav className="flex flex-col gap-1 mt-6 flex-grow overflow-y-auto pr-2 -mr-2">
                 {navItems.map(item => {
@@ -76,9 +80,12 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
                     return (
                         <React.Fragment key={item.id}>
                             {isGroupStart && (
-                                <h2 className="font-mono text-xs font-semibold text-slate-500 uppercase mt-4 mb-2 px-3 tracking-wider">
-                                    {item.group}
-                                </h2>
+                                <div className="mt-4 mb-2">
+                                    <h2 className="font-mono text-xs font-semibold text-slate-400 uppercase px-3 tracking-wider opacity-70">
+                                        {item.group}
+                                    </h2>
+                                    <div className="h-px bg-gradient-to-r from-accent/20 to-transparent mt-2"></div>
+                                </div>
                             )}
                             <NavButton
                                 item={item}
@@ -90,21 +97,21 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
                 })}
             </nav>
             {/* App Settings Section */}
-            <div className="flex-shrink-0 mt-4">
-                 <h2 className="font-mono text-xs font-semibold text-slate-500 uppercase mt-4 mb-2 px-3 tracking-wider">
+            <div className="flex-shrink-0 mt-4 pt-4 border-t border-accent/20">
+                 <h2 className="font-mono text-xs font-semibold text-slate-400 uppercase mt-4 mb-3 px-3 tracking-wider opacity-70">
                     App Settings
                 </h2>
                 <div className="space-y-1">
-                    <button onClick={onExport} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
-                        <Download size={18} />
+                    <button onClick={onExport} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 hover:border hover:border-accent/20 transition-all duration-300 group">
+                        <Download size={18} className="group-hover:scale-110 transition-transform duration-300" />
                         <span>Export Data</span>
                     </button>
-                    <button onClick={onImport} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
-                        <Upload size={18} />
+                    <button onClick={onImport} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 hover:border hover:border-accent/20 transition-all duration-300 group">
+                        <Upload size={18} className="group-hover:scale-110 transition-transform duration-300" />
                         <span>Import Data</span>
                     </button>
-                     <button onClick={onReset} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors">
-                        <Trash2 size={18} />
+                     <button onClick={onReset} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-900/20 hover:border hover:border-red-500/30 transition-all duration-300 group">
+                        <Trash2 size={18} className="group-hover:scale-110 transition-transform duration-300" />
                         <span>Reset App</span>
                     </button>
                 </div>

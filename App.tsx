@@ -484,9 +484,9 @@ export default function App() {
   }
   
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 font-sans">
+    <div className="flex h-screen bg-slate-950 text-slate-100 font-sans" style={{background: 'linear-gradient(135deg, #0f1729 0%, #1a2847 25%, #0f1a2e 50%, #1a2847 75%, #0f1729 100%)'}}>
       <NavSidebar activeTab={activeTab} setActiveTab={setActiveTab} onExport={handleExport} onImport={handleImport} onReset={handleReset} />
-      <main className="flex-1 overflow-y-auto p-8">
+      <main className="flex-1 overflow-y-auto p-8 backdrop-blur-3xl" style={{backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(217, 170, 239, 0.03) 0%, transparent 50%)'}}>
         {renderActiveTab()}
       </main>
       <Coach 
