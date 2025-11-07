@@ -141,17 +141,26 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
 
                 {/* Summary Stats */}
                 <div className="grid grid-cols-3 gap-4 mb-8">
-                    <div className="card-glass bg-gradient-to-br from-amber-900/40 to-orange-900/20 border border-amber-500/30 rounded-xl p-6 text-center group hover:shadow-glow-lg transition-all duration-300" style={{backdropFilter: 'blur(10px)'}}>
-                        <div className="text-4xl font-bold text-amber-300 group-hover:scale-110 transition-transform duration-300">{pendingInsights.length}</div>
-                        <div className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Pending Connections</div>
+                    <div className="card-glass relative bg-gradient-to-br from-amber-900/50 to-orange-900/25 border border-amber-500/40 rounded-xl p-6 text-center group hover:border-amber-500/60 hover:-translate-y-1 transition-all duration-300 overflow-hidden" style={{backdropFilter: 'blur(12px)', boxShadow: '0 8px 24px rgba(217, 119, 6, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1)'}}>
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(217, 119, 6, 0.1) 0%, transparent 60%)'}}></div>
+                        <div className="relative z-10">
+                            <div className="text-4xl font-bold text-amber-300 group-hover:scale-110 transition-transform duration-300">{pendingInsights.length}</div>
+                            <div className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Pending Connections</div>
+                        </div>
                     </div>
-                    <div className="card-glass bg-gradient-to-br from-green-900/40 to-emerald-900/20 border border-green-500/30 rounded-xl p-6 text-center group hover:shadow-glow-lg transition-all duration-300" style={{backdropFilter: 'blur(10px)'}}>
-                        <div className="text-4xl font-bold text-green-300 group-hover:scale-110 transition-transform duration-300">{addressedInsights.length}</div>
-                        <div className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Completed Integrations</div>
+                    <div className="card-glass relative bg-gradient-to-br from-green-900/50 to-emerald-900/25 border border-green-500/40 rounded-xl p-6 text-center group hover:border-green-500/60 hover:-translate-y-1 transition-all duration-300 overflow-hidden" style={{backdropFilter: 'blur(12px)', boxShadow: '0 8px 24px rgba(34, 197, 94, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1)'}}>
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(34, 197, 94, 0.1) 0%, transparent 60%)'}}></div>
+                        <div className="relative z-10">
+                            <div className="text-4xl font-bold text-green-300 group-hover:scale-110 transition-transform duration-300">{addressedInsights.length}</div>
+                            <div className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Completed Integrations</div>
+                        </div>
                     </div>
-                    <div className="card-glass bg-gradient-to-br from-blue-900/40 to-indigo-900/20 border border-blue-500/30 rounded-xl p-6 text-center group hover:shadow-glow-lg transition-all duration-300" style={{backdropFilter: 'blur(10px)'}}>
-                        <div className="text-4xl font-bold text-blue-300 group-hover:scale-110 transition-transform duration-300">{integratedInsights.length}</div>
-                        <div className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Total Insights</div>
+                    <div className="card-glass relative bg-gradient-to-br from-blue-900/50 to-indigo-900/25 border border-blue-500/40 rounded-xl p-6 text-center group hover:border-blue-500/60 hover:-translate-y-1 transition-all duration-300 overflow-hidden" style={{backdropFilter: 'blur(12px)', boxShadow: '0 8px 24px rgba(59, 130, 246, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1)'}}>
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(59, 130, 246, 0.1) 0%, transparent 60%)'}}></div>
+                        <div className="relative z-10">
+                            <div className="text-4xl font-bold text-blue-300 group-hover:scale-110 transition-transform duration-300">{integratedInsights.length}</div>
+                            <div className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Total Insights</div>
+                        </div>
                     </div>
                 </div>
                 
@@ -164,61 +173,66 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
                             {pendingInsights.map(insight => {
                                 const category = getToolCategory(insight.mindToolType);
                                 return (
-                                <div key={insight.id} className="card-glass bg-gradient-to-br from-slate-800/60 to-slate-900/40 border border-amber-600/40 rounded-xl p-6 shadow-card hover:shadow-glow transition-all duration-300 group" style={{backdropFilter: 'blur(8px)'}}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${category.color}`}>
-                                            {category.name}
-                                        </span>
-                                        <p className="text-xs text-slate-500">{new Date(insight.dateCreated).toLocaleDateString()} • {insight.mindToolType}</p>
-                                    </div>
-                                    <h4 className="text-lg font-semibold text-slate-200">{insight.mindToolName}</h4>
-                                    <p className="text-slate-400 text-sm mt-2">{insight.mindToolShortSummary}</p>
-                                    <div className="mt-4 bg-slate-900/50 border border-slate-700 rounded-md p-3">
-                                        <p className="font-semibold text-slate-300 flex items-center gap-2"><BrainCircuit size={16} className="text-blue-400"/> Detected Pattern:</p>
-                                        <p className="text-sm text-slate-200 mt-1">{insight.detectedPattern}</p>
-                                    </div>
-                                    {insight.suggestedShadowWork && insight.suggestedShadowWork.length > 0 && (
-                                        <div className="mt-4">
-                                            <p className="font-semibold text-slate-300 flex items-center gap-2"><GitMerge size={16} className="text-amber-400"/> Suggested Shadow Work:</p>
-                                            <ul className="mt-2 space-y-2">
-                                                {insight.suggestedShadowWork.map((sw, idx) => (
-                                                    <li key={idx} className="bg-slate-700/50 rounded-md p-3 flex justify-between items-center">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-slate-200">{sw.practiceName}</p>
-                                                            <p className="text-xs text-slate-400">{sw.rationale}</p>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => handleStartShadowWork(insight.id, sw.practiceId)}
-                                                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1 shadow-md hover:shadow-glow-sm transform hover:scale-105"
-                                                        >
-                                                            <Sparkles size={14} /> Start
-                                                        </button>
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                <div key={insight.id} className="card-glass relative bg-gradient-to-br from-slate-800/70 to-slate-900/50 border border-amber-600/50 rounded-xl p-6 hover:border-amber-500/70 hover:-translate-y-1 transition-all duration-300 group overflow-hidden" style={{backdropFilter: 'blur(10px)', boxShadow: '0 12px 32px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(217, 119, 6, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.05)'}}>
+                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(217, 119, 6, 0.08) 0%, transparent 60%)'}}></div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${category.color}`}>
+                                                {category.name}
+                                            </span>
+                                            <p className="text-xs text-slate-500">{new Date(insight.dateCreated).toLocaleDateString()} • {insight.mindToolType}</p>
                                         </div>
-                                    )}
-                                    {insight.suggestedNextSteps && insight.suggestedNextSteps.length > 0 && (
-                                        <div className="mt-4">
-                                            <p className="font-semibold text-slate-300 flex items-center gap-2"><Target size={16} className="text-green-400"/> Suggested Next Steps:</p>
-                                            <ul className="mt-2 space-y-2">
-                                                {insight.suggestedNextSteps.map((step, idx) => (
-                                                    <li key={idx} className="bg-slate-700/50 rounded-md p-3 flex justify-between items-center">
-                                                        <div>
-                                                            <p className="text-sm font-medium text-slate-200">{step.practiceName}</p>
-                                                            <p className="text-xs text-slate-400">{step.rationale}</p>
-                                                        </div>
-                                                        <button
-                                                            onClick={() => handleStartShadowWork(insight.id, step.practiceId)}
-                                                            className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1 shadow-md hover:shadow-glow-sm transform hover:scale-105"
-                                                        >
-                                                            <Sparkles size={14} /> Start
-                                                        </button>
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                        <h4 className="text-lg font-semibold text-slate-200">{insight.mindToolName}</h4>
+                                        <p className="text-slate-400 text-sm mt-2">{insight.mindToolShortSummary}</p>
+                                        <div className="mt-4 bg-slate-900/60 border border-slate-700/60 rounded-md p-3 shadow-sm" style={{backdropFilter: 'blur(6px)'}}>
+                                            <p className="font-semibold text-slate-300 flex items-center gap-2"><BrainCircuit size={16} className="text-blue-400"/> Detected Pattern:</p>
+                                            <p className="text-sm text-slate-200 mt-1">{insight.detectedPattern}</p>
                                         </div>
-                                    )}
+                                        {insight.suggestedShadowWork && insight.suggestedShadowWork.length > 0 && (
+                                            <div className="mt-4">
+                                                <p className="font-semibold text-slate-300 flex items-center gap-2"><GitMerge size={16} className="text-amber-400"/> Suggested Shadow Work:</p>
+                                                <ul className="mt-2 space-y-2">
+                                                    {insight.suggestedShadowWork.map((sw, idx) => (
+                                                        <li key={idx} className="bg-slate-700/60 hover:bg-slate-700/80 rounded-md p-3 flex justify-between items-center transition-all duration-200 shadow-sm" style={{backdropFilter: 'blur(4px)'}}>
+                                                            <div>
+                                                                <p className="text-sm font-medium text-slate-200">{sw.practiceName}</p>
+                                                                <p className="text-xs text-slate-400">{sw.rationale}</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleStartShadowWork(insight.id, sw.practiceId)}
+                                                                className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1 shadow-md hover:shadow-lg transform hover:scale-105"
+                                                                style={{boxShadow: '0 4px 12px rgba(217, 119, 6, 0.3)'}}
+                                                            >
+                                                                <Sparkles size={14} /> Start
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                        {insight.suggestedNextSteps && insight.suggestedNextSteps.length > 0 && (
+                                            <div className="mt-4">
+                                                <p className="font-semibold text-slate-300 flex items-center gap-2"><Target size={16} className="text-green-400"/> Suggested Next Steps:</p>
+                                                <ul className="mt-2 space-y-2">
+                                                    {insight.suggestedNextSteps.map((step, idx) => (
+                                                        <li key={idx} className="bg-slate-700/60 hover:bg-slate-700/80 rounded-md p-3 flex justify-between items-center transition-all duration-200 shadow-sm" style={{backdropFilter: 'blur(4px)'}}>
+                                                            <div>
+                                                                <p className="text-sm font-medium text-slate-200">{step.practiceName}</p>
+                                                                <p className="text-xs text-slate-400">{step.rationale}</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleStartShadowWork(insight.id, step.practiceId)}
+                                                                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1 shadow-md hover:shadow-lg transform hover:scale-105"
+                                                                style={{boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'}}
+                                                            >
+                                                                <Sparkles size={14} /> Start
+                                                            </button>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 );
                             })}
@@ -235,22 +249,25 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
                             {addressedInsights.map(insight => {
                                 const category = getToolCategory(insight.mindToolType);
                                 return (
-                                <div key={insight.id} className="card-glass bg-gradient-to-br from-slate-800/60 to-slate-900/40 border border-green-600/40 rounded-xl p-6 shadow-card hover:shadow-glow transition-all duration-300 group opacity-85" style={{backdropFilter: 'blur(8px)'}}>
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${category.color}`}>
-                                            {category.name}
-                                        </span>
-                                        <p className="text-xs text-slate-500">{new Date(insight.dateCreated).toLocaleDateString()} • {insight.mindToolType}</p>
-                                    </div>
-                                    <h4 className="text-lg font-semibold text-slate-200">{insight.mindToolName}</h4>
-                                    <p className="text-slate-400 text-sm mt-2">{insight.detectedPattern}</p>
-                                    <div className="mt-4">
-                                        <p className="font-semibold text-slate-300 flex items-center gap-2"><CheckCircle size={16} className="text-green-500"/> Addressed with:</p>
-                                        <ul className="mt-2 space-y-1 text-sm text-slate-300">
-                                            {insight.shadowWorkSessionsAddressed?.map((sw, idx) => (
-                                                <li key={idx}>{sw.shadowToolType} on {new Date(sw.dateCompleted).toLocaleDateString()}</li>
-                                            ))}
-                                        </ul>
+                                <div key={insight.id} className="card-glass relative bg-gradient-to-br from-slate-800/70 to-slate-900/50 border border-green-600/50 rounded-xl p-6 hover:border-green-500/70 hover:-translate-y-1 transition-all duration-300 group overflow-hidden opacity-85" style={{backdropFilter: 'blur(10px)', boxShadow: '0 12px 32px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(34, 197, 94, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.05)'}}>
+                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(34, 197, 94, 0.08) 0%, transparent 60%)'}}></div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className={`text-xs px-2 py-1 rounded-full border font-semibold ${category.color}`}>
+                                                {category.name}
+                                            </span>
+                                            <p className="text-xs text-slate-500">{new Date(insight.dateCreated).toLocaleDateString()} • {insight.mindToolType}</p>
+                                        </div>
+                                        <h4 className="text-lg font-semibold text-slate-200">{insight.mindToolName}</h4>
+                                        <p className="text-slate-400 text-sm mt-2">{insight.detectedPattern}</p>
+                                        <div className="mt-4">
+                                            <p className="font-semibold text-slate-300 flex items-center gap-2"><CheckCircle size={16} className="text-green-500"/> Addressed with:</p>
+                                            <ul className="mt-2 space-y-1 text-sm text-slate-300">
+                                                {insight.shadowWorkSessionsAddressed?.map((sw, idx) => (
+                                                    <li key={idx}>{sw.shadowToolType} on {new Date(sw.dateCompleted).toLocaleDateString()}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                                 );
