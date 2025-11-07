@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { X, ArrowRight, ArrowLeft, Check, Target, TrendingUp, BookOpen, AlertCircle } from 'lucide-react';
+import { X, ArrowRight, ArrowLeft, Check, Target, TrendingUp, BookOpen, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import {
+  generateRoleActionSuggestion,
+  generateShadowWorkInsight,
+  generateIntegralReflection
+} from '../services/geminiService';
 
 interface RoleAlignmentWizardProps {
   onClose: () => void;
@@ -45,6 +50,14 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
   const [currentRoleIndex, setCurrentRoleIndex] = useState(0);
   const [commitToActions, setCommitToActions] = useState<boolean[]>([]);
   const [integralNote, setIntegralNote] = useState('');
+  const [isGeneratingAction, setIsGeneratingAction] = useState(false);
+  const [isGeneratingShadow, setIsGeneratingShadow] = useState(false);
+  const [isGeneratingIntegral, setIsGeneratingIntegral] = useState(false);
+  const [aiIntegralReflection, setAiIntegralReflection] = useState<{
+    integralInsight: string;
+    quadrantConnections: string;
+    recommendations: string[];
+  } | null>(null);
 
   const currentRole = roles[currentRoleIndex];
   const activeRoles = roles.filter(r => r.name.trim() !== '');
@@ -60,10 +73,27 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
     return templates[Math.floor(Math.random() * templates.length)];
   };
 
-  const handleAlignmentNext = () => {
-    // Auto-suggest action if not already set
+  const handleAlignmentNext = async () => {
+    // Auto-suggest action using Gemini if not already set
     if (!currentRole.action) {
-      handleRoleUpdate(currentRoleIndex, 'action', getSuggestion(currentRole.valueScore));
+      setIsGeneratingAction(true);
+      try {
+        const aiAction = await generateRoleActionSuggestion(
+          currentRole.name,
+          currentRole.why || '',
+          currentRole.goal || '',
+          currentRole.valueScore,
+          currentRole.valueNote || '',
+          currentRole.shadowNudge
+        );
+        handleRoleUpdate(currentRoleIndex, 'action', aiAction);
+      } catch (error) {
+        console.error('Error generating action:', error);
+        // Fallback to original template behavior
+        handleRoleUpdate(currentRoleIndex, 'action', getSuggestion(currentRole.valueScore));
+      } finally {
+        setIsGeneratingAction(false);
+      }
     }
 
     if (currentRoleIndex < activeRoles.length - 1) {
@@ -71,6 +101,38 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
     } else {
       setStep('summary');
       setCommitToActions(new Array(activeRoles.length).fill(false));
+      // Generate integral reflection when entering summary
+      generateIntegralAnalysis();
+    }
+  };
+
+  const generateIntegralAnalysis = async () => {
+    setIsGeneratingIntegral(true);
+    try {
+      const analysis = await generateIntegralReflection(activeRoles);
+      setAiIntegralReflection(analysis);
+    } catch (error) {
+      console.error('Error generating integral reflection:', error);
+    } finally {
+      setIsGeneratingIntegral(false);
+    }
+  };
+
+  const handleGenerateShadowInsight = async () => {
+    if (!currentRole.name || !currentRole.valueNote) return;
+
+    setIsGeneratingShadow(true);
+    try {
+      const insight = await generateShadowWorkInsight(
+        currentRole.name,
+        currentRole.valueScore,
+        currentRole.valueNote
+      );
+      handleRoleUpdate(currentRoleIndex, 'shadowNudge', insight);
+    } catch (error) {
+      console.error('Error generating shadow insight:', error);
+    } finally {
+      setIsGeneratingShadow(false);
     }
   };
 
@@ -281,10 +343,29 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
           {/* Shadow nudge for low scores */}
           {roleData.valueScore < 5 && (
             <div className="bg-amber-900/20 border border-amber-700/50 rounded-lg p-4 space-y-3">
-              <h4 className="font-semibold text-amber-300 flex items-center gap-2">
-                <AlertCircle size={18} />
-                Shadow Work Opportunity
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-amber-300 flex items-center gap-2">
+                  <AlertCircle size={18} />
+                  Shadow Work Opportunity
+                </h4>
+                <button
+                  onClick={handleGenerateShadowInsight}
+                  disabled={isGeneratingShadow || !roleData.valueNote}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition bg-amber-700/30 hover:bg-amber-700/50 text-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingShadow ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} />
+                      AI Insight
+                    </>
+                  )}
+                </button>
+              </div>
               <div>
                 <label className="block text-sm text-slate-300 mb-2">
                   What feels off? What small shift could help?
@@ -296,6 +377,7 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
                   placeholder="e.g., It drains my energy. Try setting clearer boundaries."
                   className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent"
                 />
+                <p className="text-xs text-slate-500 mt-1">Click "AI Insight" for a personalized suggestion</p>
               </div>
             </div>
           )}
@@ -327,15 +409,24 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
 
           <button
             onClick={handleAlignmentNext}
-            disabled={!roleData.goal || !roleData.valueNote}
+            disabled={!roleData.goal || !roleData.valueNote || isGeneratingAction}
             className={`px-6 py-2 rounded-lg font-medium transition inline-flex items-center gap-2 ${
-              roleData.goal && roleData.valueNote
+              roleData.goal && roleData.valueNote && !isGeneratingAction
                 ? 'btn-luminous'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed'
             }`}
           >
-            {currentRoleIndex === activeRoles.length - 1 ? 'View Summary' : 'Next Role'}
-            <ArrowRight size={20} />
+            {isGeneratingAction ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                {currentRoleIndex === activeRoles.length - 1 ? 'View Summary' : 'Next Role'}
+                <ArrowRight size={20} />
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -407,11 +498,54 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
         ))}
       </div>
 
-      {/* Integral reflection */}
+      {/* AI-Powered Integral Reflection */}
+      {isGeneratingIntegral && (
+        <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-5 flex items-center justify-center gap-3">
+          <Loader2 size={24} className="animate-spin text-purple-400" />
+          <span className="text-slate-300">Generating integral insights...</span>
+        </div>
+      )}
+
+      {aiIntegralReflection && !isGeneratingIntegral && (
+        <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="text-purple-400" size={20} />
+            <h3 className="text-lg font-bold text-slate-100">AI Integral Analysis</h3>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <h4 className="text-sm font-semibold text-purple-300 mb-1">Pattern Insight</h4>
+              <p className="text-sm text-slate-300">{aiIntegralReflection.integralInsight}</p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-purple-300 mb-1">Quadrant Connections (I, We, It)</h4>
+              <p className="text-sm text-slate-300">{aiIntegralReflection.quadrantConnections}</p>
+            </div>
+
+            {aiIntegralReflection.recommendations.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-purple-300 mb-2">Recommendations</h4>
+                <ul className="space-y-1">
+                  {aiIntegralReflection.recommendations.map((rec, i) => (
+                    <li key={i} className="text-sm text-slate-300 flex items-start gap-2">
+                      <span className="text-purple-400 mt-1">•</span>
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* User's Personal Reflection */}
       <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-5 space-y-3">
-        <h3 className="text-lg font-bold text-slate-100">Integral Reflection</h3>
+        <h3 className="text-lg font-bold text-slate-100">Your Personal Reflection</h3>
         <p className="text-sm text-slate-400">
-          How does this connect to your inner world (I) or relationships (We)? Note one link.
+          How does this connect to your inner world (I) or relationships (We)? Add your own insights.
         </p>
         <textarea
           value={integralNote}
@@ -453,6 +587,10 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
             setCurrentRoleIndex(0);
             setCommitToActions([]);
             setIntegralNote('');
+            setAiIntegralReflection(null);
+            setIsGeneratingAction(false);
+            setIsGeneratingShadow(false);
+            setIsGeneratingIntegral(false);
           }}
           className="text-slate-400 hover:text-slate-200 transition text-sm"
         >
