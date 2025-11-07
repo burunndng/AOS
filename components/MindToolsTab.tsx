@@ -92,35 +92,6 @@ export default function MindToolsTab({ setActiveWizard }: MindToolsTabProps) {
         </div>
       </section>
 
-      <SectionDivider />
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-100 mb-1">Contemplative Practice Tracking</h2>
-          <p className="text-sm text-slate-400">For serious meditators tracking concentration states</p>
-        </div>
-        <div className="bg-gradient-to-br from-indigo-900/30 to-violet-900/30 border-2 border-indigo-500/40 rounded-lg p-6">
-          <div className="flex items-center gap-4 mb-3">
-            <Sparkles size={32} className="text-indigo-400" />
-            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Jhana/Samadhi Tracker</h3>
-            <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded-full font-semibold">Interactive</span>
-          </div>
-          <p className="text-slate-300 mb-4 leading-relaxed">
-            Track concentration states, jhana factors, nimittas (signs), and phenomenology with detailed explanations
-            of each state. Built for practitioners working with absorption states in samatha/jhana practice.
-          </p>
-          <p className="text-sm text-slate-400 mb-5 italic">
-            Based on Theravada jhana maps. Tracks all 8 jhanas plus access concentration, the five factors,
-            nimitta characteristics, and progress over time. Very explanatory and educational.
-          </p>
-          <button
-            onClick={() => setActiveWizard('jhana')}
-            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
-          >
-            Log Meditation Session
-          </button>
-        </div>
-      </section>
     </div>
   );
 }

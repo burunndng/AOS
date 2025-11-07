@@ -11,7 +11,8 @@ import RecommendationsTab from './components/RecommendationsTab.tsx';
 import AqalTab from './components/AqalTab.tsx';
 import MindToolsTab from './components/MindToolsTab.tsx';
 import ShadowToolsTab from './components/ShadowToolsTab.tsx';
-import BodyToolsTab from './components/BodyToolsTab.tsx'; // NEW: Body Tools tab import
+import BodyToolsTab from './components/BodyToolsTab.tsx';
+import SpiritToolsTab from './components/SpiritToolsTab.tsx';
 import LibraryTab from './components/LibraryTab.tsx';
 // FIX: Imported the Coach component to resolve "Cannot find name 'Coach'" error.
 import Coach from './components/Coach.tsx';
@@ -457,7 +458,8 @@ export default function App() {
       case 'mind-tools': return <MindToolsTab setActiveWizard={setActiveWizardAndLink} />;
       // FIX: Changed prop `setDraftIFSSession` to `setDraftIFS` to match the updated ShadowToolsTabProps interface.
       case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} draft321Session={draft321} draftIFSSession={draftIFS} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;
-      case 'body-tools': return <BodyToolsTab setActiveWizard={setActiveWizardAndLink} />; // NEW: BodyToolsTab
+      case 'body-tools': return <BodyToolsTab setActiveWizard={setActiveWizardAndLink} />;
+      case 'spirit-tools': return <SpiritToolsTab setActiveWizard={setActiveWizardAndLink} />;
       case 'library': return <LibraryTab />;
       default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} integratedInsights={integratedInsights} markInsightAsAddressed={markInsightAsAddressed} setActiveWizard={setActiveWizardAndLink} />;
     }

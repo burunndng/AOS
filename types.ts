@@ -52,7 +52,7 @@ export interface StarterStacksData {
   [key: string]: StarterStack;
 }
 
-export type ActiveTab = 
+export type ActiveTab =
   | 'dashboard'
   | 'stack'
   | 'browse'
@@ -63,6 +63,7 @@ export type ActiveTab =
   | 'mind-tools'
   | 'shadow-tools'
   | 'body-tools'
+  | 'spirit-tools'
   | 'library';
 
 export interface CoachMessage {
