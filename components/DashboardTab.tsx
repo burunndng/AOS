@@ -22,10 +22,10 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
     const bodyTools = ['Somatic Practice'];
     const spiritTools = ['Jhana Guide', 'Meditation Finder', 'Consciousness Graph'];
 
-    if (mindTools.includes(toolType)) return { name: 'Mind', color: 'text-blue-400 bg-blue-900/30 border-blue-700/50' };
+    if (mindTools.includes(toolType)) return { name: 'Mind', color: 'text-neutral-400 bg-neutral-900/30 border-neutral-700/50' };
     if (shadowTools.includes(toolType)) return { name: 'Shadow', color: 'text-amber-400 bg-amber-900/30 border-amber-700/50' };
     if (bodyTools.includes(toolType)) return { name: 'Body', color: 'text-teal-400 bg-teal-900/30 border-teal-700/50' };
-    if (spiritTools.includes(toolType)) return { name: 'Spirit', color: 'text-purple-400 bg-purple-900/30 border-purple-700/50' };
+    if (spiritTools.includes(toolType)) return { name: 'Spirit', color: 'text-neutral-400 bg-neutral-900/30 border-neutral-700/50' };
     return { name: 'Other', color: 'text-slate-400 bg-slate-800/30 border-slate-700/50' };
   };
 
@@ -149,17 +149,17 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
                             <div className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Pending Connections</div>
                         </div>
                     </div>
-                    <div className="card-glass relative bg-gradient-to-br from-green-900/50 to-emerald-900/25 border border-green-500/40 rounded-xl p-6 text-center group hover:border-green-500/60 hover:-translate-y-1 transition-all duration-300 overflow-hidden" style={{backdropFilter: 'blur(12px)', boxShadow: '0 8px 24px rgba(34, 197, 94, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1)'}}>
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(34, 197, 94, 0.1) 0%, transparent 60%)'}}></div>
+                    <div className="card-glass relative bg-gradient-to-br from-neutral-900/50 to-neutral-900/25 border border-neutral-500/40 rounded-xl p-6 text-center group hover:border-neutral-500/60 hover:-translate-y-1 transition-all duration-300 overflow-hidden" style={{backdropFilter: 'blur(12px)', boxShadow: '0 8px 24px rgba(115, 115, 115, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1)'}}>
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(115, 115, 115, 0.1) 0%, transparent 60%)'}}></div>
                         <div className="relative z-10">
-                            <div className="text-4xl font-bold text-green-300 group-hover:scale-110 transition-transform duration-300">{addressedInsights.length}</div>
+                            <div className="text-4xl font-bold text-neutral-300 group-hover:scale-110 transition-transform duration-300">{addressedInsights.length}</div>
                             <div className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Completed Integrations</div>
                         </div>
                     </div>
-                    <div className="card-glass relative bg-gradient-to-br from-blue-900/50 to-indigo-900/25 border border-blue-500/40 rounded-xl p-6 text-center group hover:border-blue-500/60 hover:-translate-y-1 transition-all duration-300 overflow-hidden" style={{backdropFilter: 'blur(12px)', boxShadow: '0 8px 24px rgba(59, 130, 246, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1)'}}>
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(59, 130, 246, 0.1) 0%, transparent 60%)'}}></div>
+                    <div className="card-glass relative bg-gradient-to-br from-neutral-900/50 to-neutral-900/25 border border-neutral-500/40 rounded-xl p-6 text-center group hover:border-neutral-500/60 hover:-translate-y-1 transition-all duration-300 overflow-hidden" style={{backdropFilter: 'blur(12px)', boxShadow: '0 8px 24px rgba(115, 115, 115, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.1)'}}>
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(115, 115, 115, 0.1) 0%, transparent 60%)'}}></div>
                         <div className="relative z-10">
-                            <div className="text-4xl font-bold text-blue-300 group-hover:scale-110 transition-transform duration-300">{integratedInsights.length}</div>
+                            <div className="text-4xl font-bold text-neutral-300 group-hover:scale-110 transition-transform duration-300">{integratedInsights.length}</div>
                             <div className="text-xs text-slate-400 mt-2 font-medium tracking-wide">Total Insights</div>
                         </div>
                     </div>
@@ -186,7 +186,7 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
                                         <h4 className="text-lg font-semibold text-slate-200">{insight.mindToolName}</h4>
                                         <p className="text-slate-400 text-sm mt-2">{insight.mindToolShortSummary}</p>
                                         <div className="mt-4 bg-slate-900/60 border border-slate-700/60 rounded-md p-3 shadow-sm" style={{backdropFilter: 'blur(6px)'}}>
-                                            <p className="font-semibold text-slate-300 flex items-center gap-2"><BrainCircuit size={16} className="text-blue-400"/> Detected Pattern:</p>
+                                            <p className="font-semibold text-slate-300 flex items-center gap-2"><BrainCircuit size={16} className="text-neutral-400"/> Detected Pattern:</p>
                                             <p className="text-sm text-slate-200 mt-1">{insight.detectedPattern}</p>
                                         </div>
                                         {insight.suggestedShadowWork && insight.suggestedShadowWork.length > 0 && (

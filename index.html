@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950">
+<html lang="en" class="h-full bg-black">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -24,13 +24,9 @@
         70% { transform: scale(1.02); opacity: 1; }
         100% { transform: scale(1); opacity: 1; }
       }
-      @keyframes glow {
-        0%, 100% { box-shadow: 0 0 20px rgba(217, 170, 239, 0.2), 0 0 40px rgba(217, 170, 239, 0); }
-        50% { box-shadow: 0 0 20px rgba(217, 170, 239, 0.4), 0 0 40px rgba(217, 170, 239, 0.1); }
-      }
-      @keyframes shimmer {
-        0% { background-position: -1000px 0; }
-        100% { background-position: 1000px 0; }
+      @keyframes shadow {
+        0%, 100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6); }
+        50% { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8); }
       }
       .animate-fade-in {
         animation: fadeIn 0.5s ease-out forwards;
@@ -44,15 +40,11 @@
       .animate-pop-in {
         animation: popIn 0.3s ease-out forwards;
       }
-      .animate-glow {
-        animation: glow 3s ease-in-out infinite;
-      }
-      .animate-shimmer {
-        animation: shimmer 2s infinite;
-        background-size: 1000px 100%;
+      .animate-shadow {
+        animation: shadow 3s ease-in-out infinite;
       }
 
-      /* Custom Scrollbar - Premium Deep Theme */
+      /* Custom Scrollbar - Professional Dark Theme */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -61,173 +53,109 @@
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: rgba(217, 170, 239, 0.3);
+        background: rgba(115, 115, 115, 0.3);
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: rgba(217, 170, 239, 0.6);
+        background: rgba(163, 163, 163, 0.5);
       }
 
       /* Typography Rules */
       h1, h2, h3, h4, h5, h6 {
         font-family: 'Geist Mono', monospace;
-        letter-spacing: -0.03em;
+        letter-spacing: -0.02em;
       }
 
-      /* Premium Glass-morphism Cards */
+      /* Professional Glass-morphism Cards */
       .card-glass {
-        background: rgba(15, 23, 42, 0.4);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(217, 170, 239, 0.1);
-        transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+        background: rgba(23, 23, 23, 0.4);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(64, 64, 64, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .card-glass:hover {
-        background: rgba(15, 23, 42, 0.6);
-        border-color: rgba(217, 170, 239, 0.3);
-        box-shadow: 0 8px 32px 0 rgba(217, 170, 239, 0.1);
+        background: rgba(38, 38, 38, 0.6);
+        border-color: rgba(115, 115, 115, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
         transform: translateY(-2px);
       }
 
-      /* Premium Buttons */
+      /* Professional Buttons */
       .btn-luminous {
-        background: linear-gradient(135deg, rgba(217, 170, 239, 0.1), rgba(217, 170, 239, 0.05));
-        border: 1px solid rgba(217, 170, 239, 0.2);
-        color: var(--accent-luminous);
-        transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
-        position: relative;
-        overflow: hidden;
-      }
-      .btn-luminous::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(217, 170, 239, 0.2), transparent);
-        transition: left 0.5s;
+        background: rgba(38, 38, 38, 0.6);
+        border: 1px solid rgba(64, 64, 64, 0.4);
+        color: #e5e5e5;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .btn-luminous:hover {
-        border-color: rgba(217, 170, 239, 0.5);
-        background: linear-gradient(135deg, rgba(217, 170, 239, 0.15), rgba(217, 170, 239, 0.1));
-        box-shadow: 0 0 20px rgba(217, 170, 239, 0.2);
+        border-color: rgba(115, 115, 115, 0.6);
+        background: rgba(64, 64, 64, 0.6);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
         color: #fff;
-      }
-      .btn-luminous:hover::before {
-        left: 100%;
       }
 
       /* Card Hover Effects */
       .card-luminous-hover {
-        transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
-        position: relative;
-      }
-      .card-luminous-hover::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(217, 170, 239, 0.1), transparent 80%);
-        opacity: 0;
-        transition: opacity 0.3s;
-        border-radius: inherit;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .card-luminous-hover:hover {
-        border-color: rgba(217, 170, 239, 0.4);
-        box-shadow: 0 12px 40px rgba(217, 170, 239, 0.15);
-        transform: translateY(-4px);
-      }
-      .card-luminous-hover:hover::before {
-        opacity: 1;
+        border-color: rgba(115, 115, 115, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+        transform: translateY(-2px);
       }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-    // Define CSS variables for colors to use in styles
+    // Define CSS variables for professional dark theme
     const style = document.createElement('style');
     style.innerHTML = `
       :root {
-        /* Base Accent Colors */
-        --accent-luminous: #d9aaef;
-        --accent-luminous-faded: rgba(217, 170, 239, 0.5);
-        --accent-luminous-dark: rgba(217, 170, 239, 0.1);
-        --accent-luminous-bright: #e8c4f4;
-        --accent-gold: #f59e0b;
-        --accent-gold-faded: rgba(245, 158, 11, 0.4);
-        --bg-deep: #0f1729;
-        --bg-deep-light: #1a2847;
-        --border-glow: rgba(217, 170, 239, 0.15);
+        /* Base Neutral Colors */
+        --accent-primary: #a3a3a3;
+        --accent-secondary: #737373;
+        --accent-tertiary: #525252;
+        --bg-deep: #0a0a0a;
+        --bg-elevated: #171717;
+        --bg-card: #1f1f1f;
+        --border-base: rgba(64, 64, 64, 0.3);
+        --border-hover: rgba(115, 115, 115, 0.5);
 
-        /* Module-Specific Theme Colors */
-        --module-mind-primary: #8b5cf6;
-        --module-mind-glow: rgba(139, 92, 246, 0.25);
-        --module-mind-border: rgba(139, 92, 246, 0.3);
-        --module-mind-border-hover: rgba(139, 92, 246, 0.5);
-
-        --module-shadow-primary: #6366f1;
-        --module-shadow-glow: rgba(99, 102, 241, 0.25);
-        --module-shadow-border: rgba(99, 102, 241, 0.3);
-        --module-shadow-border-hover: rgba(99, 102, 241, 0.5);
-
-        --module-body-primary: #10b981;
-        --module-body-glow: rgba(16, 185, 129, 0.25);
-        --module-body-border: rgba(16, 185, 129, 0.3);
-        --module-body-border-hover: rgba(16, 185, 129, 0.5);
-
-        --module-spirit-primary: #3b82f6;
-        --module-spirit-glow: rgba(59, 130, 246, 0.25);
-        --module-spirit-border: rgba(59, 130, 246, 0.3);
-        --module-spirit-border-hover: rgba(59, 130, 246, 0.5);
+        /* Module Colors - Unified Monochrome */
+        --module-primary: #a3a3a3;
+        --module-secondary: #737373;
+        --module-shadow: rgba(0, 0, 0, 0.6);
+        --module-border: rgba(64, 64, 64, 0.3);
+        --module-border-hover: rgba(115, 115, 115, 0.5);
       }
 
       /* Card with Accent Color Support */
       .card-accent {
         position: relative;
-        background: rgba(30, 41, 59, 0.4);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(148, 163, 184, 0.2);
+        background: rgba(23, 23, 23, 0.6);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--module-border);
         border-radius: 0.75rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      /* Accent variants */
-      .card-accent.accent-purple {
-        border-color: var(--module-mind-border);
-      }
-      .card-accent.accent-purple:hover {
-        border-color: var(--module-mind-border-hover);
-        box-shadow: 0 20px 48px var(--module-mind-glow);
-        transform: translateY(-4px);
-      }
-
-      .card-accent.accent-indigo {
-        border-color: var(--module-shadow-border);
-      }
-      .card-accent.accent-indigo:hover {
-        border-color: var(--module-shadow-border-hover);
-        box-shadow: 0 20px 48px var(--module-shadow-glow);
-        transform: translateY(-4px);
-      }
-
-      .card-accent.accent-emerald {
-        border-color: var(--module-body-border);
-      }
-      .card-accent.accent-emerald:hover {
-        border-color: var(--module-body-border-hover);
-        box-shadow: 0 20px 48px var(--module-body-glow);
-        transform: translateY(-4px);
-      }
-
+      /* Unified Accent Styles */
+      .card-accent.accent-neutral,
+      .card-accent.accent-purple,
+      .card-accent.accent-indigo,
+      .card-accent.accent-emerald,
       .card-accent.accent-blue {
-        border-color: var(--module-spirit-border);
+        border-color: var(--module-border);
       }
+
+      .card-accent.accent-neutral:hover,
+      .card-accent.accent-purple:hover,
+      .card-accent.accent-indigo:hover,
+      .card-accent.accent-emerald:hover,
       .card-accent.accent-blue:hover {
-        border-color: var(--module-spirit-border-hover);
-        box-shadow: 0 20px 48px var(--module-spirit-glow);
-        transform: translateY(-4px);
+        border-color: var(--module-border-hover);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+        transform: translateY(-2px);
       }
     `;
     document.head.appendChild(style);
@@ -240,31 +168,28 @@
              mono: ['Geist Mono', 'monospace'],
           },
           colors: {
-            'module-body': '#10b981',
-            'module-mind': '#3b82f6',
-            'module-spirit': '#8b5cf6',
-            'module-shadow': '#f59e0b',
-            'accent': 'var(--accent-luminous)',
-            'accent-gold': 'var(--accent-gold)',
-            'success': '#10b981',
-            'warning': '#f59e0b',
-            'error': '#f43f5e',
+            'module-body': '#a3a3a3',
+            'module-mind': '#a3a3a3',
+            'module-spirit': '#a3a3a3',
+            'module-shadow': '#737373',
+            'accent': 'var(--accent-primary)',
+            'accent-secondary': 'var(--accent-secondary)',
+            'success': '#737373',
+            'warning': '#a3a3a3',
+            'error': '#737373',
             'bg-deep': 'var(--bg-deep)',
-            'bg-deep-light': 'var(--bg-deep-light)',
-            'theme-mind-primary': 'var(--module-mind-primary)',
-            'theme-shadow-primary': 'var(--module-shadow-primary)',
-            'theme-body-primary': 'var(--module-body-primary)',
-            'theme-spirit-primary': 'var(--module-spirit-primary)',
+            'bg-elevated': 'var(--bg-elevated)',
+            'bg-card': 'var(--bg-card)',
           },
           boxShadow: {
-            'glow-sm': '0 0 12px rgba(217, 170, 239, 0.15)',
-            'glow': '0 0 20px rgba(217, 170, 239, 0.2)',
-            'glow-lg': '0 0 30px rgba(217, 170, 239, 0.25)',
-            'card': '0 4px 20px rgba(0, 0, 0, 0.3)',
+            'glow-sm': '0 4px 12px rgba(0, 0, 0, 0.4)',
+            'glow': '0 4px 24px rgba(0, 0, 0, 0.6)',
+            'glow-lg': '0 8px 32px rgba(0, 0, 0, 0.8)',
+            'card': '0 4px 24px rgba(0, 0, 0, 0.6)',
           },
           borderColor: {
-            'luminous': 'rgba(217, 170, 239, 0.2)',
-            'luminous-light': 'rgba(217, 170, 239, 0.3)',
+            'base': 'var(--border-base)',
+            'hover': 'var(--border-hover)',
           }
         }
       }
@@ -288,7 +213,7 @@
 }
 </script>
 </head>
-  <body class="h-full font-sans" style="background: linear-gradient(135deg, #0f1729 0%, #1a2847 25%, #0f1a2e 50%, #1a2847 75%, #0f1729 100%); background-attachment: fixed;">
+  <body class="h-full font-sans" style="background: #0a0a0a; background-attachment: fixed;">
     <div id="root" class="h-full"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

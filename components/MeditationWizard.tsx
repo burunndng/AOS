@@ -90,7 +90,7 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
   const renderWelcome = () => (
     <div className="space-y-6 py-8">
       <div className="text-center space-y-4">
-        <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full mx-auto flex items-center justify-center">
+        <div className="w-20 h-20 bg-gradient-to-br from-neutral-800 to-neutral-700 rounded-full mx-auto flex items-center justify-center">
           <Sparkles size={40} className="text-white" />
         </div>
         <h2 className="text-3xl font-bold text-slate-100">Meditation Practice Finder</h2>
@@ -101,7 +101,7 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto mt-8">
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-          <BookOpen className="text-indigo-400 mb-2" size={24} />
+          <BookOpen className="text-neutral-400 mb-2" size={24} />
           <h3 className="font-semibold text-slate-100 mb-1">12 Practice Styles</h3>
           <p className="text-sm text-slate-400">From Samatha to MBSR, we cover major meditation traditions</p>
         </div>
@@ -111,7 +111,7 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
           <p className="text-sm text-slate-400">Smart algorithm considers your goals, personality, and lifestyle</p>
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-          <Users className="text-blue-400 mb-2" size={24} />
+          <Users className="text-neutral-400 mb-2" size={24} />
           <h3 className="font-semibold text-slate-100 mb-1">Evidence-Based</h3>
           <p className="text-sm text-slate-400">Research-backed recommendations with scientific studies</p>
         </div>
@@ -264,16 +264,16 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
         </div>
         <div className="w-full bg-slate-800 rounded-full h-2">
           <div
-            className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-neutral-800 to-neutral-700 h-2 rounded-full transition-all duration-300"
             style={{ width: `${((currentSectionIndex + 1) / sectionOrder.length) * 100}%` }}
           />
         </div>
       </div>
 
       {/* Section description */}
-      <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+      <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-4">
         <div className="flex items-start gap-2">
-          <Info size={20} className="text-blue-400 mt-0.5 flex-shrink-0" />
+          <Info size={20} className="text-neutral-400 mt-0.5 flex-shrink-0" />
           <p className="text-sm text-slate-300">{sectionDescriptions[currentSection]}</p>
         </div>
       </div>
@@ -327,7 +327,7 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
     return (
       <div className="space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mx-auto flex items-center justify-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-neutral-800 to-neutral-700 rounded-full mx-auto flex items-center justify-center">
             <Star size={32} className="text-white" />
           </div>
           <h2 className="text-2xl font-bold text-slate-100">Your Personalized Recommendations</h2>
@@ -335,7 +335,7 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
         </div>
 
         {/* Top Recommendation */}
-        <div className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border-2 border-green-500/40 rounded-xl p-6 space-y-4">
+        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <Star className="text-green-400" size={24} />
             <h3 className="text-xl font-bold text-slate-100">Top Recommendation</h3>
@@ -429,7 +429,7 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
 
         {/* Hybrid approach */}
         {hybridApproach && (
-          <div className="bg-indigo-900/20 border border-indigo-700/50 rounded-lg p-4 space-y-2">
+          <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-4 space-y-2">
             <h4 className="font-semibold text-slate-100">💡 Hybrid Approach Suggestion</h4>
             <p className="text-sm text-slate-300">{hybridApproach.description}</p>
             <p className="text-sm text-slate-400 italic">{hybridApproach.schedule}</p>
@@ -515,8 +515,8 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
         <div className="space-y-3">
           <h3 className="text-xl font-bold text-slate-100">Research-Backed Benefits</h3>
           <div className="grid md:grid-cols-3 gap-3">
-            <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-3">
-              <h4 className="font-semibold text-blue-400 text-sm mb-2">Cognitive</h4>
+            <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-3">
+              <h4 className="font-semibold text-neutral-400 text-sm mb-2">Cognitive</h4>
               <ul className="space-y-1">
                 {selectedPractice.research.benefits.cognitive.map((benefit, i) => (
                   <li key={i} className="text-xs text-slate-300">• {benefit}</li>
@@ -531,8 +531,8 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
                 ))}
               </ul>
             </div>
-            <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-3">
-              <h4 className="font-semibold text-purple-400 text-sm mb-2">Physical</h4>
+            <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-3">
+              <h4 className="font-semibold text-neutral-400 text-sm mb-2">Physical</h4>
               <ul className="space-y-1">
                 {selectedPractice.research.benefits.physical.map((benefit, i) => (
                   <li key={i} className="text-xs text-slate-300">• {benefit}</li>
@@ -578,7 +578,7 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
         </div>
 
         {/* Who it's for */}
-        <div className="bg-indigo-900/20 border border-indigo-700/50 rounded-lg p-4">
+        <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-4">
           <h4 className="font-semibold text-slate-100 mb-2">Who is this practice for?</h4>
           <p className="text-sm text-slate-300">{selectedPractice.considerations.whoItsFor}</p>
         </div>

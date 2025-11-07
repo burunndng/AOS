@@ -235,9 +235,9 @@ const DURATION_OPTIONS = [5, 10, 15, 20, 30];
 
 const MODULE_INFO = {
   body: { name: 'Body', color: 'bg-green-900', textColor: 'text-green-200', borderColor: 'border-green-700', icon: '💚' },
-  mind: { name: 'Mind', color: 'bg-blue-900', textColor: 'text-blue-200', borderColor: 'border-blue-700', icon: '💙' },
+  mind: { name: 'Mind', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '💙' },
   shadow: { name: 'Shadow', color: 'bg-amber-900', textColor: 'text-amber-200', borderColor: 'border-amber-700', icon: '🧡' },
-  spirit: { name: 'Spirit', color: 'bg-purple-900', textColor: 'text-purple-200', borderColor: 'border-purple-700', icon: '💜' },
+  spirit: { name: 'Spirit', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '💜' },
 };
 
 export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice }: GuidedPracticeGeneratorProps) {
@@ -505,7 +505,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
         <header className="p-6 border-b border-slate-700 flex justify-between items-start">
           <div>
             <h2 className="text-2xl font-bold font-mono tracking-tight text-slate-50 flex items-center gap-2">
-              <Sparkles size={20} className="text-blue-400" />
+              <Sparkles size={20} className="text-neutral-400" />
               Generate Guided Practice
             </h2>
             <p className="text-slate-400 mt-1">Create ILP practices from the Integral Life Platform</p>
@@ -518,13 +518,13 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
         <div className="px-6 pt-4 border-b border-slate-700 flex gap-4">
           <button
             onClick={() => setStep('create')}
-            className={`pb-3 px-2 border-b-2 font-medium transition ${ step === 'create' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-300' }`}
+            className={`pb-3 px-2 border-b-2 font-medium transition ${ step === 'create' ? 'border-neutral-500 text-neutral-400' : 'border-transparent text-slate-400 hover:text-slate-300' }`}
           >
             Create
           </button>
           <button
             onClick={() => setStep('history')}
-            className={`pb-3 px-2 border-b-2 font-medium transition flex items-center gap-2 ${ step === 'history' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-300' }`}
+            className={`pb-3 px-2 border-b-2 font-medium transition flex items-center gap-2 ${ step === 'history' ? 'border-neutral-500 text-neutral-400' : 'border-transparent text-slate-400 hover:text-slate-300' }`}
           >
             <History size={16} />
             History {generatedPractices.length > 0 && `(${generatedPractices.length})`}
@@ -566,7 +566,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
                       <button
                         key={preset.name}
                         onClick={() => handlePresetSelect(preset)}
-                        className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg border border-slate-600 hover:border-blue-500 transition text-left"
+                        className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg border border-slate-600 hover:border-neutral-500 transition text-left"
                       >
                         <div className="text-xl mb-1">{preset.icon}</div>
                         <p className="text-sm font-medium text-slate-200">{preset.name}</p>
@@ -601,7 +601,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
                     <button
                       key={dur}
                       onClick={() => { setDuration(dur); setCustomDuration(false); }}
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition ${ !customDuration && duration === dur ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600' }`}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition ${ !customDuration && duration === dur ? 'bg-neutral-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600' }`}
                     >
                       {dur}m
                     </button>
@@ -630,7 +630,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
                   {TONE_OPTIONS.map((option) => (
                     <button
                       key={option.value} onClick={() => setTone(option.value)}
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition text-center ${ tone === option.value ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600' }`}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition text-center ${ tone === option.value ? 'bg-neutral-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600' }`}
                       title={option.description}
                     >
                       {option.label}
@@ -678,7 +678,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
 
               <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700 space-y-4">
                 <div className="flex items-center gap-4">
-                  <button onClick={togglePlayback} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full transition flex-shrink-0 disabled:bg-slate-500">
+                  <button onClick={togglePlayback} disabled={isLoading} className="bg-neutral-600 hover:bg-neutral-700 text-white p-3 rounded-full transition flex-shrink-0 disabled:bg-slate-500">
                     {isLoading ? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : isPlaying ? <Pause size={24} /> : <Play size={24} />}
                   </button>
                   <div className="flex-grow">
@@ -692,7 +692,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
                 {durationSeconds > 0 && (
                   <div className="space-y-2">
                     <div className="w-full bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-blue-500 h-full" style={{ width: `${(playbackTime / durationSeconds) * 100}%` }} />
+                      <div className="bg-neutral-500 h-full" style={{ width: `${(playbackTime / durationSeconds) * 100}%` }} />
                     </div>
                     <div className="flex justify-between text-xs text-slate-400">
                       <span>{formatTime(playbackTime)}</span>
@@ -727,7 +727,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
                   <button
                     key={practice.id}
                     onClick={() => { setCurrentPractice(practice); audioBufferRef.current = null; setPlaybackTime(0); setDurationSeconds(0); setStep('preview'); }}
-                    className="w-full p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg border border-slate-600 hover:border-blue-500 transition text-left"
+                    className="w-full p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg border border-slate-600 hover:border-neutral-500 transition text-left"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-grow flex items-center gap-3">

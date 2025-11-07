@@ -147,7 +147,7 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
   const renderWelcome = () => (
     <div className="space-y-6 py-8">
       <div className="text-center space-y-4">
-        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-pink-600 rounded-full mx-auto flex items-center justify-center">
+        <div className="w-20 h-20 bg-gradient-to-br from-neutral-800 to-neutral-700 rounded-full mx-auto flex items-center justify-center">
           <Target size={40} className="text-white" />
         </div>
         <h2 className="text-3xl font-bold text-slate-100">Role Alignment Wizard</h2>
@@ -168,15 +168,15 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
           <p className="text-sm text-slate-400">Score each role (5-6 min)</p>
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-          <BookOpen className="text-blue-400 mb-2" size={24} />
+          <BookOpen className="text-neutral-400 mb-2" size={24} />
           <h3 className="font-semibold text-slate-100 mb-1">Action Plan</h3>
           <p className="text-sm text-slate-400">Get personalized next steps (2-3 min)</p>
         </div>
       </div>
 
-      <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4 max-w-2xl mx-auto">
+      <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-4 max-w-2xl mx-auto">
         <div className="flex items-start gap-2">
-          <AlertCircle size={20} className="text-blue-400 mt-0.5 flex-shrink-0" />
+          <AlertCircle size={20} className="text-neutral-400 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-slate-300">
             <strong>Privacy:</strong> All data stays in-session and is cleared on exit unless you choose to save a snapshot to your journal.
           </div>
@@ -279,7 +279,7 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
           </div>
           <div className="w-full bg-slate-800 rounded-full h-2">
             <div
-              className="bg-gradient-to-r from-orange-500 to-pink-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-neutral-800 to-neutral-700 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentRoleIndex + 1) / activeRoles.length) * 100}%` }}
             />
           </div>
@@ -436,7 +436,7 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
   const renderSummary = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mx-auto flex items-center justify-center">
+        <div className="w-16 h-16 bg-gradient-to-br from-neutral-800 to-neutral-700 rounded-full mx-auto flex items-center justify-center">
           <Check size={32} className="text-white" />
         </div>
         <h2 className="text-2xl font-bold text-slate-100">Your Its Alignment Card</h2>
@@ -500,37 +500,37 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
 
       {/* AI-Powered Integral Reflection */}
       {isGeneratingIntegral && (
-        <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-5 flex items-center justify-center gap-3">
-          <Loader2 size={24} className="animate-spin text-purple-400" />
+        <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-5 flex items-center justify-center gap-3">
+          <Loader2 size={24} className="animate-spin text-neutral-400" />
           <span className="text-slate-300">Generating integral insights...</span>
         </div>
       )}
 
       {aiIntegralReflection && !isGeneratingIntegral && (
-        <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-5 space-y-4">
+        <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="text-purple-400" size={20} />
+            <Sparkles className="text-neutral-400" size={20} />
             <h3 className="text-lg font-bold text-slate-100">AI Integral Analysis</h3>
           </div>
 
           <div className="space-y-3">
             <div>
-              <h4 className="text-sm font-semibold text-purple-300 mb-1">Pattern Insight</h4>
+              <h4 className="text-sm font-semibold text-neutral-300 mb-1">Pattern Insight</h4>
               <p className="text-sm text-slate-300">{aiIntegralReflection.integralInsight}</p>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-purple-300 mb-1">Quadrant Connections (I, We, It)</h4>
+              <h4 className="text-sm font-semibold text-neutral-300 mb-1">Quadrant Connections (I, We, It)</h4>
               <p className="text-sm text-slate-300">{aiIntegralReflection.quadrantConnections}</p>
             </div>
 
             {aiIntegralReflection.recommendations.length > 0 && (
               <div>
-                <h4 className="text-sm font-semibold text-purple-300 mb-2">Recommendations</h4>
+                <h4 className="text-sm font-semibold text-neutral-300 mb-2">Recommendations</h4>
                 <ul className="space-y-1">
                   {aiIntegralReflection.recommendations.map((rec, i) => (
                     <li key={i} className="text-sm text-slate-300 flex items-start gap-2">
-                      <span className="text-purple-400 mt-1">•</span>
+                      <span className="text-neutral-400 mt-1">•</span>
                       <span>{rec}</span>
                     </li>
                   ))}
@@ -542,7 +542,7 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
       )}
 
       {/* User's Personal Reflection */}
-      <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-5 space-y-3">
+      <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-5 space-y-3">
         <h3 className="text-lg font-bold text-slate-100">Your Personal Reflection</h3>
         <p className="text-sm text-slate-400">
           How does this connect to your inner world (I) or relationships (We)? Add your own insights.

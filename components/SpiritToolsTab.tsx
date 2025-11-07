@@ -36,11 +36,11 @@ export default function SpiritToolsTab({ setActiveWizard }: SpiritToolsTabProps)
           <h2 className="text-2xl font-bold text-slate-100 mb-1">Concentration & Absorption States</h2>
           <p className="text-sm text-slate-400">Deepen your meditation practice with structured guidance on jhana states</p>
         </div>
-        <div className="bg-gradient-to-br from-indigo-900/30 to-violet-900/30 border-2 border-indigo-500/40 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
           <div className="flex items-center gap-4 mb-3">
-            <Sparkles size={32} className="text-indigo-400" />
+            <Sparkles size={32} className="text-neutral-400" />
             <h3 className="text-2xl font-bold tracking-tight text-slate-100">Jhana/Samadhi Guide</h3>
-            <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded-full font-semibold">Instructional</span>
+            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-1 rounded-full font-semibold">Instructional</span>
           </div>
           <p className="text-slate-300 mb-4 leading-relaxed">
             An instructional guide to understanding and working with concentration states and jhana practice.
@@ -69,11 +69,11 @@ export default function SpiritToolsTab({ setActiveWizard }: SpiritToolsTabProps)
           <h2 className="text-2xl font-bold text-slate-100 mb-1">Discover Your Practice</h2>
           <p className="text-sm text-slate-400">Find the meditation practice that matches your goals and personality</p>
         </div>
-        <div className="bg-gradient-to-br from-purple-900/30 to-indigo-900/30 border-2 border-purple-500/40 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
           <div className="flex items-center gap-4 mb-3">
-            <Sparkles size={32} className="text-purple-400" />
+            <Sparkles size={32} className="text-neutral-400" />
             <h3 className="text-2xl font-bold tracking-tight text-slate-100">Meditation Practice Finder</h3>
-            <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full font-semibold">NEW</span>
+            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-1 rounded-full font-semibold">NEW</span>
           </div>
           <p className="text-slate-300 mb-4 leading-relaxed">
             Not sure which meditation practice is right for you? Take our comprehensive assessment to discover
@@ -115,11 +115,11 @@ export default function SpiritToolsTab({ setActiveWizard }: SpiritToolsTabProps)
           <h2 className="text-2xl font-bold text-slate-100 mb-1">Consciousness Maps & Models</h2>
           <p className="text-sm text-slate-400">Explore frameworks for understanding states, stages, and development</p>
         </div>
-        <div className="bg-gradient-to-br from-violet-900/30 to-fuchsia-900/30 border-2 border-violet-500/40 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
           <div className="flex items-center gap-4 mb-3">
-            <GitCompare size={32} className="text-violet-400" />
+            <GitCompare size={32} className="text-neutral-400" />
             <h3 className="text-2xl font-bold tracking-tight text-slate-100">Interactive Consciousness Graph</h3>
-            <span className="text-xs bg-violet-500/20 text-violet-300 px-2 py-1 rounded-full font-semibold">NEW</span>
+            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-1 rounded-full font-semibold">NEW</span>
           </div>
           <p className="text-slate-300 mb-4 leading-relaxed">
             Compare Timothy Leary's 8 Circuits of Consciousness with Ken Wilber's Integral Theory in an interactive,
@@ -127,8 +127,8 @@ export default function SpiritToolsTab({ setActiveWizard }: SpiritToolsTabProps)
             and <strong>stages</strong> (developmental levels), and learn how different stages interpret the same mystical
             experiences differently.
           </p>
-          <div className="bg-violet-950/50 border border-violet-500/30 rounded-lg p-4 mb-4">
-            <p className="text-sm text-violet-200 mb-2">
+          <div className="bg-neutral-950/50 border border-neutral-500/30 rounded-lg p-4 mb-4">
+            <p className="text-sm text-neutral-200 mb-2">
               <strong>Key Insight:</strong> You can access advanced states from any stage of development - but your stage
               determines how you interpret and integrate what you experience.
             </p>
@@ -178,7 +178,7 @@ export default function SpiritToolsTab({ setActiveWizard }: SpiritToolsTabProps)
           </div>
           <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6">
             <div className="flex items-center gap-4 mb-3">
-              <Moon size={28} className="text-purple-400"/>
+              <Moon size={28} className="text-neutral-400"/>
               <h3 className="text-xl font-bold text-slate-100">Insight Practice Map</h3>
             </div>
             <p className="text-slate-400 text-sm">Coming soon...</p>
