@@ -149,6 +149,7 @@
     const style = document.createElement('style');
     style.innerHTML = `
       :root {
+        /* Base Accent Colors */
         --accent-luminous: #d9aaef;
         --accent-luminous-faded: rgba(217, 170, 239, 0.5);
         --accent-luminous-dark: rgba(217, 170, 239, 0.1);
@@ -158,6 +159,75 @@
         --bg-deep: #0f1729;
         --bg-deep-light: #1a2847;
         --border-glow: rgba(217, 170, 239, 0.15);
+
+        /* Module-Specific Theme Colors */
+        --module-mind-primary: #8b5cf6;
+        --module-mind-glow: rgba(139, 92, 246, 0.25);
+        --module-mind-border: rgba(139, 92, 246, 0.3);
+        --module-mind-border-hover: rgba(139, 92, 246, 0.5);
+
+        --module-shadow-primary: #6366f1;
+        --module-shadow-glow: rgba(99, 102, 241, 0.25);
+        --module-shadow-border: rgba(99, 102, 241, 0.3);
+        --module-shadow-border-hover: rgba(99, 102, 241, 0.5);
+
+        --module-body-primary: #10b981;
+        --module-body-glow: rgba(16, 185, 129, 0.25);
+        --module-body-border: rgba(16, 185, 129, 0.3);
+        --module-body-border-hover: rgba(16, 185, 129, 0.5);
+
+        --module-spirit-primary: #3b82f6;
+        --module-spirit-glow: rgba(59, 130, 246, 0.25);
+        --module-spirit-border: rgba(59, 130, 246, 0.3);
+        --module-spirit-border-hover: rgba(59, 130, 246, 0.5);
+      }
+
+      /* Card with Accent Color Support */
+      .card-accent {
+        position: relative;
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 0.75rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+      }
+
+      /* Accent variants */
+      .card-accent.accent-purple {
+        border-color: var(--module-mind-border);
+      }
+      .card-accent.accent-purple:hover {
+        border-color: var(--module-mind-border-hover);
+        box-shadow: 0 20px 48px var(--module-mind-glow);
+        transform: translateY(-4px);
+      }
+
+      .card-accent.accent-indigo {
+        border-color: var(--module-shadow-border);
+      }
+      .card-accent.accent-indigo:hover {
+        border-color: var(--module-shadow-border-hover);
+        box-shadow: 0 20px 48px var(--module-shadow-glow);
+        transform: translateY(-4px);
+      }
+
+      .card-accent.accent-emerald {
+        border-color: var(--module-body-border);
+      }
+      .card-accent.accent-emerald:hover {
+        border-color: var(--module-body-border-hover);
+        box-shadow: 0 20px 48px var(--module-body-glow);
+        transform: translateY(-4px);
+      }
+
+      .card-accent.accent-blue {
+        border-color: var(--module-spirit-border);
+      }
+      .card-accent.accent-blue:hover {
+        border-color: var(--module-spirit-border-hover);
+        box-shadow: 0 20px 48px var(--module-spirit-glow);
+        transform: translateY(-4px);
       }
     `;
     document.head.appendChild(style);
@@ -181,6 +251,10 @@
             'error': '#f43f5e',
             'bg-deep': 'var(--bg-deep)',
             'bg-deep-light': 'var(--bg-deep-light)',
+            'theme-mind-primary': 'var(--module-mind-primary)',
+            'theme-shadow-primary': 'var(--module-shadow-primary)',
+            'theme-body-primary': 'var(--module-body-primary)',
+            'theme-spirit-primary': 'var(--module-spirit-primary)',
           },
           boxShadow: {
             'glow-sm': '0 0 12px rgba(217, 170, 239, 0.15)',
