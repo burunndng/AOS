@@ -222,20 +222,20 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
         <h3 className="text-lg font-semibold text-slate-100 mb-2">What state of consciousness are you cultivating?</h3>
         <p className="text-sm text-slate-400 mb-4">Describe the inner quality, presence, or spiritual state you want to develop.</p>
         <textarea {...commonProps} placeholder="E.g., 'Non-dual awareness and resting in the Witness' or 'Deep compassion and loving presence'" className={`${commonProps.className} focus:ring-purple-500`} />
-        <div className="bg-purple-900/30 border border-purple-700 rounded-md p-3 mb-4 text-xs"><p className="font-semibold text-purple-300">✨ Contemplative Focus</p><p className="text-purple-200 mt-1">The best spirit practices are gateways to direct experience, not just intellectual understanding.</p></div>
+        <div className="bg-neutral-900/30 border border-neutral-700 rounded-md p-3 mb-4 text-xs"><p className="font-semibold text-neutral-300">✨ Contemplative Focus</p><p className="text-neutral-200 mt-1">The best spirit practices are gateways to direct experience, not just intellectual understanding.</p></div>
       </>;
     } else {
        return <>
         <h3 className="text-lg font-semibold text-slate-100 mb-2">What do you want to accomplish?</h3>
         <p className="text-sm text-slate-400 mb-4">Be specific about the outcome or skill you're building.</p>
         <textarea {...commonProps} rows={3} placeholder="E.g., 'Build mental resilience through deliberate discomfort' or 'Improve my posture and reduce back pain'" className={`${commonProps.className} focus:ring-blue-500`} />
-        {similarPractices.length > 0 && <div className="bg-blue-900/30 border border-blue-700 rounded-md p-3 mb-4 text-sm"><p className="font-semibold text-blue-300 mb-2 flex items-center gap-2"><AlertCircle size={16}/> Similar practices found:</p><ul className="text-blue-200 space-y-1 list-disc list-inside">{similarPractices.map((p, i) => <li key={i}>{p}</li>)}</ul><p className="text-xs text-blue-400 mt-2">Consider whether you want to customize one of these instead.</p></div>}
+        {similarPractices.length > 0 && <div className="bg-neutral-900/30 border border-neutral-700 rounded-md p-3 mb-4 text-sm"><p className="font-semibold text-neutral-300 mb-2 flex items-center gap-2"><AlertCircle size={16}/> Similar practices found:</p><ul className="text-neutral-200 space-y-1 list-disc list-inside">{similarPractices.map((p, i) => <li key={i}>{p}</li>)}</ul><p className="text-xs text-neutral-400 mt-2">Consider whether you want to customize one of these instead.</p></div>}
       </>;
     }
   };
 
     const renderResearchStep = () => {
-    const ringColor = module === 'shadow' ? 'focus:ring-amber-500' : module === 'spirit' ? 'focus:ring-purple-500' : 'focus:ring-blue-500';
+    const ringColor = module === 'shadow' ? 'focus:ring-amber-500' : module === 'spirit' ? 'focus:ring-neutral-500' : 'focus:ring-neutral-500';
     return <>
         <h3 className="text-lg font-semibold text-slate-100 mb-4">{module === 'shadow' ? 'Understanding the Pattern' : module === 'spirit' ? 'Contemplative Foundation' : 'Research & Evidence'}</h3>
         <div className="bg-slate-900/50 p-3 rounded-md mb-4 border border-slate-700"><p className="text-xs text-slate-400 mb-2">{module === 'shadow' ? 'Your Pattern:' : module === 'spirit' ? 'Your Aspiration:' : 'Your Goal:'}</p><p className="text-sm text-slate-200 font-mono">{goal}</p></div>
@@ -253,9 +253,9 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
         <button onClick={handleGenerateResearch} disabled={isLoading} className="w-full mt-4 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 text-white font-medium py-2 rounded-md transition flex items-center justify-center gap-2"><Sparkles size={16}/> {isLoading ? 'Generating...' : 'AI Help Me Articulate'}</button>
     </>;
   };
-  
+
     const renderStructureStep = () => {
-    const ringColor = module === 'shadow' ? 'focus:ring-amber-500' : module === 'spirit' ? 'focus:ring-purple-500' : 'focus:ring-blue-500';
+    const ringColor = module === 'shadow' ? 'focus:ring-amber-500' : module === 'spirit' ? 'focus:ring-neutral-500' : 'focus:ring-neutral-500';
     return <>
         <h3 className="text-lg font-semibold text-slate-100 mb-4">{module === 'shadow' ? 'Shadow Work Structure' : module === 'spirit' ? 'Contemplative Practice Structure' : 'Practice Structure'}</h3>
         <div className="space-y-4">
@@ -280,9 +280,9 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
     <>
       <h3 className="text-lg font-semibold text-slate-100 mb-4">Refine Your Practice</h3>
       <div className="bg-slate-900/50 p-3 rounded-md mb-4 border border-slate-700 max-h-32 overflow-y-auto"><p className="text-xs text-slate-400 mb-2">Practice Preview:</p><p className="text-sm text-slate-200 font-bold">{name || '(no name yet)'}</p><p className="text-xs text-slate-400 mt-1">{description || '(no description)'}</p></div>
-      <textarea value={refinementNotes} onChange={(e) => setRefinementNotes(e.target.value)} placeholder="Add any refinement notes or changes..." rows={4} className="w-full text-sm bg-slate-700/50 border border-slate-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4" />
+      <textarea value={refinementNotes} onChange={(e) => setRefinementNotes(e.target.value)} placeholder="Add any refinement notes or changes..." rows={4} className="w-full text-sm bg-slate-700/50 border border-slate-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-neutral-500 mb-4" />
       <button onClick={handleGetRefinementSuggestions} disabled={isLoading} className="w-full bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 text-white font-medium py-2 rounded-md transition flex items-center justify-center gap-2 mb-4"><Sparkles size={16}/> {isLoading ? 'Generating...' : 'Get AI Suggestions'}</button>
-      {aiSuggestions.length > 0 && <div className="bg-purple-900/30 border border-purple-700 rounded-md p-3 mb-4"><p className="text-sm text-purple-300 mb-2 font-medium">💡 Suggestions to improve:</p><div className="space-y-2">{aiSuggestions.map((suggestion, i) => <button key={i} onClick={() => handleApplySuggestion(suggestion)} className="w-full text-left text-xs bg-purple-800/50 hover:bg-purple-800 p-2 rounded border border-purple-600 text-purple-100 transition">{suggestion}</button>)}</div></div>}
+      {aiSuggestions.length > 0 && <div className="bg-neutral-900/30 border border-neutral-700 rounded-md p-3 mb-4"><p className="text-sm text-neutral-300 mb-2 font-medium">💡 Suggestions to improve:</p><div className="space-y-2">{aiSuggestions.map((suggestion, i) => <button key={i} onClick={() => handleApplySuggestion(suggestion)} className="w-full text-left text-xs bg-neutral-800/50 hover:bg-neutral-800 p-2 rounded border border-neutral-600 text-neutral-100 transition">{suggestion}</button>)}</div></div>}
     </>
   );
 
@@ -334,7 +334,7 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
       <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-        <header className="p-4 border-b border-slate-700"><div className="flex justify-between items-start mb-3"><div><h2 className="text-2xl font-bold text-slate-50">Practice Builder</h2><p className="text-xs text-slate-400 mt-1">{getStepLabel()}</p></div><button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={24}/></button></div><div className="w-full bg-slate-700 h-1 rounded-full overflow-hidden"><div className="bg-blue-500 h-full transition-all" style={{ width: `${((currentStepIndex + 1) / 6) * 100}%` }}/></div></header>
+        <header className="p-4 border-b border-slate-700"><div className="flex justify-between items-start mb-3"><div><h2 className="text-2xl font-bold text-slate-50">Practice Builder</h2><p className="text-xs text-slate-400 mt-1">{getStepLabel()}</p></div><button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={24}/></button></div><div className="w-full bg-slate-700 h-1 rounded-full overflow-hidden"><div className="bg-neutral-500 h-full transition-all" style={{ width: `${((currentStepIndex + 1) / 6) * 100}%` }}/></div></header>
         <main className="p-6 flex-grow overflow-y-auto">{error && <p className="text-red-400 text-sm mb-4 bg-red-900/30 p-2 rounded-md">{error}</p>}{renderStep()}</main>
         <footer className="p-4 border-t border-slate-700 flex justify-between items-center">
           <button onClick={onClose} className="text-sm text-slate-400 hover:text-white transition">Close</button>

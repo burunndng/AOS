@@ -74,10 +74,10 @@ const PerspectiveCard: React.FC<PerspectiveCardProps> = ({
   isActive 
 }) => {
   const colors: Record<Perspective['type'], { bg: string; border: string; text: string }> = {
-    'First Person (You)': { bg: 'bg-blue-900/40', border: 'border-blue-600', text: 'text-blue-300' },
-    'Second Person (Them)': { bg: 'bg-emerald-900/40', border: 'border-emerald-600', text: 'text-emerald-300' },
+    'First Person (You)': { bg: 'bg-neutral-900/40', border: 'border-neutral-600', text: 'text-neutral-300' },
+    'Second Person (Them)': { bg: 'bg-neutral-900/40', border: 'border-neutral-600', text: 'text-neutral-300' },
     'Third Person (Observer)': { bg: 'bg-amber-900/40', border: 'border-amber-600', text: 'text-amber-300' },
-    'Witness (Pure Awareness)': { bg: 'bg-purple-900/40', border: 'border-purple-600', text: 'text-purple-300' }
+    'Witness (Pure Awareness)': { bg: 'bg-neutral-900/40', border: 'border-neutral-600', text: 'text-neutral-300' }
   };
   
   const color = colors[type];

@@ -486,24 +486,15 @@ export default function App() {
   }
   
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden">
-      {/* Layer 1: Deep base gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950" />
+    <div className="flex h-screen bg-neutral-950 text-neutral-100 font-sans relative overflow-hidden">
+      {/* Layer 1: Solid dark base */}
+      <div className="absolute inset-0 bg-black" />
 
-      {/* Layer 2: Ambient glows */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(99,102,241,0.12)_0%,transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(139,92,246,0.10)_0%,transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_80%,rgba(59,130,246,0.08)_0%,transparent_50%)]" />
-
-      {/* Layer 3: Subtle animated aurora */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-500/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse" />
-        <div className="absolute top-40 -right-40 w-80 h-80 bg-indigo-500/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse" style={{animationDelay: '1000ms'}} />
-      </div>
+      {/* Layer 2: Subtle depth gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 opacity-60" />
 
       <NavSidebar activeTab={activeTab} setActiveTab={setActiveTab} onExport={handleExport} onImport={handleImport} onReset={handleReset} />
-      <main className="flex-1 overflow-y-auto p-8 relative z-10" style={{backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.02) 30%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 40%), linear-gradient(180deg, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.5) 100%)', backdropFilter: 'blur(12px)'}}>
-        <div className="absolute inset-0 pointer-events-none" style={{background: 'radial-gradient(circle at 80% 20%, rgba(96, 165, 250, 0.05) 0%, transparent 40%)'}}></div>
+      <main className="flex-1 overflow-y-auto p-8 relative z-10" style={{background: 'linear-gradient(180deg, rgba(10, 10, 10, 0.4) 0%, rgba(10, 10, 10, 0.6) 100%)', backdropFilter: 'blur(4px)'}}>
         <div className="relative z-10">
           {renderActiveTab()}
         </div>

@@ -613,7 +613,7 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
       )}
       {session?.transcript.map((msg, idx) => (
         <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-          <p className={`inline-block px-3 py-2 rounded-lg max-w-[85%] text-sm shadow ${msg.role === 'user' ? 'bg-blue-600 text-blue-100 rounded-br-none' : 'bg-slate-700 text-slate-200 rounded-bl-none'}`}>
+          <p className={`inline-block px-3 py-2 rounded-lg max-w-[85%] text-sm shadow ${msg.role === 'user' ? 'bg-neutral-600 text-neutral-100 rounded-br-none' : 'bg-slate-700 text-slate-200 rounded-bl-none'}`}>
             {msg.text}
           </p>
         </div>
@@ -662,7 +662,7 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
 
             <div className="space-y-2">
               {connectionState === 'idle' && (
-                <button onClick={startMicrophone} disabled={isSaving} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md flex items-center justify-center gap-2 transition">
+                <button onClick={startMicrophone} disabled={isSaving} className="w-full bg-neutral-600 hover:bg-neutral-700 text-white font-medium py-2 rounded-md flex items-center justify-center gap-2 transition">
                   <Mic size={18} /> Start Voice Session
                 </button>
               )}
@@ -683,7 +683,7 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
 
             {session && currentPhase !== 'CLOSING' && (
               <>
-                <button onClick={getPartInfo} disabled={isSaving || connectionState !== 'connected'} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-md flex items-center justify-center gap-2 transition">
+                <button onClick={getPartInfo} disabled={isSaving || connectionState !== 'connected'} className="w-full bg-neutral-600 hover:bg-neutral-700 text-white font-medium py-2 rounded-md flex items-center justify-center gap-2 transition">
                   <Sparkles size={18} /> AI Part Info
                 </button>
                 <div className="bg-slate-700/50 p-3 rounded-md text-sm text-slate-300">
@@ -707,10 +707,10 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
             )}
             
             {insightContext && (
-                <div className="mt-4 bg-blue-900/30 border border-blue-700 rounded-md p-3 text-sm text-blue-200 space-y-2">
+                <div className="mt-4 bg-neutral-900/30 border border-neutral-700 rounded-md p-3 text-sm text-neutral-200 space-y-2">
                     <p className="font-bold flex items-center gap-2"><Lightbulb size={16}/> Context from Insight:</p>
-                    <p className="text-blue-300">{insightContext.detectedPattern}</p>
-                    <p className="text-xs text-blue-400">From: {insightContext.mindToolType}</p>
+                    <p className="text-neutral-300">{insightContext.detectedPattern}</p>
+                    <p className="text-xs text-neutral-400">From: {insightContext.mindToolType}</p>
                 </div>
             )}
 

@@ -76,11 +76,11 @@ export default function ShadowToolsTab({
           onResume={() => onStartIFS(draftIFSSession?.linkedInsightId)} // Pass linkedInsightId if resuming
           hasDraft={!!draftIFSSession}
         />
-        <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-2 border-purple-500/40 rounded-lg p-6 flex flex-col lg:col-span-2">
+        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6 flex flex-col lg:col-span-2">
           <div className="flex items-center gap-4 mb-3">
-            <MessageCircle size={32} className="text-purple-400"/>
+            <MessageCircle size={32} className="text-neutral-400"/>
             <h2 className="text-2xl font-bold tracking-tight text-slate-100">Relational Pattern Tracker</h2>
-            <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full font-semibold">AI Chatbot</span>
+            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-1 rounded-full font-semibold">AI Chatbot</span>
           </div>
           <p className="text-slate-300 mb-5 flex-grow">
             Explore how you show up in different relationships through an interactive conversation.

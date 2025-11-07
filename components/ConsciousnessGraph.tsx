@@ -300,10 +300,10 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
 
           {/* Introduction Modal */}
           {showIntro && (
-            <div className="bg-gradient-to-br from-violet-900/40 to-purple-900/40 border-2 border-violet-500/50 rounded-lg p-6 mb-6">
+            <div className="bg-gradient-to-br from-neutral-900/40 to-neutral-900/40 border-2 border-neutral-500/50 rounded-lg p-6 mb-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <Lightbulb size={32} className="text-violet-400" />
+                  <Lightbulb size={32} className="text-neutral-400" />
                   <h2 className="text-2xl font-bold text-slate-100">Two Maps, One Territory</h2>
                 </div>
                 <button
@@ -315,17 +315,17 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
               </div>
               <div className="space-y-4 text-slate-300">
                 <p>
-                  <strong className="text-violet-300">Timothy Leary's 8 Circuits</strong> map the different{' '}
+                  <strong className="text-neutral-300">Timothy Leary's 8 Circuits</strong> map the different{' '}
                   <em>functions</em> of consciousness - from survival to mystical union. Think of these as
                   different territories you can visit.
                 </p>
                 <p>
-                  <strong className="text-violet-300">Ken Wilber's Integral Stages</strong> map how you{' '}
+                  <strong className="text-neutral-300">Ken Wilber's Integral Stages</strong> map how you{' '}
                   <em>develop</em> through life - how your capacity to understand, include, and integrate
                   grows over time.
                 </p>
-                <div className="bg-violet-950/50 border border-violet-500/30 rounded-lg p-4 mt-4">
-                  <p className="text-violet-200 font-semibold mb-2">The Key Insight:</p>
+                <div className="bg-neutral-950/50 border border-neutral-500/30 rounded-lg p-4 mt-4">
+                  <p className="text-neutral-200 font-semibold mb-2">The Key Insight:</p>
                   <p>
                     You can visit advanced territories (Leary's higher circuits) from any level of
                     development (Wilber's stages). But where you're developed determines how you navigate
@@ -346,7 +346,7 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
               onClick={() => setViewMode('both')}
               className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
                 viewMode === 'both'
-                  ? 'bg-violet-600 text-white'
+                  ? 'bg-neutral-600 text-white'
                   : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
               }`}
             >
@@ -357,7 +357,7 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
               onClick={() => setViewMode('leary')}
               className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
                 viewMode === 'leary'
-                  ? 'bg-violet-600 text-white'
+                  ? 'bg-neutral-600 text-white'
                   : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
               }`}
             >
@@ -368,7 +368,7 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
               onClick={() => setViewMode('wilber')}
               className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
                 viewMode === 'wilber'
-                  ? 'bg-violet-600 text-white'
+                  ? 'bg-neutral-600 text-white'
                   : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
               }`}
             >
@@ -387,7 +387,7 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                 }`}
                 onClick={() => setSelectedLevel(selectedLevel === level.number ? null : level.number)}
               >
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-violet-500/50">
+                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-neutral-500/50">
                   <div className="flex items-center gap-4">
                     {/* Level Number */}
                     <div
@@ -425,12 +425,12 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                             {level.wilber.name}
                           </h3>
                           {level.wilber.isState && (
-                            <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">
+                            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-0.5 rounded-full">
                               STATE
                             </span>
                           )}
                           {!level.wilber.isState && (
-                            <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">
+                            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-0.5 rounded-full">
                               STAGE
                             </span>
                           )}
@@ -451,7 +451,7 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
 
           {/* Detailed View */}
           {selectedData && (
-            <div className="bg-slate-900/70 border-2 border-violet-500/50 rounded-lg p-6 mb-8">
+            <div className="bg-slate-900/70 border-2 border-neutral-500/50 rounded-lg p-6 mb-8">
               <div className="flex justify-between items-start mb-6">
                 <h2 className="text-3xl font-bold text-slate-100">
                   Level {selectedData.number} — Deep Dive
@@ -476,7 +476,7 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                     </h3>
                     <p className="text-slate-300 mb-3">{selectedData.leary.description}</p>
 
-                    <div className="bg-slate-800/50 rounded p-3 mb-3">
+                    <div className="bg-neutral-900/20 border border-neutral-500/30 rounded p-3 mb-3">
                       <p className="text-sm text-slate-400 mb-1 font-semibold">When Active:</p>
                       <p className="text-sm text-slate-300">{selectedData.leary.when_active}</p>
                     </div>
@@ -506,8 +506,8 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                       <span
                         className={`text-xs px-2 py-1 rounded-full ${
                           selectedData.wilber.isState
-                            ? 'bg-purple-500/20 text-purple-300'
-                            : 'bg-blue-500/20 text-blue-300'
+                            ? 'bg-neutral-500/20 text-neutral-300'
+                            : 'bg-neutral-500/20 text-neutral-300'
                         }`}
                       >
                         {selectedData.wilber.isState ? 'STATE' : 'STAGE'}
@@ -527,15 +527,15 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
 
                     {/* Stage Interpretations */}
                     {selectedData.wilber.stageInterpretations && (
-                      <div className="bg-blue-900/20 border border-blue-500/30 rounded p-3">
-                        <p className="text-sm text-blue-300 mb-2 font-semibold">
+                      <div className="bg-neutral-900/20 border border-neutral-500/30 rounded p-3">
+                        <p className="text-sm text-neutral-300 mb-2 font-semibold">
                           How Different Stages Experience This:
                         </p>
                         <div className="space-y-2">
                           {Object.entries(selectedData.wilber.stageInterpretations).map(
                             ([stage, interpretation]) => (
                               <div key={stage} className="text-sm">
-                                <span className="text-blue-400 font-semibold">{stage}:</span>{' '}
+                                <span className="text-neutral-400 font-semibold">{stage}:</span>{' '}
                                 <span className="text-slate-300">{interpretation}</span>
                               </div>
                             )

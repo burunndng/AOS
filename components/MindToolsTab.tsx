@@ -36,7 +36,7 @@ export default function MindToolsTab({ setActiveWizard }: MindToolsTabProps) {
           <h2 className="text-2xl font-bold text-slate-100 mb-1">Developmental Assessment</h2>
           <p className="text-sm text-slate-400">Understand your center of gravity across Kegan's stages of adult development</p>
         </div>
-        <div className="bg-gradient-to-br from-amber-900/30 to-purple-900/30 border-2 border-accent/40 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-amber-900/30 to-neutral-900/30 border-2 border-accent/40 rounded-lg p-6">
           <div className="flex items-center gap-4 mb-3">
             <TrendingUp size={32} className="text-accent" />
             <h3 className="text-2xl font-bold tracking-tight text-slate-100">Kegan Stage Assessment</h3>
@@ -65,14 +65,14 @@ export default function MindToolsTab({ setActiveWizard }: MindToolsTabProps) {
           <p className="text-sm text-slate-400">Tools for working with specific patterns and biases</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ToolCard 
-          icon={<BrainCircuit size={28} className="text-blue-400"/>}
+        <ToolCard
+          icon={<BrainCircuit size={28} className="text-neutral-400"/>}
           title="Bias Detective"
           description="Uncover the unconscious cognitive biases that shape your decisions and learn to think with greater clarity."
           onStart={() => setActiveWizard('bias')}
         />
-        <ToolCard 
-          icon={<Layers size={28} className="text-purple-400"/>}
+        <ToolCard
+          icon={<Layers size={28} className="text-neutral-400"/>}
           title="Subject-Object Explorer"
           description="A guided process to make unconscious patterns visible, moving them from 'subject' (what runs you) to 'object' (what you can see)."
           onStart={() => setActiveWizard('so')}

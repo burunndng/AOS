@@ -249,10 +249,10 @@ export const ILPGraphQuiz: React.FC = () => {
   const categoryColor: Record<ILPGraphCategory, string> = {
     core: 'from-amber-500 to-orange-500',
     body: 'from-red-500 to-pink-500',
-    mind: 'from-blue-500 to-cyan-500',
-    spirit: 'from-purple-500 to-pink-500',
-    shadow: 'from-indigo-500 to-purple-500',
-    'integral-theory': 'from-green-500 to-emerald-500',
+    mind: 'from-neutral-800 to-neutral-700',
+    spirit: 'from-neutral-800 to-neutral-700',
+    shadow: 'from-neutral-800 to-neutral-700',
+    'integral-theory': 'from-neutral-800 to-neutral-700',
   };
 
   const difficultyLabel: Record<DifficultyLevel, string> = {
@@ -278,7 +278,7 @@ export const ILPGraphQuiz: React.FC = () => {
   const categoryStats = getCategoryStats();
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-xl p-6 text-white">
+    <div className="w-full min-h-screen bg-gradient-to-br from-slate-900 via-neutral-900 to-slate-900 rounded-xl p-6 text-white">
       {/* Confetti effect */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -297,7 +297,7 @@ export const ILPGraphQuiz: React.FC = () => {
         </div>
       )}
 
-      <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+      <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-neutral-400 to-neutral-400 bg-clip-text text-transparent">
         ILP Graph Quiz
       </h1>
       <p className="text-slate-400 mb-8">Test your knowledge across all ILP dimensions</p>
@@ -307,7 +307,7 @@ export const ILPGraphQuiz: React.FC = () => {
           {/* Statistics Grid */}
           {stats && (
             <div className="grid grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-lg p-4 border border-purple-700/30 backdrop-blur">
+              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-lg p-4 border border-neutral-700/30 backdrop-blur">
                 <div className="flex items-center gap-2 mb-2">
                   <Trophy size={20} className="text-yellow-400" />
                   <span className="text-sm text-slate-400">Quizzes</span>
@@ -315,9 +315,9 @@ export const ILPGraphQuiz: React.FC = () => {
                 <div className="text-3xl font-bold">{stats.totalTaken}</div>
               </div>
 
-              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-lg p-4 border border-blue-700/30 backdrop-blur">
+              <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-lg p-4 border border-neutral-700/30 backdrop-blur">
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp size={20} className="text-blue-400" />
+                  <TrendingUp size={20} className="text-neutral-400" />
                   <span className="text-sm text-slate-400">Average</span>
                 </div>
                 <div className="text-3xl font-bold">{stats.averageScore}%</div>
@@ -342,13 +342,13 @@ export const ILPGraphQuiz: React.FC = () => {
           )}
 
           {/* Quiz Category Info */}
-          <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-xl p-6 border border-purple-700/30 backdrop-blur">
+          <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-xl p-6 border border-neutral-700/30 backdrop-blur">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <span className="text-2xl">📊</span> Question Library
             </h3>
             <div className="grid grid-cols-3 gap-3 text-sm">
               <div className="bg-slate-700/50 rounded p-3 border border-slate-600/30">
-                <div className="font-semibold text-purple-300">{categoryStats.total}</div>
+                <div className="font-semibold text-neutral-300">{categoryStats.total}</div>
                 <div className="text-slate-400">Total Questions</div>
               </div>
               <div className="bg-slate-700/50 rounded p-3 border border-slate-600/30">
@@ -356,7 +356,7 @@ export const ILPGraphQuiz: React.FC = () => {
                 <div className="text-slate-400">Core + Body</div>
               </div>
               <div className="bg-slate-700/50 rounded p-3 border border-slate-600/30">
-                <div className="font-semibold text-blue-300">{categoryStats.mind + categoryStats.spirit}</div>
+                <div className="font-semibold text-neutral-300">{categoryStats.mind + categoryStats.spirit}</div>
                 <div className="text-slate-400">Mind + Spirit</div>
               </div>
             </div>
@@ -367,7 +367,7 @@ export const ILPGraphQuiz: React.FC = () => {
             {/* Category Selection */}
             <div>
               <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold">1</span>
+                <span className="w-8 h-8 rounded-full bg-gradient-to-r from-neutral-800 to-neutral-700 flex items-center justify-center text-sm font-bold">1</span>
                 Select Category
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -378,7 +378,7 @@ export const ILPGraphQuiz: React.FC = () => {
                     className={`p-3 rounded-lg font-medium transition-all duration-300 border-2 ${
                       selectedCategory === key
                         ? `bg-gradient-to-r ${key === 'all' ? 'from-slate-600 to-slate-500' : categoryColor[key as ILPGraphCategory]} border-white/50 shadow-lg scale-105`
-                        : 'bg-slate-700/50 border-slate-600 hover:border-purple-500 hover:bg-slate-600/50'
+                        : 'bg-slate-700/50 border-slate-600 hover:border-neutral-500 hover:bg-slate-600/50'
                     }`}
                   >
                     {key === 'all' ? '🌟 All Categories' : categoryLabel[key as ILPGraphCategory]}
@@ -390,7 +390,7 @@ export const ILPGraphQuiz: React.FC = () => {
             {/* Difficulty Selection */}
             <div>
               <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold">2</span>
+                <span className="w-8 h-8 rounded-full bg-gradient-to-r from-neutral-800 to-neutral-700 flex items-center justify-center text-sm font-bold">2</span>
                 Select Difficulty
               </h2>
               <div className="grid grid-cols-3 gap-3">
@@ -401,7 +401,7 @@ export const ILPGraphQuiz: React.FC = () => {
                     className={`p-3 rounded-lg font-medium transition-all duration-300 border-2 ${
                       selectedDifficulty === key
                         ? `${difficultyColor[key as DifficultyLevel]} border-white/50 shadow-lg scale-105 bg-opacity-50`
-                        : 'bg-slate-700/50 border-slate-600 hover:border-blue-500 hover:bg-slate-600/50 text-slate-300'
+                        : 'bg-slate-700/50 border-slate-600 hover:border-neutral-500 hover:bg-slate-600/50 text-slate-300'
                     }`}
                   >
                     {label}
@@ -413,7 +413,7 @@ export const ILPGraphQuiz: React.FC = () => {
             {/* Question Count Selection */}
             <div>
               <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold">3</span>
+                <span className="w-8 h-8 rounded-full bg-gradient-to-r from-neutral-800 to-neutral-700 flex items-center justify-center text-sm font-bold">3</span>
                 Number of Questions
               </h2>
               <div className="grid grid-cols-4 gap-3">
@@ -423,7 +423,7 @@ export const ILPGraphQuiz: React.FC = () => {
                     onClick={() => setNumQuestions(num)}
                     className={`p-3 rounded-lg font-medium transition-all duration-300 border-2 ${
                       numQuestions === num
-                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 border-white/50 shadow-lg scale-105'
+                        ? 'bg-gradient-to-r from-neutral-800 to-neutral-700 border-white/50 shadow-lg scale-105'
                         : 'bg-slate-700/50 border-slate-600 hover:border-cyan-500 hover:bg-slate-600/50'
                     }`}
                   >
@@ -437,7 +437,7 @@ export const ILPGraphQuiz: React.FC = () => {
           {/* Start Button */}
           <button
             onClick={startQuiz}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-2 text-lg"
+            className="w-full bg-gradient-to-r from-neutral-800 to-neutral-700 hover:from-neutral-700 hover:to-neutral-700 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-2 text-lg"
           >
             Start Quiz
             <ChevronRight size={24} />
@@ -457,9 +457,9 @@ export const ILPGraphQuiz: React.FC = () => {
                 {Math.round(((currentSession.currentQuestionIndex + 1) / questions.length) * 100)}%
               </span>
             </div>
-            <div className="bg-slate-700 rounded-full h-3 overflow-hidden border border-purple-700/50">
+            <div className="bg-slate-700 rounded-full h-3 overflow-hidden border border-neutral-700/50">
               <div
-                className="bg-gradient-to-r from-purple-500 to-blue-500 h-full transition-all duration-500"
+                className="bg-gradient-to-r from-neutral-800 to-neutral-700 h-full transition-all duration-500"
                 style={{
                   width: `${((currentSession.currentQuestionIndex + 1) / questions.length) * 100}%`,
                 }}
@@ -478,10 +478,10 @@ export const ILPGraphQuiz: React.FC = () => {
           </div>
 
           {/* Question Card */}
-          <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-xl p-8 border border-purple-700/30 backdrop-blur">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-700 rounded-xl p-8 border border-neutral-700/30 backdrop-blur">
             <h2 className="text-2xl font-bold mb-6 leading-relaxed">{currentQuestion.question}</h2>
             {currentQuestion.description && (
-              <p className="text-slate-300 text-sm mb-6 italic bg-slate-700/50 p-4 rounded border-l-2 border-purple-500">
+              <p className="text-slate-300 text-sm mb-6 italic bg-slate-700/50 p-4 rounded border-l-2 border-neutral-500">
                 {currentQuestion.description}
               </p>
             )}
@@ -492,10 +492,10 @@ export const ILPGraphQuiz: React.FC = () => {
                 <button
                   key={answer.id}
                   onClick={() => selectAnswer(answer.id)}
-                  className="w-full text-left p-4 bg-slate-700/50 hover:bg-slate-600/70 border-2 border-slate-600/50 hover:border-purple-500/70 rounded-lg transition-all duration-300 group hover:shadow-lg hover:shadow-purple-500/20"
+                  className="w-full text-left p-4 bg-slate-700/50 hover:bg-slate-600/70 border-2 border-slate-600/50 hover:border-neutral-500/70 rounded-lg transition-all duration-300 group hover:shadow-lg hover:shadow-neutral-500/20"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold group-hover:scale-110 transition-transform">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-neutral-800 to-neutral-700 flex items-center justify-center text-sm font-bold group-hover:scale-110 transition-transform">
                       {String.fromCharCode(65 + idx)}
                     </div>
                     <span className="flex-1 pt-1">{answer.text}</span>
@@ -511,7 +511,7 @@ export const ILPGraphQuiz: React.FC = () => {
         <div className="space-y-8 max-w-3xl">
           {/* Score Display */}
           <div className="text-center space-y-4">
-            <div className="text-6xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+            <div className="text-6xl font-bold bg-gradient-to-r from-neutral-400 via-neutral-400 to-neutral-400 bg-clip-text text-transparent">
               {results.score}%
             </div>
             <div className="text-2xl font-semibold">{getScoreBadge(results.score).label}</div>
@@ -521,7 +521,7 @@ export const ILPGraphQuiz: React.FC = () => {
           </div>
 
           {/* Feedback Card */}
-          <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-xl p-6 border-2 border-purple-700/30">
+          <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-xl p-6 border-2 border-neutral-700/30">
             {results.score >= 80 && (
               <div className="flex gap-4">
                 <span className="text-4xl">🎉</span>
@@ -535,7 +535,7 @@ export const ILPGraphQuiz: React.FC = () => {
               <div className="flex gap-4">
                 <span className="text-4xl">✨</span>
                 <div>
-                  <h3 className="text-xl font-bold text-blue-400 mb-2">Good Job!</h3>
+                  <h3 className="text-xl font-bold text-neutral-400 mb-2">Good Job!</h3>
                   <p className="text-slate-300">You have solid knowledge of the key concepts. Review weak areas to improve further.</p>
                 </div>
               </div>
@@ -552,7 +552,7 @@ export const ILPGraphQuiz: React.FC = () => {
           </div>
 
           {/* Detailed Stats */}
-          <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-xl p-6 border border-purple-700/30 space-y-4">
+          <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-xl p-6 border border-neutral-700/30 space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <span>📊</span> Performance Breakdown
             </h3>
@@ -564,7 +564,7 @@ export const ILPGraphQuiz: React.FC = () => {
                 percentage >= 80
                   ? 'from-green-500/30'
                   : percentage >= 60
-                    ? 'from-blue-500/30'
+                    ? 'from-neutral-500/30'
                     : 'from-red-500/30';
               return (
                 <div key={category} className="space-y-2">
@@ -595,7 +595,7 @@ export const ILPGraphQuiz: React.FC = () => {
               <div className="text-lg font-semibold">{Math.floor(results.timeSpent / 60)}m {results.timeSpent % 60}s</div>
             </div>
             <div className="bg-gradient-to-br from-slate-800/80 to-slate-700/50 rounded-lg p-4 border border-slate-700/30 text-center">
-              <div className="text-2xl font-bold text-purple-400">⚡</div>
+              <div className="text-2xl font-bold text-neutral-400">⚡</div>
               <div className="text-sm text-slate-400 mt-2">Avg per Question</div>
               <div className="text-lg font-semibold">{Math.round(results.timeSpent / results.totalQuestions)}s</div>
             </div>
@@ -614,7 +614,7 @@ export const ILPGraphQuiz: React.FC = () => {
             </button>
             <button
               onClick={resetQuiz}
-              className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all"
+              className="flex-1 bg-gradient-to-r from-neutral-800 to-neutral-700 hover:from-neutral-700 hover:to-neutral-700 text-white font-bold py-3 px-4 rounded-lg transition-all"
             >
               <RotateCcw className="inline mr-2" size={18} />
               Try Again
