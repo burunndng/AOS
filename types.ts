@@ -64,7 +64,8 @@ export type ActiveTab =
   | 'shadow-tools'
   | 'body-tools'
   | 'spirit-tools'
-  | 'library';
+  | 'library'
+  | 'quiz';
 
 export interface CoachMessage {
   role: 'user' | 'coach';
@@ -482,5 +483,66 @@ export interface JhanaSession {
   insights?: string;
   difficulties?: string;
   questions?: string;
+}
+
+// ILP Graph Quiz Types
+export type ILPGraphCategory = 'core' | 'body' | 'mind' | 'spirit' | 'shadow' | 'integral-theory';
+export type QuizQuestionType = 'multiple-choice' | 'true-false' | 'matching' | 'ranking' | 'scenario';
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export interface ILPGraphNode {
+  id: string;
+  label: string;
+  category: ILPGraphCategory;
+  description: string;
+  importance: number; // 1-10
+}
+
+export interface QuizAnswer {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface QuizQuestion {
+  id: string;
+  type: QuizQuestionType;
+  category: ILPGraphCategory;
+  difficulty: DifficultyLevel;
+  question: string;
+  description?: string;
+  answers: QuizAnswer[];
+  correctExplanation: string;
+  relatedNodes: string[]; // IDs of related graph nodes
+  points?: number;
+}
+
+export interface QuizResult {
+  id: string;
+  quizId: string;
+  date: string;
+  difficulty: DifficultyLevel;
+  category: ILPGraphCategory;
+  totalQuestions: number;
+  correctAnswers: number;
+  score: number; // percentage
+  timeSpent: number; // seconds
+  categoryBreakdown: Record<ILPGraphCategory, { correct: number; total: number }>;
+  answers: {
+    questionId: string;
+    selectedAnswerId: string;
+    isCorrect: boolean;
+  }[];
+}
+
+export interface ILPGraphQuizSession {
+  id: string;
+  date: string;
+  category: ILPGraphCategory;
+  difficulty: DifficultyLevel;
+  currentQuestionIndex: number;
+  answers: { questionId: string; selectedAnswerId: string }[];
+  startTime: number;
+  results?: QuizResult;
 }
 

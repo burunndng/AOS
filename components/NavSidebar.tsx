@@ -18,6 +18,7 @@ import {
     Library,
     Hand,
     Flame,
+    HelpCircle,
 } from 'lucide-react';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
 
@@ -41,6 +42,7 @@ const navItems = [
     { id: 'shadow-tools', label: 'Shadow Tools', icon: Shield },
     { id: 'body-tools', label: 'Body Tools', icon: Hand },
     { id: 'spirit-tools', label: 'Spirit Tools', icon: Flame },
+    { id: 'quiz', label: 'ILP Graph Quiz', icon: HelpCircle, group: 'Learning' },
     { id: 'library', label: 'Library', icon: Library, group: 'Resources' },
 ];
 
