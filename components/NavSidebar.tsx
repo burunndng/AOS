@@ -47,14 +47,14 @@ const navItems = [
 const NavButton = ({ item, isActive, onClick }: { item: any, isActive: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
             isActive
-                ? 'bg-accent/10 text-accent font-semibold shadow-[0_0_15px_rgba(217,170,239,0.2)]'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                ? 'bg-gradient-to-r from-purple-500/20 to-purple-400/10 text-purple-200 font-semibold shadow-[0_0_20px_rgba(168,85,247,0.25)] border border-purple-500/30'
+                : 'text-slate-300 hover:bg-slate-800/50 hover:text-slate-100 hover:border-purple-500/20 border border-transparent'
         }`}
     >
-        <item.icon size={18} />
-        <span>{item.label}</span>
+        <item.icon size={18} className="flex-shrink-0" />
+        <span className="truncate">{item.label}</span>
     </button>
 );
 
@@ -63,20 +63,21 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
     let lastGroup: string | undefined = undefined;
 
     return (
-        <aside className="w-64 bg-slate-900/50 border-r border-slate-800/70 p-4 flex flex-col sticky top-0 h-screen">
-            <div className="flex items-center gap-3 px-2 flex-shrink-0">
+        <aside className="w-64 glass-effect border-r border-purple-500/20 p-5 flex flex-col sticky top-0 h-screen overflow-hidden">
+            <div className="flex items-center gap-3 px-3 flex-shrink-0 mb-2">
                 {/* FIX: MerkabaIcon now accepts 'size' prop for explicit sizing. */}
-                <MerkabaIcon className="text-accent" size={28} />
-                <h1 className="text-2xl font-bold font-mono tracking-tighter text-slate-100">Aura OS</h1>
+                <MerkabaIcon className="text-purple-300 animate-float" size={28} />
+                <h1 className="text-xl font-bold font-mono tracking-tighter bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">Aura OS</h1>
             </div>
-            <nav className="flex flex-col gap-1 mt-6 flex-grow overflow-y-auto pr-2 -mr-2">
+            <div className="h-px subtle-divider mb-6"></div>
+            <nav className="flex flex-col gap-2 flex-grow overflow-y-auto pr-3 -mr-3">
                 {navItems.map(item => {
                     const isGroupStart = item.group && item.group !== lastGroup;
                     lastGroup = item.group;
                     return (
                         <React.Fragment key={item.id}>
                             {isGroupStart && (
-                                <h2 className="font-mono text-xs font-semibold text-slate-500 uppercase mt-4 mb-2 px-3 tracking-wider">
+                                <h2 className="font-mono text-xs font-semibold text-purple-400/70 uppercase mt-5 mb-3 px-4 tracking-widest opacity-80">
                                     {item.group}
                                 </h2>
                             )}
@@ -90,22 +91,22 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
                 })}
             </nav>
             {/* App Settings Section */}
-            <div className="flex-shrink-0 mt-4">
-                 <h2 className="font-mono text-xs font-semibold text-slate-500 uppercase mt-4 mb-2 px-3 tracking-wider">
+            <div className="flex-shrink-0 pt-4 border-t border-purple-500/15 mt-4">
+                 <h2 className="font-mono text-xs font-semibold text-purple-400/70 uppercase mt-4 mb-3 px-4 tracking-widest opacity-80">
                     App Settings
                 </h2>
-                <div className="space-y-1">
-                    <button onClick={onExport} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
-                        <Download size={18} />
-                        <span>Export Data</span>
+                <div className="space-y-2">
+                    <button onClick={onExport} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-purple-200 transition-all duration-300 border border-transparent hover:border-purple-500/20">
+                        <Download size={18} className="flex-shrink-0" />
+                        <span className="truncate">Export Data</span>
                     </button>
-                    <button onClick={onImport} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
-                        <Upload size={18} />
-                        <span>Import Data</span>
+                    <button onClick={onImport} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800/40 hover:text-purple-200 transition-all duration-300 border border-transparent hover:border-purple-500/20">
+                        <Upload size={18} className="flex-shrink-0" />
+                        <span className="truncate">Import Data</span>
                     </button>
-                     <button onClick={onReset} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors">
-                        <Trash2 size={18} />
-                        <span>Reset App</span>
+                     <button onClick={onReset} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-red-500/10 hover:text-red-300 transition-all duration-300 border border-transparent hover:border-red-500/20">
+                        <Trash2 size={18} className="flex-shrink-0" />
+                        <span className="truncate">Reset App</span>
                     </button>
                 </div>
             </div>
