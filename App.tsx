@@ -36,6 +36,7 @@ import JhanaTracker from './components/JhanaTracker.tsx';
 import MeditationWizard from './components/MeditationWizard.tsx';
 import ConsciousnessGraph from './components/ConsciousnessGraph.tsx';
 import RoleAlignmentWizard from './components/RoleAlignmentWizard.tsx';
+import { ILPGraphQuiz } from './components/ILPGraphQuiz.tsx';
 
 
 // Constants & Types
@@ -474,6 +475,7 @@ export default function App() {
       case 'body-tools': return <BodyToolsTab setActiveWizard={setActiveWizardAndLink} />;
       case 'spirit-tools': return <SpiritToolsTab setActiveWizard={setActiveWizardAndLink} />;
       case 'library': return <LibraryTab />;
+      case 'quiz': return <ILPGraphQuiz />;
       default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} integratedInsights={integratedInsights} markInsightAsAddressed={markInsightAsAddressed} setActiveWizard={setActiveWizardAndLink} />;
     }
   };
