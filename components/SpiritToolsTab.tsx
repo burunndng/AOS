@@ -61,6 +61,52 @@ export default function SpiritToolsTab({ setActiveWizard }: SpiritToolsTabProps)
         </div>
       </section>
 
+      {/* Meditation Practice Finder */}
+      <SectionDivider />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-1">Discover Your Practice</h2>
+          <p className="text-sm text-slate-400">Find the meditation practice that matches your goals and personality</p>
+        </div>
+        <div className="bg-gradient-to-br from-purple-900/30 to-indigo-900/30 border-2 border-purple-500/40 rounded-lg p-6">
+          <div className="flex items-center gap-4 mb-3">
+            <Sparkles size={32} className="text-purple-400" />
+            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Meditation Practice Finder</h3>
+            <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full font-semibold">NEW</span>
+          </div>
+          <p className="text-slate-300 mb-4 leading-relaxed">
+            Not sure which meditation practice is right for you? Take our comprehensive assessment to discover
+            personalized recommendations from 12 major meditation traditions. From Samatha to Zen, from MBSR to
+            Self-Inquiry - find your perfect match based on your goals, personality, and lifestyle.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">12</div>
+              <div className="text-xs text-slate-400 mt-1">Practices</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">5min</div>
+              <div className="text-xs text-slate-400 mt-1">Assessment</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">✓</div>
+              <div className="text-xs text-slate-400 mt-1">Research-Based</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">∞</div>
+              <div className="text-xs text-slate-400 mt-1">Personalized</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveWizard('meditation')}
+            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
+          >
+            Find Your Practice
+          </button>
+        </div>
+      </section>
+
       {/* Future Spirit Tools Placeholder */}
       <SectionDivider />
 
