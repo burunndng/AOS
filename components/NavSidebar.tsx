@@ -2,21 +2,22 @@
 import React from 'react';
 // FIX: Correct import path for types.
 import { ActiveTab } from '../types.ts';
-import { 
+import {
     Home,
-    LayoutDashboard, 
-    CheckSquare, 
-    Zap, 
-    Sparkles, 
-    BrainCircuit, 
-    Shield, 
-    BookOpen, 
+    LayoutDashboard,
+    CheckSquare,
+    Zap,
+    Sparkles,
+    BrainCircuit,
+    Shield,
+    BookOpen,
     Search,
     Download,
     Upload,
     Trash2,
     Library,
-    Hand, // NEW: Import Hand icon
+    Hand,
+    Flame,
 } from 'lucide-react';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
 
@@ -38,7 +39,8 @@ const navItems = [
     { id: 'aqal', label: 'AQAL Report', icon: BookOpen },
     { id: 'mind-tools', label: 'Mind Tools', icon: BrainCircuit, group: 'Toolkits' },
     { id: 'shadow-tools', label: 'Shadow Tools', icon: Shield },
-    { id: 'body-tools', label: 'Body Tools', icon: Hand, group: 'Toolkits' }, // NEW: Body Tools tab
+    { id: 'body-tools', label: 'Body Tools', icon: Hand },
+    { id: 'spirit-tools', label: 'Spirit Tools', icon: Flame },
     { id: 'library', label: 'Library', icon: Library, group: 'Resources' },
 ];
 
