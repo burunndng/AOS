@@ -35,6 +35,7 @@ import RelationalPatternChatbot from './components/RelationalPatternChatbot.tsx'
 import JhanaTracker from './components/JhanaTracker.tsx';
 import MeditationWizard from './components/MeditationWizard.tsx';
 import ConsciousnessGraph from './components/ConsciousnessGraph.tsx';
+import RoleAlignmentWizard from './components/RoleAlignmentWizard.tsx';
 
 
 // Constants & Types
@@ -506,6 +507,7 @@ export default function App() {
       {activeWizard === 'somatic' && <SomaticGeneratorWizard onClose={() => setActiveWizard(null)} onSave={handleSaveSomaticPractice} />}
       {activeWizard === 'meditation' && <MeditationWizard onClose={() => setActiveWizard(null)} />}
       {activeWizard === 'consciousness-graph' && <ConsciousnessGraph onClose={() => setActiveWizard(null)} />}
+      {activeWizard === 'role-alignment' && <RoleAlignmentWizard onClose={() => setActiveWizard(null)} />}
     </div>
   );
 }
