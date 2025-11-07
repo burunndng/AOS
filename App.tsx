@@ -34,6 +34,7 @@ import KeganAssessmentWizard from './components/KeganAssessmentWizard.tsx';
 import RelationalPatternChatbot from './components/RelationalPatternChatbot.tsx';
 import JhanaTracker from './components/JhanaTracker.tsx';
 import MeditationWizard from './components/MeditationWizard.tsx';
+import ConsciousnessGraph from './components/ConsciousnessGraph.tsx';
 
 
 // Constants & Types
@@ -504,6 +505,7 @@ export default function App() {
       {activeWizard === 'jhana' && <JhanaTracker onClose={() => setActiveWizard(null)} onSave={handleSaveJhanaSession} />}
       {activeWizard === 'somatic' && <SomaticGeneratorWizard onClose={() => setActiveWizard(null)} onSave={handleSaveSomaticPractice} />}
       {activeWizard === 'meditation' && <MeditationWizard onClose={() => setActiveWizard(null)} />}
+      {activeWizard === 'consciousness-graph' && <ConsciousnessGraph onClose={() => setActiveWizard(null)} />}
     </div>
   );
 }
