@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Flame, Moon, Sun } from 'lucide-react';
+import { Sparkles, Flame, Moon, Sun, GitCompare } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 import { ActiveTab } from '../types.ts';
 
@@ -103,6 +103,59 @@ export default function SpiritToolsTab({ setActiveWizard }: SpiritToolsTabProps)
             className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
           >
             Find Your Practice
+          </button>
+        </div>
+      </section>
+
+      {/* Consciousness Maps & Models */}
+      <SectionDivider />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-1">Consciousness Maps & Models</h2>
+          <p className="text-sm text-slate-400">Explore frameworks for understanding states, stages, and development</p>
+        </div>
+        <div className="bg-gradient-to-br from-violet-900/30 to-fuchsia-900/30 border-2 border-violet-500/40 rounded-lg p-6">
+          <div className="flex items-center gap-4 mb-3">
+            <GitCompare size={32} className="text-violet-400" />
+            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Interactive Consciousness Graph</h3>
+            <span className="text-xs bg-violet-500/20 text-violet-300 px-2 py-1 rounded-full font-semibold">NEW</span>
+          </div>
+          <p className="text-slate-300 mb-4 leading-relaxed">
+            Compare Timothy Leary's 8 Circuits of Consciousness with Ken Wilber's Integral Theory in an interactive,
+            visual exploration. Understand the crucial distinction between <strong>states</strong> (temporary experiences)
+            and <strong>stages</strong> (developmental levels), and learn how different stages interpret the same mystical
+            experiences differently.
+          </p>
+          <div className="bg-violet-950/50 border border-violet-500/30 rounded-lg p-4 mb-4">
+            <p className="text-sm text-violet-200 mb-2">
+              <strong>Key Insight:</strong> You can access advanced states from any stage of development - but your stage
+              determines how you interpret and integrate what you experience.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">8</div>
+              <div className="text-xs text-slate-400 mt-1">Circuits</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">∞</div>
+              <div className="text-xs text-slate-400 mt-1">Stages</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">✓</div>
+              <div className="text-xs text-slate-400 mt-1">Interactive</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">⚡</div>
+              <div className="text-xs text-slate-400 mt-1">Deep Dive</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveWizard('consciousness-graph')}
+            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
+          >
+            Explore the Graph
           </button>
         </div>
       </section>
