@@ -488,8 +488,11 @@ export default function App() {
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 font-sans" style={{background: 'linear-gradient(135deg, #0f1729 0%, #1a2847 25%, #0f1a2e 50%, #1a2847 75%, #0f1729 100%)'}}>
       <NavSidebar activeTab={activeTab} setActiveTab={setActiveTab} onExport={handleExport} onImport={handleImport} onReset={handleReset} />
-      <main className="flex-1 overflow-y-auto p-8 backdrop-blur-3xl" style={{backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(217, 170, 239, 0.03) 0%, transparent 50%)'}}>
-        {renderActiveTab()}
+      <main className="flex-1 overflow-y-auto p-8" style={{backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(217, 170, 239, 0.08) 0%, rgba(217, 170, 239, 0.02) 30%, transparent 50%), linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)', backdropFilter: 'blur(12px)'}}>
+        <div className="absolute inset-0 pointer-events-none" style={{background: 'radial-gradient(circle at 80% 20%, rgba(96, 165, 250, 0.05) 0%, transparent 40%)'}}></div>
+        <div className="relative z-10">
+          {renderActiveTab()}
+        </div>
       </main>
       <Coach 
           practiceStack={practiceStack}

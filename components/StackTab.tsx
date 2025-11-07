@@ -27,27 +27,31 @@ const StackItem: React.FC<StackItemProps> = ({ practice, moduleKey, onRemove, no
   };
 
   return (
-    <div className={`bg-slate-800/50 border border-slate-800 card-luminous-hover border-l-4 ${moduleInfo.borderColor} rounded-r-lg p-4 flex flex-col`}>
-      <div className="flex items-start justify-between">
+    <div className={`group relative bg-gradient-to-br from-slate-800/60 to-slate-900/40 border border-slate-700/50 border-l-4 ${moduleInfo.borderColor} rounded-lg p-5 flex flex-col transition-all duration-300 hover:border-slate-600/80 hover:-translate-y-1 overflow-hidden`} style={{boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(8px)'}}>
+      {/* Background gradient layer for depth */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{background: 'radial-gradient(circle at top right, rgba(217, 170, 239, 0.05) 0%, transparent 60%)'}}></div>
+
+      <div className="relative z-10 flex items-start justify-between">
         <div>
           <h3 className="font-bold font-mono text-lg text-slate-100">{practice.name}</h3>
           <p className="text-sm text-slate-400 mt-1">{practice.description}</p>
         </div>
-        <button onClick={() => onRemove(practice.id)} className="text-slate-500 hover:text-red-400 p-1">
+        <button onClick={() => onRemove(practice.id)} className="text-slate-500 hover:text-red-400 p-1 transition-all duration-200 hover:scale-110 group/btn" style={{boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.05)'}}>
           <X size={18} />
         </button>
       </div>
-      <div className="mt-3 pt-3 border-t border-slate-700/50">
+      <div className="relative z-10 mt-3 pt-3 border-t border-slate-700/50">
         {isEditing ? (
           <div className="flex flex-col gap-2">
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full text-sm bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent resize-y"
+              className="w-full text-sm bg-slate-900/70 border border-slate-700/80 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent/50 resize-y transition-all duration-200 shadow-sm"
               rows={3}
               placeholder="Add your personal 'why' or customization notes..."
+              style={{backdropFilter: 'blur(4px)'}}
             />
-            <button onClick={handleSaveNote} className="self-start bg-accent/80 hover:bg-accent text-white text-xs font-bold py-1 px-3 rounded-md flex items-center gap-1">
+            <button onClick={handleSaveNote} className="self-start bg-gradient-to-r from-accent/90 to-accent/80 hover:from-accent hover:to-accent text-white text-xs font-bold py-2 px-4 rounded-md flex items-center gap-1 transition-all duration-200 shadow-md hover:shadow-lg" style={{boxShadow: '0 4px 12px rgba(217, 170, 239, 0.3)'}}>
               <Save size={12} /> Save
             </button>
           </div>
@@ -56,7 +60,7 @@ const StackItem: React.FC<StackItemProps> = ({ practice, moduleKey, onRemove, no
             <p className="text-sm text-slate-300 italic whitespace-pre-wrap flex-grow">
               {note || "No notes yet. Click edit to add your personal 'why'."}
             </p>
-            <button onClick={() => setIsEditing(true)} className="text-slate-400 hover:text-accent p-1 flex items-center gap-1 text-xs">
+            <button onClick={() => setIsEditing(true)} className="text-slate-400 hover:text-accent p-1 flex items-center gap-1 text-xs transition-colors duration-200">
               <Edit2 size={12} /> Edit
             </button>
           </div>
