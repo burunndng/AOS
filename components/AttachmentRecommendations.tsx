@@ -24,8 +24,16 @@ export default function AttachmentRecommendations({
   const phases = attachmentPracticeSequences[attachmentStyle];
   const stackIds = new Set(practiceStack.map(p => p.id));
 
-  // Get all practices
-  const allPractices = { ...practices.body, ...practices.mind, ...practices.spirit, ...practices.shadow };
+  // Get all practices as a key-value map
+  const allPractices = [
+    ...practices.body,
+    ...practices.mind,
+    ...practices.spirit,
+    ...practices.shadow
+  ].reduce((acc, practice) => {
+    acc[practice.id] = practice;
+    return acc;
+  }, {} as Record<string, any>);
 
   useEffect(() => {
     const generateExplanation = async () => {
