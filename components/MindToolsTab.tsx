@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { BrainCircuit, GitCompareArrows, Layers, Shuffle, TrendingUp, Sparkles, Target, Heart } from 'lucide-react'; // Removed Activity
 import { SectionDivider } from './SectionDivider.tsx';
-import { ActiveTab } from '../types.ts';
+import { ActiveTab, AttachmentAssessmentSession, Practice } from '../types.ts';
 import { AttachmentStyle } from '../data/attachmentMappings.ts';
 import AttachmentRecommendations from './AttachmentRecommendations.tsx';
+import AttachmentAssessmentWizard from './AttachmentAssessmentWizard.tsx';
 
 interface MindToolsTabProps {
   setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
+  attachmentAssessment?: AttachmentAssessmentSession;
+  onCompleteAttachmentAssessment?: (session: AttachmentAssessmentSession) => void;
+  addToStack?: (practice: Practice) => void;
 }
 
 const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode, title: string, description: string, onStart: () => void }) => (
@@ -22,8 +26,14 @@ const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode
     </div>
 );
 
-export default function MindToolsTab({ setActiveWizard }: MindToolsTabProps) {
-  const [selectedAttachmentStyle, setSelectedAttachmentStyle] = useState<AttachmentStyle>('secure');
+export default function MindToolsTab({
+  setActiveWizard,
+  attachmentAssessment,
+  onCompleteAttachmentAssessment,
+  addToStack
+}: MindToolsTabProps) {
+  const [showAttachmentWizard, setShowAttachmentWizard] = useState(false);
+  const [selectedAttachmentStyle, setSelectedAttachmentStyle] = useState<AttachmentStyle>(attachmentAssessment?.style || 'secure');
 
   return (
     <div className="space-y-8">
@@ -70,34 +80,83 @@ export default function MindToolsTab({ setActiveWizard }: MindToolsTabProps) {
           <p className="text-sm text-slate-400">Discover practices that heal your attachment patterns and support secure relationships</p>
         </div>
 
-        <div className="space-y-4">
-          {/* Style Selector */}
-          <div className="flex flex-wrap gap-2">
-            {(['secure', 'anxious', 'avoidant', 'fearful'] as AttachmentStyle[]).map(style => (
-              <button
-                key={style}
-                onClick={() => setSelectedAttachmentStyle(style)}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                  selectedAttachmentStyle === style
-                    ? 'bg-accent text-slate-900 shadow-lg'
-                    : 'bg-slate-800/50 border border-slate-700 text-slate-300 hover:border-accent/50'
-                }`}
-              >
-                {style.charAt(0).toUpperCase() + style.slice(1)}
-              </button>
-            ))}
+        {!attachmentAssessment ? (
+          /* Assessment CTA */
+          <div className="bg-gradient-to-br from-pink-900/30 to-rose-900/30 border-2 border-pink-700/40 rounded-lg p-6 text-center space-y-4">
+            <h3 className="text-xl font-bold text-slate-100">Take the Attachment Assessment</h3>
+            <p className="text-slate-300 max-w-md mx-auto">
+              Understand your attachment style in relationships and discover personalized practices to support healing and secure connection.
+            </p>
+            <button
+              onClick={() => setShowAttachmentWizard(true)}
+              className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
+            >
+              Start Assessment (5 min)
+            </button>
           </div>
+        ) : (
+          /* Results and Recommendations */
+          <div className="space-y-4">
+            {/* Assessment Result Card */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide">Your Attachment Style</p>
+                  <p className="text-lg font-bold text-slate-100 mt-1">
+                    {attachmentAssessment.style === 'secure' && '🌱 Secure Attachment'}
+                    {attachmentAssessment.style === 'anxious' && '🌊 Anxious-Preoccupied'}
+                    {attachmentAssessment.style === 'avoidant' && '🏔️ Dismissive-Avoidant'}
+                    {attachmentAssessment.style === 'fearful' && '⛈️ Fearful-Avoidant'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowAttachmentWizard(true)}
+                  className="text-xs text-slate-400 hover:text-slate-200 px-3 py-1 border border-slate-700 rounded hover:border-slate-600 transition"
+                >
+                  Retake
+                </button>
+              </div>
+            </div>
 
-          {/* Attachment Recommendations Component */}
-          <AttachmentRecommendations
-            attachmentStyle={selectedAttachmentStyle}
-            onPracticeClick={(practice) => {
-              // Could add practice to stack here
-              console.log('Would add practice:', practice.id);
-            }}
-          />
-        </div>
+            {/* Style Selector */}
+            <div className="flex flex-wrap gap-2">
+              {(['secure', 'anxious', 'avoidant', 'fearful'] as AttachmentStyle[]).map(style => (
+                <button
+                  key={style}
+                  onClick={() => setSelectedAttachmentStyle(style)}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                    selectedAttachmentStyle === style
+                      ? 'bg-accent text-slate-900 shadow-lg'
+                      : 'bg-slate-800/50 border border-slate-700 text-slate-300 hover:border-accent/50'
+                  }`}
+                >
+                  {style.charAt(0).toUpperCase() + style.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            {/* Attachment Recommendations Component */}
+            <AttachmentRecommendations
+              attachmentStyle={selectedAttachmentStyle}
+              onPracticeClick={(practice) => {
+                addToStack?.(practice);
+              }}
+            />
+          </div>
+        )}
       </section>
+
+      {/* Attachment Assessment Wizard Modal */}
+      {showAttachmentWizard && (
+        <AttachmentAssessmentWizard
+          onClose={() => setShowAttachmentWizard(false)}
+          onComplete={(session) => {
+            onCompleteAttachmentAssessment?.(session);
+            setSelectedAttachmentStyle(session.style);
+            setShowAttachmentWizard(false);
+          }}
+        />
+      )}
 
       <SectionDivider />
 
