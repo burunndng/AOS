@@ -21,7 +21,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 1,
       duration: 'Week 1-2',
       focus: 'Maintain security',
-      practiceIds: ['meditation', 'loving-kindness'],
+      practiceIds: ['physiological-sigh', 'loving-kindness'],
       description: 'Continue the foundational practices that keep you grounded. Attachment is secure when you have a solid personal foundation.'
     },
     {
@@ -37,7 +37,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 3,
       duration: 'Month 2+',
       focus: 'Advanced growth',
-      practiceIds: ['perspective-shifter', 'three-two-one'],
+      practiceIds: ['self-compassion', 'coherent-breathing'],
       description: 'Develop sophisticated relational skills and continue growing. Secure attachment is a practice, not a destination.'
     }
   ],
