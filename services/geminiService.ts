@@ -17,7 +17,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 export async function generateText(prompt: string): Promise<string> {
   // FIX: Use the correct API call `ai.models.generateContent` for text generation.
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.5-flash-lite',
     contents: prompt,
   });
   // FIX: Access the generated text directly from the `text` property of the response.
@@ -132,7 +132,7 @@ export async function generatePracticeScript(userPrompt: string): Promise<{ titl
     
     Return ONLY the JSON object.`;
 
-    // FIX: Use `gemini-2.5-flash` for complex JSON generation and define the response schema correctly.
+    // FIX: Use `gemini-2.5-flash-lite` for complex JSON generation and define the response schema correctly.
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-pro',
         contents: prompt,
@@ -156,7 +156,7 @@ export async function generatePracticeScript(userPrompt: string): Promise<{ titl
 export async function generateSpeechFromText(text: string, voiceName: string = 'Kore'): Promise<string> {
     // FIX: Use the correct model and configuration for text-to-speech generation.
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-preview-tts',
+        model: 'gemini-2.5-flash-lite-preview-tts',
         contents: [{ parts: [{ text }] }],
         config: {
             responseModalities: [Modality.AUDIO],
@@ -198,7 +198,7 @@ export async function suggestSubjectObjectExperiments(pattern: string, subjectTo
     Example: ["For one day, what if you acted as if the opposite were true?", "Notice the physical sensation just before the pattern starts."]
     Return ONLY the JSON array.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-flash-lite',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -252,7 +252,7 @@ export async function extractPartInfo(transcript: string): Promise<{ role: strin
     Be concise.
     Return ONLY the JSON object.`;
      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-flash-lite',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -314,7 +314,7 @@ export async function generateRecommendations(context: string): Promise<string[]
     Example: ["You're doing great with Body practices. Consider adding 'Daily Meditation' to bring in the Spirit module.", "Your notes mention feeling overwhelmed. The '3-2-1 Process' could help you work with that feeling."]
     Return ONLY the JSON array.`;
      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-flash-lite',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -487,7 +487,7 @@ export async function generateSpiritualContext(aspiration: string): Promise<{ tr
     Return a JSON object with keys: "tradition" (string) and "teachings" (string).
     Return ONLY the JSON object.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-2.5-flash-lite',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -756,7 +756,7 @@ Important:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -860,7 +860,7 @@ Return ONLY the probe question as plain text, no JSON or markdown formatting.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt
     });
 
@@ -922,7 +922,7 @@ Return ONLY the probe question as plain text.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt
     });
 
@@ -985,7 +985,7 @@ Return ONLY the probe question as plain text.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt
     });
 
@@ -1049,7 +1049,7 @@ Return a JSON object:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -1146,7 +1146,7 @@ Be specific and reference actual content from their responses. The probes should
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -1249,7 +1249,7 @@ Return JSON:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -1413,7 +1413,7 @@ Return ONLY the action suggestion as a string.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt
     });
     return response.text.trim();
@@ -1472,7 +1472,7 @@ Return a JSON object:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -1526,7 +1526,7 @@ Return ONLY the insight as a string.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt
     });
     return response.text.trim();
@@ -1590,7 +1590,7 @@ Return JSON:
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -1652,7 +1652,7 @@ Return only one word: secure | anxious | avoidant | fearful`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
     });
 
@@ -1697,7 +1697,7 @@ Be warm, encouraging, and specific to their attachment style.`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
     });
     return response.text;
