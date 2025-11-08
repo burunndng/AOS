@@ -1,7 +1,9 @@
-import React from 'react';
-import { BrainCircuit, GitCompareArrows, Layers, Shuffle, TrendingUp, Sparkles, Target } from 'lucide-react'; // Removed Activity
+import React, { useState } from 'react';
+import { BrainCircuit, GitCompareArrows, Layers, Shuffle, TrendingUp, Sparkles, Target, Heart } from 'lucide-react'; // Removed Activity
 import { SectionDivider } from './SectionDivider.tsx';
 import { ActiveTab } from '../types.ts';
+import { AttachmentStyle } from '../data/attachmentMappings.ts';
+import AttachmentRecommendations from './AttachmentRecommendations.tsx';
 
 interface MindToolsTabProps {
   setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
@@ -21,6 +23,8 @@ const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode
 );
 
 export default function MindToolsTab({ setActiveWizard }: MindToolsTabProps) {
+  const [selectedAttachmentStyle, setSelectedAttachmentStyle] = useState<AttachmentStyle>('secure');
+
   return (
     <div className="space-y-8">
       <header>
@@ -54,6 +58,44 @@ export default function MindToolsTab({ setActiveWizard }: MindToolsTabProps) {
           >
             Start Assessment
           </button>
+        </div>
+      </section>
+
+      <SectionDivider />
+
+      {/* Attachment-Aware Practices Section */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-1">Attachment-Aware Practices</h2>
+          <p className="text-sm text-slate-400">Discover practices that heal your attachment patterns and support secure relationships</p>
+        </div>
+
+        <div className="space-y-4">
+          {/* Style Selector */}
+          <div className="flex flex-wrap gap-2">
+            {(['secure', 'anxious', 'avoidant', 'fearful'] as AttachmentStyle[]).map(style => (
+              <button
+                key={style}
+                onClick={() => setSelectedAttachmentStyle(style)}
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                  selectedAttachmentStyle === style
+                    ? 'bg-accent text-slate-900 shadow-lg'
+                    : 'bg-slate-800/50 border border-slate-700 text-slate-300 hover:border-accent/50'
+                }`}
+              >
+                {style.charAt(0).toUpperCase() + style.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Attachment Recommendations Component */}
+          <AttachmentRecommendations
+            attachmentStyle={selectedAttachmentStyle}
+            onPracticeClick={(practice) => {
+              // Could add practice to stack here
+              console.log('Would add practice:', practice.id);
+            }}
+          />
         </div>
       </section>
 
