@@ -11,6 +11,7 @@ interface MindToolsTabProps {
   attachmentAssessment?: AttachmentAssessmentSession;
   onCompleteAttachmentAssessment?: (session: AttachmentAssessmentSession) => void;
   addToStack?: (practice: Practice) => void;
+  practiceStack?: any[];
 }
 
 const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode, title: string, description: string, onStart: () => void }) => (
@@ -30,7 +31,8 @@ export default function MindToolsTab({
   setActiveWizard,
   attachmentAssessment,
   onCompleteAttachmentAssessment,
-  addToStack
+  addToStack,
+  practiceStack = []
 }: MindToolsTabProps) {
   const [showAttachmentWizard, setShowAttachmentWizard] = useState(false);
   const [selectedAttachmentStyle, setSelectedAttachmentStyle] = useState<AttachmentStyle>(attachmentAssessment?.style || 'secure');
@@ -138,6 +140,7 @@ export default function MindToolsTab({
             {/* Attachment Recommendations Component */}
             <AttachmentRecommendations
               attachmentStyle={selectedAttachmentStyle}
+              practiceStack={practiceStack}
               onPracticeClick={(practice) => {
                 addToStack?.(practice);
               }}
