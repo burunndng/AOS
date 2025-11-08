@@ -339,7 +339,7 @@ export default function App() {
     setHistoryKegan(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftKegan(null);
     setActiveWizard(null);
-    const report = `# Kegan Assessment\n- Stage: ${session.dominantStage}\n- Key Insights: ${JSON.stringify(session.answers).substring(0, 200)}`;
+    const report = `# Kegan Assessment\n- Stage: ${session.overallInterpretation?.centerOfGravity || 'Pending'}\n- Key Insights: ${JSON.stringify(session.responses).substring(0, 200)}`;
     const insight = await geminiService.detectPatternsAndSuggestShadowWork(
       'Kegan Assessment', session.id, report, Object.values(corePractices.shadow)
     );
@@ -350,7 +350,7 @@ export default function App() {
     setHistoryRelational(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftRelational(null);
     setActiveWizard(null);
-    const report = `# Relational Pattern: ${session.patternName}\n- Context: ${session.conversation.slice(-3).map(m => m.content).join(' ')}`;
+    const report = `# Relational Pattern\n- Context: ${session.conversation.slice(-3).map(m => m.text).join(' ')}`;
     const insight = await geminiService.detectPatternsAndSuggestShadowWork(
       'Relational Pattern', session.id, report, Object.values(corePractices.shadow)
     );

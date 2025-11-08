@@ -139,12 +139,15 @@ export default function PerspectiveShifterWizard({
   }, [draft]);
 
   const handleSaveDraft = () => {
-    const perspectivesList: Perspective[] = Object.entries(perspectives).map(([type, data]) => ({
-      type: type as Perspective['type'],
-      description: data.description,
-      // FIX: Use 'reflection' property, consistent with the Perspective interface.
-      reflection: data.reflection 
-    }));
+    const perspectivesList: Perspective[] = Object.entries(perspectives).map(([type, data]) => {
+      const typedData = data as { description: string; reflection?: string };
+      return {
+        type: type as Perspective['type'],
+        description: typedData.description,
+        // FIX: Use 'reflection' property, consistent with the Perspective interface.
+        reflection: typedData.reflection
+      };
+    });
     
     const session: PerspectiveShifterSession = {
       id: draft?.id || `ps-${Date.now()}`,
@@ -210,12 +213,15 @@ export default function PerspectiveShifterWizard({
         // Move to next step
         if (step === 'WITNESS') {
           // Generate synthesis of all perspectives
-          const perspectivesList = Object.entries(perspectives).map(([type, data]) => ({
-            type: type as Perspective['type'],
-            description: data.description,
-            // FIX: Use 'reflection' property, consistent with the Perspective interface.
-            reflection: data.reflection 
-          }));
+          const perspectivesList = Object.entries(perspectives).map(([type, data]) => {
+            const typedData = data as { description: string; reflection?: string };
+            return {
+              type: type as Perspective['type'],
+              description: typedData.description,
+              // FIX: Use 'reflection' property, consistent with the Perspective interface.
+              reflection: typedData.reflection
+            };
+          });
           const synth = await synthesizeAllPerspectives(situation, perspectivesList);
           setSynthesis(synth);
           setStep('MAP');
@@ -231,12 +237,15 @@ export default function PerspectiveShifterWizard({
         setStep('ACTION');
       } else if (step === 'ACTION') {
         // Save and complete
-        const perspectivesList: Perspective[] = Object.entries(perspectives).map(([type, data]) => ({
-          type: type as Perspective['type'],
-          description: data.description,
-          // FIX: Use 'reflection' property, consistent with the Perspective interface.
-          reflection: data.reflection 
-        }));
+        const perspectivesList: Perspective[] = Object.entries(perspectives).map(([type, data]) => {
+          const typedData = data as { description: string; reflection?: string };
+          return {
+            type: type as Perspective['type'],
+            description: typedData.description,
+            // FIX: Use 'reflection' property, consistent with the Perspective interface.
+            reflection: typedData.reflection
+          };
+        });
         
         const session: PerspectiveShifterSession = {
           id: draft?.id || `ps-${Date.now()}`,
