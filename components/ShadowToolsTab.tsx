@@ -59,6 +59,10 @@ export default function ShadowToolsTab({
 
       <SectionDivider />
 
+      <div className="flex justify-center my-6">
+        <img src="https://files.catbox.moe/sjd9bx.gif" alt="Shadow Tools" className="w-full max-w-2xl rounded-lg" />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ToolCard
           icon={<GitMerge size={28} className="text-amber-400"/>}
