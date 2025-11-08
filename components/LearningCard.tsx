@@ -28,7 +28,7 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
 
     if (cachedAudio && audioRef.current) {
       // Use cached audio
-      audioRef.current.src = cachedAudio;
+      audioRef.current.src = `data:audio/mp3;base64,${cachedAudio}`;
       audioRef.current.play();
       setIsPlaying(true);
       return;
@@ -42,7 +42,7 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
       if (audioData && audioRef.current) {
         // Cache the audio
         localStorage.setItem(cacheKey, audioData);
-        audioRef.current.src = audioData;
+        audioRef.current.src = `data:audio/mp3;base64,${audioData}`;
         audioRef.current.play();
         setIsPlaying(true);
       }
