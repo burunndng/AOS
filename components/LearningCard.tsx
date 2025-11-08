@@ -85,6 +85,26 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
           </div>
         )}
 
+        {/* Audio Player */}
+        {card.audioUrl && (
+          <div className="mb-8 p-6 bg-gradient-to-br from-accent/10 to-accent/5 rounded-xl border border-accent/30 backdrop-blur-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-accent/20 rounded-full flex items-center justify-center border border-accent/40">
+                <span className="text-2xl">🎵</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-slate-300 mb-2">Audio Guidance</p>
+                <audio
+                  src={card.audioUrl}
+                  controls
+                  className="w-full"
+                  style={{ height: '40px' }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Interaction Based on Type */}
         <div className="mb-6">
           {card.interactionType === 'text' && (
