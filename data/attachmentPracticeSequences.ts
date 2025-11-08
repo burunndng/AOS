@@ -56,7 +56,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 2,
       duration: 'Week 3-4',
       focus: 'Know yourself',
-      practiceIds: ['expressive-writing', 'self-compassion'],
+      practiceIds: ['self-compassion', 'expressive-writing'],
       description: 'Learn to recognize your anxiety patterns and comfort yourself. The goal is self-regulation, not needing others to regulate you.'
     },
     {
@@ -75,7 +75,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 1,
       duration: 'Week 1-2',
       focus: 'Get in your body',
-      practiceIds: ['physiological-sigh', 'cold-exposure'],
+      practiceIds: ['physiological-sigh', 'coherent-breathing'],
       description: 'Avoidant attachment often involves disconnection from the body. These practices help you return to physical sensation and presence.'
     },
     {
@@ -91,7 +91,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 3,
       duration: 'Month 2+',
       focus: 'Connect & trust',
-      practiceIds: ['loving-kindness', 'meditation'],
+      practiceIds: ['loving-kindness', 'self-compassion'],
       description: 'With body and emotion accessible, practice opening to connection. Learn to trust vulnerability and interdependence.'
     }
   ],
@@ -110,7 +110,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 2,
       duration: 'Week 3-4',
       focus: 'Integrate yourself',
-      practiceIds: ['expressive-writing', 'self-compassion'],
+      practiceIds: ['self-compassion', 'parts-dialogue'],
       description: 'You contain conflicting impulses. These practices help integrate the part that wants closeness with the part that fears it.'
     },
     {
@@ -118,7 +118,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 3,
       duration: 'Month 2+',
       focus: 'Sustainable connection',
-      practiceIds: ['loving-kindness', 'parts-dialogue'],
+      practiceIds: ['loving-kindness', 'expressive-writing'],
       description: 'Now you can relate from a more integrated place. Practice stable, secure relating even when fear arises.'
     }
   ]
