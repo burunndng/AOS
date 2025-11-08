@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { JourneyCard } from '../types.ts';
-import { Volume2, Play, Check } from 'lucide-react';
+import { Volume2, Play, Check, Loader } from 'lucide-react';
+import * as geminiService from '../services/geminiService.ts';
 
 interface LearningCardProps {
   card: JourneyCard;
@@ -10,15 +11,46 @@ interface LearningCardProps {
 
 export default function LearningCard({ card, isCompleted, onComplete }: LearningCardProps) {
   const [showAudio, setShowAudio] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [pollAnswers, setPollAnswers] = useState<Record<string, number>>({});
   const [dragState, setDragState] = useState<Record<string, string>>({});
   const [reflectionText, setReflectionText] = useState('');
 
   const playAudio = async () => {
-    if (card.audioScript) {
-      setShowAudio(true);
-      // In production, call Gemini TTS API here
+    if (!card.audioScript) return;
+
+    // Check if we have a cached audio file
+    const cacheKey = `audio-${card.id}`;
+    const cachedAudio = localStorage.getItem(cacheKey);
+
+    if (cachedAudio && audioRef.current) {
+      // Use cached audio
+      audioRef.current.src = cachedAudio;
+      audioRef.current.play();
+      setIsPlaying(true);
+      return;
+    }
+
+    // Generate new audio
+    setAudioLoading(true);
+    try {
+      const audioData = await geminiService.generateSpeechFromText(card.audioScript, 'Kore');
+
+      if (audioData && audioRef.current) {
+        // Cache the audio
+        localStorage.setItem(cacheKey, audioData);
+        audioRef.current.src = audioData;
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Failed to generate audio:', error);
+      alert('Could not generate audio. Please try again.');
+    } finally {
+      setAudioLoading(false);
     }
   };
 
@@ -43,31 +75,42 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto animate-fadeIn">
       <div
-        className="bg-gradient-to-br from-neutral-800 to-neutral-900 rounded-xl border border-accent/20 p-8 shadow-xl"
+        className="bg-gradient-to-br from-neutral-800 via-neutral-850 to-neutral-900 rounded-2xl border border-accent/30 p-8 shadow-2xl overflow-hidden relative"
         style={{
-          boxShadow: '0 8px 32px rgba(217, 170, 239, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.05)',
+          boxShadow: '0 20px 60px rgba(217, 170, 239, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.08)',
+          background: 'linear-gradient(135deg, rgba(23, 23, 28, 1) 0%, rgba(30, 27, 38, 1) 50%, rgba(23, 23, 28, 1) 100%)',
         }}
       >
+        {/* Glow background effect */}
+        <div className="absolute inset-0 opacity-30" style={{
+          background: 'radial-gradient(circle at 30% 20%, rgba(217, 170, 239, 0.1) 0%, transparent 50%)',
+        }} />
+
+        <div className="relative z-10">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-accent mb-2">{card.title}</h2>
-            <p className="text-slate-300">{card.description}</p>
+        <div className="flex items-start justify-between mb-8">
+          <div className="flex-1">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-accent via-purple-400 to-accent bg-clip-text text-transparent mb-2">{card.title}</h2>
+            <p className="text-slate-300 leading-relaxed">{card.description}</p>
           </div>
           {isCompleted && (
-            <div className="flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-500/40 rounded-lg">
+            <div className="ml-4 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500/20 to-green-500/10 border border-green-500/50 rounded-xl animate-pulse">
               <Check size={16} className="text-green-400" />
-              <span className="text-sm text-green-300">Completed</span>
+              <span className="text-sm font-semibold text-green-300">Completed</span>
             </div>
           )}
         </div>
 
         {/* Image/Video */}
         {card.imageUrl && (
-          <div className="mb-6 rounded-lg overflow-hidden bg-neutral-700 aspect-video flex items-center justify-center">
-            <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover" />
+          <div className="mb-8 rounded-xl overflow-hidden bg-neutral-700 aspect-video flex items-center justify-center group cursor-pointer border border-accent/20 hover:border-accent/40 transition-all">
+            <img
+              src={card.imageUrl}
+              alt={card.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
           </div>
         )}
 
@@ -84,13 +127,39 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
 
         {/* Audio Button */}
         {card.audioScript && (
-          <button
-            onClick={playAudio}
-            className="flex items-center gap-2 px-4 py-2 bg-accent/20 border border-accent/40 rounded-lg hover:bg-accent/30 transition-all mb-6 text-accent"
-          >
-            <Volume2 size={18} />
-            <span>Hear It (60 seconds)</span>
-          </button>
+          <div className="mb-6 space-y-3">
+            <button
+              onClick={playAudio}
+              disabled={audioLoading}
+              className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-accent/20 to-accent/10 border border-accent/40 rounded-lg hover:bg-accent/30 transition-all text-accent disabled:opacity-50 font-semibold w-full"
+            >
+              {audioLoading ? (
+                <>
+                  <Loader size={18} className="animate-spin" />
+                  <span>Generating audio...</span>
+                </>
+              ) : isPlaying ? (
+                <>
+                  <Volume2 size={18} />
+                  <span>Playing... (Click to stop)</span>
+                </>
+              ) : (
+                <>
+                  <Play size={18} />
+                  <span>Hear It - Narrated Wisdom</span>
+                </>
+              )}
+            </button>
+            <audio
+              ref={audioRef}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => setIsPlaying(false)}
+              controls
+              className="w-full"
+              style={{ height: '32px' }}
+            />
+          </div>
         )}
 
         {/* Interaction Based on Type */}
@@ -198,11 +267,12 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
         {!isCompleted && card.interactionType === 'text' && (
           <button
             onClick={onComplete}
-            className="w-full px-4 py-3 bg-accent/20 border border-accent/40 rounded-lg hover:bg-accent/30 transition-all font-semibold text-accent"
+            className="w-full px-4 py-3 bg-gradient-to-r from-accent/20 to-accent/10 border border-accent/40 rounded-lg hover:bg-accent/30 transition-all font-semibold text-accent hover:text-accent-light"
           >
-            Continue
+            Continue Reading
           </button>
         )}
+        </div>
       </div>
     </div>
   );
