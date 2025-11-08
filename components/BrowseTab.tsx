@@ -57,6 +57,9 @@ export default function BrowseTab({ practiceStack, addToStack, onExplainClick, o
         className="w-full rounded-lg"
         controls
         preload="metadata"
+        autoplay
+        loop
+        muted
       />
 
       <SectionDivider />
