@@ -39,12 +39,12 @@ const navItems = [
     { id: 'streaks', label: 'Streaks', icon: Zap },
     { id: 'recommendations', label: 'Recommendations', icon: Sparkles, group: 'Insights' },
     { id: 'aqal', label: 'AQAL Report', icon: BookOpen },
+    { id: 'quiz', label: 'ILP Graph Quiz', icon: HelpCircle, group: 'Learning' },
     { id: 'journey', label: 'The Journey', icon: Map, group: 'Learning' },
     { id: 'mind-tools', label: 'Mind Tools', icon: BrainCircuit, group: 'Toolkits' },
     { id: 'shadow-tools', label: 'Shadow Tools', icon: Shield },
     { id: 'body-tools', label: 'Body Tools', icon: Hand },
     { id: 'spirit-tools', label: 'Spirit Tools', icon: Flame },
-    { id: 'quiz', label: 'ILP Graph Quiz', icon: HelpCircle, group: 'Learning' },
     { id: 'library', label: 'Library', icon: Library, group: 'Resources' },
 ];
 
