@@ -51,7 +51,13 @@ export default function BrowseTab({ practiceStack, addToStack, onExplainClick, o
       
       <SectionDivider />
 
-      <img src="https://files.catbox.moe/50rciq.png" alt="Browse Practices" className="w-full rounded-lg" />
+      <video
+        src="https://files.catbox.moe/3cns32.mp4"
+        alt="Browse Practices"
+        className="w-full rounded-lg"
+        controls
+        preload="metadata"
+      />
 
       <SectionDivider />
 
