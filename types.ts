@@ -74,6 +74,7 @@ export interface JourneyCard {
   description: string;
   imageUrl?: string;
   videoUrl?: string;
+  audioUrl?: string;
   interactionType: 'text' | 'drag-drop' | 'poll' | 'body-diagram' | 'quiz' | 'reflection';
   interactionData?: Record<string, any>;
   quizQuestion?: { question: string; options: string[]; correct: number };

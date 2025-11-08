@@ -12,6 +12,7 @@ export const journeyRegions: JourneyRegion[] = [
         title: 'What is ILP?',
         description: 'Integral Life Practice is a cross-training approach to human development that integrates four dimensions: body awareness and vitality, mental clarity and growth, spiritual connection and meaning, and shadow work—the integration of disowned parts of ourselves. Think of it as cross-training for your entire being.',
         imageUrl: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=800&h=400&fit=crop',
+        audioUrl: 'https://files.catbox.moe/qh40b7.m4a',
         interactionType: 'text',
       },
       {
