@@ -16,13 +16,17 @@ export default function AttachmentAssessmentWizard({ onClose, onComplete }: Atta
   const [answers, setAnswers] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    console.log('AttachmentAssessmentWizard mounted, step:', step);
+    // Scroll to top when modal opens to ensure it's visible
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Prevent body scroll while modal is open
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [step]);
 
   const totalQuestions = attachmentQuestions.length;
   const progress = ((currentQuestion + 1) / totalQuestions) * 100;
-
-  console.log('Rendering AttachmentAssessmentWizard with step:', step);
 
   const handleAnswer = (score: number) => {
     const questionId = attachmentQuestions[currentQuestion].id;
@@ -55,8 +59,8 @@ export default function AttachmentAssessmentWizard({ onClose, onComplete }: Atta
 
   if (step === 'intro') {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-2xl w-full p-8 space-y-6">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-2xl w-full p-8 space-y-6 my-auto">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-3">
               <Heart className="text-red-500" size={32} />
@@ -111,8 +115,8 @@ export default function AttachmentAssessmentWizard({ onClose, onComplete }: Atta
     const question = attachmentQuestions[currentQuestion];
 
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-2xl w-full p-8 space-y-6">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-2xl w-full p-8 space-y-6 my-auto">
           {/* Header */}
           <div className="flex justify-between items-start">
             <div className="text-sm text-slate-400">
@@ -205,8 +209,8 @@ export default function AttachmentAssessmentWizard({ onClose, onComplete }: Atta
     };
 
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-2xl w-full p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-2xl w-full p-8 space-y-6 max-h-[90vh] overflow-y-auto my-auto">
           {/* Close Button */}
           <div className="flex justify-end">
             <button onClick={onClose} className="text-slate-400 hover:text-slate-200">

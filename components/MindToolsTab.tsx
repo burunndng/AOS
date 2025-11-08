@@ -37,33 +37,8 @@ export default function MindToolsTab({
   const [showAttachmentWizard, setShowAttachmentWizard] = useState(false);
   const [selectedAttachmentStyle, setSelectedAttachmentStyle] = useState<AttachmentStyle>(attachmentAssessment?.style || 'secure');
 
-  console.log('MindToolsTab rendered', { attachmentAssessment, showAttachmentWizard });
-
   return (
     <div className="space-y-8">
-      {/* DEBUG: Test button to verify state management works */}
-      <div style={{ padding: '16px', backgroundColor: '#1e293b', border: '2px solid #f59e0b', borderRadius: '8px' }}>
-        <button
-          onClick={() => {
-            console.log('DEBUG button clicked, toggling showAttachmentWizard from', showAttachmentWizard);
-            setShowAttachmentWizard(!showAttachmentWizard);
-          }}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#f59e0b',
-            color: '#000',
-            borderRadius: '4px',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          DEBUG: Toggle Wizard (current: {showAttachmentWizard ? 'OPEN' : 'CLOSED'})
-        </button>
-        <p style={{ color: '#cbd5e1', marginTop: '8px', fontSize: '12px' }}>
-          attachmentAssessment: {attachmentAssessment ? 'exists' : 'undefined'}
-        </p>
-      </div>
       <header>
         <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter">Mind Tools</h1>
         <p className="text-slate-400 mt-2">Wizards to train metacognition, reveal blind spots, and accelerate your cognitive development.</p>
@@ -115,13 +90,7 @@ export default function MindToolsTab({
               Understand your attachment style in relationships and discover personalized practices to support healing and secure connection.
             </p>
             <button
-              onClick={() => {
-                console.log('Start Assessment button clicked, current showAttachmentWizard:', showAttachmentWizard);
-                setShowAttachmentWizard(prev => {
-                  console.log('Setting showAttachmentWizard from', prev, 'to true');
-                  return true;
-                });
-              }}
+              onClick={() => setShowAttachmentWizard(true)}
               className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
             >
               Start Assessment (5 min)
