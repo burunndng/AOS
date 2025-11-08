@@ -84,20 +84,11 @@ export const journeyRegions: JourneyRegion[] = [
     cards: [
       {
         id: 'mind-1',
-        title: 'Perspective-Taking',
-        description: 'Perspective-taking is seeing through multiple lenses. Scientific, artistic, systemic, personal, cultural—each reveals different truths about the same situation. The integral approach holds all perspectives as valid and necessary.',
+        title: 'The Mind Module',
+        description: 'The Mind module develops your mental clarity, cognitive flexibility, and capacity to understand complexity. Your mind is the tool for comprehending reality—for seeing patterns, integrating knowledge, and developing wisdom. Through perspective-taking, studying stages of development, and integrating both logical and intuitive thinking, you cultivate a more complete and mature intelligence. A developed mind is clear, discerning, and capable of holding multiple truths simultaneously.',
         imageUrl: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=800&h=400&fit=crop',
-        interactionType: 'quiz',
-        quizQuestion: {
-          question: 'A person asks you for money. Which perspective is pluralistic?',
-          options: [
-            'Help them directly',
-            'Consider systemic causes of poverty',
-            'Follow the rules about charity',
-            'Make the most efficient decision',
-          ],
-          correct: 1,
-        },
+        audioUrl: 'https://files.catbox.moe/er3g5i.m4a',
+        interactionType: 'text',
       },
       {
         id: 'mind-2',
@@ -126,9 +117,10 @@ export const journeyRegions: JourneyRegion[] = [
     cards: [
       {
         id: 'spirit-1',
-        title: 'The Witness',
-        description: 'The Witness is pure awareness—the consciousness that observes thoughts, feelings, and sensations without identification or judgment. It is always available, like the sky behind clouds. Behind every emotion is the witness. Behind every thought is the witness. Can you feel it right now?',
+        title: 'The Spirit Module',
+        description: 'The Spirit module awakens your connection to the sacred, the transcendent, and the infinite dimensions of consciousness. Spirit is not belief—it is direct experience. Through contemplative practice, meditation, and states of expanded consciousness, you develop sensitivity to dimensions of existence beyond thought and emotion. Your spirit is your access to meaning, purpose, and the profound interconnection of all things. A developed spirit brings grace, wisdom, and authentic power to every area of life.',
         imageUrl: 'https://images.unsplash.com/photo-1508672019048-805c876b67e2?w=800&h=400&fit=crop',
+        audioUrl: 'https://files.catbox.moe/v4ajsy.m4a',
         interactionType: 'text',
       },
       {
@@ -158,9 +150,10 @@ export const journeyRegions: JourneyRegion[] = [
     cards: [
       {
         id: 'shadow-1',
-        title: 'What is Shadow?',
-        description: 'Shadow is everything you believe you are NOT. It includes disowned qualities—aggression, neediness, power. It includes repressed traumas and forgotten memories. It includes all the judged, rejected parts. Shadow work is the courageous practice of facing and integrating these exiled aspects of yourself.',
+        title: 'The Shadow Module',
+        description: 'The Shadow module teaches you to face, accept, and integrate the disowned parts of yourself—the qualities you judge, deny, and project onto others. Shadow is not darkness to fear; it is wholeness to embrace. Through courageous self-inquiry and emotional healing, you reclaim your full humanity. Shadow work transforms reactivity into wisdom, shame into compassion, and fragmentation into integration. A developed shadow practice brings authenticity, emotional freedom, and genuine self-acceptance.',
         imageUrl: 'https://images.unsplash.com/photo-1533158326339-7f3cf2404354?w=800&h=400&fit=crop',
+        audioUrl: 'https://files.catbox.moe/r59ebt.m4a',
         interactionType: 'text',
       },
       {
