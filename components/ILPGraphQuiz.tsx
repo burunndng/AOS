@@ -30,7 +30,7 @@ export const ILPGraphQuiz: React.FC = () => {
   const [step, setStep] = useState<QuizStep>('menu');
   const [selectedCategory, setSelectedCategory] = useState<ILPGraphCategory>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('beginner');
-  const [numQuestions, setNumQuestions] = useState<number>(15);
+  const [numQuestions, setNumQuestions] = useState<number>(10);
   const [currentSession, setCurrentSession] = useState<ILPGraphQuizSession | null>(null);
   const [results, setResults] = useState<QuizResult | null>(null);
   const [stats, setStats] = useState<QuizStats | null>(null);
@@ -416,8 +416,8 @@ export const ILPGraphQuiz: React.FC = () => {
                 <span className="w-8 h-8 rounded-full bg-gradient-to-r from-neutral-800 to-neutral-700 flex items-center justify-center text-sm font-bold">3</span>
                 Number of Questions
               </h2>
-              <div className="grid grid-cols-4 gap-3">
-                {[10, 15, 20, 25].map((num) => (
+              <div className="grid grid-cols-3 gap-3">
+                {[10, 20, 30].map((num) => (
                   <button
                     key={num}
                     onClick={() => setNumQuestions(num)}
