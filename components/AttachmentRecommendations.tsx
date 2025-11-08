@@ -5,20 +5,26 @@ import { Practice, AllPractice } from '../types.ts';
 import { practices } from '../constants.ts';
 import { Heart, Sparkles, Check, Lock } from 'lucide-react';
 import * as geminiService from '../services/geminiService.ts';
+import PracticeChatbot from './PracticeChatbot.tsx';
 
 interface AttachmentRecommendationsProps {
   attachmentStyle: AttachmentStyle;
+  anxietyScore: number;
+  avoidanceScore: number;
   practiceStack?: AllPractice[];
   onPracticeClick?: (practice: Practice) => void;
 }
 
 export default function AttachmentRecommendations({
   attachmentStyle,
+  anxietyScore,
+  avoidanceScore,
   practiceStack = [],
   onPracticeClick
 }: AttachmentRecommendationsProps) {
   const [explanation, setExplanation] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPractice, setSelectedPractice] = useState<Practice | null>(null);
 
   const profile = attachmentProfiles[attachmentStyle];
   const phases = attachmentPracticeSequences[attachmentStyle];
@@ -123,12 +129,16 @@ export default function AttachmentRecommendations({
                     return (
                       <button
                         key={p.id}
-                        onClick={() => !isInStack && onPracticeClick?.(p)}
+                        onClick={() => {
+                          if (!isInStack) {
+                            setSelectedPractice(p);
+                          }
+                        }}
                         disabled={isInStack}
                         className={`text-left text-xs p-2 rounded border transition-all ${
                           isInStack
                             ? 'bg-green-900/20 border-green-700/50 text-slate-400 cursor-default'
-                            : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-accent/50 hover:bg-slate-800'
+                            : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-accent/50 hover:bg-slate-800 cursor-pointer'
                         }`}
                       >
                         <div className="flex items-start gap-2">
@@ -158,10 +168,26 @@ export default function AttachmentRecommendations({
             <span>{Math.round((Array.from(stackIds).filter(id => phases.some(p => p.practiceIds.includes(id))).length / phases.flatMap(p => p.practiceIds).length) * 100)}%</span>
           </div>
           <p className="text-xs text-slate-400">
-            {stackIds.size === 0 ? 'Start Phase 1 when you\'re ready.' : 'Keep building your practice foundation!'}
+            {stackIds.size === 0 ? 'Click a practice to begin your guided session!' : 'Keep building your practice foundation!'}
           </p>
         </div>
       </div>
+
+      {/* Practice Chatbot Modal */}
+      {selectedPractice && (
+        <PracticeChatbot
+          practice={selectedPractice}
+          attachmentStyle={attachmentStyle}
+          anxietyScore={anxietyScore}
+          avoidanceScore={avoidanceScore}
+          onClose={() => setSelectedPractice(null)}
+          onComplete={(sessionNotes) => {
+            // Add practice to stack after completing session
+            onPracticeClick?.(selectedPractice);
+            setSelectedPractice(null);
+          }}
+        />
+      )}
     </div>
   );
 }
