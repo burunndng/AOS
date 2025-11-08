@@ -65,7 +65,38 @@ export type ActiveTab =
   | 'body-tools'
   | 'spirit-tools'
   | 'library'
-  | 'quiz';
+  | 'quiz'
+  | 'journey';
+
+export interface JourneyCard {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  audioScript?: string;
+  interactionType: 'text' | 'drag-drop' | 'poll' | 'body-diagram' | 'quiz' | 'reflection';
+  interactionData?: Record<string, any>;
+  quizQuestion?: { question: string; options: string[]; correct: number };
+}
+
+export interface JourneyRegion {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  cards: JourneyCard[];
+  unlocksAt?: number; // card index that unlocks this region
+  unlockedPractices?: string[]; // practice IDs unlocked upon completion
+}
+
+export interface JourneyProgress {
+  visitedRegions: string[];
+  completedCards: string[];
+  earnedBadges: string[];
+  currentRegion?: string;
+  currentCard?: string;
+}
 
 export interface CoachMessage {
   role: 'user' | 'coach';

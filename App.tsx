@@ -14,6 +14,7 @@ import ShadowToolsTab from './components/ShadowToolsTab.tsx';
 import BodyToolsTab from './components/BodyToolsTab.tsx';
 import SpiritToolsTab from './components/SpiritToolsTab.tsx';
 import LibraryTab from './components/LibraryTab.tsx';
+import JourneyTab from './components/JourneyTab.tsx';
 // FIX: Imported the Coach component to resolve "Cannot find name 'Coach'" error.
 import Coach from './components/Coach.tsx';
 
@@ -59,7 +60,8 @@ import {
   PolarityMapDraft, // FIX: Imported PolarityMapDraft
   KeganAssessmentSession,
   RelationalPatternSession,
-  JhanaSession
+  JhanaSession,
+  JourneyProgress
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -142,6 +144,13 @@ export default function App() {
   
   // Integrated Insights
   const [integratedInsights, setIntegratedInsights] = useLocalStorage<IntegratedInsight[]>('integratedInsights', []);
+
+  // Journey Progress
+  const [journeyProgress, setJourneyProgress] = useLocalStorage<JourneyProgress>('journeyProgress', {
+    visitedRegions: [],
+    completedCards: [],
+    earnedBadges: [],
+  });
 
   const setActiveWizardAndLink = (wizardName: string | null, insightId?: string) => {
     setActiveWizard(wizardName);
@@ -403,7 +412,7 @@ export default function App() {
     const data = {
         practiceStack, practiceNotes, dailyNotes, completionHistory,
         history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan,
-        partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory
+        partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory, journeyProgress
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -441,6 +450,7 @@ export default function App() {
                         setIntegratedInsights(data.integratedInsights || []);
                         setAqalReport(data.aqalReport || null);
                         setSomaticPracticeHistory(data.somaticPracticeHistory || []);
+                        setJourneyProgress(data.journeyProgress || { visitedRegions: [], completedCards: [], earnedBadges: [] });
                         alert('Data imported successfully!');
                     }
                 } catch (err) {
@@ -476,6 +486,7 @@ export default function App() {
       case 'spirit-tools': return <SpiritToolsTab setActiveWizard={setActiveWizardAndLink} />;
       case 'library': return <LibraryTab />;
       case 'quiz': return <ILPGraphQuiz />;
+      case 'journey': return <JourneyTab journeyProgress={journeyProgress} updateJourneyProgress={setJourneyProgress} />;
       default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} integratedInsights={integratedInsights} markInsightAsAddressed={markInsightAsAddressed} setActiveWizard={setActiveWizardAndLink} />;
     }
   };
