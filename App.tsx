@@ -1,43 +1,49 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, lazy, Suspense } from 'react';
 
-// Core Components
+// Core Components (always loaded)
 import NavSidebar from './components/NavSidebar.tsx';
-import DashboardTab from './components/DashboardTab.tsx';
-import StackTab from './components/StackTab.tsx';
-import BrowseTab from './components/BrowseTab.tsx';
-import TrackerTab from './components/TrackerTab.tsx';
-import StreaksTab from './components/StreaksTab.tsx';
-import RecommendationsTab from './components/RecommendationsTab.tsx';
-import AqalTab from './components/AqalTab.tsx';
-import MindToolsTab from './components/MindToolsTab.tsx';
-import ShadowToolsTab from './components/ShadowToolsTab.tsx';
-import BodyToolsTab from './components/BodyToolsTab.tsx';
-import SpiritToolsTab from './components/SpiritToolsTab.tsx';
-import LibraryTab from './components/LibraryTab.tsx';
-import JourneyTab from './components/JourneyTab.tsx';
-// FIX: Imported the Coach component to resolve "Cannot find name 'Coach'" error.
-import Coach from './components/Coach.tsx';
+import LoadingFallback, { TabLoadingFallback, WizardLoadingFallback, ModalLoadingFallback } from './components/LoadingFallback.tsx';
 
-// Modals & Wizards
-import PracticeInfoModal from './components/PracticeInfoModal.tsx';
-import PracticeExplanationModal from './components/PracticeExplanationModal.tsx';
-import PracticeCustomizationModal from './components/PracticeCustomizationModal.tsx';
-import CustomPracticeModal from './components/CustomPracticeModal.tsx';
-import GuidedPracticeGenerator from './components/GuidedPracticeGenerator.tsx';
-import ThreeTwoOneWizard from './components/ThreeTwoOneWizard.tsx';
-import IFSWizard from './components/IFSWizard.tsx';
-import BiasDetectiveWizard from './components/BiasDetectiveWizard.tsx';
-import SubjectObjectWizard from './components/SubjectObjectWizard.tsx';
-import PerspectiveShifterWizard from './components/PerspectiveShifterWizard.tsx';
-import PolarityMapperWizard from './components/PolarityMapperWizard.tsx';
-import SomaticGeneratorWizard from './components/SomaticGeneratorWizard.tsx';
-import KeganAssessmentWizard from './components/KeganAssessmentWizard.tsx';
-import RelationalPatternChatbot from './components/RelationalPatternChatbot.tsx';
-import JhanaTracker from './components/JhanaTracker.tsx';
-import MeditationWizard from './components/MeditationWizard.tsx';
-import ConsciousnessGraph from './components/ConsciousnessGraph.tsx';
-import RoleAlignmentWizard from './components/RoleAlignmentWizard.tsx';
-import { ILPGraphQuiz } from './components/ILPGraphQuiz.tsx';
+// Lazy-loaded Core Enhancements
+const Coach = lazy(() => import('./components/Coach.tsx'));
+
+// Lazy-loaded Tab Components
+const DashboardTab = lazy(() => import('./components/DashboardTab.tsx'));
+const StackTab = lazy(() => import('./components/StackTab.tsx'));
+const BrowseTab = lazy(() => import('./components/BrowseTab.tsx'));
+const TrackerTab = lazy(() => import('./components/TrackerTab.tsx'));
+const StreaksTab = lazy(() => import('./components/StreaksTab.tsx'));
+const RecommendationsTab = lazy(() => import('./components/RecommendationsTab.tsx'));
+const AqalTab = lazy(() => import('./components/AqalTab.tsx'));
+const MindToolsTab = lazy(() => import('./components/MindToolsTab.tsx'));
+const ShadowToolsTab = lazy(() => import('./components/ShadowToolsTab.tsx'));
+const BodyToolsTab = lazy(() => import('./components/BodyToolsTab.tsx'));
+const SpiritToolsTab = lazy(() => import('./components/SpiritToolsTab.tsx'));
+const LibraryTab = lazy(() => import('./components/LibraryTab.tsx'));
+const JourneyTab = lazy(() => import('./components/JourneyTab.tsx'));
+const ILPGraphQuiz = lazy(() => import('./components/ILPGraphQuiz.tsx').then(module => ({ default: module.ILPGraphQuiz })));
+
+// Lazy-loaded Modal Components
+const PracticeInfoModal = lazy(() => import('./components/PracticeInfoModal.tsx'));
+const PracticeExplanationModal = lazy(() => import('./components/PracticeExplanationModal.tsx'));
+const PracticeCustomizationModal = lazy(() => import('./components/PracticeCustomizationModal.tsx'));
+const CustomPracticeModal = lazy(() => import('./components/CustomPracticeModal.tsx'));
+const GuidedPracticeGenerator = lazy(() => import('./components/GuidedPracticeGenerator.tsx'));
+
+// Lazy-loaded Wizard Components
+const ThreeTwoOneWizard = lazy(() => import('./components/ThreeTwoOneWizard.tsx'));
+const IFSWizard = lazy(() => import('./components/IFSWizard.tsx'));
+const BiasDetectiveWizard = lazy(() => import('./components/BiasDetectiveWizard.tsx'));
+const SubjectObjectWizard = lazy(() => import('./components/SubjectObjectWizard.tsx'));
+const PerspectiveShifterWizard = lazy(() => import('./components/PerspectiveShifterWizard.tsx'));
+const PolarityMapperWizard = lazy(() => import('./components/PolarityMapperWizard.tsx'));
+const SomaticGeneratorWizard = lazy(() => import('./components/SomaticGeneratorWizard.tsx'));
+const KeganAssessmentWizard = lazy(() => import('./components/KeganAssessmentWizard.tsx'));
+const RelationalPatternChatbot = lazy(() => import('./components/RelationalPatternChatbot.tsx'));
+const JhanaTracker = lazy(() => import('./components/JhanaTracker.tsx'));
+const MeditationWizard = lazy(() => import('./components/MeditationWizard.tsx'));
+const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.tsx'));
+const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
 
 
 // Constants & Types
@@ -491,6 +497,124 @@ export default function App() {
     }
   };
 
+  const renderActiveWizard = () => {
+    if (!activeWizard) return null;
+    const insightContext = getActiveInsightContext();
+
+    switch (activeWizard) {
+      case '321':
+        return (
+          <ThreeTwoOneWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSave321Session}
+            session={draft321}
+            insightContext={insightContext}
+            markInsightAsAddressed={markInsightAsAddressed}
+          />
+        );
+      case 'ifs':
+        return (
+          <IFSWizard
+            isOpen={true}
+            onClose={(draft) => { setDraftIFS(draft); setActiveWizard(null); }}
+            onSaveSession={handleSaveIFSSession}
+            draft={draftIFS}
+            partsLibrary={partsLibrary}
+            insightContext={insightContext}
+            markInsightAsAddressed={markInsightAsAddressed}
+          />
+        );
+      case 'bias':
+        return (
+          <BiasDetectiveWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveBiasSession}
+            session={draftBias}
+            setDraft={setDraftBias}
+          />
+        );
+      case 'so':
+        return (
+          <SubjectObjectWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveSOSession}
+            session={draftSO}
+            setDraft={setDraftSO}
+          />
+        );
+      case 'ps':
+        return (
+          <PerspectiveShifterWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSavePSSession}
+            session={draftPS}
+            setDraft={setDraftPS}
+          />
+        );
+      case 'pm':
+        return (
+          <PolarityMapperWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSavePMSession}
+            draft={draftPM}
+            setDraft={setDraftPM}
+          />
+        );
+      case 'kegan':
+        return (
+          <KeganAssessmentWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveKeganSession}
+            session={draftKegan}
+            setDraft={setDraftKegan}
+          />
+        );
+      case 'relational':
+        return (
+          <RelationalPatternChatbot
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveRelationalSession}
+            session={draftRelational}
+            setDraft={setDraftRelational}
+          />
+        );
+      case 'jhana':
+        return (
+          <JhanaTracker
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveJhanaSession}
+          />
+        );
+      case 'somatic':
+        return (
+          <SomaticGeneratorWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveSomaticPractice}
+          />
+        );
+      case 'meditation':
+        return (
+          <MeditationWizard
+            onClose={() => setActiveWizard(null)}
+          />
+        );
+      case 'consciousness-graph':
+        return (
+          <ConsciousnessGraph
+            onClose={() => setActiveWizard(null)}
+          />
+        );
+      case 'role-alignment':
+        return (
+          <RoleAlignmentWizard
+            onClose={() => setActiveWizard(null)}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   const getActiveInsightContext = () => {
     if (!linkedInsightId) return null;
     return integratedInsights.find(i => i.id === linkedInsightId) || null;
@@ -507,38 +631,52 @@ export default function App() {
       <NavSidebar activeTab={activeTab} setActiveTab={setActiveTab} onExport={handleExport} onImport={handleImport} onReset={handleReset} />
       <main className="flex-1 overflow-y-auto p-8 relative z-10" style={{background: 'linear-gradient(180deg, rgba(10, 10, 10, 0.4) 0%, rgba(10, 10, 10, 0.6) 100%)', backdropFilter: 'blur(4px)'}}>
         <div className="relative z-10">
-          {renderActiveTab()}
+          <Suspense fallback={<TabLoadingFallback />}>
+            {renderActiveTab()}
+          </Suspense>
         </div>
       </main>
-      <Coach 
-          practiceStack={practiceStack}
-          completedCount={Object.values(completedToday).filter(Boolean).length}
-          completionRate={practiceStack.length > 0 ? (Object.values(completedToday).filter(Boolean).length / practiceStack.length) * 100 : 0}
-          timeCommitment={practiceStack.reduce((sum, p) => sum + p.timePerWeek, 0)}
-          timeIndicator={"Balanced"}
-          modules={modules}
-          getStreak={getStreak}
-          practiceNotes={practiceNotes}
-          dailyNotes={dailyNotes}
-      />
-      {infoModalPractice && <PracticeInfoModal practice={infoModalPractice} onClose={() => setInfoModalPractice(null)} onAdd={addToStack} isInStack={practiceStack.some(p => p.id === infoModalPractice.id)} onExplainClick={handleExplainPractice} onPersonalizeClick={setCustomizationModalPractice} />}
-      {explanationModal.isOpen && <PracticeExplanationModal isOpen={explanationModal.isOpen} onClose={() => setExplanationModal({ isOpen: false, title: '', explanation: '' })} title={explanationModal.title} explanation={explanationModal.explanation} />}
-      {customizationModalPractice && <PracticeCustomizationModal practice={customizationModalPractice} onClose={() => setCustomizationModalPractice(null)} onSave={handlePersonalizePractice} />}
-      {isCustomPracticeModalOpen && <CustomPracticeModal isOpen={isCustomPracticeModalOpen} onClose={() => setIsCustomPracticeModalOpen(false)} onSave={handleSaveCustomPractice} />}
-      {isGuidedPracticeGeneratorOpen && <GuidedPracticeGenerator isOpen={isGuidedPracticeGeneratorOpen} onClose={() => setIsGuidedPracticeGeneratorOpen(false)} onLogPractice={() => alert('Practice logged!')} />}
-      {activeWizard === '321' && <ThreeTwoOneWizard onClose={() => setActiveWizard(null)} onSave={handleSave321Session} session={draft321} insightContext={getActiveInsightContext()} markInsightAsAddressed={markInsightAsAddressed} />}
-      {activeWizard === 'ifs' && <IFSWizard isOpen={true} onClose={(draft) => { setDraftIFS(draft); setActiveWizard(null); }} onSaveSession={handleSaveIFSSession} draft={draftIFS} partsLibrary={partsLibrary} insightContext={getActiveInsightContext()} markInsightAsAddressed={markInsightAsAddressed}/>}
-      {activeWizard === 'bias' && <BiasDetectiveWizard onClose={() => setActiveWizard(null)} onSave={handleSaveBiasSession} session={draftBias} setDraft={setDraftBias} />}
-      {activeWizard === 'so' && <SubjectObjectWizard onClose={() => setActiveWizard(null)} onSave={handleSaveSOSession} session={draftSO} setDraft={setDraftSO} />}
-      {activeWizard === 'ps' && <PerspectiveShifterWizard onClose={() => setActiveWizard(null)} onSave={handleSavePSSession} session={draftPS} setDraft={setDraftPS} />}
-      {activeWizard === 'pm' && <PolarityMapperWizard onClose={() => setActiveWizard(null)} onSave={handleSavePMSession} draft={draftPM} setDraft={setDraftPM} />}
-      {activeWizard === 'kegan' && <KeganAssessmentWizard onClose={() => setActiveWizard(null)} onSave={handleSaveKeganSession} session={draftKegan} setDraft={setDraftKegan} />}
-      {activeWizard === 'relational' && <RelationalPatternChatbot onClose={() => setActiveWizard(null)} onSave={handleSaveRelationalSession} session={draftRelational} setDraft={setDraftRelational} />}
-      {activeWizard === 'jhana' && <JhanaTracker onClose={() => setActiveWizard(null)} onSave={handleSaveJhanaSession} />}
-      {activeWizard === 'somatic' && <SomaticGeneratorWizard onClose={() => setActiveWizard(null)} onSave={handleSaveSomaticPractice} />}
-      {activeWizard === 'meditation' && <MeditationWizard onClose={() => setActiveWizard(null)} />}
-      {activeWizard === 'consciousness-graph' && <ConsciousnessGraph onClose={() => setActiveWizard(null)} />}
-      {activeWizard === 'role-alignment' && <RoleAlignmentWizard onClose={() => setActiveWizard(null)} />}
+      <Suspense fallback={<div className="fixed bottom-6 right-6 z-50"><LoadingFallback text="Loading coach..." size="small" /></div>}>
+        <Coach 
+            practiceStack={practiceStack}
+            completedCount={Object.values(completedToday).filter(Boolean).length}
+            completionRate={practiceStack.length > 0 ? (Object.values(completedToday).filter(Boolean).length / practiceStack.length) * 100 : 0}
+            timeCommitment={practiceStack.reduce((sum, p) => sum + p.timePerWeek, 0)}
+            timeIndicator={"Balanced"}
+            modules={modules}
+            getStreak={getStreak}
+            practiceNotes={practiceNotes}
+            dailyNotes={dailyNotes}
+        />
+      </Suspense>
+      {infoModalPractice && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <PracticeInfoModal practice={infoModalPractice} onClose={() => setInfoModalPractice(null)} onAdd={addToStack} isInStack={practiceStack.some(p => p.id === infoModalPractice.id)} onExplainClick={handleExplainPractice} onPersonalizeClick={setCustomizationModalPractice} />
+        </Suspense>
+      )}
+      {explanationModal.isOpen && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <PracticeExplanationModal isOpen={explanationModal.isOpen} onClose={() => setExplanationModal({ isOpen: false, title: '', explanation: '' })} title={explanationModal.title} explanation={explanationModal.explanation} />
+        </Suspense>
+      )}
+      {customizationModalPractice && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <PracticeCustomizationModal practice={customizationModalPractice} onClose={() => setCustomizationModalPractice(null)} onSave={handlePersonalizePractice} />
+        </Suspense>
+      )}
+      {isCustomPracticeModalOpen && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <CustomPracticeModal isOpen={isCustomPracticeModalOpen} onClose={() => setIsCustomPracticeModalOpen(false)} onSave={handleSaveCustomPractice} />
+        </Suspense>
+      )}
+      {isGuidedPracticeGeneratorOpen && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <GuidedPracticeGenerator isOpen={isGuidedPracticeGeneratorOpen} onClose={() => setIsGuidedPracticeGeneratorOpen(false)} onLogPractice={() => alert('Practice logged!')} />
+        </Suspense>
+      )}
+      <Suspense fallback={<WizardLoadingFallback />}>
+        {renderActiveWizard()}
+      </Suspense>
     </div>
   );
 }

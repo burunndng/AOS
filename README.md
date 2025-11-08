@@ -18,3 +18,13 @@ View your app in AI Studio: https://ai.studio/apps/drive/1ha68-rGh0nKvcjLcdO4_vk
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Build Analysis
+
+To verify bundle splitting and inspect chunk sizes, run:
+
+```
+npm run build
+```
+
+The resulting chunk breakdown and performance notes are documented in [BUILD_ANALYSIS.md](./BUILD_ANALYSIS.md).
