@@ -1,6 +1,6 @@
-import React from 'react';
-// FIX: Use a named import for ILPKnowledgeGraph as it is not a default export.
-import { ILPKnowledgeGraph } from './ILPKnowledgeGraph.tsx';
+import React, { lazy, Suspense } from 'react';
+
+const ILPKnowledgeGraph = lazy(() => import('./ILPKnowledgeGraph.tsx').then(module => ({ default: module.ILPKnowledgeGraph })));
 
 export default function LibraryTab() {
   return (
@@ -13,7 +13,9 @@ export default function LibraryTab() {
       <section>
         <h2 className="text-3xl font-semibold font-mono tracking-tight text-slate-200 mb-2">Integral Practice Map</h2>
         <p className="text-slate-400 mb-4">Explore the interconnected concepts of ILP. Click and drag to navigate, scroll to zoom, and hover over nodes for details.</p>
-        <ILPKnowledgeGraph />
+        <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="text-neutral-400">Loading knowledge graph...</div></div>}>
+          <ILPKnowledgeGraph />
+        </Suspense>
       </section>
 
       <div className="space-y-10 pt-8 border-t border-slate-800">
