@@ -314,18 +314,6 @@ ${getAttachmentStyleGuidelines(style)}`,
     estimatedDuration: 7
   }),
 
-  'cold-exposure': (style: AttachmentStyle, anxiety: number, avoidance: number) => ({
-    systemPrompt: `You are guiding someone with ${style} attachment through mental preparation for cold exposure.
-
-${getAttachmentStyleGuidelines(style)}
-
-Note: You're NOT guiding them through actual cold exposure, but helping them prepare mentally and building their resilience mindset.`,
-    openingMessage: `Let's prepare you mentally for cold exposure. This practice builds resilience by voluntarily choosing discomfort.${style === 'fearful' ? ' You\'re completely in control of when and how you do this.' : ''}`,
-    attachmentBenefit: "Builds mental resilience and stress tolerance",
-    sessionGoal: 'Mental preparation for cold exposure practice',
-    estimatedDuration: 5
-  }),
-
   'perspective-shifter': (style: AttachmentStyle, anxiety: number, avoidance: number) => ({
     systemPrompt: `You are guiding someone with ${style} attachment through perspective-shifting (1st, 2nd, 3rd person, Witness).
 
