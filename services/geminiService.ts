@@ -6,6 +6,7 @@
 import { GoogleGenAI, Type, Modality, Blob, Content } from "@google/genai";
 import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey, IntegratedInsight, KeganResponse, KeganStage, KeganDomain, KeganAssessmentSession, KeganProbeExchange, RelationshipContext, RelationshipType } from '../types.ts';
 import { practices as corePractaces } from '../constants.ts';
+import { AttachmentStyle, getRecommendedPracticesBySystem } from '../data/attachmentMappings.ts';
 
 
 // Initialize the Google AI client
@@ -1619,5 +1620,89 @@ Return JSON:
         "Consider which roles deserve more energy and which might need boundaries"
       ]
     };
+  }
+}
+
+/**
+ * Detect attachment style from relational patterns
+ */
+export async function detectAttachmentStyle(
+  relationshipContexts: RelationshipContext[]
+): Promise<AttachmentStyle> {
+  if (relationshipContexts.length === 0) {
+    return 'secure'; // Default fallback
+  }
+
+  const contextSummary = relationshipContexts.map(ctx =>
+    `Type: ${ctx.type}, Fear: ${ctx.underlyingFear || 'N/A'}, Pattern: ${ctx.pattern || 'N/A'}`
+  ).join('\n');
+
+  const prompt = `Based on these relationship patterns, determine the person's primary attachment style. Return ONLY the style name: "secure", "anxious", "avoidant", or "fearful".
+
+Relationship Contexts:
+${contextSummary}
+
+Analysis: Look for:
+- Secure: Comfortable with intimacy, healthy boundaries, direct conflict management
+- Anxious: Fears abandonment, seeks reassurance, over-focuses on relationships
+- Avoidant: Values independence, distances from emotional intimacy, suppresses feelings
+- Fearful: Oscillates between clinging and withdrawing, fear and shame present
+
+Return only one word: secure | anxious | avoidant | fearful`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    const style = response.text.toLowerCase().trim() as AttachmentStyle;
+    if (['secure', 'anxious', 'avoidant', 'fearful'].includes(style)) {
+      return style;
+    }
+    return 'secure';
+  } catch (error) {
+    console.error('Error detecting attachment style:', error);
+    return 'secure';
+  }
+}
+
+/**
+ * Generate personalized practice recommendations based on attachment style
+ */
+export async function explainAttachmentPractices(
+  attachmentStyle: AttachmentStyle,
+  selectedPracticeIds: string[]
+): Promise<string> {
+  // Get practice details
+  const allPractices = { ...corePractaces.body, ...corePractaces.mind, ...corePractaces.spirit, ...corePractaces.shadow };
+  const selectedPractices = selectedPracticeIds
+    .map(id => allPractices[id as keyof typeof allPractices])
+    .filter(Boolean);
+
+  const practicesInfo = selectedPractices
+    .map((p: any) => `- ${p.name}: ${p.description}`)
+    .join('\n');
+
+  const prompt = `You are a somatic psychology expert. A person with ${attachmentStyle} attachment style is exploring these practices:
+
+${practicesInfo}
+
+Explain in 2-3 sentences why these specific practices help heal ${attachmentStyle} attachment patterns. Focus on:
+1. How each practice addresses their specific attachment wound
+2. The mechanism of change (what shifts in their nervous system/mind)
+3. How they'll feel different as they practice
+
+Be warm, encouraging, and specific to their attachment style.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+    return response.text;
+  } catch (error) {
+    console.error('Error explaining attachment practices:', error);
+    return `These practices support healing your ${attachmentStyle} attachment patterns by helping you develop a more secure nervous system and healthier relationship skills. Regular practice will help you feel safer in intimacy and more grounded in yourself.`;
   }
 }
