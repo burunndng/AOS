@@ -152,7 +152,7 @@ export async function generatePracticeScript(userPrompt: string): Promise<{ titl
 }
 
 // Function for GuidedPracticeGenerator.tsx (Speech)
-export async function generateSpeechFromText(text: string): Promise<string> {
+export async function generateSpeechFromText(text: string, voiceName: string = 'Kore'): Promise<string> {
     // FIX: Use the correct model and configuration for text-to-speech generation.
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-preview-tts',
@@ -161,7 +161,7 @@ export async function generateSpeechFromText(text: string): Promise<string> {
             responseModalities: [Modality.AUDIO],
             speechConfig: {
                 voiceConfig: {
-                    prebuiltVoiceConfig: { voiceName: 'Kore' },
+                    prebuiltVoiceConfig: { voiceName },
                 },
             },
         },
