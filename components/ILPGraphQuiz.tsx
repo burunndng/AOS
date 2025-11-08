@@ -32,6 +32,7 @@ export const ILPGraphQuiz: React.FC = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('beginner');
   const [numQuestions, setNumQuestions] = useState<number>(10);
   const [currentSession, setCurrentSession] = useState<ILPGraphQuizSession | null>(null);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [results, setResults] = useState<QuizResult | null>(null);
   const [stats, setStats] = useState<QuizStats | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -114,7 +115,21 @@ export const ILPGraphQuiz: React.FC = () => {
   };
 
   const startQuiz = () => {
-    const questions = getQuizQuestions(selectedCategory, selectedDifficulty, numQuestions);
+    const availableQuestions = getQuizQuestions(selectedCategory, selectedDifficulty, numQuestions);
+
+    // Validate that we have enough unique questions
+    if (availableQuestions.length < numQuestions) {
+      alert(`Only ${availableQuestions.length} questions available for this combination. Please select fewer questions or a different difficulty level.`);
+      return;
+    }
+
+    // Ensure no duplicate questions
+    const questionIds = new Set(availableQuestions.map(q => q.id));
+    if (questionIds.size !== availableQuestions.length) {
+      console.warn('Warning: Duplicate questions detected, filtering...');
+      return;
+    }
+
     const newSession: ILPGraphQuizSession = {
       id: generateId(),
       date: new Date().toISOString(),
@@ -124,37 +139,34 @@ export const ILPGraphQuiz: React.FC = () => {
       answers: [],
       startTime: Date.now(),
     };
+
+    // Store questions for this quiz session (prevents re-shuffling)
+    setQuizQuestions(availableQuestions);
     setCurrentSession(newSession);
     setStep('quiz');
   };
 
   const selectAnswer = (answerId: string) => {
-    if (!currentSession) return;
-
-    const questions = getQuizQuestions(
-      currentSession.category,
-      currentSession.difficulty,
-      numQuestions
-    );
+    if (!currentSession || quizQuestions.length === 0) return;
 
     const updatedSession = {
       ...currentSession,
       answers: [
         ...currentSession.answers,
         {
-          questionId: questions[currentSession.currentQuestionIndex].id,
+          questionId: quizQuestions[currentSession.currentQuestionIndex].id,
           selectedAnswerId: answerId,
         },
       ],
     };
 
-    if (currentSession.currentQuestionIndex < questions.length - 1) {
+    if (currentSession.currentQuestionIndex < quizQuestions.length - 1) {
       setCurrentSession({
         ...updatedSession,
         currentQuestionIndex: currentSession.currentQuestionIndex + 1,
       });
     } else {
-      finishQuiz(updatedSession, questions);
+      finishQuiz(updatedSession, quizQuestions);
     }
   };
 
@@ -226,16 +238,16 @@ export const ILPGraphQuiz: React.FC = () => {
 
   const resetQuiz = () => {
     setCurrentSession(null);
+    setQuizQuestions([]);
     setResults(null);
     setStep('menu');
     setShowConfetti(false);
   };
 
-  // Get questions
-  const questions = currentSession
-    ? getQuizQuestions(currentSession.category, currentSession.difficulty, numQuestions)
-    : [];
-  const currentQuestion = currentSession ? questions[currentSession.currentQuestionIndex] : null;
+  // Get current question from stored questions
+  const currentQuestion = currentSession && quizQuestions.length > 0
+    ? quizQuestions[currentSession.currentQuestionIndex]
+    : null;
 
   const categoryLabel: Record<ILPGraphCategory, string> = {
     core: 'Core Concepts',
@@ -451,17 +463,17 @@ export const ILPGraphQuiz: React.FC = () => {
           <div className="space-y-3">
             <div className="flex justify-between items-center text-sm">
               <span className="font-semibold">
-                Question {currentSession.currentQuestionIndex + 1} of {questions.length}
+                Question {currentSession.currentQuestionIndex + 1} of {quizQuestions.length}
               </span>
               <span className="text-slate-400">
-                {Math.round(((currentSession.currentQuestionIndex + 1) / questions.length) * 100)}%
+                {Math.round(((currentSession.currentQuestionIndex + 1) / quizQuestions.length) * 100)}%
               </span>
             </div>
             <div className="bg-slate-700 rounded-full h-3 overflow-hidden border border-neutral-700/50">
               <div
                 className="bg-gradient-to-r from-neutral-800 to-neutral-700 h-full transition-all duration-500"
                 style={{
-                  width: `${((currentSession.currentQuestionIndex + 1) / questions.length) * 100}%`,
+                  width: `${((currentSession.currentQuestionIndex + 1) / quizQuestions.length) * 100}%`,
                 }}
               />
             </div>

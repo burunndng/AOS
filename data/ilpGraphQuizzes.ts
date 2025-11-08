@@ -1600,6 +1600,12 @@ export function shuffleQuestions(
   return count ? shuffled.slice(0, count) : shuffled;
 }
 
+// Utility function to shuffle answers within a question
+export function shuffleAnswers(question: QuizQuestion): QuizQuestion {
+  const shuffledAnswers = [...question.answers].sort(() => Math.random() - 0.5);
+  return { ...question, answers: shuffledAnswers };
+}
+
 // Utility function to get questions for a quiz session
 export function getQuizQuestions(
   category: 'core' | 'body' | 'mind' | 'spirit' | 'shadow' | 'integral-theory' | 'all',
@@ -1616,7 +1622,10 @@ export function getQuizQuestions(
   }
   // For difficult, include all levels
 
-  return shuffleQuestions(questions, Math.min(count, questions.length));
+  const selectedQuestions = shuffleQuestions(questions, Math.min(count, questions.length));
+
+  // Shuffle answers for each question to randomize correct answer position
+  return selectedQuestions.map((q) => shuffleAnswers(q));
 }
 
 // Get category stats
