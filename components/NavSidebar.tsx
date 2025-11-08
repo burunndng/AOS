@@ -19,6 +19,7 @@ import {
     Hand,
     Flame,
     HelpCircle,
+    Map,
 } from 'lucide-react';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
 
@@ -38,6 +39,7 @@ const navItems = [
     { id: 'streaks', label: 'Streaks', icon: Zap },
     { id: 'recommendations', label: 'Recommendations', icon: Sparkles, group: 'Insights' },
     { id: 'aqal', label: 'AQAL Report', icon: BookOpen },
+    { id: 'journey', label: 'The Journey', icon: Map, group: 'Learning' },
     { id: 'mind-tools', label: 'Mind Tools', icon: BrainCircuit, group: 'Toolkits' },
     { id: 'shadow-tools', label: 'Shadow Tools', icon: Shield },
     { id: 'body-tools', label: 'Body Tools', icon: Hand },
