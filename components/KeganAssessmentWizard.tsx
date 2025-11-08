@@ -5,7 +5,7 @@ import {
   KeganResponse,
   KeganPrompt,
   KeganDomain,
-  KeganCenterOfGravity,
+  KeganStage,
   KeganProbeSession
 } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Sparkles, Brain, Users, Target, MessageSquare, User, Download } from 'lucide-react';
@@ -521,7 +521,7 @@ ${session.selfReflection || 'Not yet completed'}
 
     const { centerOfGravity, confidence, domainVariation, developmentalEdge, recommendations, fullAnalysis } = session.overallInterpretation;
 
-    const stageColors: Record<KeganCenterOfGravity, string> = {
+    const stageColors: Record<KeganStage, string> = {
       'Socialized Mind': 'text-blue-300',
       'Socialized/Self-Authoring Transition': 'text-blue-300',
       'Self-Authoring Mind': 'text-purple-300',
@@ -555,14 +555,15 @@ ${session.selfReflection || 'Not yet completed'}
             You may show different stages in different life areas. This is normal.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {Object.entries(domainVariation).map(([domain, stage]) => { 
+            {Object.entries(domainVariation).map(([domain, stage]) => {
               const Icon = domainIcons[domain as KeganDomain];
+              const typedStage = stage as KeganStage;
               return (
                 <div key={domain} className="bg-slate-900/50 rounded-lg p-4 flex items-center gap-3">
                   <Icon size={24} className="text-accent flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-slate-200">{domain}</p>
-                    <p className={`text-xs ${stageColors[stage]}`}>{stage}</p>
+                    <p className={`text-xs ${stageColors[typedStage]}`}>{typedStage}</p>
                   </div>
                 </div>
               );

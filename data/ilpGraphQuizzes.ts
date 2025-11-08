@@ -172,7 +172,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'core-11',
     type: 'multiple-choice',
     category: 'core',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'An ILP "catalyst" differs from a "practice" because it:',
     answers: [
       { id: 'a', text: 'Produces more rapid transformation', isCorrect: false },
@@ -188,7 +188,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'core-12',
     type: 'multiple-choice',
     category: 'core',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'The "Primacy of Practice" principle addresses:',
     answers: [
       { id: 'a', text: 'The superiority of action over theory', isCorrect: false },
@@ -204,7 +204,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'core-13',
     type: 'multiple-choice',
     category: 'core',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'ILP addresses the Pre/Trans Fallacy by:',
     answers: [
       { id: 'a', text: 'Rejecting all pre-rational states', isCorrect: false },
@@ -220,7 +220,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'core-14',
     type: 'multiple-choice',
     category: 'core',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'The "Integral Self" or "Central Coordinator" is:',
     answers: [
       { id: 'a', text: 'The highest developmental structure achieved', isCorrect: false },
@@ -236,7 +236,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'core-15',
     type: 'multiple-choice',
     category: 'core',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: '"Kosmic Karma Yoga" refers to:',
     answers: [
       { id: 'a', text: 'Traditional Hindu service practices', isCorrect: false },
@@ -436,7 +436,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'body-12',
     type: 'multiple-choice',
     category: 'body',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Integral exercise differs from conventional training by:',
     answers: [
       { id: 'a', text: 'Using lighter weights and more reps', isCorrect: false },
@@ -452,7 +452,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'body-13',
     type: 'multiple-choice',
     category: 'body',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'The ultimate Causal Body practice is:',
     answers: [
       { id: 'a', text: 'Achieving eight hours nightly sleep', isCorrect: false },
@@ -468,7 +468,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'body-14',
     type: 'multiple-choice',
     category: 'body',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Somatics emphasizes the body as:',
     answers: [
       { id: 'a', text: 'Objective third-person phenomenon', isCorrect: false },
@@ -484,7 +484,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'body-15',
     type: 'multiple-choice',
     category: 'body',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'The Subtle Body relates to Gross Body as:',
     answers: [
       { id: 'a', text: 'Separate non-interacting systems', isCorrect: false },
@@ -500,7 +500,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'body-16',
     type: 'multiple-choice',
     category: 'body',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Chronic physical tension often reflects:',
     answers: [
       { id: 'a', text: 'Optimal health and vitality', isCorrect: false },
@@ -684,7 +684,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'mind-11',
     type: 'multiple-choice',
     category: 'mind',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Moving from "multi-perspectival" to "integral-aperspectival" means:',
     answers: [
       { id: 'a', text: 'Rejecting all perspectives equally', isCorrect: false },
@@ -700,7 +700,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'mind-12',
     type: 'multiple-choice',
     category: 'mind',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Mind Module supports Shadow work by:',
     answers: [
       { id: 'a', text: 'Rationalizing projections away intellectually', isCorrect: false },
@@ -716,7 +716,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'mind-13',
     type: 'multiple-choice',
     category: 'mind',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: '"Tracking your center of gravity" means:',
     answers: [
       { id: 'a', text: 'Monitoring physical balance', isCorrect: false },
@@ -732,7 +732,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'mind-14',
     type: 'multiple-choice',
     category: 'mind',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: '"Aperspectival madness" refers to:',
     answers: [
       { id: 'a', text: 'Belief in absolute truth', isCorrect: false },
@@ -748,7 +748,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'mind-15',
     type: 'multiple-choice',
     category: 'mind',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Mind Module versus Spirit Module uses mind to:',
     answers: [
       { id: 'a', text: 'Perform identical functions', isCorrect: false },
@@ -964,7 +964,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'spirit-13',
     type: 'multiple-choice',
     category: 'spirit',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: '"Spiritual Bypassing" means:',
     answers: [
       { id: 'a', text: 'Skipping meditation sessions', isCorrect: false },
@@ -980,7 +980,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'spirit-14',
     type: 'multiple-choice',
     category: 'spirit',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: '"Involution" describes:',
     answers: [
       { id: 'a', text: 'Evolution from matter to mind', isCorrect: false },
@@ -996,7 +996,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'spirit-15',
     type: 'multiple-choice',
     category: 'spirit',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Witness relates to Causal and Nondual as:',
     answers: [
       { id: 'a', text: 'Completely unrelated phenomena', isCorrect: false },
@@ -1012,7 +1012,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'spirit-16',
     type: 'multiple-choice',
     category: 'spirit',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'In "Wake Up, Grow Up, Clean Up, Show Up," Spirit Module primarily addresses:',
     answers: [
       { id: 'a', text: 'Wake Up', isCorrect: true },
@@ -1028,7 +1028,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'spirit-17',
     type: 'multiple-choice',
     category: 'spirit',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'The formless aspect of Spirit corresponds to:',
     answers: [
       { id: 'a', text: 'Gross physical body', isCorrect: false },
@@ -1228,7 +1228,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'shadow-12',
     type: 'multiple-choice',
     category: 'shadow',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'The 3-2-1 process relates to quadrants by:',
     answers: [
       { id: 'a', text: 'Operating purely subjectively', isCorrect: false },
@@ -1244,7 +1244,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'shadow-13',
     type: 'multiple-choice',
     category: 'shadow',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Social movements demonizing opposition likely engage in:',
     answers: [
       { id: 'a', text: 'Healthy democratic debate', isCorrect: false },
@@ -1260,7 +1260,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'shadow-14',
     type: 'multiple-choice',
     category: 'shadow',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Repression versus dissociation:',
     answers: [
       { id: 'a', text: 'Are identical defense mechanisms', isCorrect: false },
@@ -1276,7 +1276,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'shadow-15',
     type: 'multiple-choice',
     category: 'shadow',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Green stage shadow might include:',
     answers: [
       { id: 'a', text: 'Overly hierarchical judgmentalism', isCorrect: false },
@@ -1292,7 +1292,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'shadow-16',
     type: 'multiple-choice',
     category: 'shadow',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Shadow across developmental levels:',
     answers: [
       { id: 'a', text: 'Exists only at lower stages', isCorrect: false },
@@ -1492,7 +1492,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'integral-12',
     type: 'multiple-choice',
     category: 'integral-theory',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: '"Tetra-meshed" phenomena:',
     answers: [
       { id: 'a', text: 'Are excessively complicated', isCorrect: false },
@@ -1508,7 +1508,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'integral-13',
     type: 'multiple-choice',
     category: 'integral-theory',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: '"Second Tier" consciousness:',
     answers: [
       { id: 'a', text: 'Rejects all previous stages', isCorrect: false },
@@ -1524,7 +1524,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'integral-14',
     type: 'multiple-choice',
     category: 'integral-theory',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Integral Methodological Pluralism uses:',
     answers: [
       { id: 'a', text: 'Four quadrants from two perspectives', isCorrect: true },
@@ -1540,7 +1540,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'integral-15',
     type: 'multiple-choice',
     category: 'integral-theory',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: '"Structures versus contents" means:',
     answers: [
       { id: 'a', text: 'Architecture versus interior design', isCorrect: false },
@@ -1556,7 +1556,7 @@ export const ilpGraphQuizzes: QuizQuestion[] = [
     id: 'integral-16',
     type: 'multiple-choice',
     category: 'integral-theory',
-    difficulty: 'difficult',
+    difficulty: 'advanced',
     question: 'Waking Up without Growing Up risks:',
     answers: [
       { id: 'a', text: 'Permanent psychological damage', isCorrect: false },
@@ -1618,7 +1618,7 @@ export function getQuizQuestions(
   if (difficulty === 'beginner') {
     questions = questions.filter((q) => q.difficulty === 'beginner');
   } else if (difficulty === 'intermediate') {
-    questions = questions.filter((q) => q.difficulty !== 'difficult');
+    questions = questions.filter((q) => q.difficulty !== 'advanced');
   }
   // For difficult, include all levels
 

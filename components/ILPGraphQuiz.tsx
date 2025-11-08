@@ -570,8 +570,9 @@ export const ILPGraphQuiz: React.FC = () => {
             </h3>
 
             {Object.entries(results.categoryBreakdown).map(([category, stats]) => {
-              if (stats.total === 0) return null;
-              const percentage = Math.round((stats.correct / stats.total) * 100);
+              const typedStats = stats as { correct: number; total: number };
+              if (typedStats.total === 0) return null;
+              const percentage = Math.round((typedStats.correct / typedStats.total) * 100);
               const bgColor =
                 percentage >= 80
                   ? 'from-green-500/30'
@@ -585,7 +586,7 @@ export const ILPGraphQuiz: React.FC = () => {
                       {categoryLabel[category as ILPGraphCategory]}
                     </span>
                     <span className="text-sm text-slate-400">
-                      {stats.correct}/{stats.total} ({percentage}%)
+                      {typedStats.correct}/{typedStats.total} ({percentage}%)
                     </span>
                   </div>
                   <div className="bg-slate-700/50 rounded-full h-2 overflow-hidden border border-slate-600/30">
