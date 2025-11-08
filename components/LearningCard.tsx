@@ -1,7 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { JourneyCard } from '../types.ts';
-import { Volume2, Play, Check, Loader } from 'lucide-react';
-import * as geminiService from '../services/geminiService.ts';
+import { Check } from 'lucide-react';
 
 interface LearningCardProps {
   card: JourneyCard;
@@ -10,49 +9,10 @@ interface LearningCardProps {
 }
 
 export default function LearningCard({ card, isCompleted, onComplete }: LearningCardProps) {
-  const [showAudio, setShowAudio] = useState(false);
-  const [audioLoading, setAudioLoading] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [pollAnswers, setPollAnswers] = useState<Record<string, number>>({});
   const [dragState, setDragState] = useState<Record<string, string>>({});
   const [reflectionText, setReflectionText] = useState('');
-
-  const playAudio = async () => {
-    if (!card.audioScript) return;
-
-    // Check if we have a cached audio file
-    const cacheKey = `audio-${card.id}`;
-    const cachedAudio = localStorage.getItem(cacheKey);
-
-    if (cachedAudio && audioRef.current) {
-      // Use cached audio
-      audioRef.current.src = `data:audio/mp3;base64,${cachedAudio}`;
-      audioRef.current.play();
-      setIsPlaying(true);
-      return;
-    }
-
-    // Generate new audio
-    setAudioLoading(true);
-    try {
-      const audioData = await geminiService.generateSpeechFromText(card.audioScript, 'Kore');
-
-      if (audioData && audioRef.current) {
-        // Cache the audio
-        localStorage.setItem(cacheKey, audioData);
-        audioRef.current.src = `data:audio/mp3;base64,${audioData}`;
-        audioRef.current.play();
-        setIsPlaying(true);
-      }
-    } catch (error) {
-      console.error('Failed to generate audio:', error);
-      alert('Could not generate audio. Please try again.');
-    } finally {
-      setAudioLoading(false);
-    }
-  };
 
   const handleQuizAnswer = (index: number) => {
     setSelectedAnswer(index);
@@ -125,47 +85,10 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
           </div>
         )}
 
-        {/* Audio Button */}
-        {card.audioScript && (
-          <div className="mb-6 space-y-3">
-            <button
-              onClick={playAudio}
-              disabled={audioLoading}
-              className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-accent/20 to-accent/10 border border-accent/40 rounded-lg hover:bg-accent/30 transition-all text-accent disabled:opacity-50 font-semibold w-full"
-            >
-              {audioLoading ? (
-                <>
-                  <Loader size={18} className="animate-spin" />
-                  <span>Generating audio...</span>
-                </>
-              ) : isPlaying ? (
-                <>
-                  <Volume2 size={18} />
-                  <span>Playing... (Click to stop)</span>
-                </>
-              ) : (
-                <>
-                  <Play size={18} />
-                  <span>Hear It - Narrated Wisdom</span>
-                </>
-              )}
-            </button>
-            <audio
-              ref={audioRef}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onEnded={() => setIsPlaying(false)}
-              controls
-              className="w-full"
-              style={{ height: '32px' }}
-            />
-          </div>
-        )}
-
         {/* Interaction Based on Type */}
         <div className="mb-6">
           {card.interactionType === 'text' && (
-            <p className="text-slate-300 leading-relaxed">{card.audioScript}</p>
+            <p className="text-slate-300 leading-relaxed">{card.description}</p>
           )}
 
           {card.interactionType === 'poll' && card.interactionData?.options && (
