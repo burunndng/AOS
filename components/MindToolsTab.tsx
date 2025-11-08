@@ -140,6 +140,8 @@ export default function MindToolsTab({
             {/* Attachment Recommendations Component */}
             <AttachmentRecommendations
               attachmentStyle={selectedAttachmentStyle}
+              anxietyScore={attachmentAssessment?.scores.anxiety || 3.5}
+              avoidanceScore={attachmentAssessment?.scores.avoidance || 3.5}
               practiceStack={practiceStack}
               onPracticeClick={(practice) => {
                 addToStack?.(practice);
