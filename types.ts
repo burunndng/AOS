@@ -254,7 +254,7 @@ export interface PolarityMapDraft extends Partial<PolarityMap> {
 
 export interface IntegratedInsight {
   id: string;
-  mindToolType: 'Bias Detective' | 'Subject-Object Explorer' | 'Perspective-Shifter' | 'Polarity Mapper' | 'Kegan Assessment' | 'Relational Pattern' | 'Role Alignment' | 'Somatic Practice' | 'Jhana Guide' | 'Meditation Finder' | 'Consciousness Graph';
+  mindToolType: 'Bias Detective' | 'Subject-Object Explorer' | 'Perspective-Shifter' | 'Polarity Mapper' | 'Kegan Assessment' | 'Relational Pattern' | 'Role Alignment' | 'Somatic Practice' | 'Jhana Guide' | 'Meditation Finder' | 'Consciousness Graph' | 'Big Mind Process';
   mindToolSessionId: string;
   mindToolName: string;
   mindToolReport: string;
@@ -589,5 +589,48 @@ export interface ILPGraphQuizSession {
   answers: { questionId: string; selectedAnswerId: string }[];
   startTime: number;
   results?: QuizResult;
+}
+
+// Big Mind Process Types
+export type BigMindStage = 'VOICE_ID' | 'VOICE_DIALOGUE' | 'WITNESS' | 'INTEGRATION' | 'SUMMARY';
+
+export interface BigMindVoice {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  description?: string;
+}
+
+export interface BigMindMessage {
+  id: string;
+  role: 'user' | 'witness';
+  text: string;
+  voiceName?: string; // Name of voice speaking (for user messages)
+  timestamp: string;
+  stage: BigMindStage;
+  isStreaming?: boolean;
+}
+
+export interface BigMindInsightSummary {
+  primaryVoices: string[]; // Voice names identified
+  witnessPerspective: string; // Key insight from witness
+  integrationCommitments: string[]; // What user commits to
+  recommendedPractices: {
+    practiceId: string;
+    practiceName: string;
+    rationale: string;
+    alreadyInStack: boolean;
+  }[];
+}
+
+export interface BigMindSession {
+  id: string;
+  date: string;
+  currentStage: BigMindStage;
+  voices: BigMindVoice[];
+  messages: BigMindMessage[];
+  summary?: BigMindInsightSummary;
+  linkedInsightId?: string;
+  completedAt?: string;
 }
 
