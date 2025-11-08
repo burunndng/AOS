@@ -61,7 +61,8 @@ import {
   KeganAssessmentSession,
   RelationalPatternSession,
   JhanaSession,
-  JourneyProgress
+  JourneyProgress,
+  AttachmentAssessmentSession
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -126,6 +127,7 @@ export default function App() {
   const [historyJhana, setHistoryJhana] = useLocalStorage<JhanaSession[]>('historyJhana', []);
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
+  const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
   
   // AI-generated data
   const [recommendations, setRecommendations] = useState<string[]>([]);
@@ -346,6 +348,10 @@ export default function App() {
     if (insight) setIntegratedInsights(prev => [...prev, insight]);
   };
 
+  const handleSaveAttachmentAssessment = (session: AttachmentAssessmentSession) => {
+    setHistoryAttachment(prev => [...prev.filter(s => s.id !== session.id), session]);
+  };
+
   const handleSaveRelationalSession = async (session: RelationalPatternSession) => {
     setHistoryRelational(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftRelational(null);
@@ -411,7 +417,7 @@ export default function App() {
   const handleExport = () => {
     const data = {
         practiceStack, practiceNotes, dailyNotes, completionHistory,
-        history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan,
+        history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan, historyRelational, historyAttachment,
         partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory, journeyProgress
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -446,6 +452,8 @@ export default function App() {
                         setHistoryPS(data.historyPS || []);
                         setHistoryPM(data.historyPM || []);
                         setHistoryKegan(data.historyKegan || []);
+                        setHistoryRelational(data.historyRelational || []);
+                        setHistoryAttachment(data.historyAttachment || []);
                         setPartsLibrary(data.partsLibrary || []);
                         setIntegratedInsights(data.integratedInsights || []);
                         setAqalReport(data.aqalReport || null);
@@ -479,7 +487,12 @@ export default function App() {
       case 'streaks': return <StreaksTab practiceStack={practiceStack} completionHistory={completionHistory} findModuleKey={findModuleKey} />;
       case 'recommendations': return <RecommendationsTab starterStacks={starterStacks} applyStarterStack={applyStarterStack} recommendations={recommendations} isLoading={aiLoading} error={aiError} onGenerate={generateRecommendations} />;
       case 'aqal': return <AqalTab report={aqalReport} isLoading={aiLoading} error={aiError} onGenerate={generateAqalReport} />;
-      case 'mind-tools': return <MindToolsTab setActiveWizard={setActiveWizardAndLink} />;
+      case 'mind-tools': return <MindToolsTab
+        setActiveWizard={setActiveWizardAndLink}
+        attachmentAssessment={historyAttachment[historyAttachment.length - 1]}
+        onCompleteAttachmentAssessment={handleSaveAttachmentAssessment}
+        addToStack={addToStack}
+      />;
       // FIX: Changed prop `setDraftIFSSession` to `setDraftIFS` to match the updated ShadowToolsTabProps interface.
       case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} draft321Session={draft321} draftIFSSession={draftIFS} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;
       case 'body-tools': return <BodyToolsTab setActiveWizard={setActiveWizardAndLink} />;

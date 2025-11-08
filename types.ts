@@ -435,6 +435,20 @@ export interface KeganProbeSession {
   };
 }
 
+// Attachment Assessment Types
+export interface AttachmentAssessmentSession {
+  id: string;
+  date: string;
+  answers: Record<string, number>; // Question ID -> response (1-7)
+  scores: {
+    anxiety: number;
+    avoidance: number;
+  };
+  style: 'secure' | 'anxious' | 'avoidant' | 'fearful';
+  description: string;
+  notes?: string;
+}
+
 // Relational Pattern Tracking Types
 export type RelationshipType = 'Romantic Partner' | 'Parent' | 'Child' | 'Sibling' | 'Friend' | 'Boss/Authority' | 'Colleague' | 'Direct Report' | 'Stranger/Public';
 
