@@ -77,6 +77,8 @@ User Profile:
 Your approach:
 ${getAttachmentStyleGuidelines(style)}
 
+IMPORTANT: As soon as the session starts, proactively greet the user with: "${benefits[style]}. ${style === 'fearful' ? 'You\'re in complete control here, and we can stop or adjust anytime. ' : ''}We'll practice together for about 3-5 minutes. How are you feeling right now on a scale of 1-10, where 1 is very calm and 10 is very stressed?"
+
 Session Structure:
 1. Brief check-in (1-2 messages)
 2. Quick science explanation (1 message)
@@ -129,6 +131,8 @@ ${getAttachmentStyleGuidelines(style)}
 
 Coherent breathing: 5-6 breaths per minute (roughly 5 seconds in, 5 seconds out).
 
+IMPORTANT: As soon as the session starts, proactively greet the user with: "Let's practice Coherent Breathing together. ${benefits[style]}. ${style === 'fearful' ? 'This is your space, and you control the pace. ' : ''}We'll breathe at a rhythm of about 5-6 breaths per minute - slow and steady. Ready to begin?"
+
 Session Structure:
 1. Check-in
 2. Brief explanation of coherent breathing
@@ -164,6 +168,8 @@ User Profile:
 
 Your approach:
 ${getAttachmentStyleGuidelines(style)}
+
+IMPORTANT: As soon as the session starts, proactively greet the user with: "${approaches[style]}. Ready to explore?"
 
 Adaptation by style:
 - Anxious: Help distinguish fears from evidence, validate then reality-check
@@ -207,6 +213,8 @@ User Profile:
 Your approach:
 ${getAttachmentStyleGuidelines(style)}
 
+IMPORTANT: As soon as the session starts, proactively greet the user with: "${approaches[style]}. Shall we begin?"
+
 Self-compassion components (Kristin Neff):
 1. Self-kindness vs. self-judgment
 2. Common humanity vs. isolation
@@ -245,6 +253,8 @@ User Profile:
 
 Your approach:
 ${getAttachmentStyleGuidelines(style)}
+
+IMPORTANT: As soon as the session starts, proactively greet the user with: "${approaches[style]}. Are you ready to begin this practice?"
 
 Loving-kindness structure:
 1. Start with self (or easy person for those resistant to self-love)
@@ -288,6 +298,8 @@ User Profile:
 Your approach:
 ${getAttachmentStyleGuidelines(style)}
 
+IMPORTANT: As soon as the session starts, proactively greet the user with: "${approaches[style]}. Ready to explore your inner world?"
+
 Parts work for ${style}:
 ${style === 'anxious' ? '- Help anxious part and calm part dialogue\n- Validate both parts\n- Help them collaborate' : ''}
 ${style === 'avoidant' ? '- Help independent part and connection-seeking part dialogue\n- Honor both needs\n- Find integration' : ''}
@@ -307,7 +319,9 @@ Guide them through identifying parts, giving each a voice, and facilitating dial
   'meditation': (style: AttachmentStyle, anxiety: number, avoidance: number) => ({
     systemPrompt: `You are a meditation guide for someone with ${style} attachment. Guide a 5-minute mindfulness meditation.
 
-${getAttachmentStyleGuidelines(style)}`,
+${getAttachmentStyleGuidelines(style)}
+
+IMPORTANT: As soon as the session starts, proactively greet the user with: "Let's practice a brief mindfulness meditation together. Ready to settle in?"`,
     openingMessage: "Let's practice a brief mindfulness meditation together.",
     attachmentBenefit: "Meditation builds awareness and calm",
     sessionGoal: 'Practice mindfulness meditation',
@@ -317,7 +331,9 @@ ${getAttachmentStyleGuidelines(style)}`,
   'perspective-shifter': (style: AttachmentStyle, anxiety: number, avoidance: number) => ({
     systemPrompt: `You are guiding someone with ${style} attachment through perspective-shifting (1st, 2nd, 3rd person, Witness).
 
-${getAttachmentStyleGuidelines(style)}`,
+${getAttachmentStyleGuidelines(style)}
+
+IMPORTANT: As soon as the session starts, proactively greet the user with: "Let's explore a relationship challenge from multiple perspectives to gain new insights. What situation would you like to explore?"`,
     openingMessage: "Let's explore a relationship challenge from multiple perspectives to gain new insights.",
     attachmentBenefit: "Dissolves stuck patterns through perspective-taking",
     sessionGoal: 'Practice shifting perspectives on a relationship situation',
@@ -327,7 +343,9 @@ ${getAttachmentStyleGuidelines(style)}`,
   'three-two-one': (style: AttachmentStyle, anxiety: number, avoidance: number) => ({
     systemPrompt: `You are guiding someone with ${style} attachment through the 3-2-1 shadow process.
 
-${getAttachmentStyleGuidelines(style)}`,
+${getAttachmentStyleGuidelines(style)}
+
+IMPORTANT: As soon as the session starts, proactively greet the user with: "Let's work with something you're judging or reacting to in someone else. This helps integrate disowned parts of yourself. What person or quality comes to mind?"`,
     openingMessage: "Let's work with something you're judging or reacting to in someone else. This helps integrate disowned parts of yourself.",
     attachmentBenefit: "Integrates shadow material for wholeness",
     sessionGoal: 'Process shadow material through 3-2-1',

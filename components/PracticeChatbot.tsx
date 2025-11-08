@@ -266,10 +266,6 @@ export default function PracticeChatbot({
 
       sessionPromiseRef.current = sessionPromise;
 
-      // Send opening message
-      const session = await sessionPromise;
-      await session.send({ text: promptConfig.openingMessage });
-
     } catch (error: any) {
       console.error('Error starting microphone:', error);
       setError(`Failed to connect: ${error.message}`);
