@@ -44,6 +44,7 @@ const JhanaTracker = lazy(() => import('./components/JhanaTracker.tsx'));
 const MeditationWizard = lazy(() => import('./components/MeditationWizard.tsx'));
 const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.tsx'));
 const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
+const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizard.tsx'));
 
 
 // Constants & Types
@@ -68,13 +69,15 @@ import {
   RelationalPatternSession,
   JhanaSession,
   JourneyProgress,
-  AttachmentAssessmentSession
+  AttachmentAssessmentSession,
+  BigMindSession
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
 
 // Services
 import * as geminiService from './services/geminiService.ts';
+import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -120,6 +123,7 @@ export default function App() {
   const [draftPM, setDraftPM] = useLocalStorage<PolarityMapDraft | null>('draftPM', null);
   const [draftKegan, setDraftKegan] = useLocalStorage<KeganAssessmentSession | null>('draftKegan', null);
   const [draftRelational, setDraftRelational] = useLocalStorage<RelationalPatternSession | null>('draftRelational', null);
+  const [draftBigMind, setDraftBigMind] = useLocalStorage<Partial<BigMindSession> | null>('draftBigMind', null);
 
   // Session History
   const [history321, setHistory321] = useLocalStorage<ThreeTwoOneSession[]>('history321', []);
@@ -134,6 +138,7 @@ export default function App() {
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
+  const [historyBigMind, setHistoryBigMind] = useLocalStorage<BigMindSession[]>('historyBigMind', []);
   
   // AI-generated data
   const [recommendations, setRecommendations] = useState<string[]>([]);
@@ -404,6 +409,18 @@ export default function App() {
     setActiveTab('library');
   };
 
+  const handleSaveBigMindSession = (session: BigMindSession) => {
+    setHistoryBigMind(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftBigMind(null);
+    setActiveWizard(null);
+
+    // Create integrated insight from the session
+    if (session.summary) {
+      const insight = createBigMindIntegratedInsight(session.id, session.summary);
+      setIntegratedInsights(prev => [...prev, insight]);
+    }
+  };
+
   const markInsightAsAddressed = (insightId: string, shadowToolType: string, shadowSessionId: string) => {
     setIntegratedInsights(prev => prev.map(insight => {
         if (insight.id === insightId) {
@@ -423,7 +440,7 @@ export default function App() {
   const handleExport = () => {
     const data = {
         practiceStack, practiceNotes, dailyNotes, completionHistory,
-        history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan, historyRelational, historyAttachment,
+        history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan, historyRelational, historyAttachment, historyBigMind,
         partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory, journeyProgress
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -460,6 +477,7 @@ export default function App() {
                         setHistoryKegan(data.historyKegan || []);
                         setHistoryRelational(data.historyRelational || []);
                         setHistoryAttachment(data.historyAttachment || []);
+                        setHistoryBigMind(data.historyBigMind || []);
                         setPartsLibrary(data.partsLibrary || []);
                         setIntegratedInsights(data.integratedInsights || []);
                         setAqalReport(data.aqalReport || null);
@@ -503,7 +521,7 @@ export default function App() {
       // FIX: Changed prop `setDraftIFSSession` to `setDraftIFS` to match the updated ShadowToolsTabProps interface.
       case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} draft321Session={draft321} draftIFSSession={draftIFS} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;
       case 'body-tools': return <BodyToolsTab setActiveWizard={setActiveWizardAndLink} />;
-      case 'spirit-tools': return <SpiritToolsTab setActiveWizard={setActiveWizardAndLink} />;
+      case 'spirit-tools': return <SpiritToolsTab setActiveWizard={setActiveWizardAndLink} historyBigMind={historyBigMind} />;
       case 'library': return <LibraryTab />;
       case 'quiz': return <ILPGraphQuiz />;
       case 'journey': return <JourneyTab journeyProgress={journeyProgress} updateJourneyProgress={setJourneyProgress} />;
@@ -622,6 +640,22 @@ export default function App() {
         return (
           <RoleAlignmentWizard
             onClose={() => setActiveWizard(null)}
+          />
+        );
+      case 'big-mind':
+        return (
+          <BigMindProcessWizard
+            onClose={(draft) => { setDraftBigMind(draft); setActiveWizard(null); }}
+            onSave={handleSaveBigMindSession}
+            session={draftBigMind}
+            practiceStack={practiceStack.map(p => p.id)}
+            completionHistory={completionHistory}
+            addPracticeToStack={(practiceId: string) => {
+              const practice = Object.values(corePractices).flat().find(p => p.id === practiceId);
+              if (practice && !practiceStack.some(p => p.id === practiceId)) {
+                addToStack(practice);
+              }
+            }}
           />
         );
       default:
