@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AttachmentAssessmentSession } from '../types.ts';
 import { attachmentQuestions, calculateAttachmentScores, determineAttachmentStyle, getScoreLabel } from '../data/attachmentAssessment.ts';
 import { X, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
@@ -15,8 +15,14 @@ export default function AttachmentAssessmentWizard({ onClose, onComplete }: Atta
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
 
+  useEffect(() => {
+    console.log('AttachmentAssessmentWizard mounted, step:', step);
+  }, [step]);
+
   const totalQuestions = attachmentQuestions.length;
   const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+
+  console.log('Rendering AttachmentAssessmentWizard with step:', step);
 
   const handleAnswer = (score: number) => {
     const questionId = attachmentQuestions[currentQuestion].id;
