@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2 } from 'lucide-react';
+import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2, AlertCircle, Plus, Trash2, Clock } from 'lucide-react';
 import {
   IntegralBodyPlan,
   YangConstraints,
@@ -8,7 +8,9 @@ import {
   DayPlan,
   YinPracticeDetail,
   WorkoutRoutine,
-  PersonalizationSummary
+  PersonalizationSummary,
+  TimeWindow,
+  InjuryRestriction
 } from '../types.ts';
 import { generateIntegralWeeklyPlan } from '../services/integralBodyArchitectService.ts';
 import { buildPersonalizationPromptInsertion } from '../services/integralBodyPersonalization.ts';
@@ -100,6 +102,11 @@ export default function IntegralBodyArchitectWizard({
   const [yinIntentions, setYinIntentions] = useState('');
   const [yinNotes, setYinNotes] = useState('');
 
+  // New fields from Ticket 1
+  const [stressLevel, setStressLevel] = useState<number>(5);
+  const [injuryRestrictions, setInjuryRestrictions] = useState<InjuryRestriction[]>([]);
+  const [availableTimeWindows, setAvailableTimeWindows] = useState<TimeWindow[]>([]);
+
   const [generatedPlan, setGeneratedPlan] = useState<IntegralBodyPlan | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
@@ -127,6 +134,8 @@ export default function IntegralBodyArchitectWizard({
         sleepHours: sleepHours ? parseFloat(sleepHours) : undefined,
         equipment,
         unavailableDays,
+        availableTimeWindows: availableTimeWindows.length > 0 ? availableTimeWindows : undefined,
+        injuryRestrictions: injuryRestrictions.length > 0 ? injuryRestrictions : undefined,
         nutritionFocus: nutritionFocus || undefined,
         additionalConstraints: additionalConstraints || undefined,
       };
@@ -222,6 +231,12 @@ export default function IntegralBodyArchitectWizard({
           onYinIntentionsChange={setYinIntentions}
           yinNotes={yinNotes}
           onYinNotesChange={setYinNotes}
+          stressLevel={stressLevel}
+          onStressLevelChange={setStressLevel}
+          injuryRestrictions={injuryRestrictions}
+          onInjuryRestrictionsChange={setInjuryRestrictions}
+          availableTimeWindows={availableTimeWindows}
+          onAvailableTimeWindowsChange={setAvailableTimeWindows}
           error={error}
         />;
       case 'SYNTHESIS':
@@ -378,6 +393,12 @@ interface BlueprintStepProps {
   onYinIntentionsChange: (value: string) => void;
   yinNotes: string;
   onYinNotesChange: (value: string) => void;
+  stressLevel: number;
+  onStressLevelChange: (value: number) => void;
+  injuryRestrictions: InjuryRestriction[];
+  onInjuryRestrictionsChange: (value: InjuryRestriction[]) => void;
+  availableTimeWindows: TimeWindow[];
+  onAvailableTimeWindowsChange: (value: TimeWindow[]) => void;
   error: string;
 }
 
@@ -405,187 +426,532 @@ function BlueprintStep(props: BlueprintStepProps) {
     onYinIntentionsChange,
     yinNotes,
     onYinNotesChange,
+    stressLevel,
+    onStressLevelChange,
+    injuryRestrictions,
+    onInjuryRestrictionsChange,
+    availableTimeWindows,
+    onAvailableTimeWindowsChange,
     error
   } = props;
 
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    goals: true,
+    yangConstraints: true,
+    yinStates: true,
+    recoveryLifestyle: true,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 max-w-4xl mx-auto">
       <div className="bg-slate-900/40 border border-slate-700 p-4 rounded-md text-sm text-slate-300">
         <p className="font-semibold mb-2">Welcome to The Integral Body Architect</p>
         <p>This master planner synthesizes a 7-day schedule that balances Yang (training, sleep, nutrition) and Yin (subtle energy, breath, Qigong) for coherent progress.</p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">
-          Your Goal for This Week <span className="text-red-400">*</span>
-        </label>
-        <textarea
-          value={goalStatement}
-          onChange={e => onGoalChange(e.target.value)}
-          rows={3}
-          placeholder="e.g., 'Build strength while keeping stress regulated during a product launch week'"
-          className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100"
-        />
-      </div>
-
-      <div className="border-t border-slate-700 pt-6 space-y-4">
-        <SectionHeading icon={<Dumbbell size={20} className="text-blue-400" />} title="Yang Parameters" />
-
-        <div className="grid grid-cols-2 gap-4">
+      {/* Goals Section */}
+      <CollapsibleSection
+        title="Your Goals"
+        icon={<Heart size={18} className="text-red-400" />}
+        isExpanded={expandedSections.goals}
+        onToggle={() => toggleSection('goals')}
+      >
+        <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Bodyweight (kg)</label>
-            <input
-              type="number"
-              value={bodyweight}
-              onChange={e => onBodyweightChange(e.target.value)}
-              placeholder="70"
-              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100"
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-300">
+                Goal for This Week <span className="text-red-400">*</span>
+              </label>
+              <span className="text-xs text-slate-500">Required</span>
+            </div>
+            <textarea
+              value={goalStatement}
+              onChange={e => onGoalChange(e.target.value)}
+              rows={3}
+              placeholder="e.g., 'Build strength while keeping stress regulated during a product launch week'"
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
             />
+            <p className="text-xs text-slate-500 mt-1">💡 Be specific about what success looks like for you this week</p>
           </div>
+        </div>
+      </CollapsibleSection>
+
+      {/* Yang Constraints Section */}
+      <CollapsibleSection
+        title="Yang Constraints (Training & Lifestyle)"
+        icon={<Dumbbell size={18} className="text-blue-400" />}
+        isExpanded={expandedSections.yangConstraints}
+        onToggle={() => toggleSection('yangConstraints')}
+      >
+        <div className="space-y-4">
+          {/* Physical Parameters */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Bodyweight (kg)</label>
+              <input
+                type="number"
+                value={bodyweight}
+                onChange={e => onBodyweightChange(e.target.value)}
+                placeholder="70"
+                min="30"
+                max="250"
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              />
+              <p className="text-xs text-slate-500 mt-1">Optional: helps personalize workouts</p>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Target Sleep (hours/night)</label>
+              <input
+                type="number"
+                step="0.5"
+                value={sleepHours}
+                onChange={e => onSleepHoursChange(e.target.value)}
+                placeholder="8"
+                min="4"
+                max="12"
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              />
+              <p className="text-xs text-slate-500 mt-1">Default: 8 hours</p>
+            </div>
+          </div>
+
+          {/* Equipment */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Target Sleep (hours/night)</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Equipment Available</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {EQUIPMENT_OPTIONS.map(item => (
+                <button
+                  key={item}
+                  onClick={() => onToggleEquipment(item)}
+                  className={`p-2.5 rounded-md text-xs font-medium transition min-h-10 capitalize touch-target ${
+                    equipment.includes(item)
+                      ? 'bg-accent text-slate-900'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                  title={item}
+                >
+                  {item.replace('-', ' ')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Unavailable Days */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Unavailable Days</label>
+            <div className="grid grid-cols-3.5 sm:grid-cols-7 gap-2">
+              {DAYS_OF_WEEK.map(day => (
+                <button
+                  key={day}
+                  onClick={() => onToggleDay(day)}
+                  className={`p-2 rounded-md text-xs font-medium transition min-h-10 touch-target ${
+                    unavailableDays.includes(day)
+                      ? 'bg-red-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                  title={day}
+                >
+                  {day.slice(0, 3).toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 mt-2">Mark days when you're unavailable for workouts</p>
+          </div>
+
+          {/* Nutrition Focus */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Nutrition Focus</label>
             <input
-              type="number"
-              step="0.5"
-              value={sleepHours}
-              onChange={e => onSleepHoursChange(e.target.value)}
-              placeholder="8"
-              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100"
+              type="text"
+              value={nutritionFocus}
+              onChange={e => onNutritionFocusChange(e.target.value)}
+              placeholder="e.g., 'High protein Mediterranean, gluten-free'"
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
             />
+            <p className="text-xs text-slate-500 mt-1">Optional: dietary preferences and restrictions</p>
+          </div>
+
+          {/* Additional Constraints */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Additional Notes</label>
+            <textarea
+              value={additionalConstraints}
+              onChange={e => onAdditionalConstraintsChange(e.target.value)}
+              rows={2}
+              placeholder="e.g., 'Recovering from shoulder strain, prefer morning workouts'"
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+            />
+            <p className="text-xs text-slate-500 mt-1">Optional: any other constraints or preferences</p>
           </div>
         </div>
+      </CollapsibleSection>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Equipment Available</label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {EQUIPMENT_OPTIONS.map(item => (
-              <button
-                key={item}
-                onClick={() => onToggleEquipment(item)}
-                className={`p-2 rounded-md text-sm font-medium transition capitalize ${
-                  equipment.includes(item)
-                    ? 'bg-accent text-slate-900'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                {item.replace('-', ' ')}
-              </button>
-            ))}
+      {/* Yin States Section */}
+      <CollapsibleSection
+        title="Yin States (Practice Preferences)"
+        icon={<Wind size={18} className="text-teal-400" />}
+        isExpanded={expandedSections.yinStates}
+        onToggle={() => toggleSection('yinStates')}
+      >
+        <div className="space-y-4">
+          {/* Yin Goal */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Primary Intention</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {YIN_GOAL_OPTIONS.map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => onYinGoalChange(option.value)}
+                  className={`p-3 rounded-md text-left transition text-xs touch-target ${
+                    yinGoal === option.value
+                      ? 'bg-accent text-slate-900 border-2 border-accent'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600 border-2 border-transparent'
+                  }`}
+                  title={option.label}
+                >
+                  <div className="font-semibold text-sm">{option.label}</div>
+                  <div className="text-xs opacity-80 mt-0.5">{option.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Experience Level */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Experience Level</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['Beginner', 'Intermediate'] as const).map(level => (
+                <button
+                  key={level}
+                  onClick={() => onYinExperienceChange(level)}
+                  className={`p-2.5 rounded-md text-sm font-medium transition min-h-10 touch-target ${
+                    yinExperience === level
+                      ? 'bg-accent text-slate-900'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                  title={level}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Additional Intentions */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Additional Intentions</label>
+            <input
+              type="text"
+              value={yinIntentions}
+              onChange={e => onYinIntentionsChange(e.target.value)}
+              placeholder="e.g., 'wind down quickly, deepen breath awareness'"
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+            />
+            <p className="text-xs text-slate-500 mt-1">Optional: comma-separated list</p>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Practice Notes</label>
+            <textarea
+              value={yinNotes}
+              onChange={e => onYinNotesChange(e.target.value)}
+              rows={2}
+              placeholder="e.g., 'Prefer morning qigong, limited time after 9pm'"
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+            />
+            <p className="text-xs text-slate-500 mt-1">Optional: any timing or format preferences</p>
           </div>
         </div>
+      </CollapsibleSection>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Unavailable Days</label>
-          <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
-            {DAYS_OF_WEEK.map(day => (
-              <button
-                key={day}
-                onClick={() => onToggleDay(day)}
-                className={`p-2 rounded-md text-xs font-medium transition ${
-                  unavailableDays.includes(day)
-                    ? 'bg-red-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                {day.slice(0, 3).toUpperCase()}
-              </button>
-            ))}
+      {/* Recovery & Lifestyle Section */}
+      <CollapsibleSection
+        title="Recovery & Lifestyle"
+        icon={<AlertCircle size={18} className="text-orange-400" />}
+        isExpanded={expandedSections.recoveryLifestyle}
+        onToggle={() => toggleSection('recoveryLifestyle')}
+      >
+        <div className="space-y-4">
+          {/* Stress Level */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Current Stress Level</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="0"
+                max="10"
+                value={stressLevel}
+                onChange={e => onStressLevelChange(parseInt(e.target.value))}
+                className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-accent"
+                title="Stress level"
+              />
+              <div className={`text-2xl font-bold w-12 text-center ${
+                stressLevel <= 3 ? 'text-green-400' :
+                stressLevel <= 6 ? 'text-yellow-400' :
+                stressLevel <= 8 ? 'text-orange-400' :
+                'text-red-400'
+              }`}>
+                {stressLevel}
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">0 = Calm & centered | 10 = Overwhelmed & frazzled</p>
           </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Nutrition Focus (optional)</label>
-          <input
-            type="text"
-            value={nutritionFocus}
-            onChange={e => onNutritionFocusChange(e.target.value)}
-            placeholder="e.g., 'High protein Mediterranean, gluten-free'"
-            className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100"
+          {/* Injury Restrictions */}
+          <InjuryRestrictionsEditor
+            restrictions={injuryRestrictions}
+            onChange={onInjuryRestrictionsChange}
+          />
+
+          {/* Available Time Windows */}
+          <TimeWindowsEditor
+            windows={availableTimeWindows}
+            onChange={onAvailableTimeWindowsChange}
           />
         </div>
+      </CollapsibleSection>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Additional Constraints (optional)</label>
-          <textarea
-            value={additionalConstraints}
-            onChange={e => onAdditionalConstraintsChange(e.target.value)}
-            rows={2}
-            placeholder="e.g., 'Recovering from shoulder strain, no overhead pressing'"
-            className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100"
-          />
-        </div>
-      </div>
-
-      <div className="border-t border-slate-700 pt-6 space-y-4">
-        <SectionHeading icon={<Wind size={20} className="text-teal-400" />} title="Yin Parameters" />
-
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Primary Intention</label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {YIN_GOAL_OPTIONS.map(option => (
-              <button
-                key={option.value}
-                onClick={() => onYinGoalChange(option.value)}
-                className={`p-3 rounded-md text-left transition ${
-                  yinGoal === option.value
-                    ? 'bg-accent text-slate-900 border-2 border-accent'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600 border-2 border-transparent'
-                }`}
-              >
-                <div className="font-semibold text-sm">{option.label}</div>
-                <div className="text-xs opacity-80 mt-1">{option.description}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Experience Level</label>
-          <div className="grid grid-cols-2 gap-2">
-            {(['Beginner', 'Intermediate'] as const).map(level => (
-              <button
-                key={level}
-                onClick={() => onYinExperienceChange(level)}
-                className={`p-2 rounded-md text-sm font-medium transition ${
-                  yinExperience === level
-                    ? 'bg-accent text-slate-900'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                {level}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Additional Intentions (comma-separated)</label>
-          <input
-            type="text"
-            value={yinIntentions}
-            onChange={e => onYinIntentionsChange(e.target.value)}
-            placeholder="e.g., 'wind down quickly, deepen breath awareness'"
-            className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Notes (optional)</label>
-          <textarea
-            value={yinNotes}
-            onChange={e => onYinNotesChange(e.target.value)}
-            rows={2}
-            placeholder="e.g., 'Prefer morning qigong, limited time after 9pm'"
-            className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100"
-          />
-        </div>
-      </div>
-
+      {/* Error Display */}
       {error && (
-        <div className="bg-red-900/30 border border-red-700 rounded-md p-3 text-sm text-red-200">
-          {error}
+        <div className="bg-red-900/30 border border-red-700 rounded-md p-3 text-sm text-red-200 flex items-start gap-2">
+          <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
+    </div>
+  );
+}
+
+// Collapsible Section Component
+function CollapsibleSection({
+  title,
+  icon,
+  isExpanded,
+  onToggle,
+  children
+}: {
+  title: string;
+  icon: React.ReactNode;
+  isExpanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border border-slate-700 rounded-md overflow-hidden bg-slate-900/30">
+      <button
+        onClick={onToggle}
+        className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition text-left min-h-12 touch-target"
+      >
+        <div className="flex items-center gap-3">
+          {icon}
+          <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
+        </div>
+        {isExpanded ? (
+          <ChevronUp size={18} className="text-slate-400 flex-shrink-0" />
+        ) : (
+          <ChevronDown size={18} className="text-slate-400 flex-shrink-0" />
+        )}
+      </button>
+      {isExpanded && (
+        <div className="border-t border-slate-700 px-4 py-4 space-y-4">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Injury Restrictions Editor Component
+function InjuryRestrictionsEditor({
+  restrictions,
+  onChange
+}: {
+  restrictions: InjuryRestriction[];
+  onChange: (restrictions: InjuryRestriction[]) => void;
+}) {
+  const [newRestriction, setNewRestriction] = useState<Partial<InjuryRestriction>>({
+    bodyPart: '',
+    severity: 'mild',
+    restrictions: []
+  });
+
+  const addRestriction = () => {
+    if (newRestriction.bodyPart?.trim()) {
+      onChange([
+        ...restrictions,
+        {
+          bodyPart: newRestriction.bodyPart,
+          severity: newRestriction.severity as 'mild' | 'moderate' | 'severe',
+          restrictions: newRestriction.restrictions || [],
+          notes: newRestriction.notes
+        }
+      ]);
+      setNewRestriction({ bodyPart: '', severity: 'mild', restrictions: [] });
+    }
+  };
+
+  const removeRestriction = (index: number) => {
+    onChange(restrictions.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Injury or Pain Restrictions (Optional)</label>
+      <div className="space-y-2 mb-3">
+        {restrictions.map((restriction, idx) => (
+          <div key={idx} className="bg-slate-800/50 rounded-md p-3 flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-slate-200">{restriction.bodyPart}</div>
+              <div className="text-xs text-slate-400">{restriction.severity.charAt(0).toUpperCase() + restriction.severity.slice(1)} • {restriction.restrictions.join(', ')}</div>
+              {restriction.notes && <div className="text-xs text-slate-500 mt-1 italic">{restriction.notes}</div>}
+            </div>
+            <button
+              onClick={() => removeRestriction(idx)}
+              className="text-red-400 hover:text-red-300 transition p-1 flex-shrink-0 touch-target"
+              title="Remove restriction"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-2 p-3 bg-slate-800/30 rounded-md">
+        <input
+          type="text"
+          value={newRestriction.bodyPart || ''}
+          onChange={e => setNewRestriction(prev => ({ ...prev, bodyPart: e.target.value }))}
+          placeholder="e.g., 'Shoulder', 'Lower back'"
+          className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+        />
+        <select
+          value={newRestriction.severity || 'mild'}
+          onChange={e => setNewRestriction(prev => ({ ...prev, severity: e.target.value as 'mild' | 'moderate' | 'severe' }))}
+          className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+        >
+          <option value="mild">Mild (discomfort)</option>
+          <option value="moderate">Moderate (pain when used)</option>
+          <option value="severe">Severe (avoid completely)</option>
+        </select>
+        <input
+          type="text"
+          placeholder="e.g., 'no overhead pressing, avoid heavy squats'"
+          className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+          onChange={e => setNewRestriction(prev => ({ ...prev, restrictions: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+        />
+        <button
+          onClick={addRestriction}
+          disabled={!newRestriction.bodyPart?.trim()}
+          className="w-full bg-accent hover:bg-accent/90 disabled:bg-slate-700 disabled:text-slate-400 text-slate-900 rounded-md py-2 px-3 font-medium text-sm transition flex items-center justify-center gap-2 touch-target"
+          title="Add injury restriction"
+        >
+          <Plus size={16} /> Add Restriction
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Time Windows Editor Component
+function TimeWindowsEditor({
+  windows,
+  onChange
+}: {
+  windows: TimeWindow[];
+  onChange: (windows: TimeWindow[]) => void;
+}) {
+  const [newWindow, setNewWindow] = useState<Partial<TimeWindow>>({
+    dayOfWeek: 'Monday',
+    startHour: 9,
+    endHour: 17
+  });
+
+  const addWindow = () => {
+    if (newWindow.dayOfWeek && newWindow.startHour !== undefined && newWindow.endHour !== undefined) {
+      onChange([
+        ...windows,
+        {
+          dayOfWeek: newWindow.dayOfWeek,
+          startHour: newWindow.startHour,
+          endHour: newWindow.endHour
+        }
+      ]);
+      setNewWindow({ dayOfWeek: 'Monday', startHour: 9, endHour: 17 });
+    }
+  };
+
+  const removeWindow = (index: number) => {
+    onChange(windows.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Available Practice Time Windows (Optional)</label>
+      <div className="space-y-2 mb-3">
+        {windows.map((window, idx) => (
+          <div key={idx} className="bg-slate-800/50 rounded-md p-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm text-slate-200">
+              <Clock size={14} className="text-slate-400" />
+              <span className="font-medium">{window.dayOfWeek}</span>
+              <span className="text-slate-400">{String(window.startHour).padStart(2, '0')}:00 - {String(window.endHour).padStart(2, '0')}:00</span>
+            </div>
+            <button
+              onClick={() => removeWindow(idx)}
+              className="text-red-400 hover:text-red-300 transition p-1 flex-shrink-0 touch-target"
+              title="Remove time window"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-2 p-3 bg-slate-800/30 rounded-md">
+        <select
+          value={newWindow.dayOfWeek || 'Monday'}
+          onChange={e => setNewWindow(prev => ({ ...prev, dayOfWeek: e.target.value }))}
+          className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+        >
+          {DAYS_OF_WEEK.map(day => (
+            <option key={day} value={day}>{day}</option>
+          ))}
+        </select>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-xs text-slate-400 mb-1 block">Start Hour</label>
+            <input
+              type="number"
+              min="0"
+              max="23"
+              value={newWindow.startHour || 0}
+              onChange={e => setNewWindow(prev => ({ ...prev, startHour: parseInt(e.target.value) }))}
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-slate-400 mb-1 block">End Hour</label>
+            <input
+              type="number"
+              min="0"
+              max="23"
+              value={newWindow.endHour || 23}
+              onChange={e => setNewWindow(prev => ({ ...prev, endHour: parseInt(e.target.value) }))}
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+            />
+          </div>
+        </div>
+        <button
+          onClick={addWindow}
+          disabled={!newWindow.dayOfWeek || newWindow.startHour === undefined || newWindow.endHour === undefined}
+          className="w-full bg-accent hover:bg-accent/90 disabled:bg-slate-700 disabled:text-slate-400 text-slate-900 rounded-md py-2 px-3 font-medium text-sm transition flex items-center justify-center gap-2 touch-target"
+          title="Add time window"
+        >
+          <Plus size={16} /> Add Time Window
+        </button>
+      </div>
     </div>
   );
 }

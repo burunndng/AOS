@@ -858,9 +858,6 @@ export default function App() {
           <IntegralBodyArchitectWizard
             onClose={() => setActiveWizard(null)}
             onSave={handleSaveIntegralBodyPlan}
-            onLaunchSomaticPractice={(practiceIntent: string) => {
-              setActiveWizard('somatic');
-            }}
             personalizationSummary={currentPersonalizationSummary}
           />
         );
