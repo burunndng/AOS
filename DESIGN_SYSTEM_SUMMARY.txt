@@ -1,0 +1,392 @@
+================================================================================
+                    AURA OS DESIGN SYSTEM - EXECUTIVE SUMMARY
+================================================================================
+
+PROJECT: Aura OS - Integral Life Practice Personal Transformation App
+ANALYZED: Main components, pages, theme configuration, and design patterns
+DATE: November 9, 2025
+
+================================================================================
+                              KEY FINDINGS
+================================================================================
+
+OVERALL AESTHETIC & POLISH LEVEL:
+- High-polish, professional dark theme application
+- Sophisticated glass morphism UI with subtle depth and layering
+- Emphasis on elegance through monochromatic color palette
+- Smooth animations and interactive feedback throughout
+- Enterprise-level UI quality with thoughtful micro-interactions
+
+DESIGN PHILOSOPHY:
+- "Dark, serious, elegant" (as stated in theme.ts)
+- Minimalist color strategy: neutrals + purple accent + semantic colors
+- Heavy reliance on opacity and layering for visual hierarchy
+- Smooth 300ms transitions on all interactive elements
+- Professional sans-serif body text, monospace headings
+
+================================================================================
+                          COLOR SCHEME SUMMARY
+================================================================================
+
+PRIMARY PALETTE (Monochromatic Neutrals):
+  - Deep Base:     #0a0a0a (neutral-950)
+  - Elevated:      #171717 (neutral-900)
+  - Interactive:   #262626 (neutral-800)
+  - Borders:       #525252 (neutral-700)
+  - Text/Accent:   #a3a3a3 (neutral-400)
+  - Primary Text:  #e5e5e5 (neutral-100)
+
+ACCENT COLORS:
+  - Primary:       #d9aaef (Purple/Lavender) - Main interactive accent
+  - Alert:         #d97706 (Amber)
+  - Success:       #22c55e (Green)
+  
+NOTE: All modules (Mind, Shadow, Body, Spirit) use the SAME neutral palette.
+      No color differentiation between modules - unified monochromatic approach.
+
+OPACITY STRATEGY:
+  - Uses rgba extensively for layering and depth
+  - Card backgrounds: 40-60% opacity
+  - Borders: 20-50% opacity
+  - Glows: 8-20% opacity
+  - Creates sophisticated visual hierarchy through transparency
+
+================================================================================
+                        LAYOUT PATTERNS & GRIDS
+================================================================================
+
+APP STRUCTURE:
+  - Sidebar Navigation:  256px fixed width (w-64), sticky, scrollable
+  - Main Content:        flex-1, overflow-y-auto, padded p-8
+  - Full-width layout:   No max-width restriction (full bleed)
+  - Responsive:          Flex rows stack to columns on mobile
+
+CARD LAYOUTS:
+  - Standard glass card:    bg-neutral-900/50 backdrop-blur-sm
+  - 3-column summary grid:  grid grid-cols-3 gap-4
+  - 2-column content:       grid grid-cols-2 gap-4
+  - Full-width sections:    w-full max-w-4xl mx-auto
+
+SPACING HIERARCHY:
+  - Within elements:  gap-3 to gap-4 (0.75rem - 1rem)
+  - Between sections: gap-6 to gap-8 (1.5rem - 2rem)
+  - Card padding:     p-6 (24px) standard, p-3-p-8 range
+  - Border radius:    rounded-xl (12px) standard for cards
+
+SECTION ORGANIZATION:
+  - Header with title + description
+  - Grid of summary cards (often 3-column)
+  - Space-y-4 for vertically stacked items
+  - Consistent max-width containers
+
+================================================================================
+                      TYPOGRAPHY & TEXT SIZING
+================================================================================
+
+FONT STACK:
+  - Headings:  'Geist Mono' (monospace)
+  - Body:      'Geist Sans' (sans-serif), fallback to Inter
+  - Letter spacing on headings: -0.02em (tighter)
+
+TEXT HIERARCHY:
+  - H1 (Page titles):    text-5xl font-bold font-mono tracking-tighter
+  - H2 (Section titles):  text-3xl font-bold font-mono tracking-tight
+  - H3 (Subsections):     text-xl font-semibold
+  - H4 (Card titles):     text-lg font-semibold
+  - Body:                 text-slate-300 text-base leading-relaxed
+  - Small text:           text-sm text-slate-400
+  - Micro text:           text-xs text-slate-500 tracking-wide
+
+TEXT EFFECTS:
+  - Gradient text:   bg-gradient-to-r from-accent via-purple-400 to-accent
+                    + bg-clip-text text-transparent
+  - Font weights:    400 (regular) → 600 (semibold) → 700 (bold) → 900 (black)
+  - No text truncation (content typically flows naturally)
+
+================================================================================
+                      BUTTON STYLES & INTERACTIONS
+================================================================================
+
+PRIMARY BUTTON (Luminous):
+  - Style:  btn-luminous py-3 px-6 rounded-xl
+  - Shadow: shadow-glow-sm (0 4px 12px)
+  - Hover:  shadow-glow-lg + scale-105 + color brighten
+  - Uses:   Primary actions, CTAs, "Generate Practice"
+
+SECONDARY BUTTON (Glass):
+  - Style:  card-glass gradient bg rounded-xl
+  - Hover:  Gradient shift + scale-105
+  - Uses:   Alternative actions, "Browse Practices"
+
+ACCENT ACTION BUTTONS:
+  - Amber:  from-amber-600 to-amber-700 (Start actions, secondary CTA)
+  - Green:  from-green-600 to-green-700 (Confirm, complete actions)
+  - Hover:  Color shift + scale-105 + shadow-lg
+
+NAVIGATION/ICON BUTTONS:
+  - Default:  text-slate-400
+  - Hover:    text-slate-200 + bg-slate-800/60
+  - Active:   Gradient background + accent border + text-accent
+  - Icons:    Scale 110% on hover
+
+INTERACTIVE FEEDBACK:
+  - Duration:  300ms standard (transition-all duration-300)
+  - Effects:   Scale (1.05), lift (-translate-y-0.5), shadow enhance
+  - Disabled:  opacity-50
+  - Focus:     border-accent/40 outline-none (inputs)
+
+================================================================================
+                      CARD & CONTAINER STYLES
+================================================================================
+
+STANDARD CARD (Glass Morphism):
+  Element:     bg-neutral-900/50 backdrop-blur-sm
+  Border:      border border-neutral-800/50
+  Shadow:      shadow-[0_4px_24px_rgba(0,0,0,0.6)]
+  Hover:       shadow-[0_8px_32px_rgba(0,0,0,0.8)] + -translate-y-0.5
+  Duration:    transition-all duration-300
+
+COLORED ACCENT CARD (Example: Amber):
+  Background:  bg-gradient-to-br from-slate-800/70 to-slate-900/50
+  Border:      border-amber-600/50 → hover: border-amber-500/70
+  Shadow:      Layered (dark + accent tint + inset light)
+  Glow:        Radial gradient on hover (opacity 0 → 100%)
+  
+NESTED/INNER CARDS:
+  Style:       bg-slate-900/60 border border-slate-700/60 p-3
+  Use:         For contained detail sections within main cards
+
+PADDING & SPACING:
+  - Large:    p-6 to p-8 (24-32px)
+  - Medium:   p-4 to p-6 (16-24px)
+  - Small:    p-3 (12px)
+
+================================================================================
+                      ANIMATIONS & TRANSITIONS
+================================================================================
+
+KEYFRAME ANIMATIONS:
+  - fadeIn:        opacity 0→1 (0.5s ease-out)
+  - fadeInUp:      opacity 0→1 + translateY 20px→0 (0.6s ease-out)
+  - slideInRight:  opacity 0→1 + translateX -20px→0 (0.5s ease-out)
+  - popIn:         scale 0.95→1.02→1 + opacity (0.3s ease-out)
+  - shadow:        box-shadow pulsing (3s ease-in-out infinite)
+
+TRANSITION PATTERNS:
+  - Standard:      transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)
+  - Longer:        transition-all duration-500
+  - Transform:     transition-transform duration-300
+
+HOVER EFFECTS:
+  - Scale:         hover:scale-105 (5% larger)
+  - Lift:          hover:-translate-y-0.5 to -translate-y-1 (2-4px up)
+  - Shadow:        hover:shadow-lg or hover:shadow-2xl
+  - Color:         hover:bg-X hover:border-accent/40
+  - Icon scale:    group-hover:scale-110 (10% larger)
+
+ANIMATION ENTRANCE:
+  - Use animationDelay for staggered entrance
+  - Typical: 0ms, 200ms, 400ms, 600ms for sequential items
+  - Creates flowing, choreographed appearance
+
+================================================================================
+                      SHADOW & DEPTH SYSTEM
+================================================================================
+
+SHADOW DEPTH LEVELS:
+  - Light:     shadow-md (0 4px 6px) / shadow-glow-sm (0 4px 12px)
+  - Medium:    shadow-[0_4px_24px_rgba(0,0,0,0.6)] (standard card)
+  - Heavy:     shadow-2xl (0 25px 50px) / shadow-glow-lg (0 8px 32px)
+  - Glow:      0 8px 32px rgba(217, 170, 239, 0.2) (accent glow)
+
+INSET SHADOWS (Subtle emboss):
+  - Small:     inset 0 1px 2px rgba(255, 255, 255, 0.05)
+  - Medium:    inset 0 1px 2px rgba(255, 255, 255, 0.1)
+
+LAYERED SHADOWS (Complex):
+  - Card:      0 12px 32px rgba(0,0,0,0.3) + color tint + inset light
+
+================================================================================
+                    DESIGN SYSTEM COMPONENTS
+================================================================================
+
+BADGES/PILLS:
+  - Size:      text-xs px-2 py-1 rounded-full font-semibold
+  - Example:   text-amber-400 bg-amber-900/30 border-amber-700/50
+
+PROGRESS BARS:
+  - Track:     h-2 bg-slate-700/60 rounded-full overflow-hidden
+  - Fill:      h-full bg-gradient-to-r from-accent/80 to-accent
+  - Animation: transition-all duration-500
+
+SCROLLBARS:
+  - Width:     8px (webkit)
+  - Track:     transparent background
+  - Thumb:     rgba(115, 115, 115, 0.3) rounded
+  - Hover:     rgba(163, 163, 163, 0.5)
+
+GLASS MORPHISM FORMULA:
+  - Backdrop:  blur(8px-12px)
+  - BG:        rgba(23, 23, 23, 0.4-0.6)
+  - Border:    1px solid rgba(64, 64, 64, 0.2-0.5)
+  - Shadow:    0 4px 24px rgba(0,0,0,0.6) + inset light
+
+GLOW/HOVER OVERLAYS:
+  - Technique: Radial gradient with opacity transition
+  - Positioned: absolute inset-0 (covers entire element)
+  - Triggered:  group-hover:opacity-100
+  - Duration:   transition-opacity duration-500
+
+================================================================================
+                    COMPONENT LIBRARY & FRAMEWORKS
+================================================================================
+
+TECHNOLOGIES USED:
+  - Framework:      React 19+
+  - Styling:        Tailwind CSS (with custom config)
+  - Icons:          Lucide React (18-20px standard size)
+  - Fonts:          Geist Sans & Geist Mono (CDN)
+  - CDN:            Tailwind via CDN, component libraries via importmap
+
+CUSTOM TAILWIND CONFIG:
+  - Colors:        Extended with custom --accent-primary, module colors
+  - Shadows:       Custom glow-sm, glow, glow-lg
+  - Border colors: Custom base, hover variants
+  - Font family:   Geist Sans (sans), Geist Mono (mono)
+
+DESIGN SYSTEM FILE:
+  - theme.ts:      Centralized color, shadow, button, animation definitions
+  - getCardClasses(): Helper for consistent card styling
+  - getModuleTheme(): Helper for module-specific colors
+  - getGradientText(): Helper for gradient text effects
+
+================================================================================
+                      RESPONSIVE DESIGN
+================================================================================
+
+BREAKPOINT PATTERNS:
+  - Mobile-first approach
+  - sm: (640px) for small changes
+  - lg: (1024px) for larger layouts
+  - Example: grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4
+
+SIDEBAR BEHAVIOR:
+  - Desktop:   256px fixed sidebar always visible
+  - Tablet/Mobile: Likely collapses or becomes modal (inferred pattern)
+
+LAYOUT RESPONSIVENESS:
+  - Flex direction: flex flex-col sm:flex-row
+  - Padding:    p-4 sm:p-6 lg:p-8
+  - Gaps:       gap-4 sm:gap-6
+  - Full width: w-full with max-w-4xl mx-auto for content
+
+================================================================================
+                  VISUAL POLISH & MICRO-INTERACTIONS
+================================================================================
+
+POLISH TECHNIQUES:
+  1. Backdrop filters (blur effects) for glass morphism
+  2. Radial gradient overlays on hover (glow effect)
+  3. Inset shadows for subtle embossing
+  4. Staggered animations for choreographed entrance
+  5. Icon scaling and shine effects on hover
+  6. Smooth color transitions on all interactive elements
+  7. Subtle lift effect (-translate-y) on card hover
+  8. Opacity-based layering for visual hierarchy
+
+INTERACTIVE FEEDBACK:
+  - Every button/card has clear hover feedback
+  - Scale transformations feel responsive and alive
+  - Shadow changes enhance perceived elevation
+  - Color shifts indicate interactivity
+  - Animations are smooth and not jarring (300ms standard)
+
+ACCESSIBILITY CONSIDERATIONS:
+  - Focus states defined (border-accent/40)
+  - Disabled states have opacity-50
+  - Sufficient color contrast (light text on dark)
+  - Icons have aria-labels (not visible, inferred)
+  - Keyboard navigation supported (standard inputs)
+
+================================================================================
+                  IMPLEMENTATION FOR INSIGHT PRACTICE MAP
+================================================================================
+
+TO MATCH THE DESIGN SYSTEM:
+
+1. CARD BASE:
+   Use: bg-neutral-900/50 backdrop-blur-sm border border-neutral-800/50
+   Add: shadow-[0_4px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.8)]
+
+2. GRADIENT TEXT HEADINGS:
+   Use: bg-gradient-to-r from-accent via-purple-400 to-accent bg-clip-text text-transparent
+   For: Section titles (h2, text-3xl)
+
+3. COLORED CARDS:
+   Pending: border-amber-600/50, radial-gradient(amber @ 0.08 opacity)
+   Completed: border-green-600/50, radial-gradient(green @ 0.08 opacity)
+
+4. BUTTONS:
+   Primary: scale-105 on hover, from-amber-600 to-amber-700
+   Secondary: opacity changes, from-green-600 to-green-700
+
+5. SPACING:
+   Within sections: gap-4, Between sections: gap-6, Cards: p-6
+
+6. TYPOGRAPHY:
+   Headings: font-mono, body: font-sans, leading-relaxed for paragraphs
+
+7. ANIMATIONS:
+   Entrance: animate-fade-in-up with staggered delays (200ms increments)
+   Hover: All cards get -translate-y-1, all buttons get scale-105
+
+8. GRID:
+   Summary: 3-column (gap-4), Details: Full-width (max-w-4xl)
+
+================================================================================
+                          DOCUMENTATION FILES
+================================================================================
+
+THREE DETAILED GUIDES CREATED:
+
+1. DESIGN_SYSTEM.md (18KB, 618 lines)
+   - Comprehensive 14-section design system analysis
+   - Color schemes, gradients, layouts, typography
+   - Button styles, cards, animations, shadows
+   - Z-index hierarchy, responsive patterns
+   - Accessibility considerations
+
+2. DESIGN_QUICK_REFERENCE.md (6KB, 224 lines)
+   - Quick lookup guide for designers/developers
+   - Color palette at a glance
+   - Component cheat sheets (cards, buttons, text)
+   - Spacing reference table
+   - Shadow depth levels, border radius
+   - Typical component structure templates
+
+3. INSIGHT_PRACTICE_MAP_STYLE_GUIDE.md (8KB, 399 lines)
+   - Exact code examples for implementation
+   - Section-by-section styling patterns
+   - Ready-to-copy JSX code blocks
+   - Progress bars, badges, chat patterns
+   - Modals, overlays, animations
+   - Key takeaways for matching the system
+
+================================================================================
+                              NEXT STEPS
+================================================================================
+
+To implement the Insight Practice Map with perfect design consistency:
+
+1. Read DESIGN_QUICK_REFERENCE.md for quick lookup
+2. Reference INSIGHT_PRACTICE_MAP_STYLE_GUIDE.md for exact code patterns
+3. Use theme.ts helpers: getCardClasses(), getGradientText()
+4. Follow the spacing patterns: gap-4 within sections, gap-6 between
+5. Use amber borders/buttons for pending, green for completed
+6. Apply staggered fadeInUp animations on entrance
+7. Test hover states: -translate-y-1 lift + shadow-lg enhancement
+8. Use glass morphism for all cards: backdrop-blur-sm + opacity
+
+All three files are saved in /home/user/AOS/ for easy reference.
+
+================================================================================
