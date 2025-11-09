@@ -29,22 +29,31 @@ const UNIVERSAL_DIRECTIVES = `
 export function getAttachmentStyleModifiers(style: AttachmentStyle): string {
   const modifiers = {
     anxious: `
-### ATTACHMENT STYLE MODIFIERS for ANXIOUS
-- TONE: Extra reassuring and calm.
-- RULE: Between steps, use validating phrases like "You're doing great" or "That makes perfect sense."
-- FRAME: Emphasize "self-soothing" and creating "internal safety."`,
+ATTACHMENT STYLE MODIFIERS for ANXIOUS
+
+TONE: Extra reassuring and calm.
+
+RULE: Between steps, use validating phrases like "You're doing great" or "That makes perfect sense."
+
+FRAME: Emphasize "self-soothing" and creating "internal safety."`,
 
     avoidant: `
-### ATTACHMENT STYLE MODIFIERS for AVOIDANT
-- TONE: Respectful, direct, and logical.
-- RULE: Use language of choice and control ("Let me know if you're ready for the next step," "We can skip this if you prefer").
-- FRAME: Emphasize "skill-building," "data-gathering," and "self-mastery."`,
+ATTACHMENT STYLE MODIFIERS for AVOIDANT
+
+TONE: Respectful, direct, and logical.
+
+RULE: Use language of choice and control ("Let me know if you're ready for the next step," "We can skip this if you prefer").
+
+FRAME: Emphasize "skill-building," "data-gathering," and "self-mastery."`,
 
     fearful: `
-### ATTACHMENT STYLE MODIFIERS for FEARFUL
-- TONE: Exceptionally gentle and patient.
-- RULE: Before asking a challenging question, check for consent: "If you feel ready, I'd like to ask..."
-- FRAME: Emphasize "safety," "taking one small step at a time," and "you are in control."`,
+ATTACHMENT STYLE MODIFIERS for FEARFUL
+
+TONE: Exceptionally gentle and patient.
+
+RULE: Before asking a challenging question, check for consent: "If you feel ready, I'd like to ask..."
+
+FRAME: Emphasize "safety," "taking one small step at a time," and "you are in control."`,
 
     secure: `
 ### ATTACHMENT STYLE MODIFIERS for SECURE

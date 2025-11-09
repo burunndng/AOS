@@ -1,10 +1,11 @@
 import React from 'react';
-import { Sparkles, Flame, Moon, Sun, GitCompare } from 'lucide-react';
+import { Sparkles, Flame, Moon, Sun, GitCompare, Brain } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 import { ActiveTab } from '../types.ts';
 
 interface SpiritToolsTabProps {
   setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
+  historyBigMind?: any[];
 }
 
 const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode, title: string, description: string, onStart: () => void }) => (
@@ -20,7 +21,7 @@ const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode
     </div>
 );
 
-export default function SpiritToolsTab({ setActiveWizard }: SpiritToolsTabProps) {
+export default function SpiritToolsTab({ setActiveWizard, historyBigMind }: SpiritToolsTabProps) {
   return (
     <div className="space-y-8">
       <header>
@@ -158,6 +159,95 @@ export default function SpiritToolsTab({ setActiveWizard }: SpiritToolsTabProps)
             Explore the Graph
           </button>
         </div>
+      </section>
+
+      {/* Big Mind Process */}
+      <SectionDivider />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-1">Inner Voice Work & Integration</h2>
+          <p className="text-sm text-slate-400">Explore and integrate the diverse voices within your consciousness</p>
+        </div>
+        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
+          <div className="flex items-center gap-4 mb-3">
+            <Brain size={32} className="text-neutral-400" />
+            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Big Mind Process</h3>
+            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-1 rounded-full font-semibold">NEW</span>
+          </div>
+          <p className="text-slate-300 mb-4 leading-relaxed">
+            A transformative dialogue with your inner voices. In this guided process, you'll identify the different perspectives
+            within you—the Protector, the Critic, the Vulnerable Self, and more—and help them speak freely. By shifting to the
+            spacious witness perspective, you'll discover how these voices work together and integrate their wisdom for wholeness.
+          </p>
+          <div className="bg-neutral-950/50 border border-neutral-500/30 rounded-lg p-4 mb-4">
+            <p className="text-sm text-neutral-200">
+              <strong>Core Practice:</strong> Identify voices → Dialogue deeply → Witness compassionately → Integrate wisdom
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">5</div>
+              <div className="text-xs text-slate-400 mt-1">Stages</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">🎭</div>
+              <div className="text-xs text-slate-400 mt-1">Parts Work</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">↔️</div>
+              <div className="text-xs text-slate-400 mt-1">Dialogue</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">✨</div>
+              <div className="text-xs text-slate-400 mt-1">Integration</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveWizard('big-mind')}
+            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
+          >
+            Start Big Mind Process
+          </button>
+        </div>
+
+        {/* Big Mind History */}
+        {historyBigMind && historyBigMind.length > 0 && (
+          <div className="mt-6 pt-6 border-t border-slate-700/50">
+            <h4 className="text-lg font-semibold text-slate-100 mb-4">Recent Sessions</h4>
+            <div className="space-y-3">
+              {historyBigMind.slice().reverse().slice(0, 5).map((session) => (
+                <div
+                  key={session.id}
+                  className="bg-slate-900/30 border border-slate-700/30 rounded-lg p-4 flex justify-between items-start"
+                >
+                  <div className="flex-grow">
+                    <div className="text-sm font-semibold text-slate-200">
+                      {new Date(session.date).toLocaleDateString()} at{' '}
+                      {new Date(session.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    {session.summary?.primaryVoices && (
+                      <div className="text-xs text-slate-400 mt-1">
+                        Voices: {session.summary.primaryVoices.join(', ')}
+                      </div>
+                    )}
+                    {session.summary?.witnessPerspective && (
+                      <div className="text-xs text-slate-300 mt-2 italic line-clamp-2">
+                        {session.summary.witnessPerspective}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setActiveWizard('big-mind')}
+                    className="text-accent hover:text-accent/80 text-sm font-medium ml-4 whitespace-nowrap"
+                  >
+                    Review
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Future Spirit Tools Placeholder */}
