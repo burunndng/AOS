@@ -120,20 +120,28 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
 
   /**
    * Helper function to consume async generators and display streaming text
-   * Returns a promise that resolves when streaming is complete
+   * Properly captures both yielded values and the return value of the generator
    */
   const consumeStreaming = async <T,>(
     generator: AsyncGenerator<string, T, unknown>,
     onChunk: (chunk: string) => void,
     onComplete: (result: T) => void
   ): Promise<void> => {
-    let result: T;
-    for await (const chunk of generator) {
-      onChunk(chunk);
+    let result: IteratorResult<string, T>;
+
+    // Manually iterate to capture both yielded values and return value
+    result = await generator.next();
+    while (!result.done) {
+      if (result.value) {
+        onChunk(result.value);
+      }
+      result = await generator.next();
     }
-    // Get the final return value
-    result = (await generator.next()).value!;
-    onComplete(result);
+
+    // When done === true, result.value contains the generator's return value
+    if (result.value) {
+      onComplete(result.value);
+    }
   };
 
   const handleSendMessage = async () => {
