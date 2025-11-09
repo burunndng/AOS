@@ -68,7 +68,8 @@ export async function retrievePractices(
 
   const results = await semanticSearch(embedding, {
     topK,
-    ...filter,
+    type: 'practice' as const,
+    ...filters,
   });
 
   console.log(`[RAG] Retrieved ${results.length} practices`);
@@ -83,14 +84,10 @@ export async function retrieveFrameworks(
   filters: Record<string, any> = {},
   topK: number = 5,
 ): Promise<QueryResult[]> {
-  const filter = {
-    type: 'framework',
-    ...filters,
-  };
-
   const results = await semanticSearch(embedding, {
     topK,
-    ...filter,
+    type: 'framework' as const,
+    ...filters,
   });
 
   console.log(`[RAG] Retrieved ${results.length} frameworks`);
