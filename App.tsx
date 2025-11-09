@@ -97,9 +97,22 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<Re
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      if (!item) return initialValue;
+
+      // Try to parse as JSON first
+      try {
+        return JSON.parse(item);
+      } catch {
+        // If JSON.parse fails, handle legacy plain string format
+        // For userId, just return the plain string
+        if (key === 'userId') {
+          return item as unknown as T;
+        }
+        // For other keys, return initial value
+        return initialValue;
+      }
     } catch (error) {
-      console.error(error);
+      console.error(`[useLocalStorage] Error with key "${key}":`, error);
       return initialValue;
     }
   });
@@ -122,19 +135,7 @@ export default function App() {
 
   // RAG System & User Context
   const [userId] = useLocalStorage<string>('userId', (() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('userId') : null;
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch {
-        // Fallback for old format stored as plain string
-        return stored;
-      }
-    }
     const newId = `user-${Math.random().toString(36).substr(2, 9)}`;
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('userId', JSON.stringify(newId));
-    }
     return newId;
   })());
 
