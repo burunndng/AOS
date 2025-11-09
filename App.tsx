@@ -3,6 +3,7 @@ import React, { useState, useCallback, lazy, Suspense } from 'react';
 // Core Components (always loaded)
 import NavSidebar from './components/NavSidebar.tsx';
 import LoadingFallback, { TabLoadingFallback, WizardLoadingFallback, ModalLoadingFallback } from './components/LoadingFallback.tsx';
+import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 
 // Lazy-loaded Core Enhancements
 const Coach = lazy(() => import('./components/Coach.tsx'));
@@ -787,6 +788,10 @@ export default function App() {
       <Suspense fallback={<WizardLoadingFallback />}>
         {renderActiveWizard()}
       </Suspense>
+      <FlabbergasterPortal
+        isOpen={isFlabbergasterPortalOpen}
+        onClose={() => setIsFlabbergasterPortalOpen(false)}
+      />
     </div>
   );
 }
