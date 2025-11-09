@@ -53,6 +53,7 @@ class RealPineconeIndex implements PineconeIndexClient {
       const queryRequest: any = {
         vector: embedding,
         topK,
+        includeMetadata: true,
       };
 
       if (filter) {
@@ -63,8 +64,8 @@ class RealPineconeIndex implements PineconeIndexClient {
 
       return (results.matches || []).map((match: any) => ({
         id: match.id,
-        score: match.score,
-        metadata: match.metadata as PineconeVectorMetadata,
+        score: match.score || 0,
+        metadata: (match.metadata || {}) as PineconeVectorMetadata,
       }));
     } catch (error) {
       console.error('[Pinecone] Error querying vectors:', error);
@@ -88,7 +89,7 @@ class RealPineconeIndex implements PineconeIndexClient {
 
   async delete(ids: string[]): Promise<void> {
     try {
-      await this.index.deleteOne(ids);
+      await this.index.deleteMany(ids);
       console.log(`[Pinecone] Deleted ${ids.length} vectors from real index`);
     } catch (error) {
       console.error('[Pinecone] Error deleting vectors:', error);
@@ -196,9 +197,21 @@ export async function initializePinecone(): Promise<PineconeIndexClient> {
       try {
         // Use real Pinecone in production
         const pc = new Pinecone({ apiKey });
-        const index = pc.Index(hostname);
+
+        // Extract index name from hostname if it's a full URL
+        // Format: https://aura-os-telq8p6.svc.aped-4627-b74a.pinecone.io
+        // Index name is the first part before the first dot or hyphen: aura-os
+        let indexName = hostname;
+        if (hostname.includes('http')) {
+          // Remove protocol and extract index name
+          const host = hostname.replace(/^https?:\/\//, '').split('.')[0];
+          // Index name is typically the first part (before first hyphen with region info)
+          indexName = host.split('-')[0] + '-' + host.split('-')[1]; // e.g., "aura-os"
+        }
+
+        const index = pc.Index(indexName);
         indexInstance = new RealPineconeIndex(index);
-        console.log(`[Pinecone] Index initialized (using real Pinecone: ${hostname})`);
+        console.log(`[Pinecone] Index initialized (using real Pinecone: ${indexName})`);
       } catch (error) {
         console.error('[Pinecone] Failed to initialize real Pinecone:', error);
         console.log('[Pinecone] Falling back to mock index');
