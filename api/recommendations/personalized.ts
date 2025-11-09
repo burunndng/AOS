@@ -5,6 +5,7 @@
 
 import { generateRecommendationPrompt } from '../rag/generate-prompt.js';
 import { initializeDatabase } from '../lib/db.js';
+import { initializePinecone } from '../lib/pinecone.js';
 import type { GenerationRequest, RecommendationResponse, PersonalizedRecommendation } from '../lib/types.js';
 
 /**
@@ -19,8 +20,9 @@ export async function generatePersonalizedRecommendations(
   console.log(`[Recommendations] Generating recommendations for user: ${userId}`);
 
   try {
-    // Initialize database (required for serverless environment)
+    // Initialize services (required for serverless environment)
     await initializeDatabase();
+    await initializePinecone();
 
     // Generate RAG prompt with context
     const ragPrompt = await generateRecommendationPrompt(request);
