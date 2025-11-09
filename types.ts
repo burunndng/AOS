@@ -695,3 +695,93 @@ export interface BiasFinderSession {
   completedAt?: string;
 }
 
+// Integral Body Architect Types
+export type IntegralBodyArchitectStep = 'BLUEPRINT' | 'SYNTHESIS' | 'DELIVERY' | 'HANDOFF';
+
+export type YinPracticeGoal = 'reduce-stress' | 'increase-focus' | 'wind-down' | 'increase-energy' | 'balance';
+
+export interface YangConstraints {
+  bodyweight?: number; // in kg
+  sleepHours?: number; // target hours per night
+  equipment: string[];
+  unavailableDays: string[];
+  nutritionFocus?: string;
+  additionalConstraints?: string;
+}
+
+export interface YinPreferences {
+  goal: YinPracticeGoal;
+  experienceLevel: 'Beginner' | 'Intermediate';
+  intentions?: string[];
+  additionalNotes?: string;
+}
+
+export interface WorkoutRoutine {
+  name: string;
+  exercises: {
+    name: string;
+    sets: number;
+    reps: string;
+    notes?: string;
+  }[];
+  duration: number; // minutes
+  notes?: string;
+}
+
+export interface MealPlan {
+  breakfast: { description: string; protein: number; };
+  lunch: { description: string; protein: number; };
+  dinner: { description: string; protein: number; };
+  snacks?: { description: string; protein: number; };
+  totalProtein: number;
+  totalCalories?: number;
+  notes?: string;
+}
+
+export interface YinPracticeDetail {
+  name: string;
+  practiceType: string; // e.g., "Coherent Breathing", "Qigong"
+  duration: number; // minutes
+  timeOfDay: string; // e.g., "Morning", "30min before bedtime"
+  intention: string;
+  instructions: string[];
+}
+
+export interface DayPlan {
+  dayName: string; // e.g., "Monday"
+  summary: string; // e.g., "Workout A | Morning Qigong | Meal Plan"
+  workout?: WorkoutRoutine;
+  yinPractices: YinPracticeDetail[];
+  nutrition: MealPlan;
+  sleepHygiene: string[];
+  notes?: string;
+}
+
+export interface IntegralBodyPlan {
+  id: string;
+  date: string;
+  weekStartDate: string; // ISO date string for the Monday of the plan
+  goalStatement: string;
+  yangConstraints: YangConstraints;
+  yinPreferences: YinPreferences;
+  weekSummary: string;
+  dailyTargets: {
+    proteinGrams: number;
+    sleepHours: number;
+    workoutDays: number;
+    yinPracticeMinutes: number;
+  };
+  days: DayPlan[];
+  shoppingList?: string[];
+}
+
+export interface IntegralBodyArchitectSession {
+  id: string;
+  date: string;
+  currentStep: IntegralBodyArchitectStep;
+  goalStatement?: string;
+  yangConstraints?: YangConstraints;
+  yinPreferences?: YinPreferences;
+  generatedPlan?: IntegralBodyPlan;
+}
+
