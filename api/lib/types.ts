@@ -34,7 +34,7 @@ export interface PineconeVectorMetadata {
   completionDate?: string;
 
   // General metadata
-  type: 'practice' | 'framework' | 'user_session' | 'insight';
+  type: 'practice' | 'framework' | 'user_session' | 'insight' | 'user_profile';
   source?: string; // where this data came from
   description?: string;
   tags?: string[];
