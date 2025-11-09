@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 // Core Components (always loaded)
 import NavSidebar from './components/NavSidebar.tsx';
 import LoadingFallback, { TabLoadingFallback, WizardLoadingFallback, ModalLoadingFallback } from './components/LoadingFallback.tsx';
+import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 
 // Lazy-loaded Core Enhancements
 const Coach = lazy(() => import('./components/Coach.tsx'));
@@ -189,9 +190,14 @@ export default function App() {
   const [hasUnlockedFlabbergaster, setHasUnlockedFlabbergaster] = useLocalStorage<boolean>('hasUnlockedFlabbergaster', false);
 
   const onSummonFlabbergaster = () => {
-    setIsFlabbergasterPortalOpen(prev => !prev);
+    console.log('🌑 onSummonFlabbergaster called! Current state:', isFlabbergasterPortalOpen);
+    setIsFlabbergasterPortalOpen(prev => {
+      console.log('🌑 Toggling portal state from', prev, 'to', !prev);
+      return !prev;
+    });
     if (!hasUnlockedFlabbergaster) {
       setHasUnlockedFlabbergaster(true);
+      console.log('🌑 Marked Flabbergaster as unlocked');
     }
   };
 
@@ -923,6 +929,10 @@ export default function App() {
       <Suspense fallback={<WizardLoadingFallback />}>
         {renderActiveWizard()}
       </Suspense>
+      <FlabbergasterPortal
+        isOpen={isFlabbergasterPortalOpen}
+        onClose={() => setIsFlabbergasterPortalOpen(false)}
+      />
     </div>
   );
 }
