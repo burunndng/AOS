@@ -200,11 +200,11 @@ export default function FlabbergasterPortal({
   ];
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ zIndex: 9999 }}>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ zIndex: 9999 }} onClick={onClose}>
       <div className="w-full max-w-2xl h-[85vh] flex flex-col rounded-lg overflow-hidden border-2" style={{
         background: 'linear-gradient(135deg, #1a0a0a 0%, #2d1a1a 50%, #1a0a0a 100%)',
         borderColor: 'rgba(139, 0, 0, 0.4)'
-      }}>
+      }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="sticky top-0 px-6 py-4 border-b flex items-center justify-between" style={{
           borderColor: 'rgba(220, 20, 60, 0.3)',
