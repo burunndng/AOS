@@ -382,6 +382,14 @@ Your role:
 - Never diagnose mental health conditions (refer to professionals)
 - Avoid spiritual bypass or toxic positivity
 
+CRITICAL CONSTRAINTS:
+- MUST keep responses to MAXIMUM 70 words
+- MUST NOT use markdown formatting of any kind (no *, _, **, ##, etc)
+- MUST NOT use bullet points or numbered lists
+- Use plain text only
+- Use simple language and direct sentences
+- Be concise and impactful
+
 Key principles:
 - The A&P (stage 4) is often mistaken for enlightenment - it's not
 - Dark Night stages (5-10) are normal progress, not regression
@@ -391,6 +399,57 @@ Key principles:
 - Progress is often messy and non-linear
 
 Be warm, clear, and helpful. Cite the stages by number and name when relevant.`;
+
+// Helper function to remove markdown and limit word count
+function sanitizeAndLimitResponse(text: string, maxWords: number = 70): string {
+  // Remove markdown formatting
+  let cleaned = text
+    // Remove bold, italic, strikethrough
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    // Remove headers
+    .replace(/^#+\s+/gm, '')
+    // Remove code blocks
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`(.+?)`/g, '$1')
+    // Remove links [text](url) -> text
+    .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+    // Remove list markers
+    .replace(/^[\s]*[-*+]\s+/gm, '')
+    .replace(/^[\s]*\d+\.\s+/gm, '')
+    // Remove html tags
+    .replace(/<[^>]*>/g, '')
+    // Clean up extra whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Split into words and limit
+  const words = cleaned.split(/\s+/);
+
+  if (words.length <= maxWords) {
+    return cleaned;
+  }
+
+  // Trim to max words and try to end at a sentence boundary
+  const trimmed = words.slice(0, maxWords).join(' ');
+
+  // Try to cut at the last period, question mark, or exclamation point
+  const lastSentenceEnd = Math.max(
+    trimmed.lastIndexOf('.'),
+    trimmed.lastIndexOf('?'),
+    trimmed.lastIndexOf('!')
+  );
+
+  if (lastSentenceEnd > maxWords * 0.7) {
+    // If we find a sentence end in the last 30% of our trimmed text, cut there
+    return trimmed.substring(0, lastSentenceEnd + 1);
+  }
+
+  return trimmed;
+}
 
 export async function askGrokAboutInsight(
   userMessage: string,
@@ -444,7 +503,10 @@ export async function askGrokAboutInsight(
     }
 
     const data: GrokChatResponse = await response.json();
-    return data.choices[0]?.message?.content || 'No response from Grok';
+    const rawResponse = data.choices[0]?.message?.content || 'No response from Grok';
+
+    // Sanitize and limit the response
+    return sanitizeAndLimitResponse(rawResponse, 70);
   } catch (error) {
     console.error('Error calling Grok API:', error);
     throw error;
