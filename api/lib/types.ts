@@ -22,6 +22,7 @@ export interface PineconeVectorMetadata {
   duration?: number; // minutes
   evidence?: string[];
   roi?: string;
+  frameworks?: string[]; // frameworks associated with this practice
 
   // Framework metadata
   frameworkId?: string;
