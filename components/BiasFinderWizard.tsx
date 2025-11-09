@@ -352,7 +352,7 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
@@ -395,22 +395,22 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
           {messages.map((msg) => (
             <div
               key={msg.id}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[80%] rounded-lg p-4 ${
+              <div className={`${msg.role === 'user' ? 'max-w-[70%]' : 'max-w-[85%]'} rounded-lg p-5 ${
                 msg.role === 'user' ? 'bg-purple-600 text-white' :
-                msg.role === 'assistant' ? 'bg-gray-100 text-gray-800' :
-                'bg-yellow-50 text-yellow-800 border border-yellow-200'
+                msg.role === 'assistant' ? 'bg-white text-gray-900 shadow-sm border border-gray-200' :
+                'bg-yellow-50 text-yellow-900 border border-yellow-200'
               }`}>
                 {msg.role === 'assistant' && (
-                  <div className="text-xs font-semibold mb-1 text-purple-600">Bias Finder</div>
+                  <div className="text-xs font-semibold mb-2 text-purple-600">Bias Finder</div>
                 )}
-                <div className="whitespace-pre-wrap">{msg.content}</div>
-                <div className="text-xs mt-1 opacity-70">
+                <div className="whitespace-pre-wrap text-base leading-relaxed">{msg.content}</div>
+                <div className="text-xs mt-2 opacity-60">
                   {new Date(msg.timestamp).toLocaleTimeString()}
                 </div>
               </div>
@@ -419,19 +419,19 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
 
           {streamingMessage && (
             <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-lg p-4 bg-gray-100 text-gray-800">
-                <div className="text-xs font-semibold mb-1 text-purple-600">Bias Finder</div>
-                <div className="whitespace-pre-wrap">{streamingMessage}</div>
+              <div className="max-w-[85%] rounded-lg p-5 bg-white text-gray-900 shadow-sm border border-gray-200">
+                <div className="text-xs font-semibold mb-2 text-purple-600">Bias Finder</div>
+                <div className="whitespace-pre-wrap text-base leading-relaxed">{streamingMessage}</div>
               </div>
             </div>
           )}
 
           {isLoading && !streamingMessage && (
             <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-lg p-4">
+              <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-                  <span className="text-gray-600">Analyzing...</span>
+                  <span className="text-gray-700 text-base">Analyzing...</span>
                 </div>
               </div>
             </div>
@@ -589,7 +589,7 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
 
         {/* Input Area */}
         {currentPhase !== 'PARAMETERS' && currentPhase !== 'REPORT' && (
-          <div className="border-t border-gray-200 p-6">
+          <div className="border-t border-gray-200 p-6 bg-white">
             <div className="flex gap-3">
               <textarea
                 ref={inputRef}
@@ -602,8 +602,8 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
                   }
                 }}
                 placeholder="Type your response..."
-                className="flex-1 border border-gray-300 rounded-lg p-3 resize-none"
-                rows={2}
+                className="flex-1 border-2 border-gray-300 rounded-lg p-3 resize-none text-gray-900 text-base focus:border-purple-500 focus:outline-none"
+                rows={3}
                 disabled={isLoading}
               />
               <button
