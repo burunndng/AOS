@@ -140,107 +140,101 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
 
     return (
       <div className="space-y-8 pb-20">
-        {/* Header with Progress */}
-        <div className="sticky top-0 bg-gradient-to-b from-slate-950 via-slate-950 to-transparent pt-2 pb-6">
-          <div className="text-center mb-4">
-            <h2 className="text-3xl font-black text-slate-100 mb-1">Progress of Insight</h2>
-            <p className="text-slate-400 text-sm">The 16 Ñanas Journey</p>
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-gradient-to-b from-neutral-950 via-neutral-950 to-transparent py-6">
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold font-mono text-neutral-100 mb-1">progress of insight</h2>
+            <p className="text-sm text-neutral-400">track your journey through the 16 ñanas</p>
           </div>
 
           {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <p className="text-xs font-medium text-slate-300">
-                {completedStages} / 16 Stages
-              </p>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center text-xs text-neutral-400">
+              <span className="font-mono">{completedStages} / 16</span>
               {session.cycleCount > 0 && (
-                <p className="text-xs font-medium text-emerald-400">
-                  ✓ Cycle {session.cycleCount}
-                </p>
+                <span className="text-[#d9aaef]">cycle {session.cycleCount}</span>
               )}
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden border border-slate-700">
+            <div className="w-full h-1.5 bg-neutral-900/50 rounded-full overflow-hidden border border-neutral-800/50">
               <div
-                className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500 transition-all duration-500"
+                className="h-full bg-gradient-to-r from-[#d9aaef] to-[#d9aaef]/60 transition-all duration-700"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* Stages by Phase */}
+        {/* Phases */}
         {phases.map(phase => {
           const stages = getStagesByPhase(phase);
-          const phaseColorClass = getPhaseColor(phase);
-          const phaseNum = phases.indexOf(phase);
 
           return (
             <div key={phase} className="space-y-3">
-              <div className={`px-4 py-3 rounded-xl border-2 ${phaseColorClass} bg-opacity-20 backdrop-blur-sm`}>
-                <h3 className="font-bold text-base">{phase}</h3>
-                <p className="text-xs opacity-70 mt-0.5">
-                  {stages.length} Stages
-                </p>
+              {/* Phase Header */}
+              <div className="px-4 py-2 bg-neutral-900/30 backdrop-blur-sm border border-neutral-800/50 rounded-lg">
+                <h3 className="text-sm font-mono text-neutral-300 font-medium">{phase}</h3>
+                <p className="text-xs text-neutral-500 mt-0.5">{stages.length} stages</p>
               </div>
 
-              <div className="grid gap-2.5">
-                {stages.map((stage, idx) => {
+              {/* Stage Cards */}
+              <div className="space-y-2">
+                {stages.map((stage) => {
                   const isCurrent = isCurrentStage(stage.stage, session.currentStage);
                   const isCompleted = session.currentStage && stage.stage < session.currentStage;
-                  const stageNum = stage.stage;
 
                   return (
                     <div
                       key={stage.stage}
                       onClick={() => setSelectedStage(stage)}
                       className={`
-                        group p-4 rounded-xl border-2 cursor-pointer transition-all duration-200
+                        group relative p-4 rounded-lg cursor-pointer transition-all duration-300
+                        backdrop-blur-sm border
                         ${isCurrent
-                          ? 'bg-gradient-to-r from-purple-600/30 to-purple-500/10 border-purple-500/70 shadow-lg shadow-purple-500/20'
+                          ? 'bg-[#d9aaef]/10 border-[#d9aaef]/40 shadow-[0_4px_24px_rgba(217,170,239,0.15)]'
                           : isCompleted
-                          ? 'bg-slate-800/50 border-slate-600/50 hover:border-slate-500/70'
-                          : 'bg-slate-800/30 border-slate-700/40 hover:bg-slate-800/40 hover:border-slate-600/50'
+                          ? 'bg-neutral-900/30 border-green-600/30 hover:bg-neutral-900/50'
+                          : 'bg-neutral-900/30 border-neutral-800/50 hover:bg-neutral-900/50 hover:border-neutral-700/50'
                         }
+                        hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)] hover:-translate-y-0.5
                       `}
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex-shrink-0">
+                        {/* Stage Number */}
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-mono text-sm font-bold">
                           {isCurrent ? (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center animate-pulse">
-                              <CheckCircle size={18} className="text-white" />
+                            <div className="w-8 h-8 rounded-lg bg-[#d9aaef]/30 border border-[#d9aaef] flex items-center justify-center">
+                              <CheckCircle size={16} className="text-[#d9aaef]" />
                             </div>
                           ) : isCompleted ? (
-                            <div className="w-8 h-8 rounded-full bg-emerald-500/30 flex items-center justify-center">
-                              <CheckCircle size={18} className="text-emerald-400" />
+                            <div className="w-8 h-8 rounded-lg bg-green-600/20 border border-green-600/50 flex items-center justify-center">
+                              <CheckCircle size={16} className="text-green-500" />
                             </div>
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
-                              {stageNum}
+                            <div className="w-8 h-8 rounded-lg bg-neutral-800 border border-neutral-700 flex items-center justify-center text-neutral-400">
+                              {stage.stage}
                             </div>
                           )}
                         </div>
 
+                        {/* Stage Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2 mb-0.5">
-                            <span className="text-slate-100 font-semibold text-sm group-hover:text-white transition-colors">
+                          <div className="flex items-baseline gap-2 mb-1">
+                            <span className="text-sm font-medium text-neutral-100 group-hover:text-[#d9aaef] transition-colors">
                               {stage.name}
                             </span>
-                            <span className="text-slate-500 text-xs font-mono bg-slate-900/50 px-2 py-0.5 rounded">
-                              {stage.code}
-                            </span>
+                            <span className="text-xs font-mono text-neutral-500">{stage.code}</span>
                           </div>
                           {isCurrent && (
-                            <p className="text-purple-300 text-xs font-medium">📍 Current Stage</p>
+                            <p className="text-xs text-[#d9aaef] font-mono">current stage</p>
                           )}
                           {isCompleted && (
-                            <p className="text-emerald-400 text-xs font-medium">✓ Completed</p>
+                            <p className="text-xs text-green-500 font-mono">completed</p>
                           )}
                         </div>
 
-                        <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <div className="text-slate-400 group-hover:text-slate-200">
-                            →
-                          </div>
+                        {/* Arrow */}
+                        <div className="flex-shrink-0 text-neutral-600 group-hover:text-neutral-400 opacity-0 group-hover:opacity-100 transition-all">
+                          →
                         </div>
                       </div>
                     </div>
@@ -257,52 +251,47 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
   const renderStageDetail = () => {
     if (!selectedStage) return null;
 
-    const phaseColorClass = getPhaseColor(selectedStage.phase);
     const isCurrent = isCurrentStage(selectedStage.stage, session.currentStage);
 
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-        <div className="bg-gradient-to-br from-slate-900 to-slate-950 border-2 border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-neutral-900/50 backdrop-blur-sm border border-neutral-800/50 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
           {/* Header */}
-          <div className="sticky top-0 bg-gradient-to-r from-slate-900 to-slate-950 border-b-2 border-slate-700 px-6 py-5 flex justify-between items-start backdrop-blur-sm">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`px-3 py-1 rounded-lg border-2 ${phaseColorClass} text-xs font-bold`}>
-                  {selectedStage.phase}
-                </div>
-                <span className="text-slate-400 font-mono text-sm">{selectedStage.code}</span>
+          <div className="sticky top-0 border-b border-neutral-800/50 px-8 py-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <div className="text-xs font-mono text-neutral-500 mb-2">{selectedStage.code} • {selectedStage.phase}</div>
+                <h3 className="text-3xl font-bold font-mono text-neutral-100">
+                  stage {selectedStage.stage}
+                </h3>
+                <h4 className="text-lg text-neutral-400 mt-2">
+                  {selectedStage.name}
+                </h4>
               </div>
-              <h3 className="text-3xl font-black text-slate-100">
-                Stage {selectedStage.stage}
-              </h3>
-              <h4 className="text-lg font-semibold text-slate-300 mt-1">
-                {selectedStage.name}
-              </h4>
+              <button
+                onClick={() => setSelectedStage(null)}
+                className="text-neutral-600 hover:text-neutral-300 transition-colors p-1"
+              >
+                <X size={24} />
+              </button>
             </div>
-            <button
-              onClick={() => setSelectedStage(null)}
-              className="text-slate-400 hover:text-slate-200 transition-colors p-2 hover:bg-slate-800 rounded-lg"
-            >
-              <X size={24} />
-            </button>
           </div>
 
-          <div className="p-6 space-y-6">
+          {/* Content */}
+          <div className="px-8 py-8 space-y-8">
             {/* Description */}
-            <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-4">
-              <p className="text-slate-200 leading-relaxed text-base">{selectedStage.description}</p>
+            <div className="bg-neutral-900/30 backdrop-blur-sm border border-neutral-800/50 rounded-lg p-6">
+              <p className="text-neutral-200 leading-relaxed">{selectedStage.description}</p>
             </div>
 
             {/* Key Markers */}
             <div>
-              <h4 className="text-slate-100 font-bold text-lg mb-3 flex items-center gap-2">
-                <span className="text-purple-400">✦</span> What to Look For
-              </h4>
-              <div className="space-y-2">
+              <h5 className="text-sm font-mono font-bold text-[#d9aaef] mb-4">key markers</h5>
+              <div className="space-y-3">
                 {selectedStage.keyMarkers.map((marker, idx) => (
-                  <div key={idx} className="bg-slate-800/30 border-l-2 border-purple-500/50 rounded-lg p-3 flex gap-3">
-                    <span className="text-purple-400 font-bold flex-shrink-0">•</span>
-                    <span className="text-slate-300 text-sm">{marker}</span>
+                  <div key={idx} className="flex gap-4">
+                    <div className="text-neutral-600 font-mono text-lg mt-0.5">•</div>
+                    <p className="text-sm text-neutral-300 pt-0.5">{marker}</p>
                   </div>
                 ))}
               </div>
@@ -310,38 +299,32 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
 
             {/* Practice Tips */}
             <div>
-              <h4 className="text-slate-100 font-bold text-lg mb-3 flex items-center gap-2">
-                <span className="text-emerald-400">★</span> Practice Tips
-              </h4>
-              <div className="space-y-2">
+              <h5 className="text-sm font-mono font-bold text-[#d9aaef] mb-4">practice guidance</h5>
+              <div className="space-y-3">
                 {selectedStage.practiceTips.map((tip, idx) => (
-                  <div key={idx} className="bg-emerald-500/10 border-l-2 border-emerald-500/50 rounded-lg p-3 flex gap-3">
-                    <span className="text-emerald-400 font-bold flex-shrink-0">→</span>
-                    <span className="text-slate-300 text-sm">{tip}</span>
+                  <div key={idx} className="flex gap-4">
+                    <div className="text-neutral-600 font-mono text-lg mt-0.5">→</div>
+                    <p className="text-sm text-neutral-300 pt-0.5">{tip}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Duration */}
-            <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-4">
-              <p className="text-slate-300 text-sm">
-                <span className="font-bold text-slate-200">⏱ Expected Duration:</span>
-              </p>
-              <p className="text-slate-200 font-semibold mt-1">{selectedStage.duration}</p>
+            <div className="bg-neutral-900/30 backdrop-blur-sm border border-neutral-800/50 rounded-lg p-6">
+              <p className="text-xs font-mono text-neutral-500 mb-2">DURATION</p>
+              <p className="text-neutral-200 font-medium">{selectedStage.duration}</p>
             </div>
 
             {/* Warnings */}
             {selectedStage.warnings && selectedStage.warnings.length > 0 && (
-              <div className="bg-red-500/10 border-2 border-red-500/40 rounded-xl p-4">
-                <h4 className="text-red-400 font-bold mb-3 flex items-center gap-2">
-                  <span>⚠️</span> Important Notes
-                </h4>
-                <div className="space-y-2">
+              <div className="bg-red-950/30 backdrop-blur-sm border border-red-900/50 rounded-lg p-6">
+                <p className="text-xs font-mono text-red-500 font-bold mb-3">⚠ IMPORTANT NOTES</p>
+                <div className="space-y-3">
                   {selectedStage.warnings.map((warning, idx) => (
-                    <div key={idx} className="flex gap-3">
-                      <span className="text-red-400 font-bold flex-shrink-0">•</span>
-                      <span className="text-red-300 text-sm">{warning}</span>
+                    <div key={idx} className="flex gap-4">
+                      <div className="text-red-700 font-mono text-lg mt-0.5">•</div>
+                      <p className="text-sm text-red-300 pt-0.5">{warning}</p>
                     </div>
                   ))}
                 </div>
@@ -354,19 +337,16 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
                 handleMarkCurrentStage(selectedStage.stage);
                 setSelectedStage(null);
               }}
+              disabled={isCurrent}
               className={`
-                w-full px-6 py-4 rounded-xl font-bold text-lg transition-all duration-200
+                w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 font-mono text-sm
                 ${isCurrent
-                  ? 'bg-emerald-500/20 border-2 border-emerald-500/50 text-emerald-400 cursor-default'
-                  : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white shadow-lg hover:shadow-purple-500/25 hover:scale-105'
+                  ? 'bg-green-600/20 border border-green-600/50 text-green-500 cursor-default'
+                  : 'bg-[#d9aaef]/20 border border-[#d9aaef]/50 text-[#d9aaef] hover:bg-[#d9aaef]/30 hover:border-[#d9aaef]/60 hover:shadow-[0_4px_16px_rgba(217,170,239,0.2)]'
                 }
               `}
-              disabled={isCurrent}
             >
-              {isCurrent
-                ? '✓ You are currently here'
-                : '📍 Mark as Current Stage'
-              }
+              {isCurrent ? '✓ you are here' : 'mark as current stage'}
             </button>
           </div>
         </div>
@@ -377,48 +357,38 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
   const renderChatbot = () => {
     return (
       <div className="flex flex-col h-full">
-        {/* Chat Header */}
-        <div className="sticky top-0 bg-gradient-to-b from-slate-950 via-slate-950 to-transparent text-center mb-4 pb-6 pt-2">
-          <h2 className="text-3xl font-black text-slate-100 mb-2">Ask Grok</h2>
-          <p className="text-slate-400 text-sm max-w-sm mx-auto">
-            Get concise guidance about stages and your practice
-          </p>
-          <div className="mt-3 px-3 py-2 bg-gradient-to-r from-purple-500/10 to-purple-400/5 border border-purple-500/30 rounded-xl inline-block">
-            <p className="text-purple-400 text-xs font-medium">
-              💭 Powered by Grok
-            </p>
-          </div>
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-gradient-to-b from-neutral-950 via-neutral-950 to-transparent py-6 mb-6">
+          <h2 className="text-3xl font-bold font-mono text-neutral-100 mb-2">ask grok</h2>
+          <p className="text-sm text-neutral-400">concise guidance about your practice</p>
         </div>
 
         {/* Chat History */}
-        <div className="flex-1 overflow-y-auto space-y-4 mb-6">
+        <div className="flex-1 overflow-y-auto space-y-4 mb-6 pr-2">
           {session.chatHistory.length === 0 ? (
-            <div className="text-center py-16 px-4">
-              <div className="w-16 h-16 mx-auto mb-6 bg-purple-500/10 border border-purple-500/30 rounded-full flex items-center justify-center">
-                <MessageCircle size={32} className="text-purple-400" />
-              </div>
-              <p className="text-slate-400 text-sm mb-8">
-                No messages yet. Ask a question about the stages or your practice!
+            <div className="text-center py-12">
+              <MessageCircle size={32} className="text-neutral-600 mx-auto mb-4" />
+              <p className="text-neutral-400 text-sm mb-6">
+                No messages yet. Ask a question to get started.
               </p>
-              <div className="space-y-3">
-                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">💡 Try asking:</p>
+              <div className="space-y-2">
                 <button
                   onClick={() => setChatInput("What is the A&P event?")}
-                  className="block w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-purple-400 text-sm hover:bg-slate-800 hover:border-purple-500/50 transition-all text-left font-medium"
+                  className="block w-full px-4 py-2.5 bg-neutral-900/30 backdrop-blur-sm border border-neutral-800/50 rounded-lg text-[#d9aaef] text-sm hover:bg-neutral-900/50 hover:border-neutral-700/50 transition-all text-left font-mono"
                 >
                   → What is the A&P event?
                 </button>
                 <button
                   onClick={() => setChatInput("How do I know if I'm in the Dark Night?")}
-                  className="block w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-purple-400 text-sm hover:bg-slate-800 hover:border-purple-500/50 transition-all text-left font-medium"
+                  className="block w-full px-4 py-2.5 bg-neutral-900/30 backdrop-blur-sm border border-neutral-800/50 rounded-lg text-[#d9aaef] text-sm hover:bg-neutral-900/50 hover:border-neutral-700/50 transition-all text-left font-mono"
                 >
-                  → How do I know if I'm in the Dark Night?
+                  → Signs of the Dark Night?
                 </button>
                 <button
-                  onClick={() => setChatInput("What should I do if I'm stuck in Re-observation?")}
-                  className="block w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-lg text-purple-400 text-sm hover:bg-slate-800 hover:border-purple-500/50 transition-all text-left font-medium"
+                  onClick={() => setChatInput("What should I do if I'm stuck?")}
+                  className="block w-full px-4 py-2.5 bg-neutral-900/30 backdrop-blur-sm border border-neutral-800/50 rounded-lg text-[#d9aaef] text-sm hover:bg-neutral-900/50 hover:border-neutral-700/50 transition-all text-left font-mono"
                 >
-                  → What should I do if I'm stuck?
+                  → What if I'm stuck?
                 </button>
               </div>
             </div>
@@ -427,39 +397,33 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
               {session.chatHistory.map(msg => (
                 <div
                   key={msg.id}
-                  className={`
-                    flex gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300
-                    ${msg.role === 'user' ? 'justify-end' : 'justify-start'}
-                  `}
+                  className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
                     className={`
-                      max-w-[85%] px-4 py-3 rounded-2xl transition-all
+                      max-w-[85%] rounded-lg transition-all
                       ${msg.role === 'user'
-                        ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-br-none shadow-lg'
-                        : 'bg-slate-800/60 border border-slate-700 text-slate-100 rounded-bl-none'
+                        ? 'bg-[#d9aaef]/20 border border-[#d9aaef]/40 text-neutral-200 px-4 py-3 rounded-br-none'
+                        : 'bg-neutral-900/30 backdrop-blur-sm border border-neutral-800/50 text-neutral-200 px-4 py-3 rounded-bl-none'
                       }
                     `}
                   >
                     {msg.role === 'grok' && (
-                      <div className="flex items-center gap-2 mb-2 text-purple-400 text-xs font-bold">
-                        <MessageCircle size={14} />
-                        <span>GROK</span>
-                      </div>
+                      <div className="text-xs text-[#d9aaef] font-mono mb-1.5">grok</div>
                     )}
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
-                    <p className={`text-xs mt-2 opacity-70 ${msg.role === 'user' ? 'text-purple-100' : 'text-slate-400'}`}>
-                      {new Date(msg.timestamp).toLocaleTimeString()}
+                    <p className="text-xs text-neutral-500 mt-2">
+                      {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </p>
                   </div>
                 </div>
               ))}
               {isLoadingResponse && (
-                <div className="flex gap-3 justify-start animate-in fade-in duration-300">
-                  <div className="bg-slate-800/60 border border-slate-700 px-4 py-3 rounded-2xl rounded-bl-none">
+                <div className="flex gap-3 justify-start">
+                  <div className="bg-neutral-900/30 backdrop-blur-sm border border-neutral-800/50 px-4 py-3 rounded-lg rounded-bl-none">
                     <div className="flex items-center gap-2">
-                      <Loader2 size={16} className="animate-spin text-purple-400" />
-                      <span className="text-sm text-slate-300 font-medium">Grok thinking...</span>
+                      <Loader2 size={14} className="animate-spin text-[#d9aaef]" />
+                      <span className="text-xs text-neutral-400 font-mono">grok thinking</span>
                     </div>
                   </div>
                 </div>
@@ -469,9 +433,9 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
           )}
         </div>
 
-        {/* Chat Input */}
-        <div className="border-t border-slate-700 pt-4 sticky bottom-0 bg-slate-950">
-          <div className="flex gap-2">
+        {/* Input */}
+        <div className="border-t border-neutral-800/50 pt-4">
+          <div className="flex gap-3">
             <input
               type="text"
               value={chatInput}
@@ -482,19 +446,19 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
                   handleSendMessage();
                 }
               }}
-              placeholder="Ask about stages or your practice..."
-              className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+              placeholder="ask grok..."
+              className="flex-1 px-4 py-2.5 bg-neutral-900/30 backdrop-blur-sm border border-neutral-800/50 rounded-lg text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-[#d9aaef]/50 focus:ring-1 focus:ring-[#d9aaef]/20 transition-all text-sm"
               disabled={isLoadingResponse}
             />
             <button
               onClick={handleSendMessage}
               disabled={!chatInput.trim() || isLoadingResponse}
-              className="px-4 py-3 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-xl transition-all font-medium hover:shadow-lg hover:shadow-purple-500/25 disabled:shadow-none"
+              className="px-4 py-2.5 bg-[#d9aaef]/20 border border-[#d9aaef]/40 text-[#d9aaef] rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#d9aaef]/30 hover:border-[#d9aaef]/60 hover:shadow-[0_4px_16px_rgba(217,170,239,0.15)]"
             >
               {isLoadingResponse ? (
-                <Loader2 size={20} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" />
               ) : (
-                <Send size={20} />
+                <Send size={16} />
               )}
             </button>
           </div>
@@ -507,89 +471,85 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
     if (session.stageHistory.length === 0) {
       return (
         <div className="text-center py-16">
-          <div className="w-16 h-16 mx-auto mb-6 bg-slate-700/20 rounded-full flex items-center justify-center">
-            <History size={32} className="text-slate-500" />
-          </div>
-          <p className="text-slate-400 text-sm">
-            No history yet. Start marking stages as you progress!
+          <History size={32} className="text-neutral-600 mx-auto mb-4" />
+          <p className="text-neutral-400 text-sm">
+            No history yet. Mark stages to start tracking your progress.
           </p>
         </div>
       );
     }
 
     return (
-      <div className="space-y-4 pb-20">
+      <div className="pb-20">
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-b from-slate-950 via-slate-950 to-transparent text-center mb-6 pt-2 pb-6">
-          <h2 className="text-3xl font-black text-slate-100 mb-1">Your Journey</h2>
-          <p className="text-slate-400 text-sm">Progress through the 16 Ñanas</p>
+        <div className="sticky top-0 z-10 bg-gradient-to-b from-neutral-950 via-neutral-950 to-transparent py-6 mb-6">
+          <h2 className="text-3xl font-bold font-mono text-neutral-100 mb-1">your journey</h2>
+          <p className="text-sm text-neutral-400">progress through the ñanas</p>
         </div>
 
         {/* Timeline */}
         <div className="space-y-3">
           {session.stageHistory.map((log, idx) => {
             const stage = getStageByNumber(log.stageNumber);
-            const phaseColor = stage ? getPhaseColor(stage.phase) : '';
             const isLatest = idx === 0;
 
             return (
               <div
                 key={`${log.dateNoted}-${idx}`}
-                className={`
-                  relative group animate-in fade-in slide-in-from-right-4 duration-300
-                  ${isLatest ? 'ring-2 ring-purple-500/50' : ''}
-                `}
+                className="relative"
               >
-                {/* Timeline connector */}
+                {/* Vertical line connector */}
                 {idx < session.stageHistory.length - 1 && (
-                  <div className="absolute left-5 top-12 w-1 h-8 bg-gradient-to-b from-slate-700 to-slate-800" />
+                  <div className="absolute left-[19px] top-16 w-0.5 h-8 bg-neutral-800/50" />
                 )}
 
-                <div className="bg-gradient-to-br from-slate-800/50 to-slate-800/20 border border-slate-700 rounded-xl p-4 hover:bg-gradient-to-br hover:from-slate-800/70 hover:to-slate-800/40 transition-all">
-                  <div className="flex gap-4">
-                    {/* Timeline dot */}
-                    <div className="flex flex-col items-center pt-1">
-                      <div className={`
-                        w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
-                        ${isLatest
-                          ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white ring-2 ring-purple-500/50 ring-offset-2 ring-offset-slate-800'
-                          : 'bg-slate-700 text-slate-300'
-                        }
-                      `}>
-                        {log.stageNumber}
-                      </div>
+                <div className="flex gap-5">
+                  {/* Timeline marker */}
+                  <div className="flex flex-col items-center pt-2 flex-shrink-0">
+                    <div className={`
+                      w-10 h-10 rounded-lg border font-mono text-sm font-bold flex items-center justify-center
+                      ${isLatest
+                        ? 'bg-[#d9aaef]/20 border-[#d9aaef]/50 text-[#d9aaef]'
+                        : 'bg-green-600/20 border-green-600/50 text-green-500'
+                      }
+                    `}>
+                      {log.stageNumber}
                     </div>
+                  </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <h3 className="text-slate-100 font-bold">
+                  {/* Content Card */}
+                  <div className={`
+                    flex-1 p-4 rounded-lg backdrop-blur-sm border transition-all duration-300
+                    ${isLatest
+                      ? 'bg-[#d9aaef]/10 border-[#d9aaef]/40'
+                      : 'bg-neutral-900/30 border-neutral-800/50'
+                    }
+                  `}>
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="text-neutral-100 font-medium">
                           {log.stageName}
                         </h3>
                         {isLatest && (
-                          <span className="text-purple-400 text-xs font-bold px-2 py-1 bg-purple-500/20 rounded">
-                            Latest
-                          </span>
+                          <p className="text-xs text-[#d9aaef] font-mono mt-1">latest</p>
                         )}
                       </div>
-
-                      <div className="flex flex-wrap gap-2 mb-2 text-xs">
-                        {log.cycleNumber !== undefined && log.cycleNumber >= 0 && (
-                          <div className="px-2 py-1 bg-emerald-500/20 border border-emerald-500/40 rounded text-emerald-400 font-medium">
-                            🔄 Cycle {log.cycleNumber}
-                          </div>
-                        )}
-                        <div className="px-2 py-1 bg-slate-700/50 rounded text-slate-400">
-                          📅 {new Date(log.dateNoted).toLocaleDateString()} at {new Date(log.dateNoted).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </div>
-                      </div>
-
-                      {log.notes && (
-                        <p className="text-slate-400 text-sm italic mt-2 p-2 bg-slate-900/40 rounded border-l-2 border-slate-600">
-                          "{log.notes}"
-                        </p>
-                      )}
+                      <p className="text-xs text-neutral-500 font-mono">
+                        {new Date(log.dateNoted).toLocaleDateString()} {new Date(log.dateNoted).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </p>
                     </div>
+
+                    {log.cycleNumber !== undefined && log.cycleNumber >= 0 && (
+                      <p className="text-xs text-neutral-400 font-mono mb-2">
+                        cycle {log.cycleNumber}
+                      </p>
+                    )}
+
+                    {log.notes && (
+                      <p className="text-sm text-neutral-300 italic mt-2">
+                        {log.notes}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -601,66 +561,69 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-neutral-950 z-50 flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-900 border-b-2 border-slate-800 px-6 py-4 flex justify-between items-center">
+      <div className="border-b border-neutral-800/50 px-8 py-6 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-black text-slate-100">Insight Practice Map</h1>
-          <p className="text-slate-400 text-xs mt-0.5">Progress of Insight (16 Ñanas)</p>
+          <h1 className="text-2xl font-bold font-mono text-neutral-100">insight practice map</h1>
+          <p className="text-xs text-neutral-500 mt-1">mahasi sayadaw progress of insight</p>
         </div>
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-200 transition-colors p-2 hover:bg-slate-800 rounded-lg"
+          className="text-neutral-600 hover:text-neutral-400 transition-colors p-1.5"
         >
           <X size={24} />
         </button>
       </div>
 
-      {/* View Mode Tabs */}
-      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex gap-2">
+      {/* Tabs */}
+      <div className="border-b border-neutral-800/50 px-8 py-4 flex gap-6">
         <button
           onClick={() => setViewMode('map')}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all
+            flex items-center gap-2 px-3 py-2 text-sm font-mono font-medium transition-all duration-300
+            border-b-2 -mb-4 pb-4
             ${viewMode === 'map'
-              ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/25'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-800/80 hover:text-slate-300'
+              ? 'border-[#d9aaef] text-[#d9aaef]'
+              : 'border-transparent text-neutral-600 hover:text-neutral-400'
             }
           `}
         >
-          <Map size={18} />
-          <span>Map</span>
+          <Map size={16} />
+          <span>map</span>
         </button>
         <button
           onClick={() => setViewMode('chat')}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all
+            flex items-center gap-2 px-3 py-2 text-sm font-mono font-medium transition-all duration-300
+            border-b-2 -mb-4 pb-4
             ${viewMode === 'chat'
-              ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/25'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-800/80 hover:text-slate-300'
+              ? 'border-[#d9aaef] text-[#d9aaef]'
+              : 'border-transparent text-neutral-600 hover:text-neutral-400'
             }
           `}
         >
-          <MessageCircle size={18} />
-          <span>Ask Grok</span>
+          <MessageCircle size={16} />
+          <span>ask grok</span>
         </button>
         <button
           onClick={() => setViewMode('history')}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all
+            flex items-center gap-2 px-3 py-2 text-sm font-mono font-medium transition-all duration-300
+            border-b-2 -mb-4 pb-4
             ${viewMode === 'history'
-              ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/25'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-800/80 hover:text-slate-300'
+              ? 'border-[#d9aaef] text-[#d9aaef]'
+              : 'border-transparent text-neutral-600 hover:text-neutral-400'
             }
           `}
         >
-          <History size={18} />
-          <span>History</span>
+          <History size={16} />
+          <span>history</span>
         </button>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-slate-950 to-slate-950">
+      <div className="flex-1 overflow-y-auto p-8">
         {viewMode === 'map' && renderStageList()}
         {viewMode === 'chat' && renderChatbot()}
         {viewMode === 'history' && renderHistory()}
@@ -669,10 +632,10 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
       {/* Stage Detail Modal */}
       {selectedStage && renderStageDetail()}
 
-      {/* Info Footer */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-900 border-t-2 border-slate-800 px-6 py-3">
-        <p className="text-slate-500 text-xs text-center font-medium">
-          🧘 Based on Mahasi Sayadaw's Progress of Insight • Maps are not the territory
+      {/* Footer */}
+      <div className="border-t border-neutral-800/50 px-8 py-4">
+        <p className="text-neutral-600 text-xs text-center font-mono">
+          maps are not the territory
         </p>
       </div>
     </div>

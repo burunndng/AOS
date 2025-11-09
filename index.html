@@ -190,10 +190,29 @@
           borderColor: {
             'base': 'var(--border-base)',
             'hover': 'var(--border-hover)',
+          },
+          gridTemplateColumns: {
+            '3.5': 'repeat(3.5, minmax(0, 1fr))',
           }
         }
       }
     }
+    
+    // Add touch target styles for mobile accessibility
+    const accessibilityStyle = document.createElement('style');
+    accessibilityStyle.innerHTML = `
+      .touch-target {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      
+      @media (max-width: 767px) {
+        .grid-cols-3\\.5 {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+    `;
+    document.head.appendChild(accessibilityStyle);
     </script>
   <script type="importmap">
 {

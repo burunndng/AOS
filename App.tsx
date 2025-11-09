@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 import NavSidebar from './components/NavSidebar.tsx';
 import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 import LoadingFallback, { TabLoadingFallback, WizardLoadingFallback, ModalLoadingFallback } from './components/LoadingFallback.tsx';
+import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 
 // Lazy-loaded Core Enhancements
 const Coach = lazy(() => import('./components/Coach.tsx'));
@@ -188,11 +189,24 @@ export default function App() {
   // Flabbergaster Easter Egg
   const [isFlabbergasterPortalOpen, setIsFlabbergasterPortalOpen] = useLocalStorage<boolean>('isFlabbergasterPortalOpen', false);
   const [hasUnlockedFlabbergaster, setHasUnlockedFlabbergaster] = useLocalStorage<boolean>('hasUnlockedFlabbergaster', false);
+  const [hasDiscoveredHiddenMode, setHasDiscoveredHiddenMode] = useLocalStorage<boolean>('hasDiscoveredHiddenMode', false);
 
   const onSummonFlabbergaster = () => {
-    setIsFlabbergasterPortalOpen(prev => !prev);
+    console.log('🌑 onSummonFlabbergaster called! Current state:', isFlabbergasterPortalOpen);
+    setIsFlabbergasterPortalOpen(prev => {
+      console.log('🌑 Toggling portal state from', prev, 'to', !prev);
+      return !prev;
+    });
     if (!hasUnlockedFlabbergaster) {
       setHasUnlockedFlabbergaster(true);
+      console.log('🌑 Marked Flabbergaster as unlocked');
+    }
+  };
+
+  const onHiddenModeDiscovered = () => {
+    if (!hasDiscoveredHiddenMode) {
+      setHasDiscoveredHiddenMode(true);
+      console.log('🌈 Prismatic Flux mode discovered!');
     }
   };
 
@@ -845,9 +859,6 @@ export default function App() {
           <IntegralBodyArchitectWizard
             onClose={() => setActiveWizard(null)}
             onSave={handleSaveIntegralBodyPlan}
-            onLaunchSomaticPractice={(practiceIntent: string) => {
-              setActiveWizard('somatic');
-            }}
             personalizationSummary={currentPersonalizationSummary}
           />
         );
@@ -929,6 +940,11 @@ export default function App() {
       <Suspense fallback={<WizardLoadingFallback />}>
         {renderActiveWizard()}
       </Suspense>
+      <FlabbergasterPortal
+        isOpen={isFlabbergasterPortalOpen}
+        onClose={() => setIsFlabbergasterPortalOpen(false)}
+        onHiddenModeDiscovered={onHiddenModeDiscovered}
+      />
     </div>
   );
 }

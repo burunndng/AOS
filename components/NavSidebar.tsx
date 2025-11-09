@@ -82,6 +82,7 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
         e.stopPropagation();
         const newCount = clickCount + 1;
         setClickCount(newCount);
+        console.log(`✦ Flabbergaster spark clicked: ${newCount}/3`);
 
         // Reset click count if threshold time exceeded
         if (clickTimerRef.current) {
@@ -90,6 +91,7 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
 
         if (newCount === 3) {
             // Triple-click detected
+            console.log('🌑 FLABBERGASTER SUMMONED!');
             onSummonFlabbergaster();
             setClickCount(0);
         } else {
@@ -114,7 +116,7 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
                 {/* FIX: MerkabaIcon now accepts 'size' prop for explicit sizing. */}
                 <div className="relative">
                     <MerkabaIcon className="text-accent group-hover:animate-spin drop-shadow-lg" size={28} style={{transition: 'all 0.3s ease'}} />
-                    {/* Flabbergaster Spark Trigger - Ultra-subtle hidden easter egg */}
+                    {/* Flabbergaster Spark Trigger - Visible easter egg (will be made subtle after testing) */}
                     <button
                         onClick={handleSparkClick}
                         onKeyDown={(e) => {
@@ -123,11 +125,12 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
                                 handleSparkClick(e as any);
                             }
                         }}
-                        className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full opacity-60 hover:opacity-100 transition-opacity duration-300 animate-pulse"
+                        className="absolute -top-2 -right-2 w-5 h-5 rounded-full opacity-90 hover:opacity-100 transition-all duration-200 animate-pulse cursor-pointer"
                         style={{
                             background: 'linear-gradient(135deg, rgb(217, 170, 239), rgb(255, 215, 0))',
-                            animation: 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                            boxShadow: '0 0 8px rgba(217, 170, 239, 0.8)'
+                            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                            boxShadow: '0 0 12px rgba(217, 170, 239, 1), 0 0 24px rgba(255, 215, 0, 0.6), inset 0 0 4px rgba(255, 255, 255, 0.5)',
+                            border: '2px solid rgba(255, 255, 255, 0.4)'
                         }}
                         aria-label="Flabbergaster spark (triple-click to unlock)"
                         title={hasUnlockedFlabbergaster ? "🗝️ Flabbergaster Portal" : ""}
