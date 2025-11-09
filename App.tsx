@@ -5,7 +5,6 @@ import { Menu, X } from 'lucide-react';
 import NavSidebar from './components/NavSidebar.tsx';
 import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 import LoadingFallback, { TabLoadingFallback, WizardLoadingFallback, ModalLoadingFallback } from './components/LoadingFallback.tsx';
-import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 
 // Lazy-loaded Core Enhancements
 const Coach = lazy(() => import('./components/Coach.tsx'));
@@ -1001,17 +1000,13 @@ export default function App() {
           <GuidedPracticeGenerator isOpen={isGuidedPracticeGeneratorOpen} onClose={() => setIsGuidedPracticeGeneratorOpen(false)} onLogPractice={() => alert('Practice logged!')} />
         </Suspense>
       )}
-      <FlabbergasterPortal 
-        isOpen={isFlabbergasterPortalOpen} 
-        onClose={() => setIsFlabbergasterPortalOpen(false)} 
-        hasUnlocked={hasUnlockedFlabbergaster}
-      />
       <Suspense fallback={<WizardLoadingFallback />}>
         {renderActiveWizard()}
       </Suspense>
       <FlabbergasterPortal
         isOpen={isFlabbergasterPortalOpen}
         onClose={() => setIsFlabbergasterPortalOpen(false)}
+        hasUnlocked={hasUnlockedFlabbergaster}
         onHiddenModeDiscovered={onHiddenModeDiscovered}
       />
     </div>
