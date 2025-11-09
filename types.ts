@@ -916,3 +916,39 @@ export interface PlanProgressByDay {
   };
 }
 
+// Personalization & Adaptive Tuning Types
+export interface AdjustmentDirective {
+  type: 'intensity-nudge' | 'yin-duration' | 'yang-spacing' | 'practice-swap' | 'time-shift' | 'recovery-boost' | 'load-reduction' | 'load-increase';
+  description: string;
+  rationale: string;
+  impact: 'high' | 'medium' | 'low';
+  confidence: number; // 0-100
+}
+
+export interface InferredPreference {
+  type: 'preferred-time' | 'high-compliance-modality' | 'low-compliance-modality' | 'energy-pattern' | 'blocker-pattern' | 'intensity-tolerance';
+  value: string;
+  frequency: number; // Times observed in history
+  compliance?: number; // Compliance rate for this preference
+  notes?: string;
+}
+
+export interface PersonalizationSummary {
+  planCount: number;
+  analysisPeriodDays: number;
+  timeWeightedAverage: {
+    workoutCompliance: number;
+    yinCompliance: number;
+    averageIntensity: number;
+    averageEnergy: number;
+  };
+  adjustmentDirectives: AdjustmentDirective[];
+  inferredPreferences: InferredPreference[];
+  commonBlockers: string[];
+  bestPerformingDayPatterns: string[];
+  recommendedIntensityLevel: 'low' | 'moderate' | 'high';
+  recommendedYinDuration: number; // minutes per day
+  recommendedRecoveryDays: number;
+  summary: string; // Human-readable summary of personalization insights
+}
+

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 
 // Core Components (always loaded)
 import NavSidebar from './components/NavSidebar.tsx';
@@ -77,7 +77,8 @@ import {
   BigMindSession,
   IntegralBodyPlan,
   PlanHistoryEntry,
-  PlanProgressByDay
+  PlanProgressByDay,
+  PersonalizationSummary
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -86,6 +87,7 @@ import { practices as corePractices, starterStacks, modules } from './constants.
 import * as geminiService from './services/geminiService.ts';
 import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
+import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -154,6 +156,7 @@ export default function App() {
   // Plan History State
   const [integralBodyPlanHistory, setIntegralBodyPlanHistory] = useLocalStorage<PlanHistoryEntry[]>('integralBodyPlanHistory', []);
   const [planProgressByDay, setPlanProgressByDay] = useLocalStorage<PlanProgressByDay>('planProgressByDay', {});
+  const [currentPersonalizationSummary, setCurrentPersonalizationSummary] = useState<PersonalizationSummary | null>(null);
   
   // AI-generated data
   const [recommendations, setRecommendations] = useState<string[]>([]);
@@ -539,6 +542,34 @@ export default function App() {
   }, []);
 
 
+  const generatePersonalizationSummary = useCallback(() => {
+    const personalizationSummary = analyzeHistoryAndPersonalize(integralBodyPlanHistory);
+    setCurrentPersonalizationSummary(personalizationSummary);
+    
+    // Log personalization insights in dev mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📊 Personalization Analysis:', {
+        planCount: personalizationSummary.planCount,
+        analysisPeriodDays: personalizationSummary.analysisPeriodDays,
+        timeWeightedCompliance: {
+          workouts: personalizationSummary.timeWeightedAverage.workoutCompliance.toFixed(1) + '%',
+          yinPractices: personalizationSummary.timeWeightedAverage.yinCompliance.toFixed(1) + '%',
+        },
+        adjustmentDirectives: personalizationSummary.adjustmentDirectives.map(d => d.description),
+        inferredPreferences: personalizationSummary.inferredPreferences.map(p => `${p.type}: ${p.value}`),
+      });
+    }
+    
+    return personalizationSummary;
+  }, [integralBodyPlanHistory]);
+
+  // Auto-generate personalization when the Integral Body Architect wizard is opened
+  useEffect(() => {
+    if (activeWizard === 'integral-body-architect' && integralBodyPlanHistory.length > 0) {
+      generatePersonalizationSummary();
+    }
+  }, [activeWizard, integralBodyPlanHistory, generatePersonalizationSummary]);
+
   const handleSaveBigMindSession = (session: BigMindSession) => {
     setHistoryBigMind(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftBigMind(null);
@@ -816,6 +847,7 @@ export default function App() {
             onLaunchSomaticPractice={(practiceIntent: string) => {
               setActiveWizard('somatic');
             }}
+            personalizationSummary={currentPersonalizationSummary}
           />
         );
       case 'insight-practice-map':
