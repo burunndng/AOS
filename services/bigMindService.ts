@@ -1,10 +1,45 @@
 // services/bigMindService.ts
 import { GoogleGenAI, Type } from "@google/genai";
+import OpenAI from 'openai';
 import { BigMindSession, BigMindMessage, BigMindVoice, BigMindInsightSummary, IntegratedInsight, ModuleKey } from '../types.ts';
 import { practices as corePractices } from '../constants.ts';
 
 // Initialize the Google AI client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+const googleAI = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+
+// Initialize Groq client (OpenAI-compatible)
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
+  dangerouslyAllowBrowser: true // Allow usage in browser for Vercel deployment
+});
+
+// Provider types
+export type BigMindProvider = 'google' | 'groq';
+
+// Provider configuration
+interface ProviderConfig {
+  provider: BigMindProvider;
+  model: string;
+  maxTokens?: number;
+  temperature?: number;
+}
+
+// Default provider configurations
+const PROVIDER_CONFIGS: Record<BigMindProvider, ProviderConfig> = {
+  google: {
+    provider: 'google',
+    model: 'gemini-2.5-flash-lite',
+    maxTokens: 1000,
+    temperature: 0.7
+  },
+  groq: {
+    provider: 'groq',
+    model: 'openai/gpt-oss-120b',
+    maxTokens: 1000,
+    temperature: 0.7
+  }
+};
 
 // The Big Mind™ System Prompt
 const BIG_MIND_SYSTEM_PROMPT = `You facilitate the Big Mind™ Process—a structured Zen-inspired method for exploring inner voices (sub-personalities) and shifting to the Big Mind perspective. Guide users to speak AS these voices in first person, explore their roles, then dis-identify by accessing Big Mind (the spacious, non-dual awareness that observes all parts). Your role is neutral facilitation: use curiosity and mirroring to evoke direct experience. No advice, interpretation, diagnosis, or therapy. Never label or assume a user's emotion/comment as a "voice" without their explicit invitation. The user accesses their own wisdom through this structured inquiry—let them lead the topic.
@@ -98,6 +133,7 @@ interface BigMindResponseResult {
  * @param options.activeVoice - Name of the currently speaking voice
  * @param options.voices - All identified voices in the session
  * @param options.onStreamChunk - Callback for streaming chunks
+ * @param options.provider - AI provider to use ('google' or 'groq')
  */
 export async function generateBigMindResponse(options: {
   conversation: BigMindMessage[];
@@ -105,9 +141,10 @@ export async function generateBigMindResponse(options: {
   activeVoice?: string;
   voices: BigMindVoice[];
   onStreamChunk?: (chunk: string) => void;
+  provider?: BigMindProvider;
 }): Promise<BigMindResponseResult> {
   try {
-    const { conversation, stage, activeVoice, voices, onStreamChunk } = options;
+    const { conversation, stage, activeVoice, voices, onStreamChunk, provider = 'google' } = options;
 
     // Build stage-specific instructions
     const stageInstructions = getStageInstructions(stage, voices, activeVoice);
@@ -132,9 +169,35 @@ ${activeVoice ? `The user is now speaking as: "${activeVoice}"` : ''}
 
 Respond as the Guide. Keep your response to 1-3 sentences, focused on the current stage and the user's needs.`;
 
+    const config = PROVIDER_CONFIGS[provider];
+
+    // Use the selected provider
+    if (provider === 'groq') {
+      return await generateGroqResponse(userPrompt, onStreamChunk);
+    } else {
+      return await generateGoogleResponse(userPrompt, onStreamChunk);
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      success: false,
+      text: '',
+      error: `Failed to generate response: ${errorMessage}`
+    };
+  }
+}
+
+/**
+ * Generate response using Google's Gemini API
+ */
+async function generateGoogleResponse(
+  userPrompt: string,
+  onStreamChunk?: (chunk: string) => void
+): Promise<BigMindResponseResult> {
+  try {
     // Use streaming if callback provided
     if (onStreamChunk) {
-      const stream = await ai.models.generateContentStream({
+      const stream = await googleAI.models.generateContentStream({
         model: 'gemini-2.5-flash-lite',
         systemInstruction: BIG_MIND_SYSTEM_PROMPT,
         contents: userPrompt,
@@ -149,7 +212,7 @@ Respond as the Guide. Keep your response to 1-3 sentences, focused on the curren
       return { success: true, text: fullText };
     } else {
       // Fallback to non-streaming if no callback
-      const response = await ai.models.generateContent({
+      const response = await googleAI.models.generateContent({
         model: 'gemini-2.5-flash-lite',
         systemInstruction: BIG_MIND_SYSTEM_PROMPT,
         contents: userPrompt,
@@ -161,7 +224,68 @@ Respond as the Guide. Keep your response to 1-3 sentences, focused on the curren
     return {
       success: false,
       text: '',
-      error: `Failed to generate response: ${errorMessage}`
+      error: `Google API error: ${errorMessage}`
+    };
+  }
+}
+
+/**
+ * Generate response using Groq API (OpenAI-compatible)
+ */
+async function generateGroqResponse(
+  userPrompt: string,
+  onStreamChunk?: (chunk: string) => void
+): Promise<BigMindResponseResult> {
+  try {
+    // Prepare messages for OpenAI format
+    const messages = [
+      {
+        role: 'system' as const,
+        content: BIG_MIND_SYSTEM_PROMPT
+      },
+      {
+        role: 'user' as const,
+        content: userPrompt
+      }
+    ];
+
+    // Use streaming if callback provided
+    if (onStreamChunk) {
+      const stream = await groq.chat.completions.create({
+        model: 'openai/gpt-oss-120b',
+        messages,
+        max_tokens: 1000,
+        temperature: 0.7,
+        stream: true,
+      });
+
+      let fullText = '';
+      for await (const chunk of stream) {
+        const text = chunk.choices[0]?.delta?.content || '';
+        fullText += text;
+        if (text) {
+          onStreamChunk(text);
+        }
+      }
+      return { success: true, text: fullText };
+    } else {
+      // Fallback to non-streaming if no callback
+      const response = await groq.chat.completions.create({
+        model: 'openai/gpt-oss-120b',
+        messages,
+        max_tokens: 1000,
+        temperature: 0.7,
+      });
+      
+      const text = response.choices[0]?.message?.content || '';
+      return { success: true, text };
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      success: false,
+      text: '',
+      error: `Groq API error: ${errorMessage}`
     };
   }
 }
@@ -202,7 +326,8 @@ Offer brief appreciation and summarize 2-3 key insights. Ask how they're feeling
 export async function summarizeBigMindSession(
   session: BigMindSession,
   practiceStack: string[],
-  completionHistory: Record<string, string[]>
+  completionHistory: Record<string, string[]>,
+  provider: BigMindProvider = 'google'
 ): Promise<BigMindInsightSummary> {
   try {
     // Extract voice names
@@ -234,35 +359,59 @@ Please provide a JSON response with:
 
 Return ONLY valid JSON.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: summarizationPrompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            primaryVoices: { type: Type.ARRAY, items: { type: Type.STRING } },
-            witnessPerspective: { type: Type.STRING },
-            integrationCommitments: { type: Type.ARRAY, items: { type: Type.STRING } },
-            recommendedPractices: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  practiceName: { type: Type.STRING },
-                  rationale: { type: Type.STRING }
-                },
-                required: ['practiceName', 'rationale']
-              }
-            }
+    let responseText: string;
+    
+    if (provider === 'groq') {
+      // Use Groq for summarization
+      const groqResponse = await groq.chat.completions.create({
+        model: 'openai/gpt-oss-120b',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant that analyzes Big Mind Process sessions and returns structured JSON insights.'
           },
-          required: ['primaryVoices', 'witnessPerspective', 'integrationCommitments', 'recommendedPractices']
+          {
+            role: 'user',
+            content: summarizationPrompt
+          }
+        ],
+        max_tokens: 1500,
+        temperature: 0.3,
+      });
+      responseText = groqResponse.choices[0]?.message?.content || '{}';
+    } else {
+      // Use Google for summarization
+      const googleResponse = await googleAI.models.generateContent({
+        model: 'gemini-2.5-flash-lite',
+        contents: summarizationPrompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              primaryVoices: { type: Type.ARRAY, items: { type: Type.STRING } },
+              witnessPerspective: { type: Type.STRING },
+              integrationCommitments: { type: Type.ARRAY, items: { type: Type.STRING } },
+              recommendedPractices: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    practiceName: { type: Type.STRING },
+                    rationale: { type: Type.STRING }
+                  },
+                  required: ['practiceName', 'rationale']
+                }
+              }
+            },
+            required: ['primaryVoices', 'witnessPerspective', 'integrationCommitments', 'recommendedPractices']
+          }
         }
-      }
-    });
+      });
+      responseText = googleResponse.text;
+    }
 
-    const parsed = JSON.parse(response.text);
+    const parsed = JSON.parse(responseText);
 
     // Map practice names to IDs and check if they're in the stack
     const recommendedWithIds = parsed.recommendedPractices.map((rec: any) => ({
@@ -336,6 +485,47 @@ export function createBigMindIntegratedInsight(
     dateCreated: new Date().toISOString(),
     status: 'pending'
   };
+}
+
+/**
+ * Get available providers and their status
+ */
+export function getAvailableProviders(): { provider: BigMindProvider; available: boolean; error?: string }[] {
+  const providers: { provider: BigMindProvider; available: boolean; error?: string }[] = [];
+  
+  // Check Google provider
+  if (process.env.API_KEY) {
+    providers.push({ provider: 'google', available: true });
+  } else {
+    providers.push({ provider: 'google', available: false, error: 'API_KEY environment variable not set' });
+  }
+  
+  // Check Groq provider
+  if (process.env.GROQ_API_KEY) {
+    providers.push({ provider: 'groq', available: true });
+  } else {
+    providers.push({ provider: 'groq', available: false, error: 'GROQ_API_KEY environment variable not set' });
+  }
+  
+  return providers;
+}
+
+/**
+ * Get the best available provider (prefers Groq for speed)
+ */
+export function getBestProvider(): BigMindProvider {
+  const providers = getAvailableProviders();
+  const available = providers.filter(p => p.available);
+  
+  // Prefer Groq if available (faster), otherwise use Google
+  if (available.some(p => p.provider === 'groq')) {
+    return 'groq';
+  } else if (available.some(p => p.provider === 'google')) {
+    return 'google';
+  }
+  
+  // Fallback to Google even if API key might be missing
+  return 'google';
 }
 
 /**

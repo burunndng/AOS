@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BigMindSession, BigMindMessage, BigMindVoice, BigMindStage, IntegratedInsight } from '../types.ts';
-import { X, ArrowLeft, ArrowRight, Lightbulb, Plus, Send } from 'lucide-react';
-import { generateBigMindResponse, summarizeBigMindSession, getDefaultVoices, createBigMindIntegratedInsight } from '../services/bigMindService.ts';
+import { X, ArrowLeft, ArrowRight, Lightbulb, Plus, Send, Settings, Zap } from 'lucide-react';
+import { generateBigMindResponse, summarizeBigMindSession, getDefaultVoices, createBigMindIntegratedInsight, getAvailableProviders, getBestProvider, BigMindProvider } from '../services/bigMindService.ts';
 import * as ragService from '../services/ragService.ts';
 
 interface BigMindProcessWizardProps {
@@ -64,6 +64,8 @@ export default function BigMindProcessWizard({
   const [ragSyncing, setRagSyncing] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<BigMindProvider>(() => getBestProvider());
+  const [showProviderSettings, setShowProviderSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const currentStage = STAGE_ORDER[currentStageIndex] || 'VOICE_ID';
@@ -120,6 +122,7 @@ export default function BigMindProcessWizard({
       stage: currentStage,
       activeVoice: selectedVoice,
       voices: session.voices || [],
+      provider: selectedProvider,
       onStreamChunk: (chunk) => {
         streamedText += chunk;
         // Update the UI with streaming chunks
@@ -185,7 +188,8 @@ export default function BigMindProcessWizard({
           const summary = await summarizeBigMindSession(
             session as BigMindSession,
             practiceStack,
-            completionHistory
+            completionHistory,
+            selectedProvider
           );
 
           setSession(prev => ({
@@ -329,6 +333,14 @@ export default function BigMindProcessWizard({
           <div className="flex flex-col h-full space-y-4">
             {/* Conversation pane */}
             <div className="flex-1 overflow-y-auto space-y-4 bg-slate-900/50 rounded-md p-4">
+              {/* Provider indicator */}
+              <div className="flex justify-center">
+                <div className="bg-slate-700/60 border border-slate-600 rounded-full px-3 py-1 text-xs text-slate-400 flex items-center gap-1">
+                  {selectedProvider === 'groq' ? <Zap size={10} /> : null}
+                  Using {selectedProvider === 'groq' ? 'Groq' : 'Google'} AI
+                </div>
+              </div>
+              
               {(session.messages || []).length === 0 ? (
                 <p className="text-slate-400 text-center py-8">
                   Start the conversation by sharing what's alive for you...
@@ -490,11 +502,55 @@ export default function BigMindProcessWizard({
       <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh]">
         {/* Header */}
         <header className="p-4 border-b border-slate-700 flex justify-between items-center">
-          <h2 className="text-2xl font-bold font-mono tracking-tight text-amber-300">Big Mind Process</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold font-mono tracking-tight text-amber-300">Big Mind Process</h2>
+            <button
+              onClick={() => setShowProviderSettings(!showProviderSettings)}
+              className="text-slate-400 hover:text-slate-200 p-1 rounded hover:bg-slate-700/50 transition"
+              title="AI Provider Settings"
+            >
+              <Settings size={18} />
+            </button>
+          </div>
           <button onClick={() => onClose(session)} className="text-slate-500 hover:text-slate-300">
             <X size={24} />
           </button>
         </header>
+
+        {/* Provider Settings */}
+        {showProviderSettings && (
+          <div className="px-4 py-3 bg-slate-700/30 border-b border-slate-600">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-slate-300">AI Provider:</span>
+              <div className="flex gap-2">
+                {getAvailableProviders().map(({ provider, available, error }) => (
+                  <button
+                    key={provider}
+                    onClick={() => available && setSelectedProvider(provider)}
+                    disabled={!available}
+                    className={`px-3 py-1 rounded text-sm font-medium transition ${
+                      selectedProvider === provider
+                        ? 'bg-amber-500 text-slate-900'
+                        : available
+                        ? 'bg-slate-600 text-slate-200 hover:bg-slate-500'
+                        : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    }`}
+                    title={error || `${provider === 'groq' ? 'Fast streaming responses' : 'Google AI'}`}
+                  >
+                    <span className="flex items-center gap-1">
+                      {provider === 'groq' && <Zap size={12} />}
+                      {provider === 'groq' ? 'Groq' : 'Google'}
+                      {!available && ' (Unavailable)'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <span className="text-xs text-slate-400">
+                {selectedProvider === 'groq' ? '⚡ Fast streaming' : '🔍 Standard'}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Stage indicator */}
         <div className="px-4 pt-4 pb-0 flex items-center gap-2 overflow-x-auto">
