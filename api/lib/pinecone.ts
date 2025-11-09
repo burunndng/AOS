@@ -1,8 +1,10 @@
 /**
  * Pinecone Vector Database Client
  * Handles indexing and querying of 1536-dimensional embeddings
+ * Supports both real Pinecone (production) and mock (development)
  */
 
+import { Pinecone } from '@pinecone-database/pinecone';
 import { cosineSimilarity } from './embeddings.js';
 import type { PineconeVector, QueryResult, PineconeVectorMetadata } from './types.js';
 
@@ -15,8 +17,101 @@ interface PineconeIndexClient {
 }
 
 /**
+ * Real Pinecone Index for production
+ */
+class RealPineconeIndex implements PineconeIndexClient {
+  private index: any; // Pinecone Index type
+
+  constructor(index: any) {
+    this.index = index;
+  }
+
+  async upsert(vectors: PineconeVector[]): Promise<number> {
+    try {
+      // Convert to Pinecone format (id, values, metadata)
+      const pineconeVectors = vectors.map((v) => ({
+        id: v.id,
+        values: v.values,
+        metadata: v.metadata,
+      }));
+
+      await this.index.upsert(pineconeVectors);
+      console.log(`[Pinecone] Upserted ${vectors.length} vectors to real index`);
+      return vectors.length;
+    } catch (error) {
+      console.error('[Pinecone] Error upserting vectors:', error);
+      throw error;
+    }
+  }
+
+  async query(
+    embedding: number[],
+    topK: number = 5,
+    filter?: Record<string, any>,
+  ): Promise<QueryResult[]> {
+    try {
+      const queryRequest: any = {
+        vector: embedding,
+        topK,
+      };
+
+      if (filter) {
+        queryRequest.filter = filter;
+      }
+
+      const results = await this.index.query(queryRequest);
+
+      return (results.matches || []).map((match: any) => ({
+        id: match.id,
+        score: match.score,
+        metadata: match.metadata as PineconeVectorMetadata,
+      }));
+    } catch (error) {
+      console.error('[Pinecone] Error querying vectors:', error);
+      throw error;
+    }
+  }
+
+  async fetch(ids: string[]): Promise<PineconeVector[]> {
+    try {
+      const results = await this.index.fetch(ids);
+      return Object.values(results.records || {}).map((record: any) => ({
+        id: record.id,
+        values: record.values,
+        metadata: record.metadata as PineconeVectorMetadata,
+      }));
+    } catch (error) {
+      console.error('[Pinecone] Error fetching vectors:', error);
+      throw error;
+    }
+  }
+
+  async delete(ids: string[]): Promise<void> {
+    try {
+      await this.index.deleteOne(ids);
+      console.log(`[Pinecone] Deleted ${ids.length} vectors from real index`);
+    } catch (error) {
+      console.error('[Pinecone] Error deleting vectors:', error);
+      throw error;
+    }
+  }
+
+  async describeIndexStats(): Promise<{ vectorCount: number; totalVectorCount: number }> {
+    try {
+      const stats = await this.index.describeIndexStats();
+      return {
+        vectorCount: stats.totalVectorCount || 0,
+        totalVectorCount: stats.totalVectorCount || 0,
+      };
+    } catch (error) {
+      console.error('[Pinecone] Error getting index stats:', error);
+      throw error;
+    }
+  }
+}
+
+/**
  * Mock Pinecone Index for development
- * In production, use @pinecone-database/pinecone package
  */
 class MockPineconeIndex implements PineconeIndexClient {
   private vectors: Map<string, PineconeVector> = new Map();
@@ -26,7 +121,7 @@ class MockPineconeIndex implements PineconeIndexClient {
     for (const vector of vectors) {
       this.vectors.set(vector.id, vector);
     }
-    console.log(`[Pinecone] Upserted ${vectors.length} vectors`);
+    console.log(`[Pinecone] Upserted ${vectors.length} vectors (mock)`);
     return vectors.length;
   }
 
@@ -65,7 +160,7 @@ class MockPineconeIndex implements PineconeIndexClient {
     for (const id of ids) {
       this.vectors.delete(id);
     }
-    console.log(`[Pinecone] Deleted ${ids.length} vectors`);
+    console.log(`[Pinecone] Deleted ${ids.length} vectors (mock)`);
   }
 
   async describeIndexStats(): Promise<{ vectorCount: number; totalVectorCount: number }> {
@@ -90,12 +185,32 @@ class MockPineconeIndex implements PineconeIndexClient {
 let indexInstance: PineconeIndexClient | null = null;
 
 /**
- * Initialize Pinecone index
+ * Initialize Pinecone index - detects production credentials and uses real API
  */
 export async function initializePinecone(): Promise<PineconeIndexClient> {
   if (!indexInstance) {
-    indexInstance = new MockPineconeIndex();
-    console.log('[Pinecone] Index initialized (using mock for development)');
+    const apiKey = process.env.PINECONE_API_KEY;
+    const hostname = process.env.PINECONE_HOSTNAME;
+
+    if (apiKey && hostname) {
+      try {
+        // Use real Pinecone in production
+        const pc = new Pinecone({ apiKey });
+        const index = pc.Index(hostname);
+        indexInstance = new RealPineconeIndex(index);
+        console.log(`[Pinecone] Index initialized (using real Pinecone: ${hostname})`);
+      } catch (error) {
+        console.error('[Pinecone] Failed to initialize real Pinecone:', error);
+        console.log('[Pinecone] Falling back to mock index');
+        indexInstance = new MockPineconeIndex();
+      }
+    } else {
+      // Use mock for development
+      indexInstance = new MockPineconeIndex();
+      console.log('[Pinecone] Index initialized (using mock for development)');
+      if (!apiKey) console.log('[Pinecone] Tip: Set PINECONE_API_KEY to use real index');
+      if (!hostname) console.log('[Pinecone] Tip: Set PINECONE_HOSTNAME to use real index');
+    }
   }
   return indexInstance;
 }
