@@ -34,8 +34,8 @@ export const attachmentProfiles: Record<AttachmentStyle, AttachmentProfile> = {
     description: 'You tend to seek reassurance and fear abandonment. You may over-focus on relationships and struggle with self-soothing when alone.',
     color: 'text-orange-300',
     bodyPractices: ['physiological-sigh', 'coherent-breathing', 'cold-exposure'], // Nervous system regulation
-    mindPractices: ['attention-training', 'expressive-writing', 'subject-object-explorer'], // Self-awareness
-    spiritPractices: ['self-compassion', 'loving-kindness', 'integral-inquiry'], // Self-validation
+    mindPractices: ['attention-training', 'subject-object-explorer'], // Self-awareness
+    spiritPractices: ['self-compassion', 'loving-kindness'], // Self-validation
     shadowPractices: ['shadow-journaling', 'parts-dialogue', 'bias-detective'], // Understanding needs
   },
 
@@ -45,8 +45,8 @@ export const attachmentProfiles: Record<AttachmentStyle, AttachmentProfile> = {
     description: 'You value independence highly and may distance from emotional intimacy. You typically suppress feelings and focus on self-reliance.',
     color: 'text-blue-300',
     bodyPractices: ['resistance', 'zone2-cardio', 'mobility'], // Embodied presence
-    mindPractices: ['expressive-writing', 'perspective-taking', 'belief-examination'], // Emotional access
-    spiritPractices: ['loving-kindness', 'big-mind-process', 'meditation'], // Heart opening
+    mindPractices: ['perspective-taking', 'belief-examination'], // Emotional access
+    spiritPractices: ['loving-kindness', 'meditation'], // Heart opening
     shadowPractices: ['shadow-journaling', 'polarity-mapper', 'parts-dialogue'], // Vulnerability exploration
   },
 
@@ -56,8 +56,8 @@ export const attachmentProfiles: Record<AttachmentStyle, AttachmentProfile> = {
     description: 'You experience conflicting desires for closeness and distance. You oscillate between clinging and withdrawing, often accompanied by fear and shame.',
     color: 'text-red-300',
     bodyPractices: ['physiological-sigh', 'coherent-breathing', 'sleep'], // Foundational grounding
-    mindPractices: ['attention-training', 'subject-object-explorer', 'expressive-writing'], // Internal stability
-    spiritPractices: ['self-compassion', 'loving-kindness', 'three-two-one'], // Self-regulation
+    mindPractices: ['attention-training', 'subject-object-explorer'], // Internal stability
+    spiritPractices: ['self-compassion', 'loving-kindness'], // Self-regulation
     shadowPractices: ['shadow-journaling', 'parts-dialogue', 'perspective-shifter'], // Integrated self-perception
   },
 };
