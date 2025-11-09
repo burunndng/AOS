@@ -61,11 +61,6 @@ export async function retrievePractices(
   filters: Record<string, any> = {},
   topK: number = 5,
 ): Promise<QueryResult[]> {
-  const filter = {
-    type: 'practice',
-    ...filters,
-  };
-
   const results = await semanticSearch(embedding, {
     topK,
     type: 'practice' as const,
