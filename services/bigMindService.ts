@@ -135,7 +135,7 @@ Respond as the Guide. Keep your response to 1-3 sentences, focused on the curren
     // Use streaming if callback provided
     if (onStreamChunk) {
       const stream = await ai.models.generateContentStream({
-        model: 'learnlm-2.0-flash-experimental',
+        model: 'gemini-robotics-er-1.5-preview',
         systemInstruction: BIG_MIND_SYSTEM_PROMPT,
         contents: userPrompt,
       });
@@ -150,7 +150,7 @@ Respond as the Guide. Keep your response to 1-3 sentences, focused on the curren
     } else {
       // Fallback to non-streaming if no callback
       const response = await ai.models.generateContent({
-        model: 'learnlm-2.0-flash-experimental',
+        model: 'gemini-robotics-er-1.5-preview',
         systemInstruction: BIG_MIND_SYSTEM_PROMPT,
         contents: userPrompt,
       });
@@ -235,7 +235,7 @@ Please provide a JSON response with:
 Return ONLY valid JSON.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-robotics-er-1.5-preview',
       contents: summarizationPrompt,
       config: {
         responseMimeType: 'application/json',
