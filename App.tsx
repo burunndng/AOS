@@ -34,6 +34,7 @@ const GuidedPracticeGenerator = lazy(() => import('./components/GuidedPracticeGe
 const ThreeTwoOneWizard = lazy(() => import('./components/ThreeTwoOneWizard.tsx'));
 const IFSWizard = lazy(() => import('./components/IFSWizard.tsx'));
 const BiasDetectiveWizard = lazy(() => import('./components/BiasDetectiveWizard.tsx'));
+const BiasFinderWizard = lazy(() => import('./components/BiasFinderWizard.tsx'));
 const SubjectObjectWizard = lazy(() => import('./components/SubjectObjectWizard.tsx'));
 const PerspectiveShifterWizard = lazy(() => import('./components/PerspectiveShifterWizard.tsx'));
 const PolarityMapperWizard = lazy(() => import('./components/PolarityMapperWizard.tsx'));
@@ -58,6 +59,7 @@ import {
   IFSSession,
   IFSPart,
   BiasDetectiveSession,
+  BiasFinderSession,
   SubjectObjectSession,
   PerspectiveShifterSession,
   PolarityMap,
@@ -117,6 +119,7 @@ export default function App() {
   const [draft321, setDraft321] = useLocalStorage<Partial<ThreeTwoOneSession> | null>('draft321', null);
   const [draftIFS, setDraftIFS] = useLocalStorage<IFSSession | null>('draftIFS', null);
   const [draftBias, setDraftBias] = useLocalStorage<BiasDetectiveSession | null>('draftBias', null);
+  const [draftBiasFinder, setDraftBiasFinder] = useLocalStorage<BiasFinderSession | null>('draftBiasFinder', null);
   const [draftSO, setDraftSO] = useLocalStorage<SubjectObjectSession | null>('draftSO', null);
   const [draftPS, setDraftPS] = useLocalStorage<PerspectiveShifterSession | null>('draftPS', null);
   // FIX: Updated draftPM to use PolarityMapDraft type.
@@ -129,6 +132,7 @@ export default function App() {
   const [history321, setHistory321] = useLocalStorage<ThreeTwoOneSession[]>('history321', []);
   const [historyIFS, setHistoryIFS] = useLocalStorage<IFSSession[]>('historyIFS', []);
   const [historyBias, setHistoryBias] = useLocalStorage<BiasDetectiveSession[]>('historyBias', []);
+  const [historyBiasFinder, setHistoryBiasFinder] = useLocalStorage<BiasFinderSession[]>('historyBiasFinder', []);
   const [historySO, setHistorySO] = useLocalStorage<SubjectObjectSession[]>('historySO', []);
   const [historyPS, setHistoryPS] = useLocalStorage<PerspectiveShifterSession[]>('historyPS', []);
   const [historyPM, setHistoryPM] = useLocalStorage<PolarityMap[]>('historyPM', []);
@@ -314,7 +318,19 @@ export default function App() {
     );
     if (insight) setIntegratedInsights(prev => [...prev, insight]);
   };
-  
+
+  const handleSaveBiasFinderSession = async (session: BiasFinderSession) => {
+    setHistoryBiasFinder(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftBiasFinder(null);
+    setActiveWizard(null);
+    const biasesSummary = session.hypotheses.filter(h => h.confidence).map(h => `${h.biasName} (${h.confidence}%)`).join(', ');
+    const report = `# Bias Finder: ${session.targetDecision}\n- Biases Identified: ${biasesSummary}\n- Recommendations: ${session.diagnosticReport?.recommendations.join('; ') || 'N/A'}`;
+    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
+      'Bias Finder', session.id, report, Object.values(corePractices.shadow)
+    );
+    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+  };
+
   const handleSaveSOSession = async (session: SubjectObjectSession) => {
     setHistorySO(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftSO(null);
@@ -563,6 +579,15 @@ export default function App() {
             onSave={handleSaveBiasSession}
             session={draftBias}
             setDraft={setDraftBias}
+          />
+        );
+      case 'biasfinder':
+        return (
+          <BiasFinderWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveBiasFinderSession}
+            session={draftBiasFinder}
+            setDraft={setDraftBiasFinder}
           />
         );
       case 'so':
