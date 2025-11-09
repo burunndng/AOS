@@ -99,19 +99,20 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<Re
       const item = window.localStorage.getItem(key);
       if (!item) return initialValue;
 
-      // Try to parse as JSON, but if it fails and it's a string, use it directly
+      // Try to parse as JSON first
       try {
         return JSON.parse(item);
-      } catch (parseError) {
-        // If parsing fails and the value is a string type, return it as-is
-        // This handles legacy values that weren't JSON-stringified
-        if (typeof initialValue === 'string') {
-          return item as T;
+      } catch {
+        // If JSON.parse fails, handle legacy plain string format
+        // For userId, just return the plain string
+        if (key === 'userId') {
+          return item as unknown as T;
         }
-        throw parseError;
+        // For other keys, return initial value
+        return initialValue;
       }
     } catch (error) {
-      console.error(error);
+      console.error(`[useLocalStorage] Error with key "${key}":`, error);
       return initialValue;
     }
   });
@@ -133,10 +134,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useLocalStorage<ActiveTab>('activeTab', 'dashboard');
 
   // RAG System & User Context
-  const [userId] = useLocalStorage<string>(
-    'userId',
-    `user-${Math.random().toString(36).substr(2, 9)}`
-  );
+  const [userId] = useLocalStorage<string>('userId', (() => {
+    const newId = `user-${Math.random().toString(36).substr(2, 9)}`;
+    return newId;
+  })());
 
   // Core Data
   const [practiceStack, setPracticeStack] = useLocalStorage<AllPractice[]>('practiceStack', []);

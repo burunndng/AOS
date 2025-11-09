@@ -5,6 +5,7 @@
 
 import { generateInsightPrompt } from '../rag/generate-prompt.js';
 import { initializeDatabase, getDatabase } from '../lib/db.js';
+import { initializePinecone } from '../lib/pinecone.js';
 import type { GenerationRequest, GenerationResponse, UserSession } from '../lib/types.js';
 
 /**
@@ -18,8 +19,9 @@ export async function generateInsights(
   console.log(`[Insights] Generating insights for user: ${userId}, type: ${sessionType}`);
 
   try {
-    // Initialize database (required for serverless environment)
+    // Initialize services (required for serverless environment)
     await initializeDatabase();
+    await initializePinecone();
 
     // Store the session
     const db = getDatabase();

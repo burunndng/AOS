@@ -66,6 +66,8 @@ export default function RecommendationsTab({
         {/* Query Input */}
         <div className="mb-4">
           <input
+            id="rag-query-input"
+            name="ragQuery"
             type="text"
             placeholder="What practices would help right now? (leave blank for general recommendations)"
             value={userQuery}

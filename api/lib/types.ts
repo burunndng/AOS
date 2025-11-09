@@ -22,7 +22,7 @@ export interface PineconeVectorMetadata {
   duration?: number; // minutes
   evidence?: string[];
   roi?: string;
-  frameworks?: string[]; // frameworks associated with this practice
+  frameworks?: string[]; // frameworks linked to this practice
 
   // Framework metadata
   frameworkId?: string;
