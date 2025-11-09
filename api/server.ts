@@ -37,7 +37,7 @@ import {
 
 import {
   syncUserSession,
-  batchSyncSessions,
+  batchSyncUserSessions,
   getUserSyncStatus,
   deleteUserData,
   healthCheck as syncHealth,
@@ -243,7 +243,7 @@ userRouter.post('/sync', async (req: Request, res: Response) => {
 userRouter.post('/sync-batch', async (req: Request, res: Response) => {
   try {
     const { userId, sessions } = req.body;
-    const responses = await batchSyncSessions(
+    const responses = await batchSyncUserSessions(
       sessions.map((s: any) => ({
         userId,
         sessionData: s,
