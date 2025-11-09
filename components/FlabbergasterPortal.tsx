@@ -187,7 +187,12 @@ export default function FlabbergasterPortal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('🌑 FlabbergasterPortal: isOpen is false, not rendering');
+    return null;
+  }
+
+  console.log('🌑 FlabbergasterPortal: RENDERING MODAL - isOpen is true!');
 
   const suggestedPrompts = [
     'What lies beneath my surface?',
@@ -197,7 +202,7 @@ export default function FlabbergasterPortal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ zIndex: 9999 }}>
       <div className="w-full max-w-2xl h-[85vh] flex flex-col rounded-lg overflow-hidden border-2" style={{
         background: 'linear-gradient(135deg, #1a0a0a 0%, #2d1a1a 50%, #1a0a0a 100%)',
         borderColor: 'rgba(139, 0, 0, 0.4)'

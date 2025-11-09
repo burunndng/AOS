@@ -180,9 +180,14 @@ export default function App() {
   const [hasUnlockedFlabbergaster, setHasUnlockedFlabbergaster] = useLocalStorage<boolean>('hasUnlockedFlabbergaster', false);
 
   const onSummonFlabbergaster = () => {
-    setIsFlabbergasterPortalOpen(prev => !prev);
+    console.log('🌑 onSummonFlabbergaster called! Current state:', isFlabbergasterPortalOpen);
+    setIsFlabbergasterPortalOpen(prev => {
+      console.log('🌑 Toggling portal state from', prev, 'to', !prev);
+      return !prev;
+    });
     if (!hasUnlockedFlabbergaster) {
       setHasUnlockedFlabbergaster(true);
+      console.log('🌑 Marked Flabbergaster as unlocked');
     }
   };
 
