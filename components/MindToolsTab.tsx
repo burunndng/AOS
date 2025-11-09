@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrainCircuit, GitCompareArrows, Layers, Shuffle, TrendingUp, Sparkles, Target, Heart } from 'lucide-react'; // Removed Activity
+import { BrainCircuit, GitCompareArrows, Layers, Shuffle, TrendingUp, Sparkles, Target, Heart, SearchCode } from 'lucide-react'; // Removed Activity
 import { SectionDivider } from './SectionDivider.tsx';
 import { ActiveTab, AttachmentAssessmentSession, Practice } from '../types.ts';
 import { AttachmentStyle } from '../data/attachmentMappings.ts';
@@ -176,6 +176,12 @@ export default function MindToolsTab({
           title="Bias Detective"
           description="Uncover the unconscious cognitive biases that shape your decisions and learn to think with greater clarity."
           onStart={() => setActiveWizard('bias')}
+        />
+        <ToolCard
+          icon={<SearchCode size={28} className="text-purple-400"/>}
+          title="Bias Finder"
+          description="AI-guided chatbot that systematically analyzes past decisions to identify cognitive biases through Socratic questioning."
+          onStart={() => setActiveWizard('biasfinder')}
         />
         <ToolCard
           icon={<Layers size={28} className="text-neutral-400"/>}

@@ -634,3 +634,62 @@ export interface BigMindSession {
   completedAt?: string;
 }
 
+// Bias Finder Types
+export type BiasFinderPhase =
+  | 'ONBOARDING'      // Phase 0: Target acquisition
+  | 'PARAMETERS'      // Phase 1: Gather context
+  | 'HYPOTHESIS'      // Phase 2: Select bias to investigate
+  | 'INTERROGATION'   // Phase 3: Socratic questioning
+  | 'DIAGNOSTIC'      // Phase 4: Confirmation & loop decision
+  | 'REPORT';         // Phase 5: Final report generation
+
+export interface BiasFinderParameters {
+  stakes: 'Low' | 'Medium' | 'High';
+  timePressure: 'Ample' | 'Moderate' | 'Rushed';
+  emotionalState: string; // Free text: e.g., "Calm", "Anxious", "Excited"
+}
+
+export interface BiasHypothesis {
+  biasId: string;
+  biasName: string;
+  confidence?: number; // 0-100, set after interrogation
+  evidence?: string[]; // Collected during interrogation
+  userConcurrence?: boolean; // Set in diagnostic phase
+}
+
+export interface BiasFinderMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  phase: BiasFinderPhase;
+  timestamp: string;
+}
+
+export interface BiasFinderDiagnosticReport {
+  decisionAnalyzed: string;
+  parameters: BiasFinderParameters;
+  biasesInvestigated: {
+    biasId: string;
+    biasName: string;
+    confidence: number;
+    keyFindings: string[];
+    userConcurrence: boolean;
+  }[];
+  recommendations: string[];
+  nextTimeChecklist: string[];
+  generatedAt: string;
+}
+
+export interface BiasFinderSession {
+  id: string;
+  date: string;
+  currentPhase: BiasFinderPhase;
+  targetDecision: string; // The decision being analyzed
+  parameters?: BiasFinderParameters;
+  hypotheses: BiasHypothesis[]; // List of biases to investigate
+  currentHypothesisIndex: number; // Which bias is being investigated
+  messages: BiasFinderMessage[];
+  diagnosticReport?: BiasFinderDiagnosticReport;
+  completedAt?: string;
+}
+
