@@ -7,9 +7,11 @@ import {
   YinPracticeGoal,
   DayPlan,
   YinPracticeDetail,
-  WorkoutRoutine
+  WorkoutRoutine,
+  PersonalizationSummary
 } from '../types.ts';
 import { generateIntegralWeeklyPlan } from '../services/integralBodyArchitectService.ts';
+import { buildPersonalizationPromptInsertion } from '../services/integralBodyPersonalization.ts';
 
 interface PracticeHandoffPayload {
   name: string;
@@ -33,6 +35,7 @@ interface IntegralBodyArchitectWizardProps {
   onSave: (plan: IntegralBodyPlan) => void;
   onLaunchYinPractice?: (payload: PracticeHandoffPayload) => void;
   onLaunchYangPractice?: (payload: WorkoutHandoffPayload) => void;
+  personalizationSummary?: PersonalizationSummary | null;
 }
 
 type WizardStep = 'BLUEPRINT' | 'SYNTHESIS' | 'DELIVERY' | 'HANDOFF';
@@ -77,7 +80,8 @@ export default function IntegralBodyArchitectWizard({
   onClose,
   onSave,
   onLaunchYinPractice,
-  onLaunchYangPractice
+  onLaunchYangPractice,
+  personalizationSummary
 }: IntegralBodyArchitectWizardProps) {
   const [step, setStep] = useState<WizardStep>('BLUEPRINT');
   const [isLoading, setIsLoading] = useState(false);
@@ -138,6 +142,7 @@ export default function IntegralBodyArchitectWizard({
         goalStatement,
         yangConstraints,
         yinPreferences,
+        personalizationSummary: personalizationSummary || undefined,
       });
 
       setGeneratedPlan(plan);

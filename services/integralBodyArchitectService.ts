@@ -7,8 +7,10 @@ import {
   YinPracticeDetail,
   HistoricalComplianceSummary,
   PlanSynthesisMetadata,
-  SynergyNote
+  SynergyNote,
+  PersonalizationSummary
 } from '../types.ts';
+import { buildPersonalizationPromptInsertion } from './integralBodyPersonalization.ts';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
@@ -17,6 +19,7 @@ interface GeneratePlanInput {
   yangConstraints: YangConstraints;
   yinPreferences: YinPreferences;
   historicalContext?: HistoricalComplianceSummary;
+  personalizationSummary?: PersonalizationSummary;
 }
 
 interface LLMPlanGenerationResponse {
@@ -79,6 +82,11 @@ interface LLMPlanGenerationResponse {
 export async function generateIntegralWeeklyPlan(input: GeneratePlanInput): Promise<IntegralBodyPlan> {
   const historicalContext = input.historicalContext ? buildHistoricalContextPrompt(input.historicalContext) : '';
   
+  // Build personalization insertion if summary is provided
+  const personalizationInsertion = input.personalizationSummary 
+    ? buildPersonalizationPromptInsertion(input.personalizationSummary)
+    : '';
+  
   const prompt = `You are The Integral Body Architect—an expert at synthesizing comprehensive, integrated weekly plans that balance Yang practices (workouts, nutrition, sleep) with Yin practices (Qigong, breathing, Microcosmic Orbit, etc.).
 
 USER'S GOAL:
@@ -101,6 +109,8 @@ YIN PREFERENCES:
 - Notes: ${input.yinPreferences.additionalNotes || 'None'}
 
 ${historicalContext}
+
+${personalizationInsertion}
 
 YOUR TASK:
 Create a comprehensive, integrated 7-day plan that:
