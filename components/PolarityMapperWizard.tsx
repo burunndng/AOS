@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { PolarityMap, PolarityMapperStep, PolarityMapDraft } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Lightbulb, Download, GitCompareArrows, Check } from 'lucide-react';
+import * as ragService from '../services/ragService.ts';
 
 interface PolarityMapperWizardProps {
   onClose: (draft: PolarityMapDraft | null) => void;
   onSave: (map: PolarityMap) => void;
   draft: PolarityMapDraft | null;
   setDraft: (draft: PolarityMapDraft | null) => void;
+  userId: string;
 }
 
 const ProgressBar = ({ currentStep }: { currentStep: PolarityMapperStep }) => {
@@ -42,7 +44,7 @@ const ProgressBar = ({ currentStep }: { currentStep: PolarityMapperStep }) => {
 };
 
 
-export default function PolarityMapperWizard({ onClose, onSave, draft, setDraft }: PolarityMapperWizardProps) {
+export default function PolarityMapperWizard({ onClose, onSave, draft, setDraft, userId }: PolarityMapperWizardProps) {
   // FIX: Initialize currentStep state by checking draft.currentStep.
   const [currentStep, setCurrentStep] = useState<PolarityMapperStep>(draft?.currentStep || 'INTRODUCTION');
   const [dilemma, setDilemma] = useState('');
@@ -53,6 +55,7 @@ export default function PolarityMapperWizard({ onClose, onSave, draft, setDraft 
   const [poleB_upside, setPoleB_upside] = useState('');
   const [poleB_downside, setPoleB_downside] = useState('');
   const [error, setError] = useState('');
+  const [ragSyncing, setRagSyncing] = useState(false);
 
   // Hydrate from draft
   useEffect(() => {
@@ -125,11 +128,55 @@ export default function PolarityMapperWizard({ onClose, onSave, draft, setDraft 
           poleB_downside,
         };
         onSave(finalMap);
+        handleCompleteWithRAG(finalMap);
         setCurrentStep('COMPLETE');
         break;
       case 'COMPLETE':
         onClose(null);
         break;
+    }
+  };
+
+  const handleCompleteWithRAG = async (finalMap: PolarityMap) => {
+    setRagSyncing(true);
+    try {
+      // Generate RAG insights
+      const insights = await ragService.generateSessionInsights(userId, {
+        dilemma: finalMap.dilemma,
+        poleA: {
+          name: finalMap.poleA_name,
+          upside: finalMap.poleA_upside,
+          downside: finalMap.poleA_downside,
+        },
+        poleB: {
+          name: finalMap.poleB_name,
+          upside: finalMap.poleB_upside,
+          downside: finalMap.poleB_downside,
+        },
+      }, 'polarity_mapper');
+
+      // Sync the completed session to backend
+      await ragService.syncUserSession(userId, {
+        id: finalMap.id,
+        userId: userId,
+        type: 'polarity_mapper',
+        content: {
+          dilemma: finalMap.dilemma,
+          poles: [
+            { name: finalMap.poleA_name, upside: finalMap.poleA_upside, downside: finalMap.poleA_downside },
+            { name: finalMap.poleB_name, upside: finalMap.poleB_upside, downside: finalMap.poleB_downside },
+          ],
+        },
+        insights: insights.metadata?.insights || [],
+        completedAt: new Date(),
+      });
+
+      console.log('[PolarityMapperWizard] Session synced and indexed');
+    } catch (err) {
+      console.error('[PolarityMapperWizard] RAG sync error:', err);
+      // Don't block completion if RAG fails
+    } finally {
+      setRagSyncing(false);
     }
   };
 

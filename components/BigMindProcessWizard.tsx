@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BigMindSession, BigMindMessage, BigMindVoice, BigMindStage, IntegratedInsight } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Lightbulb, Plus, Send } from 'lucide-react';
 import { generateBigMindResponse, summarizeBigMindSession, getDefaultVoices, createBigMindIntegratedInsight } from '../services/bigMindService.ts';
+import * as ragService from '../services/ragService.ts';
 
 interface BigMindProcessWizardProps {
   onClose: (draft?: Partial<BigMindSession>) => void;
@@ -10,6 +11,7 @@ interface BigMindProcessWizardProps {
   practiceStack: string[];
   completionHistory: Record<string, string[]>;
   addPracticeToStack: (practiceId: string) => void;
+  userId: string;
 }
 
 const STAGE_ORDER: BigMindStage[] = ['VOICE_ID', 'VOICE_DIALOGUE', 'WITNESS', 'INTEGRATION', 'SUMMARY'];
@@ -36,7 +38,8 @@ export default function BigMindProcessWizard({
   session: draft,
   practiceStack,
   completionHistory,
-  addPracticeToStack
+  addPracticeToStack,
+  userId
 }: BigMindProcessWizardProps) {
   const [session, setSession] = useState<Partial<BigMindSession>>(() => {
     return draft || {
@@ -58,6 +61,7 @@ export default function BigMindProcessWizard({
   const [selectedVoice, setSelectedVoice] = useState<string | undefined>(session.voices?.[0]?.name);
   const [newVoiceName, setNewVoiceName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [ragSyncing, setRagSyncing] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -215,6 +219,41 @@ export default function BigMindProcessWizard({
     };
 
     onSave(finalSession);
+    handleCompleteWithRAG(finalSession);
+  };
+
+  const handleCompleteWithRAG = async (finalSession: BigMindSession) => {
+    setRagSyncing(true);
+    try {
+      // Generate RAG insights
+      const insights = await ragService.generateSessionInsights(userId, {
+        voicesExplored: finalSession.voices?.map(v => v.name) || [],
+        messageCount: finalSession.messages?.length || 0,
+        summary: finalSession.summary,
+      }, 'big_mind');
+
+      // Sync the completed session to backend
+      await ragService.syncUserSession(userId, {
+        id: finalSession.id || `big-mind-${Date.now()}`,
+        userId: userId,
+        type: 'big_mind',
+        content: {
+          voicesIdentified: finalSession.voices?.length || 0,
+          voiceNames: finalSession.voices?.map(v => v.name) || [],
+          messageCount: finalSession.messages?.length || 0,
+          summary: finalSession.summary,
+        },
+        insights: insights.metadata?.insights || [],
+        completedAt: new Date(),
+      });
+
+      console.log('[BigMindProcessWizard] Session synced and indexed');
+    } catch (err) {
+      console.error('[BigMindProcessWizard] RAG sync error:', err);
+      // Don't block completion if RAG fails
+    } finally {
+      setRagSyncing(false);
+    }
   };
 
   const handleAddPracticeToStack = (practiceId: string) => {

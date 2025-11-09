@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { SubjectObjectSession, SubjectObjectStep } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Lightbulb, Download } from 'lucide-react';
 import * as geminiService from '../services/geminiService.ts';
+import * as ragService from '../services/ragService.ts';
 
 interface SubjectObjectWizardProps {
   onClose: () => void;
   onSave: (session: SubjectObjectSession) => void;
   session: SubjectObjectSession | null;
   setDraft: (session: SubjectObjectSession | null) => void;
+  userId: string;
 }
 
 const STEPS: SubjectObjectStep[] = [
@@ -17,7 +19,7 @@ const STEPS: SubjectObjectStep[] = [
 const TOTAL_STEPS = STEPS.length;
 
 
-export default function SubjectObjectWizard({ onClose, onSave, session: draft, setDraft }: SubjectObjectWizardProps) {
+export default function SubjectObjectWizard({ onClose, onSave, session: draft, setDraft, userId }: SubjectObjectWizardProps) {
   const [session, setSession] = useState<SubjectObjectSession>(draft || {
       id: `so-${Date.now()}`, date: new Date().toISOString(), currentStep: 'RECOGNIZE_PATTERN',
       pattern: '', truthFeelings: '', subjectToStatement: '', evidenceChecks: {}, origin: '',
@@ -25,10 +27,49 @@ export default function SubjectObjectWizard({ onClose, onSave, session: draft, s
       ongoingPracticePlan: []
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [ragSyncing, setRagSyncing] = useState(false);
 
   useEffect(() => { if (draft) setSession(draft); }, [draft]);
 
   const handleSaveDraftAndClose = () => { setDraft(session); onClose(); };
+
+  const handleCompleteWithRAG = async (completedSession: SubjectObjectSession) => {
+    setRagSyncing(true);
+    try {
+      // Generate RAG insights
+      const insights = await ragService.generateSessionInsights(userId, {
+        pattern: completedSession.pattern,
+        truthFeelings: completedSession.truthFeelings,
+        subjectStatement: completedSession.subjectToStatement,
+        origin: completedSession.origin,
+        cost: completedSession.cost,
+        observations: completedSession.firstObservation,
+        integrationShift: completedSession.integrationShift,
+      }, 'subject_object');
+
+      // Sync the completed session to backend
+      await ragService.syncUserSession(userId, {
+        id: completedSession.id,
+        userId: userId,
+        type: 'subject_object',
+        content: {
+          pattern: completedSession.pattern,
+          truthFeelings: completedSession.truthFeelings,
+          subjectStatement: completedSession.subjectToStatement,
+          integration: completedSession.integrationShift,
+        },
+        insights: insights.metadata?.insights || [],
+        completedAt: new Date(),
+      });
+
+      console.log('[SubjectObjectWizard] Session synced and indexed');
+    } catch (err) {
+      console.error('[SubjectObjectWizard] RAG sync error:', err);
+      // Don't block completion if RAG fails
+    } finally {
+      setRagSyncing(false);
+    }
+  };
 
   const updateField = (field: keyof SubjectObjectSession, value: any) => {
     setSession(prev => ({ ...prev, [field]: value }));
@@ -64,7 +105,9 @@ export default function SubjectObjectWizard({ onClose, onSave, session: draft, s
             updateField('ongoingPracticePlan', experiments);
             nextStep = 'FIRST_OBSERVATION';
         } else if (session.currentStep === 'INTEGRATION_SHIFT') {
-            onSave({ ...session, currentStep: 'COMPLETE' });
+            const completedSession = { ...session, currentStep: 'COMPLETE' as const };
+            onSave(completedSession);
+            handleCompleteWithRAG(completedSession);
             return; // Exit before setting state
         }
         

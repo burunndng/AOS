@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IFSSession, IFSPart, IFSDialogueEntry, WizardPhase, IntegratedInsight } from '../types.ts';
 import { X, Mic, MicOff, Sparkles, Save, Lightbulb, ArrowRight } from 'lucide-react';
 import { getCoachResponse, extractPartInfo, summarizeIFSSession } from '../services/geminiService.ts';
+import * as ragService from '../services/ragService.ts';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, Content } from "@google/genai";
 import { MerkabaIcon } from './MerkabaIcon.tsx';
 
@@ -243,9 +244,10 @@ interface IFSWizardProps {
   partsLibrary: IFSPart[];
   insightContext?: IntegratedInsight | null;
   markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void;
+  userId: string;
 }
 
-const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, draft, partsLibrary, insightContext, markInsightAsAddressed }) => {
+const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, draft, partsLibrary, insightContext, markInsightAsAddressed, userId }) => {
   const [session, setSession] = useState<IFSSession | null>(null);
   const [currentPhase, setCurrentPhase] = useState<WizardPhase>('IDENTIFY');
   const [connectionState, setConnectionState] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
@@ -256,6 +258,7 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
   const [error, setError] = useState<string | null>(null);
   // FIX: Added useState for isPlaying state
   const [isPlaying, setIsPlaying] = useState(false);
+  const [ragSyncing, setRagSyncing] = useState(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const sessionPromiseRef = useRef<any>(null);
@@ -276,6 +279,51 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
         markInsightAsAddressed(finalSession.linkedInsightId, 'Internal Family Systems', finalSession.id);
       }
       onClose(null); // Clear draft after saving
+
+      // RAG: Generate insights and sync session
+      handleCompleteWithRAG(finalSession);
+  };
+
+  const handleCompleteWithRAG = async (finalSession: IFSSession) => {
+    setRagSyncing(true);
+    try {
+      // Extract identified parts
+      const identifiedParts = finalSession.identifiedParts?.map(p => p.name) || [];
+
+      // Summarize conversations
+      const conversations: Record<string, string> = {};
+      finalSession.dialogueHistory?.forEach((entry, idx) => {
+        conversations[`exchange_${idx}`] = entry.text;
+      });
+
+      // Generate RAG insights
+      const insights = await ragService.generateIFSInsights(userId, {
+        identifiedParts,
+        conversations,
+      });
+
+      // Sync the completed session to backend
+      await ragService.syncUserSession(userId, {
+        id: finalSession.id,
+        userId: userId,
+        type: 'ifs_work',
+        content: {
+          identifiedParts,
+          voicesIdentified: finalSession.identifiedParts?.length || 0,
+          dialogueCount: finalSession.dialogueHistory?.length || 0,
+          summary: summaryData?.summary || '',
+        },
+        insights: insights.metadata?.insights || [],
+        completedAt: new Date(),
+      });
+
+      console.log('[IFSWizard] Session synced and indexed');
+    } catch (err) {
+      console.error('[IFSWizard] RAG sync error:', err);
+      // Don't block completion if RAG fails
+    } finally {
+      setRagSyncing(false);
+    }
   };
 
   if (!isOpen) {
