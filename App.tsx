@@ -47,6 +47,7 @@ const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.ts
 const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
 const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizard.tsx'));
 const IntegralBodyArchitectWizard = lazy(() => import('./components/IntegralBodyArchitectWizard.tsx'));
+const InsightPracticeMapWizard = lazy(() => import('./components/InsightPracticeMapWizard.tsx'));
 
 
 // Constants & Types
@@ -700,6 +701,12 @@ export default function App() {
             onLaunchSomaticPractice={(practiceIntent: string) => {
               setActiveWizard('somatic');
             }}
+          />
+        );
+      case 'insight-practice-map':
+        return (
+          <InsightPracticeMapWizard
+            onClose={() => setActiveWizard(null)}
           />
         );
       default:

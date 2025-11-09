@@ -785,3 +785,43 @@ export interface IntegralBodyArchitectSession {
   generatedPlan?: IntegralBodyPlan;
 }
 
+// Insight Practice Map (Progress of Insight / 16 Ñanas) Types
+export type InsightPhase = 'Pre-Vipassana' | 'Vipassana Begins' | 'Dark Night' | 'High Equanimity';
+
+export interface InsightStage {
+  stage: number;
+  name: string;
+  code: string;
+  phase: InsightPhase;
+  description: string;
+  keyMarkers: string[];
+  practiceTips: string[];
+  duration: string;
+  warnings?: string[];
+}
+
+export interface InsightStageLog {
+  stageNumber: number;
+  stageName: string;
+  dateNoted: string;
+  notes?: string;
+  cycleNumber?: number;
+}
+
+export interface InsightChatMessage {
+  id: string;
+  role: 'user' | 'grok';
+  text: string;
+  timestamp: string;
+}
+
+export interface InsightPracticeMapSession {
+  id: string;
+  date: string;
+  currentStage?: number; // Which stage the user thinks they're at
+  stageHistory: InsightStageLog[]; // Log of stages they've been through
+  cycleCount: number; // How many times through all 16 stages
+  chatHistory: InsightChatMessage[];
+  notes?: string;
+}
+

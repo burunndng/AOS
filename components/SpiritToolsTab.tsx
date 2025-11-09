@@ -250,26 +250,70 @@ export default function SpiritToolsTab({ setActiveWizard, historyBigMind }: Spir
         )}
       </section>
 
-      {/* Future Spirit Tools Placeholder */}
+      {/* Insight Practice Map Section */}
+      <SectionDivider />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-1">Progress of Insight</h2>
+          <p className="text-sm text-slate-400">Navigate the 16 stages of insight meditation</p>
+        </div>
+        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
+          <div className="flex items-center gap-4 mb-3">
+            <Moon size={32} className="text-neutral-400" />
+            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Insight Practice Map</h3>
+            <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full font-semibold">Powered by Grok</span>
+          </div>
+          <p className="text-slate-300 mb-4 leading-relaxed">
+            A comprehensive map of the 16 ñanas (stages of insight) in vipassana meditation, from Mind and Body
+            through the A&P event, Dark Night stages, and High Equanimity. Track your progress, learn about each
+            stage, and ask questions with our AI chatbot powered by Grok.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">16</div>
+              <div className="text-xs text-slate-400 mt-1">Stages</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">✓</div>
+              <div className="text-xs text-slate-400 mt-1">Track Progress</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">💬</div>
+              <div className="text-xs text-slate-400 mt-1">AI Chatbot</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">🗺️</div>
+              <div className="text-xs text-slate-400 mt-1">Reference Map</div>
+            </div>
+          </div>
+          <p className="text-sm text-slate-400 mb-5 italic">
+            Based on Mahasi Sayadaw's Progress of Insight. Includes detailed descriptions of all stages,
+            key markers, practice tips, and warnings for challenging phases. Ask Grok questions about your
+            experience, the Dark Night, A&P event, and more.
+          </p>
+          <button
+            onClick={() => setActiveWizard('insight-practice-map')}
+            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
+          >
+            Open Insight Map
+          </button>
+        </div>
+      </section>
+
+      {/* Coming Soon Section */}
       <SectionDivider />
 
       <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 mb-1">Coming Soon</h2>
-          <p className="text-sm text-slate-400">More spiritual practice tools will be added here</p>
+          <p className="text-sm text-slate-400">Future spiritual tools in development</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 opacity-50">
           <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6">
             <div className="flex items-center gap-4 mb-3">
               <Flame size={28} className="text-orange-400"/>
               <h3 className="text-xl font-bold text-slate-100">Energy Work Guide</h3>
-            </div>
-            <p className="text-slate-400 text-sm">Coming soon...</p>
-          </div>
-          <div className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-6">
-            <div className="flex items-center gap-4 mb-3">
-              <Moon size={28} className="text-neutral-400"/>
-              <h3 className="text-xl font-bold text-slate-100">Insight Practice Map</h3>
             </div>
             <p className="text-slate-400 text-sm">Coming soon...</p>
           </div>
