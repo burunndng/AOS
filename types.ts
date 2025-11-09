@@ -700,11 +700,26 @@ export type IntegralBodyArchitectStep = 'BLUEPRINT' | 'SYNTHESIS' | 'DELIVERY' |
 
 export type YinPracticeGoal = 'reduce-stress' | 'increase-focus' | 'wind-down' | 'increase-energy' | 'balance';
 
+export interface TimeWindow {
+  dayOfWeek: string;
+  startHour: number;
+  endHour: number;
+}
+
+export interface InjuryRestriction {
+  bodyPart: string;
+  severity: 'mild' | 'moderate' | 'severe';
+  restrictions: string[]; // e.g., "no overhead pressing", "avoid running"
+  notes?: string;
+}
+
 export interface YangConstraints {
   bodyweight?: number; // in kg
   sleepHours?: number; // target hours per night
   equipment: string[];
   unavailableDays: string[];
+  availableTimeWindows?: TimeWindow[]; // Optional: specific availability windows
+  injuryRestrictions?: InjuryRestriction[]; // Optional: injury/pain restrictions
   nutritionFocus?: string;
   additionalConstraints?: string;
 }
@@ -738,6 +753,12 @@ export interface MealPlan {
   notes?: string;
 }
 
+export interface SynergyNote {
+  type: 'pairing-benefit' | 'conflict-warning' | 'timing-optimization' | 'constraint-note';
+  message: string;
+  relatedItems?: string[]; // Names of practices or activities this relates to
+}
+
 export interface YinPracticeDetail {
   name: string;
   practiceType: string; // e.g., "Coherent Breathing", "Qigong"
@@ -745,6 +766,8 @@ export interface YinPracticeDetail {
   timeOfDay: string; // e.g., "Morning", "30min before bedtime"
   intention: string;
   instructions: string[];
+  synergyNotes?: SynergyNote[]; // Why this practice works well in this plan
+  schedulingConfidence?: number; // 0-100: How confident LLM is about this placement
 }
 
 export interface DayPlan {
@@ -755,6 +778,35 @@ export interface DayPlan {
   nutrition: MealPlan;
   sleepHygiene: string[];
   notes?: string;
+  synergyMetadata?: {
+    yangYinBalance: string; // e.g., "High intensity workout balanced with calming evening practice"
+    restSpacingNotes?: string; // Notes about rest/recovery spacing
+    constraintResolution?: string; // How conflicts were resolved
+  };
+}
+
+export interface HistoricalComplianceSummary {
+  totalPlansAnalyzed: number;
+  averageWorkoutCompliance: number;
+  averageYinCompliance: number;
+  commonBlockers: string[];
+  bestPerformingDayPatterns: string[];
+  recommendedAdjustments: string[];
+}
+
+export interface PlanSynthesisMetadata {
+  llmConfidenceScore: number; // 0-100: Overall confidence in the plan
+  constraintConflicts: {
+    type: string; // e.g., "injury-restriction", "unavailable-window", "rest-spacing"
+    description: string;
+    resolution: string; // How it was resolved
+  }[];
+  synergyScoring: {
+    yangYinPairingScore: number; // 0-100: How well Yang/Yin are balanced
+    restSpacingScore: number; // 0-100: How well rest is spaced
+    overallIntegrationScore: number; // 0-100: Overall integration quality
+  };
+  fallbackOptions?: string[]; // Alternative scheduling if conflicts arise
 }
 
 export interface IntegralBodyPlan {
@@ -773,6 +825,8 @@ export interface IntegralBodyPlan {
   };
   days: DayPlan[];
   shoppingList?: string[];
+  synthesisMetadata?: PlanSynthesisMetadata; // Metadata about plan generation and constraints
+  historicalContext?: HistoricalComplianceSummary; // Compliance history from previous plans
 }
 
 export interface IntegralBodyArchitectSession {

@@ -738,14 +738,55 @@ function DayCard({ day, isExpanded, onToggle, onLaunchYin, onLaunchYang }: {
             </div>
           )}
 
+          {day.synergyMetadata && (
+            <div className="bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-700 rounded-md p-3">
+              <h5 className="font-semibold text-amber-300 mb-2">Synergy Notes</h5>
+              <div className="space-y-2 text-xs text-slate-300">
+                {day.synergyMetadata.yangYinBalance && (
+                  <p><span className="text-amber-400 font-medium">Balance:</span> {day.synergyMetadata.yangYinBalance}</p>
+                )}
+                {day.synergyMetadata.restSpacingNotes && (
+                  <p><span className="text-amber-400 font-medium">Rest Spacing:</span> {day.synergyMetadata.restSpacingNotes}</p>
+                )}
+                {day.synergyMetadata.constraintResolution && (
+                  <p><span className="text-amber-400 font-medium">Constraint Resolution:</span> {day.synergyMetadata.constraintResolution}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {day.yinPractices.length > 0 && day.yinPractices.some(p => p.schedulingConfidence) && (
+            <div className="bg-slate-800/30 border border-slate-600 rounded-md p-3">
+              <h5 className="font-semibold text-slate-300 mb-2 text-xs">Scheduling Confidence</h5>
+              <div className="space-y-1">
+                {day.yinPractices.map((practice, idx) => (
+                  practice.schedulingConfidence && (
+                    <div key={idx} className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400">{practice.name}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-slate-700 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-teal-500 to-teal-400"
+                            style={{ width: `${practice.schedulingConfidence}%` }}
+                          />
+                        </div>
+                        <span className="text-teal-300 w-8 text-right">{practice.schedulingConfidence}%</span>
+                      </div>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+
           {day.notes && (
             <div className="text-xs text-slate-400 italic">Note: {day.notes}</div>
           )}
-        </div>
-      )}
-    </div>
-  );
-}
+          </div>
+          )}
+          </div>
+          );
+          }
 
 function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string; }) {
   return (
