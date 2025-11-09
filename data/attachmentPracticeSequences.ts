@@ -21,7 +21,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 1,
       duration: 'Week 1-2',
       focus: 'Maintain security',
-      practiceIds: ['meditation', 'loving-kindness'],
+      practiceIds: ['physiological-sigh', 'self-compassion'],
       description: 'Continue the foundational practices that keep you grounded. Attachment is secure when you have a solid personal foundation.'
     },
     {
@@ -29,7 +29,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 2,
       duration: 'Week 3-4',
       focus: 'Relational awareness',
-      practiceIds: ['expressive-writing', 'parts-dialogue'],
+      practiceIds: ['perspective-shifter', 'bias-detective'],
       description: 'Deepen your understanding of how you show up in relationships. Secure attachment benefits from continuous self-awareness.'
     },
     {
@@ -37,7 +37,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 3,
       duration: 'Month 2+',
       focus: 'Advanced growth',
-      practiceIds: ['perspective-shifter', 'three-two-one'],
+      practiceIds: ['polarity-mapper', 'belief-examination'],
       description: 'Develop sophisticated relational skills and continue growing. Secure attachment is a practice, not a destination.'
     }
   ],
@@ -48,7 +48,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 1,
       duration: 'Week 1-2',
       focus: 'Calm the body',
-      practiceIds: ['physiological-sigh', 'coherent-breathing'],
+      practiceIds: ['physiological-sigh', 'self-compassion'],
       description: 'Anxious attachment lives in the nervous system. These practices help you feel safe in your body—the foundation for all change.'
     },
     {
@@ -56,7 +56,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 2,
       duration: 'Week 3-4',
       focus: 'Know yourself',
-      practiceIds: ['self-compassion', 'expressive-writing'],
+      practiceIds: ['bias-detective', 'belief-examination'],
       description: 'Learn to recognize your anxiety patterns and comfort yourself. The goal is self-regulation, not needing others to regulate you.'
     },
     {
@@ -64,7 +64,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 3,
       duration: 'Month 2+',
       focus: 'Secure connection',
-      practiceIds: ['loving-kindness', 'parts-dialogue'],
+      practiceIds: ['perspective-shifter', 'polarity-mapper'],
       description: 'Now that you can regulate yourself, you can relate from a place of wholeness. Practice secure relating patterns.'
     }
   ],
@@ -75,7 +75,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 1,
       duration: 'Week 1-2',
       focus: 'Get in your body',
-      practiceIds: ['physiological-sigh', 'coherent-breathing'],
+      practiceIds: ['physiological-sigh', 'self-compassion'],
       description: 'Avoidant attachment often involves disconnection from the body. These practices help you return to physical sensation and presence.'
     },
     {
@@ -83,7 +83,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 2,
       duration: 'Week 3-4',
       focus: 'Feel your feelings',
-      practiceIds: ['expressive-writing', 'parts-dialogue'],
+      practiceIds: ['belief-examination', 'bias-detective'],
       description: 'Avoidant patterns suppress emotion. These practices help you access what you\'ve been keeping at a distance.'
     },
     {
@@ -91,7 +91,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 3,
       duration: 'Month 2+',
       focus: 'Connect & trust',
-      practiceIds: ['loving-kindness', 'self-compassion'],
+      practiceIds: ['perspective-shifter', 'polarity-mapper'],
       description: 'With body and emotion accessible, practice opening to connection. Learn to trust vulnerability and interdependence.'
     }
   ],
@@ -102,7 +102,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 1,
       duration: 'Week 1-2',
       focus: 'Feel safe',
-      practiceIds: ['physiological-sigh', 'coherent-breathing'],
+      practiceIds: ['physiological-sigh', 'self-compassion'],
       description: 'Fearful attachment means oscillating between craving and fearing closeness. First, help your nervous system find stability and safety.'
     },
     {
@@ -110,7 +110,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 2,
       duration: 'Week 3-4',
       focus: 'Integrate yourself',
-      practiceIds: ['self-compassion', 'parts-dialogue'],
+      practiceIds: ['polarity-mapper', 'belief-examination'],
       description: 'You contain conflicting impulses. These practices help integrate the part that wants closeness with the part that fears it.'
     },
     {
@@ -118,7 +118,7 @@ export const attachmentPracticeSequences: Record<AttachmentStyle, PracticePhase[
       phaseNumber: 3,
       duration: 'Month 2+',
       focus: 'Sustainable connection',
-      practiceIds: ['loving-kindness', 'expressive-writing'],
+      practiceIds: ['perspective-shifter', 'bias-detective'],
       description: 'Now you can relate from a more integrated place. Practice stable, secure relating even when fear arises.'
     }
   ]
