@@ -83,6 +83,7 @@ import { practices as corePractices, starterStacks, modules } from './constants.
 // Services
 import * as geminiService from './services/geminiService.ts';
 import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
+import { migrateAllPlans } from './services/integralBodyArchitectService.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -107,6 +108,23 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<Re
   };
 
   return [storedValue, setValue];
+}
+
+function useMigratedIntegralBodyPlans(): [IntegralBodyPlan[], React.Dispatch<React.SetStateAction<IntegralBodyPlan[]>>] {
+  const [plans, setPlans] = useLocalStorage<IntegralBodyPlan[]>('integralBodyPlans', []);
+  const [hasMigrated, setHasMigrated] = useState(false);
+
+  React.useEffect(() => {
+    if (!hasMigrated && plans.length > 0) {
+      const migratedPlans = migrateAllPlans(plans);
+      if (migratedPlans !== plans) {
+        setPlans(migratedPlans);
+      }
+      setHasMigrated(true);
+    }
+  }, [hasMigrated, plans, setPlans]);
+
+  return [plans, setPlans];
 }
 
 export default function App() {
@@ -146,7 +164,7 @@ export default function App() {
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
   const [historyBigMind, setHistoryBigMind] = useLocalStorage<BigMindSession[]>('historyBigMind', []);
-  const [integralBodyPlans, setIntegralBodyPlans] = useLocalStorage<IntegralBodyPlan[]>('integralBodyPlans', []);
+  const [integralBodyPlans, setIntegralBodyPlans] = useMigratedIntegralBodyPlans();
   
   // AI-generated data
   const [recommendations, setRecommendations] = useState<string[]>([]);

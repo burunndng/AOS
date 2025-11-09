@@ -7,9 +7,10 @@ import {
   YinPracticeGoal,
   DayPlan,
   YinPracticeDetail,
-  WorkoutRoutine
+  WorkoutRoutine,
+  IntegralUserContext
 } from '../types.ts';
-import { generateIntegralWeeklyPlan } from '../services/integralBodyArchitectService.ts';
+import { generateIntegralWeeklyPlan, GeneratePlanInput } from '../services/integralBodyArchitectService.ts';
 
 interface PracticeHandoffPayload {
   name: string;
@@ -134,11 +135,26 @@ export default function IntegralBodyArchitectWizard({
         additionalNotes: yinNotes || undefined,
       };
 
-      const plan = await generateIntegralWeeklyPlan({
+      const userContext: IntegralUserContext = {
+        trainingAge: yangConstraints.trainingAge,
+        recoveryState: yangConstraints.recoveryState,
+        injuries: yangConstraints.injuries,
+        stressLevel: yinPreferences.stressLevel,
+        energyLevel: yinPreferences.energyLevel,
+        chronotype: yinPreferences.chronotype,
+        scheduleWindows: yinPreferences.scheduleWindows,
+      };
+
+      const enrichedInput: GeneratePlanInput = {
         goalStatement,
         yangConstraints,
         yinPreferences,
-      });
+        userContext: Object.values(userContext).some(value => value !== undefined && value !== null && (!(Array.isArray(value)) || value.length > 0))
+          ? userContext
+          : undefined,
+      };
+
+      const plan = await generateIntegralWeeklyPlan(enrichedInput);
 
       setGeneratedPlan(plan);
       setStep('DELIVERY');

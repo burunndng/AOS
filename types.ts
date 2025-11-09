@@ -700,6 +700,80 @@ export type IntegralBodyArchitectStep = 'BLUEPRINT' | 'SYNTHESIS' | 'DELIVERY' |
 
 export type YinPracticeGoal = 'reduce-stress' | 'increase-focus' | 'wind-down' | 'increase-energy' | 'balance';
 
+export type ChronotypeType = 'Lion' | 'Bear' | 'Wolf' | 'Dolphin';
+export type RecoveryState = 'fresh' | 'normal' | 'fatigued' | 'overtrained';
+
+// Integral User Context - Rich user context for personalized planning
+export interface IntegralUserContext {
+  trainingAge?: number; // years of training experience
+  recoveryState?: RecoveryState;
+  injuries?: string[]; // List of current injuries or limitations
+  stressLevel?: number; // 1-10 scale
+  energyLevel?: number; // 1-10 scale
+  chronotype?: ChronotypeType; // Circadian preference
+  scheduleWindows?: ScheduleWindow[]; // Available time blocks
+}
+
+// Schedule window for availability
+export interface ScheduleWindow {
+  dayOfWeek: string; // e.g., "Monday"
+  startTime: string; // e.g., "07:00"
+  endTime: string; // e.g., "09:00"
+  preferenceLevel?: 'preferred' | 'available' | 'last-resort';
+  location?: string;
+}
+
+// Practice Constraint - Per-day availability and redlines
+export interface PracticeConstraint {
+  description: string; // e.g., "avoid heavy lifts after 7pm"
+  appliesTo?: string[]; // Days or contexts this applies to (empty = all days)
+  constraintType: 'redline' | 'preference' | 'requirement';
+  window?: ScheduleWindow;
+  notes?: string;
+}
+
+export interface ReadinessFlag {
+  focus: string;
+  level: 'ready' | 'caution' | 'hold';
+  rationale?: string;
+}
+
+export interface SynergyPairing {
+  focusArea: string;
+  pairedWith: string;
+  rationale: string;
+}
+
+// Plan Synergy Metadata - Pairing rationale
+export interface PlanSynergyMeta {
+  pairings?: SynergyPairing[];
+  rationale?: string; // Overall synergy explanation
+  warnings?: string[]; // Potential conflicts or watch-outs
+  readinessFlags?: ReadinessFlag[]; // Readiness signals populated by intelligence layer
+}
+
+export interface PlanComplianceTarget {
+  workouts?: number;
+  yinPracticeMinutes?: number;
+  nutritionAdherencePercent?: number;
+  sleepHours?: number;
+  recoveryScore?: number;
+}
+
+// Plan Feedback - Progress tracking hooks
+export interface PlanFeedback {
+  complianceTarget?: PlanComplianceTarget;
+  trackingMetrics?: string[]; // Metrics to track
+  checkInPrompts?: string[]; // Questions to ask during tracking
+  dailyCompliance?: Record<string, {
+    target?: PlanComplianceTarget;
+    actual?: Partial<PlanComplianceTarget>;
+    status?: 'not-started' | 'in-progress' | 'complete';
+    updatedAt?: string;
+    notes?: string;
+  }>;
+}
+
 export interface YangConstraints {
   bodyweight?: number; // in kg
   sleepHours?: number; // target hours per night
@@ -707,6 +781,11 @@ export interface YangConstraints {
   unavailableDays: string[];
   nutritionFocus?: string;
   additionalConstraints?: string;
+  // Extended context
+  trainingAge?: number; // years of training experience
+  recoveryState?: RecoveryState;
+  injuries?: string[]; // Current injuries or limitations
+  constraints?: PracticeConstraint[]; // Specific constraints/redlines
 }
 
 export interface YinPreferences {
@@ -714,6 +793,11 @@ export interface YinPreferences {
   experienceLevel: 'Beginner' | 'Intermediate';
   intentions?: string[];
   additionalNotes?: string;
+  // Extended context
+  stressLevel?: number; // 1-10 scale
+  energyLevel?: number; // 1-10 scale
+  chronotype?: ChronotypeType; // Circadian preference
+  scheduleWindows?: ScheduleWindow[]; // Available time blocks
 }
 
 export interface WorkoutRoutine {
@@ -755,6 +839,17 @@ export interface DayPlan {
   nutrition: MealPlan;
   sleepHygiene: string[];
   notes?: string;
+  // Extended metadata
+  dayId?: string; // Unique identifier for progress tracking
+  availabilityWindows?: ScheduleWindow[]; // Per-day availability
+  dayConstraints?: PracticeConstraint[]; // Day-specific constraints/redlines
+  readinessScore?: number; // 1-10 predicted readiness for the day
+  complianceTargets?: {
+    workoutCompletion?: boolean;
+    yinPracticeCompletion?: boolean;
+    nutritionAdherence?: number; // 0-100%
+    sleepTarget?: number; // hours
+  };
 }
 
 export interface IntegralBodyPlan {
@@ -773,6 +868,16 @@ export interface IntegralBodyPlan {
   };
   days: DayPlan[];
   shoppingList?: string[];
+  // Extended plan metadata
+  userContext?: IntegralUserContext; // Rich user context
+  synergy?: PlanSynergyMeta; // Synergy metadata and rationale
+  feedback?: PlanFeedback; // Progress tracking hooks
+  intelligenceFlags?: {
+    personalizedForRecovery?: boolean;
+    chronotypeOptimized?: boolean;
+    injuryAdapted?: boolean;
+    constraintsApplied?: boolean;
+  };
 }
 
 export interface IntegralBodyArchitectSession {
