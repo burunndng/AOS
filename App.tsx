@@ -522,6 +522,24 @@ export default function App() {
       entry.planId === planId ? calculatePlanAggregates(entry) : entry
     ));
     setPlanProgressByDay(result.updatedProgress);
+
+    // Sync with global tracker: update completionHistory for completed yin practices
+    if (feedback.completedYinPractices.length > 0) {
+      setCompletionHistory(prev => {
+        const updated = { ...prev };
+        feedback.completedYinPractices.forEach(practiceName => {
+          // Find matching practice in the plan
+          const practice = plan.days
+            .flatMap(d => d.yinPractices)
+            .find(p => p.name === practiceName);
+          if (practice) {
+            // Update completion history with the practice name as key
+            updated[practiceName] = [...(updated[practiceName] || []), dayDate];
+          }
+        });
+        return updated;
+      });
+    }
   }, [integralBodyPlans, integralBodyPlanHistory, planProgressByDay]);
 
   const getPlanProgress = useCallback((planId: string): PlanHistoryEntry | null => {
@@ -840,6 +858,7 @@ export default function App() {
           />
         );
       case 'integral-body-architect':
+        const currentPlan = integralBodyPlans[integralBodyPlans.length - 1] || null;
         return (
           <IntegralBodyArchitectWizard
             onClose={() => setActiveWizard(null)}
@@ -848,6 +867,10 @@ export default function App() {
               setActiveWizard('somatic');
             }}
             personalizationSummary={currentPersonalizationSummary}
+            onLogPlanFeedback={logPlanFeedback}
+            onToggleTrackerCompletion={togglePracticeCompletion}
+            planHistory={currentPlan ? getPlanProgress(currentPlan.id) : null}
+            onUpdatePlanStatus={updatePlanStatus}
           />
         );
       case 'insight-practice-map':
