@@ -97,7 +97,19 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<Re
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      if (!item) return initialValue;
+
+      // Try to parse as JSON, but if it fails and it's a string, use it directly
+      try {
+        return JSON.parse(item);
+      } catch (parseError) {
+        // If parsing fails and the value is a string type, return it as-is
+        // This handles legacy values that weren't JSON-stringified
+        if (typeof initialValue === 'string') {
+          return item as T;
+        }
+        throw parseError;
+      }
     } catch (error) {
       console.error(error);
       return initialValue;
@@ -121,15 +133,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useLocalStorage<ActiveTab>('activeTab', 'dashboard');
 
   // RAG System & User Context
-  const [userId] = useLocalStorage<string>('userId', (() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('userId') : null;
-    if (stored) return stored;
-    const newId = `user-${Math.random().toString(36).substr(2, 9)}`;
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('userId', newId);
-    }
-    return newId;
-  })());
+  const [userId] = useLocalStorage<string>(
+    'userId',
+    `user-${Math.random().toString(36).substr(2, 9)}`
+  );
 
   // Core Data
   const [practiceStack, setPracticeStack] = useLocalStorage<AllPractice[]>('practiceStack', []);

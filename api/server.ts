@@ -70,6 +70,25 @@ app.use(
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Initialize services middleware (runs once on first request)
+let servicesInitialized = false;
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+  if (!servicesInitialized) {
+    try {
+      console.log('[Server] Initializing services on first request...');
+      await initializeDatabase();
+      await initializePinecone();
+      initializeEmbeddingClient();
+      servicesInitialized = true;
+      console.log('[Server] ✓ All services initialized');
+    } catch (error) {
+      console.error('[Server] Failed to initialize services:', error);
+      // Continue anyway - some endpoints might still work
+    }
+  }
+  next();
+});
+
 // Request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   const timestamp = new Date().toISOString();
@@ -420,7 +439,10 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
-// Start the server
-startServer();
+// Start the server only in local development (not on Vercel)
+// Vercel runs the app as a serverless function, so we don't need app.listen()
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  startServer();
+}
 
 export default app;
