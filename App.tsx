@@ -87,6 +87,7 @@ import { practices as corePractices, starterStacks, modules } from './constants.
 
 // Services
 import * as geminiService from './services/geminiService.ts';
+import * as ragService from './services/ragService.ts';
 import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
@@ -118,7 +119,18 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<Re
 
 export default function App() {
   const [activeTab, setActiveTab] = useLocalStorage<ActiveTab>('activeTab', 'dashboard');
-  
+
+  // RAG System & User Context
+  const [userId] = useLocalStorage<string>('userId', (() => {
+    const stored = typeof window !== 'undefined' ? window.localStorage.getItem('userId') : null;
+    if (stored) return stored;
+    const newId = `user-${Math.random().toString(36).substr(2, 9)}`;
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('userId', newId);
+    }
+    return newId;
+  })());
+
   // Core Data
   const [practiceStack, setPracticeStack] = useLocalStorage<AllPractice[]>('practiceStack', []);
   const [practiceNotes, setPracticeNotes] = useLocalStorage<Record<string, string>>('practiceNotes', {});
