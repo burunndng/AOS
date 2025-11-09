@@ -715,62 +715,229 @@ export function getBiasesByCategory(category: string): BiasDefinition[] {
 }
 
 /**
- * Get biases likely given decision parameters
+ * Enhanced parameters for bias detection with richer context
  */
-export function getLikelyBiases(params: {
+export interface EnhancedBiasFinderParams {
   stakes: 'Low' | 'Medium' | 'High';
   timePressure: 'Ample' | 'Moderate' | 'Rushed';
   emotionalState: string;
-}): BiasDefinition[] {
-  const likely: BiasDefinition[] = [];
+  decisionType?: 'hiring' | 'financial' | 'strategic' | 'interpersonal' | 'evaluation' | 'technical' | 'belief' | 'other';
+  context?: string; // Free text to capture additional nuance
+}
 
-  // High stakes + Rushed = Confirmation Bias, Availability Heuristic
-  if ((params.stakes === 'High' || params.stakes === 'Medium') && params.timePressure === 'Rushed') {
-    likely.push(
-      getBiasById('confirmation-bias')!,
-      getBiasById('availability-heuristic')!,
-      getBiasById('anchoring-bias')!
-    );
-  }
-  // Low time pressure might allow for Status Quo Bias
-  else if (params.timePressure === 'Ample') {
-    likely.push(
-      getBiasById('status-quo-bias')!,
-      getBiasById('overconfidence-bias')!
-    );
-  }
-  // High stakes alone
-  else if (params.stakes === 'High') {
-    likely.push(
-      getBiasById('sunk-cost-fallacy')!,
-      getBiasById('confirmation-bias')!,
-      getBiasById('overconfidence-bias')!
-    );
-  }
-  // Moderate conditions
-  else {
-    likely.push(
-      getBiasById('recency-bias')!,
-      getBiasById('framing-effect')!,
-      getBiasById('anchoring-bias')!
-    );
-  }
+/**
+ * Comprehensive emotional state keyword mapping
+ */
+const EMOTIONAL_STATE_KEYWORDS: Record<string, string[]> = {
+  'anxious': ['anxious', 'nervous', 'worried', 'stressed', 'tense', 'afraid', 'scared', 'fearful'],
+  'angry': ['angry', 'frustrated', 'irritated', 'annoyed', 'furious', 'enraged', 'bitter'],
+  'excited': ['excited', 'enthusiastic', 'thrilled', 'energized', 'optimistic', 'hopeful', 'confident', 'pumped'],
+  'calm': ['calm', 'peaceful', 'relaxed', 'serene', 'composed', 'collected'],
+  'sad': ['sad', 'depressed', 'down', 'disappointed', 'discouraged', 'defeated', 'helpless'],
+  'ashamed': ['ashamed', 'embarrassed', 'humiliated', 'guilty', 'regretful'],
+  'overconfident': ['confident', 'sure', 'certain', 'convinced', 'know', 'expert'],
+  'conflicted': ['conflicted', 'torn', 'confused', 'uncertain', 'unsure', 'ambivalent']
+};
 
-  // Emotional states can suggest additional biases
-  const emotionalStateLower = params.emotionalState.toLowerCase();
-  if (emotionalStateLower.includes('anxious') || emotionalStateLower.includes('stressed')) {
-    if (!likely.find(b => b.id === 'availability-heuristic')) {
-      likely.push(getBiasById('availability-heuristic')!);
-    }
-  }
-  if (emotionalStateLower.includes('excited') || emotionalStateLower.includes('confident')) {
-    if (!likely.find(b => b.id === 'overconfidence-bias')) {
-      likely.push(getBiasById('overconfidence-bias')!);
+/**
+ * Detect emotional states from free text
+ */
+function detectEmotionalStates(emotionalState: string): string[] {
+  const lower = emotionalState.toLowerCase();
+  const detected: string[] = [];
+
+  for (const [emotion, keywords] of Object.entries(EMOTIONAL_STATE_KEYWORDS)) {
+    if (keywords.some(keyword => lower.includes(keyword))) {
+      detected.push(emotion);
     }
   }
 
-  // Return top 4 most likely
-  return likely.slice(0, 4).filter(Boolean);
+  return detected.length > 0 ? detected : ['neutral'];
+}
+
+/**
+ * Get biases likely given decision parameters - enhanced version
+ */
+export function getLikelyBiases(params: EnhancedBiasFinderParams): BiasDefinition[] {
+  const likely: Map<string, number> = new Map(); // bias id -> confidence score
+  const maxBiases = 5; // Allow up to 5 suggestions
+
+  // Helper to add bias with confidence
+  const addBias = (biasId: string, confidence: number) => {
+    const current = likely.get(biasId) || 0;
+    likely.set(biasId, Math.max(current, confidence));
+  };
+
+  const emotions = detectEmotionalStates(params.emotionalState);
+  const context = (params.context || '').toLowerCase();
+
+  // === STAKES-BASED BIASES ===
+  if (params.stakes === 'High') {
+    addBias('sunk-cost-fallacy', 0.9); // High stakes = past investment weighs heavily
+    addBias('loss-aversion', 0.85);    // Fear of losing existing position
+    addBias('overconfidence-bias', 0.8);
+  }
+  if (params.stakes === 'Medium') {
+    addBias('anchoring-bias', 0.8);
+    addBias('confirmation-bias', 0.75);
+  }
+
+  // === TIME PRESSURE BIASES ===
+  if (params.timePressure === 'Rushed') {
+    addBias('availability-heuristic', 0.9);  // What comes to mind first
+    addBias('confirmation-bias', 0.85);      // No time to seek contradictions
+    addBias('anchoring-bias', 0.8);
+    addBias('planning-fallacy', 0.7);        // Quick estimates are often wrong
+  } else if (params.timePressure === 'Ample') {
+    addBias('status-quo-bias', 0.8);         // More time to deliberate = easier to stick with current
+    addBias('mere-exposure-effect', 0.7);    // Familiarity bias increases with time
+    addBias('overconfidence-bias', 0.75);    // More time to build false confidence
+  }
+
+  // === EMOTIONAL STATE BIASES ===
+  if (emotions.includes('anxious')) {
+    addBias('availability-heuristic', 0.9);  // Vivid fears come easily to mind
+    addBias('negativity-bias', 0.85);        // Focus on threats
+    addBias('loss-aversion', 0.8);
+    addBias('empathy-gap', 0.7);
+  }
+  if (emotions.includes('angry')) {
+    addBias('fundamental-attribution-error', 0.9);  // Angry at someone's behavior
+    addBias('backfire-effect', 0.85);               // Defensive about evidence
+    addBias('in-group-bias', 0.8);                  // Us vs them mentality
+    addBias('recency-bias', 0.7);
+  }
+  if (emotions.includes('excited')) {
+    addBias('overconfidence-bias', 0.95);   // Peak confidence
+    addBias('optimism-bias', 0.9);
+    addBias('illusion-of-control', 0.85);
+    addBias('planning-fallacy', 0.8);       // Underestimate obstacles
+  }
+  if (emotions.includes('overconfident')) {
+    addBias('dunning-kruger-effect', 0.95); // Core definition
+    addBias('overconfidence-bias', 0.9);
+    addBias('illusion-of-control', 0.85);
+    addBias('curse-of-knowledge', 0.8);
+  }
+  if (emotions.includes('sad')) {
+    addBias('negativity-bias', 0.85);
+    addBias('false-memory', 0.8);           // Reconstruct sad narratives
+    addBias('loss-aversion', 0.75);
+  }
+  if (emotions.includes('ashamed')) {
+    addBias('cognitive-dissonance', 0.9);   // Conflicting self-image
+    addBias('false-memory', 0.85);          // Rewrite embarrassing details
+    addBias('backfire-effect', 0.8);        // Defensive about criticism
+  }
+  if (emotions.includes('conflicted')) {
+    addBias('cognitive-dissonance', 0.95);
+    addBias('framing-effect', 0.85);
+    addBias('false-dilemma', 0.8);          // See only two options when conflicted
+  }
+
+  // === DECISION TYPE BIASES ===
+  if (params.decisionType === 'hiring' || context.includes('hire') || context.includes('candidate')) {
+    addBias('fundamental-attribution-error', 0.9);  // Judge candidate's character
+    addBias('anchoring-bias', 0.85);                // First impression sticks
+    addBias('recency-bias', 0.8);                   // Recent interview memory dominates
+    addBias('in-group-bias', 0.75);                 // Favor similar candidates
+    addBias('mere-exposure-effect', 0.7);           // Familiarity advantage
+  }
+  if (params.decisionType === 'financial' || context.includes('invest') || context.includes('money')) {
+    addBias('overconfidence-bias', 0.9);
+    addBias('availability-heuristic', 0.85);        // Recent market moves
+    addBias('bandwagon-effect', 0.8);               // What others are doing
+    addBias('loss-aversion', 0.85);                 // Fear of losses > desire for gains
+    addBias('survivorship-bias', 0.8);              // Learning from winners, not losers
+    addBias('selection-bias', 0.75);
+  }
+  if (params.decisionType === 'evaluation' || context.includes('rate') || context.includes('assess') || context.includes('perform')) {
+    addBias('fundamental-attribution-error', 0.9);  // Blame character, not circumstance
+    addBias('recency-bias', 0.85);                  // Recent performance dominates
+    addBias('in-group-bias', 0.8);                  // Lenient with "our people"
+    addBias('halo-effect-adjacent', 0.75);          // One trait colors all
+  }
+  if (params.decisionType === 'interpersonal' || context.includes('friend') || context.includes('team') || context.includes('relationship')) {
+    addBias('fundamental-attribution-error', 0.95); // Judge their motives harshly
+    addBias('actor-observer-bias', 0.9);            // Different standards for us vs them
+    addBias('empathy-gap', 0.85);                   // Can't imagine their state
+    addBias('in-group-bias', 0.8);
+  }
+  if (params.decisionType === 'belief' || context.includes('believe') || context.includes('true') || context.includes('opinion')) {
+    addBias('confirmation-bias', 0.95);             // Core belief-matching behavior
+    addBias('backfire-effect', 0.9);                // Reject contradictory evidence
+    addBias('cognitive-dissonance', 0.85);
+    addBias('false-consensus-effect', 0.8);         // Assume others agree
+  }
+  if (params.decisionType === 'strategic' || context.includes('plan') || context.includes('project') || context.includes('timeline')) {
+    addBias('planning-fallacy', 0.95);              // Underestimate time/cost
+    addBias('optimism-bias', 0.9);                  // Assume best case
+    addBias('anchoring-bias', 0.8);                 // Initial estimate sticks
+    addBias('illusion-of-control', 0.75);
+  }
+  if (params.decisionType === 'technical' || context.includes('data') || context.includes('analyz')) {
+    addBias('clustering-illusion', 0.9);            // See patterns in noise
+    addBias('selection-bias', 0.85);                // Look at filtered data
+    addBias('survivorship-bias', 0.85);             // Look at successes
+    addBias('regression-to-mean', 0.8);             // Misinterpret variance
+  }
+
+  // === CONTEXT-BASED BIASES ===
+  if (context.includes('group') || context.includes('team') || context.includes('meeting')) {
+    addBias('groupthink', 0.9);
+    addBias('bandwagon-effect', 0.85);
+    addBias('authority-bias', 0.8);                 // Leader's view dominates
+    addBias('false-consensus-effect', 0.8);
+  }
+  if (context.includes('past') || context.includes('outcome') || context.includes('result') || context.includes('happened')) {
+    addBias('hindsight-bias', 0.95);                // "I knew it would happen"
+    addBias('false-memory', 0.85);                  // Reconstruct what we remember
+    addBias('regression-to-mean', 0.8);             // Misinterpret how extreme events work
+  }
+  if (context.includes('new') || context.includes('change') || context.includes('different')) {
+    addBias('semmelweis-reflex', 0.9);              // Reject the new
+    addBias('status-quo-bias', 0.85);               // Prefer current
+    addBias('loss-aversion', 0.8);                  // Fear what we might lose
+  }
+  if (context.includes('value') || context.includes('price') || context.includes('worth')) {
+    addBias('endowment-effect', 0.9);               // Value what we have more
+    addBias('anchoring-bias', 0.85);                // First price suggested sticks
+    addBias('loss-aversion', 0.8);
+  }
+  if (context.includes('compare') || context.includes('versus') || context.includes('better')) {
+    addBias('false-dilemma', 0.85);                 // See only two options
+    addBias('framing-effect', 0.85);                // How it's presented matters
+    addBias('bandwagon-effect', 0.75);              // What's popular matters
+  }
+  if (context.includes('news') || context.includes('media') || context.includes('social')) {
+    addBias('availability-heuristic', 0.9);         // Vivid recent media
+    addBias('negativity-bias', 0.9);                // Bad news sticks
+    addBias('clustering-illusion', 0.8);            // See patterns in media
+  }
+
+  // === MITIGATING FACTORS ===
+  // If they explicitly mention base rates, historical data, or seeking other views - reduce bias confidence
+  if (context.includes('base rate') || context.includes('historical') || context.includes('past projects')) {
+    for (const [biasId] of likely) {
+      likely.set(biasId, likely.get(biasId)! * 0.8); // 20% reduction
+    }
+  }
+  if (context.includes('expert') || context.includes('consult') || context.includes('second opinion')) {
+    likely.delete('dunning-kruger-effect');
+    likely.delete('overconfidence-bias');
+    for (const [biasId] of likely) {
+      likely.set(biasId, likely.get(biasId)! * 0.85);
+    }
+  }
+
+  // Sort by confidence and return top N
+  const sorted = Array.from(likely.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, maxBiases)
+    .map(([biasId]) => getBiasById(biasId))
+    .filter(Boolean) as BiasDefinition[];
+
+  return sorted;
 }
 
 /**
