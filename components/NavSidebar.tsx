@@ -30,6 +30,7 @@ interface NavSidebarProps {
   onImport: () => void;
   onReset: () => void;
   onSummonFlabbergaster: () => void;
+  hasUnlockedFlabbergaster?: boolean;
 }
 
 const navItems = [
@@ -72,7 +73,7 @@ const NavButton = ({ item, isActive, onClick }: { item: any, isActive: boolean, 
 );
 
 
-export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport, onReset, onSummonFlabbergaster }: NavSidebarProps) {
+export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport, onReset, onSummonFlabbergaster, hasUnlockedFlabbergaster = false }: NavSidebarProps) {
     let lastGroup: string | undefined = undefined;
     const [clickCount, setClickCount] = React.useState(0);
     const clickTimerRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -132,7 +133,7 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
                             border: '2px solid rgba(255, 255, 255, 0.4)'
                         }}
                         aria-label="Flabbergaster spark (triple-click to unlock)"
-                        title="🗝️ Triple-click me!"
+                        title={hasUnlockedFlabbergaster ? "🗝️ Flabbergaster Portal" : ""}
                     />
                 </div>
                 <div>

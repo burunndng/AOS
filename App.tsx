@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
 
 // Core Components (always loaded)
 import NavSidebar from './components/NavSidebar.tsx';
+import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 import LoadingFallback, { TabLoadingFallback, WizardLoadingFallback, ModalLoadingFallback } from './components/LoadingFallback.tsx';
 import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 
@@ -885,7 +886,7 @@ export default function App() {
       {/* Layer 2: Subtle depth gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 opacity-60" />
 
-      <NavSidebar activeTab={activeTab} setActiveTab={setActiveTab} onExport={handleExport} onImport={handleImport} onReset={handleReset} onSummonFlabbergaster={onSummonFlabbergaster} />
+      <NavSidebar activeTab={activeTab} setActiveTab={setActiveTab} onExport={handleExport} onImport={handleImport} onReset={handleReset} onSummonFlabbergaster={onSummonFlabbergaster} hasUnlockedFlabbergaster={hasUnlockedFlabbergaster} />
       <main className="flex-1 overflow-y-auto p-8 relative z-10" style={{background: 'linear-gradient(180deg, rgba(10, 10, 10, 0.4) 0%, rgba(10, 10, 10, 0.6) 100%)', backdropFilter: 'blur(4px)'}}>
         <div className="relative z-10">
           <Suspense fallback={<TabLoadingFallback />}>
@@ -931,6 +932,11 @@ export default function App() {
           <GuidedPracticeGenerator isOpen={isGuidedPracticeGeneratorOpen} onClose={() => setIsGuidedPracticeGeneratorOpen(false)} onLogPractice={() => alert('Practice logged!')} />
         </Suspense>
       )}
+      <FlabbergasterPortal 
+        isOpen={isFlabbergasterPortalOpen} 
+        onClose={() => setIsFlabbergasterPortalOpen(false)} 
+        hasUnlocked={hasUnlockedFlabbergaster}
+      />
       <Suspense fallback={<WizardLoadingFallback />}>
         {renderActiveWizard()}
       </Suspense>
