@@ -647,6 +647,8 @@ export interface BiasFinderParameters {
   stakes: 'Low' | 'Medium' | 'High';
   timePressure: 'Ample' | 'Moderate' | 'Rushed';
   emotionalState: string; // Free text: e.g., "Calm", "Anxious", "Excited"
+  decisionType?: 'hiring' | 'financial' | 'strategic' | 'interpersonal' | 'evaluation' | 'technical' | 'belief' | 'other'; // Type of decision for better bias detection
+  context?: string; // Additional contextual information (e.g., "group meeting", "investment decision", "performance review")
 }
 
 export interface BiasHypothesis {
