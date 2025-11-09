@@ -873,6 +873,7 @@ export default function App() {
                 addToStack(practice);
               }
             }}
+            userId={userId}
           />
         );
       case 'integral-body-architect':
