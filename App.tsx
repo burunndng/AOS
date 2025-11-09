@@ -174,6 +174,17 @@ export default function App() {
     earnedBadges: [],
   });
 
+  // Flabbergaster Easter Egg
+  const [isFlabbergasterPortalOpen, setIsFlabbergasterPortalOpen] = useLocalStorage<boolean>('isFlabbergasterPortalOpen', false);
+  const [hasUnlockedFlabbergaster, setHasUnlockedFlabbergaster] = useLocalStorage<boolean>('hasUnlockedFlabbergaster', false);
+
+  const onSummonFlabbergaster = () => {
+    setIsFlabbergasterPortalOpen(prev => !prev);
+    if (!hasUnlockedFlabbergaster) {
+      setHasUnlockedFlabbergaster(true);
+    }
+  };
+
   const setActiveWizardAndLink = (wizardName: string | null, insightId?: string) => {
     setActiveWizard(wizardName);
     setLinkedInsightId(insightId);
@@ -727,7 +738,7 @@ export default function App() {
       {/* Layer 2: Subtle depth gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 opacity-60" />
 
-      <NavSidebar activeTab={activeTab} setActiveTab={setActiveTab} onExport={handleExport} onImport={handleImport} onReset={handleReset} />
+      <NavSidebar activeTab={activeTab} setActiveTab={setActiveTab} onExport={handleExport} onImport={handleImport} onReset={handleReset} onSummonFlabbergaster={onSummonFlabbergaster} />
       <main className="flex-1 overflow-y-auto p-8 relative z-10" style={{background: 'linear-gradient(180deg, rgba(10, 10, 10, 0.4) 0%, rgba(10, 10, 10, 0.6) 100%)', backdropFilter: 'blur(4px)'}}>
         <div className="relative z-10">
           <Suspense fallback={<TabLoadingFallback />}>

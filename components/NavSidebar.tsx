@@ -29,6 +29,7 @@ interface NavSidebarProps {
   onExport: () => void;
   onImport: () => void;
   onReset: () => void;
+  onSummonFlabbergaster: () => void;
 }
 
 const navItems = [
@@ -71,14 +72,65 @@ const NavButton = ({ item, isActive, onClick }: { item: any, isActive: boolean, 
 );
 
 
-export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport, onReset }: NavSidebarProps) {
+export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport, onReset, onSummonFlabbergaster }: NavSidebarProps) {
     let lastGroup: string | undefined = undefined;
+    const [clickCount, setClickCount] = React.useState(0);
+    const clickTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    const handleSparkClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const newCount = clickCount + 1;
+        setClickCount(newCount);
+
+        // Reset click count if threshold time exceeded
+        if (clickTimerRef.current) {
+            clearTimeout(clickTimerRef.current);
+        }
+
+        if (newCount === 3) {
+            // Triple-click detected
+            onSummonFlabbergaster();
+            setClickCount(0);
+        } else {
+            // Set timer to reset count after 1.5 seconds
+            clickTimerRef.current = setTimeout(() => {
+                setClickCount(0);
+            }, 1500);
+        }
+    };
+
+    React.useEffect(() => {
+        return () => {
+            if (clickTimerRef.current) {
+                clearTimeout(clickTimerRef.current);
+            }
+        };
+    }, []);
 
     return (
         <aside className="w-64 p-4 flex flex-col sticky top-0 h-screen" style={{background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(26, 40, 71, 0.75) 50%, rgba(15, 23, 42, 0.85) 100%)', backdropFilter: 'blur(16px)', borderRight: '1px solid rgba(217, 170, 239, 0.15)', boxShadow: '8px 0 40px rgba(0, 0, 0, 0.4), -2px 0 16px rgba(217, 170, 239, 0.08), inset -1px 0 2px rgba(217, 170, 239, 0.2)'}}>
-            <div className="flex items-center gap-3 px-2 flex-shrink-0 group cursor-pointer">
+            <div className="flex items-center gap-3 px-2 flex-shrink-0 group cursor-pointer relative">
                 {/* FIX: MerkabaIcon now accepts 'size' prop for explicit sizing. */}
-                <MerkabaIcon className="text-accent group-hover:animate-spin drop-shadow-lg" size={28} style={{transition: 'all 0.3s ease'}} />
+                <div className="relative">
+                    <MerkabaIcon className="text-accent group-hover:animate-spin drop-shadow-lg" size={28} style={{transition: 'all 0.3s ease'}} />
+                    {/* Flabbergaster Spark Trigger - Ultra-subtle hidden easter egg */}
+                    <button
+                        onClick={handleSparkClick}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleSparkClick(e as any);
+                            }
+                        }}
+                        className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full opacity-20 hover:opacity-40 transition-opacity duration-300 blur-sm animate-pulse"
+                        style={{
+                            background: 'linear-gradient(135deg, rgb(217, 170, 239), rgb(255, 215, 0))',
+                            animation: 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                        }}
+                        aria-label="Flabbergaster spark (triple-click to unlock)"
+                        title="🗝️"
+                    />
+                </div>
                 <div>
                     <h1 className="text-2xl font-bold font-mono tracking-tighter bg-gradient-to-r from-accent to-accent-gold bg-clip-text text-transparent drop-shadow-lg">Aura OS</h1>
                     <p className="text-xs text-slate-500 mt-0.5">Integral Life Practice</p>
