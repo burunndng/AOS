@@ -420,7 +420,10 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
-// Start the server
-startServer();
+// Start the server only in local development (not on Vercel)
+// Vercel runs the app as a serverless function, so we don't need app.listen()
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  startServer();
+}
 
 export default app;
