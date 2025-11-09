@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import { Menu, X } from 'lucide-react';
 
 // Core Components (always loaded)
 import NavSidebar from './components/NavSidebar.tsx';
@@ -210,6 +211,9 @@ export default function App() {
   const [isFlabbergasterPortalOpen, setIsFlabbergasterPortalOpen] = useLocalStorage<boolean>('isFlabbergasterPortalOpen', false);
   const [hasUnlockedFlabbergaster, setHasUnlockedFlabbergaster] = useLocalStorage<boolean>('hasUnlockedFlabbergaster', false);
   const [hasDiscoveredHiddenMode, setHasDiscoveredHiddenMode] = useLocalStorage<boolean>('hasDiscoveredHiddenMode', false);
+
+  // Mobile sidebar toggle
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const onSummonFlabbergaster = () => {
     console.log('🌑 onSummonFlabbergaster called! Current state:', isFlabbergasterPortalOpen);
@@ -899,6 +903,14 @@ export default function App() {
     return integratedInsights.find(i => i.id === linkedInsightId) || null;
   }
   
+  // Close sidebar on mobile when tab changes
+  const handleTabChange = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-neutral-950 text-neutral-100 font-sans relative overflow-hidden">
       {/* Layer 1: Solid dark base */}
@@ -907,12 +919,47 @@ export default function App() {
       {/* Layer 2: Subtle depth gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 opacity-60" />
 
-      <NavSidebar activeTab={activeTab} setActiveTab={setActiveTab} onExport={handleExport} onImport={handleImport} onReset={handleReset} onSummonFlabbergaster={onSummonFlabbergaster} hasUnlockedFlabbergaster={hasUnlockedFlabbergaster} />
-      <main className="flex-1 overflow-y-auto p-8 relative z-10" style={{background: 'linear-gradient(180deg, rgba(10, 10, 10, 0.4) 0%, rgba(10, 10, 10, 0.6) 100%)', backdropFilter: 'blur(4px)'}}>
-        <div className="relative z-10">
-          <Suspense fallback={<TabLoadingFallback />}>
-            {renderActiveTab()}
-          </Suspense>
+      {/* Desktop Sidebar - hidden on mobile */}
+      <div className="hidden md:flex md:w-64 md:flex-shrink-0 relative z-20">
+        <NavSidebar activeTab={activeTab} setActiveTab={handleTabChange} onExport={handleExport} onImport={handleImport} onReset={handleReset} onSummonFlabbergaster={onSummonFlabbergaster} hasUnlockedFlabbergaster={hasUnlockedFlabbergaster} />
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="md:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setSidebarOpen(false)} aria-label="Close menu" />
+      )}
+
+      {/* Mobile Sidebar - slides from left on mobile */}
+      <div className="md:hidden fixed top-0 left-0 h-screen w-64 z-40 transform transition-transform duration-300 ease-out" style={{transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)'}}>
+        <NavSidebar activeTab={activeTab} setActiveTab={handleTabChange} onExport={handleExport} onImport={handleImport} onReset={handleReset} onSummonFlabbergaster={onSummonFlabbergaster} hasUnlockedFlabbergaster={hasUnlockedFlabbergaster} />
+      </div>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col overflow-hidden relative z-10">
+        {/* Mobile Header with Hamburger */}
+        <div className="md:hidden flex items-center gap-4 px-4 py-3 border-b border-accent/20 flex-shrink-0">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors touch-target"
+            aria-label="Toggle menu"
+            aria-expanded={sidebarOpen}
+          >
+            {sidebarOpen ? (
+              <X size={24} className="text-accent" />
+            ) : (
+              <Menu size={24} className="text-slate-400" />
+            )}
+          </button>
+          <h1 className="text-lg font-bold font-mono tracking-tighter bg-gradient-to-r from-accent to-accent-gold bg-clip-text text-transparent">Aura OS</h1>
+        </div>
+
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 md:p-8 relative z-10" style={{background: 'linear-gradient(180deg, rgba(10, 10, 10, 0.4) 0%, rgba(10, 10, 10, 0.6) 100%)', backdropFilter: 'blur(4px)'}}>
+          <div className="relative z-10">
+            <Suspense fallback={<TabLoadingFallback />}>
+              {renderActiveTab()}
+            </Suspense>
+          </div>
         </div>
       </main>
       <Suspense fallback={<div className="fixed bottom-6 right-6 z-50"><LoadingFallback text="Loading coach..." size="small" /></div>}>
