@@ -689,3 +689,146 @@ Stay analytical but warm. You're a guide, not a robot. Do NOT use markdown forma
     }
   }
 }
+
+/**
+ * Generate audio for a text response - used for audio narratives in Bias Finder
+ * Integrates with the TTS model to create spoken versions of responses
+ */
+export async function generateAudioForBiasFinder(
+  text: string,
+  voiceName: string = 'Kore'
+): Promise<string> {
+  try {
+    const response = await (ai.models as any).generateContent({
+      model: 'gemini-2.5-flash-preview-tts',
+      contents: [{ parts: [{ text }] }],
+      config: {
+        responseModalities: ['audio'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName },
+          },
+        },
+      },
+    });
+
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) {
+      throw new Error('Failed to generate audio');
+    }
+    return base64Audio;
+  } catch (error) {
+    console.error('Audio generation error:', error);
+    throw new Error('Failed to generate audio for response');
+  }
+}
+
+/**
+ * Generate a guided practice session based on identified biases
+ * Creates a therapeutic exercise tailored to the user's specific biases
+ */
+export async function generateBiasPracticeSession(
+  decision: string,
+  parameters: BiasFinderParameters,
+  identifiedBiases: BiasHypothesis[],
+  selectedTherapeuticApproach: 'act' | 'dbt' | 'mixed' = 'mixed'
+): Promise<{
+  title: string;
+  script: string;
+  duration: number;
+  approach: string;
+  biasesAddressed: string[];
+}> {
+  const biasNames = identifiedBiases
+    .slice(0, 3) // Focus on top 3 biases
+    .map(b => {
+      const bias = getBiasById(b.biasId);
+      return bias ? bias.name : 'unknown bias';
+    })
+    .filter(name => name !== 'unknown bias');
+
+  const approachDescription =
+    selectedTherapeuticApproach === 'act'
+      ? 'Acceptance and Commitment Therapy (ACT) - focusing on values, cognitive defusion, and willingness'
+      : selectedTherapeuticApproach === 'dbt'
+      ? 'Dialectical Behavior Therapy (DBT) - focusing on mindfulness, emotion regulation, and distress tolerance'
+      : 'a blend of ACT and DBT techniques for maximum effectiveness';
+
+  const prompt = `You are a compassionate cognitive behavioral therapist creating a guided practice session.
+
+**Context:**
+- Decision analyzed: "${decision}"
+- Decision parameters: Stakes=${parameters.stakes}, Time Pressure=${parameters.timePressure}, Emotional State=${parameters.emotionalState}
+- Identified biases: ${biasNames.join(', ')}
+- Therapeutic approach: ${approachDescription}
+
+**Your Task:**
+Create a 10-minute guided practice session that helps the user:
+1. Recognize and defuse from these specific biases
+2. Practice acceptance and willingness techniques
+3. Develop awareness of how these biases influenced their thinking
+4. Build resilience for future similar decisions
+
+**Script Requirements:**
+- Start with a grounding/centering exercise (1 minute)
+- Address each bias with specific therapeutic techniques (6 minutes total)
+- End with an integration/commitment to values exercise (2 minutes)
+- Use warm, conversational language - like a kind therapist guiding them
+- Include pauses for reflection (indicate with [PAUSE: X seconds])
+- Be specific to their decision and emotional state
+- NO markdown formatting - plain text only, ready to be read aloud
+
+**Therapeutic Framework:**
+- Use ${approachDescription}
+- Include specific techniques like defusion, acceptance, or emotion regulation as appropriate
+- Frame biases as universal human patterns, not personal failures
+- Emphasize that awareness and practice create change
+
+Write the complete script now.`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+  });
+
+  const script = response.text;
+
+  // Estimate duration (roughly 150 words per minute for spoken content)
+  const estimatedDuration = Math.max(10, Math.ceil(script.split(' ').length / 150));
+
+  return {
+    title: `Guided Practice: Understanding ${biasNames.slice(0, 2).join(' & ')}`,
+    script,
+    duration: estimatedDuration,
+    approach: approachDescription,
+    biasesAddressed: biasNames,
+  };
+}
+
+/**
+ * Generate a streaming audio narrative that plays alongside text responses
+ * Yields both text chunks and audio data for synchronized playback
+ */
+export async function generateBiasFinderAudioNarrative(
+  message: string,
+  voiceName: string = 'Kore'
+): Promise<{ textChunks: string[]; audioBase64: string }> {
+  try {
+    // Generate audio for the message
+    const audioBase64 = await generateAudioForBiasFinder(message, voiceName);
+
+    // Split text into logical chunks for display
+    const textChunks = message
+      .split(/(?<=[.!?])\s+/)
+      .filter(chunk => chunk.trim().length > 0);
+
+    return { textChunks, audioBase64 };
+  } catch (error) {
+    console.error('Error generating audio narrative:', error);
+    // Fallback to text-only if audio generation fails
+    const textChunks = message
+      .split(/(?<=[.!?])\s+/)
+      .filter(chunk => chunk.trim().length > 0);
+    return { textChunks, audioBase64: '' };
+  }
+}
