@@ -4,7 +4,7 @@
  */
 
 import { generateInsightPrompt } from '../rag/generate-prompt.js';
-import { getDatabase } from '../lib/db.js';
+import { initializeDatabase, getDatabase } from '../lib/db.js';
 import type { GenerationRequest, GenerationResponse, UserSession } from '../lib/types.js';
 
 /**
@@ -18,6 +18,9 @@ export async function generateInsights(
   console.log(`[Insights] Generating insights for user: ${userId}, type: ${sessionType}`);
 
   try {
+    // Initialize database (required for serverless environment)
+    await initializeDatabase();
+
     // Store the session
     const db = getDatabase();
     const session: UserSession = {
