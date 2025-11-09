@@ -79,19 +79,61 @@ Add these scripts to `package.json`:
 
 ### Step 3: Configure Environment
 
-Create or update `.env`:
+#### For Local Development (with Mocks - Recommended)
 
+1. Copy `.env.example` to `.env.local`:
+```bash
+cp .env.example .env.local
+```
+
+2. The default configuration works with in-memory mocks:
 ```env
-# Server
 PORT=3001
 NODE_ENV=development
-
-# CORS Configuration
-CORS_ORIGIN=http://localhost:3000,http://localhost:5173
-
-# Frontend API Base
 REACT_APP_RAG_API_BASE=http://localhost:3001/api
 ```
+
+**No Pinecone or MongoDB keys needed!** The system uses mocks by default.
+
+#### For Local Development (with Real Services - Optional)
+
+If you want to test with real Pinecone/MongoDB locally:
+
+1. Update `.env.local` with your credentials:
+```env
+PORT=3001
+NODE_ENV=development
+REACT_APP_RAG_API_BASE=http://localhost:3001/api
+PINECONE_API_KEY=your-api-key-from-pinecone.io
+PINECONE_ENVIRONMENT=us-east-1
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/aura
+```
+
+2. Update `api/lib/pinecone.ts` and `api/lib/db.ts` to use real SDKs instead of mocks
+
+#### For Production (Vercel)
+
+**Do NOT use `.env` files.** Instead:
+
+1. Set environment variables in Vercel:
+   - Go to Project Settings → Environment Variables
+   - Add: `PINECONE_API_KEY`, `PINECONE_ENVIRONMENT`, `MONGODB_URI`, etc.
+
+2. Vercel will automatically use these for deployments
+
+#### Security Best Practices
+
+✅ **DO:**
+- Store sensitive keys only in Vercel Environment Variables
+- Use `.env.example` as a template (no secrets)
+- Add `.env` to `.gitignore` (already configured)
+- Rotate API keys regularly
+
+❌ **DON'T:**
+- Commit `.env` files to GitHub
+- Expose API keys in code or logs
+- Use the same key across environments
+- Share `.env` files in messages/emails
 
 ---
 
