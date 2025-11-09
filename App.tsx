@@ -75,7 +75,9 @@ import {
   JourneyProgress,
   AttachmentAssessmentSession,
   BigMindSession,
-  IntegralBodyPlan
+  IntegralBodyPlan,
+  PlanHistoryEntry,
+  PlanProgressByDay
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -83,6 +85,7 @@ import { practices as corePractices, starterStacks, modules } from './constants.
 // Services
 import * as geminiService from './services/geminiService.ts';
 import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
+import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -147,6 +150,10 @@ export default function App() {
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
   const [historyBigMind, setHistoryBigMind] = useLocalStorage<BigMindSession[]>('historyBigMind', []);
   const [integralBodyPlans, setIntegralBodyPlans] = useLocalStorage<IntegralBodyPlan[]>('integralBodyPlans', []);
+  
+  // Plan History State
+  const [integralBodyPlanHistory, setIntegralBodyPlanHistory] = useLocalStorage<PlanHistoryEntry[]>('integralBodyPlanHistory', []);
+  const [planProgressByDay, setPlanProgressByDay] = useLocalStorage<PlanProgressByDay>('planProgressByDay', {});
   
   // AI-generated data
   const [recommendations, setRecommendations] = useState<string[]>([]);
@@ -432,8 +439,94 @@ export default function App() {
 
   const handleSaveIntegralBodyPlan = (plan: IntegralBodyPlan) => {
     setIntegralBodyPlans(prev => [...prev.filter(p => p.id !== plan.id), plan]);
+
+    // Initialize history entry if it doesn't exist
+    setIntegralBodyPlanHistory(prev => {
+      const existingEntry = prev.find(entry => entry.planId === plan.id);
+      if (existingEntry) {
+        return prev.map(entry =>
+          entry.planId === plan.id
+            ? {
+                ...entry,
+                goalStatement: plan.goalStatement,
+                planDate: plan.date,
+                weekStartDate: plan.weekStartDate,
+              }
+            : entry,
+        );
+      }
+
+      const newEntry: PlanHistoryEntry = {
+        planId: plan.id,
+        planDate: plan.date,
+        weekStartDate: plan.weekStartDate,
+        goalStatement: plan.goalStatement,
+        startedAt: new Date().toISOString(),
+        status: 'active',
+        dailyFeedback: [],
+      };
+
+      return [...prev, newEntry];
+    });
+
+    setPlanProgressByDay(prev => ({
+      ...prev,
+      [plan.id]: prev[plan.id] || {},
+    }));
+
     alert(`Your Integral Week has been saved! Access it from your Library.`);
   };
+
+  const logPlanFeedback = useCallback((
+    planId: string,
+    dayDate: string,
+    dayName: string,
+    feedback: {
+      completedWorkout: boolean;
+      completedYinPractices: string[];
+      intensityFelt: number;
+      energyLevel: number;
+      blockers?: string;
+      notes?: string;
+    }
+  ) => {
+    const plan = integralBodyPlans.find(p => p.id === planId);
+    if (!plan) {
+      console.error('Plan not found:', planId);
+      return;
+    }
+
+    const result = logPlanDayFeedback(
+      plan,
+      dayDate,
+      { ...feedback, dayName },
+      integralBodyPlanHistory,
+      planProgressByDay
+    );
+
+    setIntegralBodyPlanHistory(result.updatedHistory.map(entry =>
+      entry.planId === planId ? calculatePlanAggregates(entry) : entry
+    ));
+    setPlanProgressByDay(result.updatedProgress);
+  }, [integralBodyPlans, integralBodyPlanHistory, planProgressByDay]);
+
+  const getPlanProgress = useCallback((planId: string): PlanHistoryEntry | null => {
+    return integralBodyPlanHistory.find(entry => entry.planId === planId) || null;
+  }, [integralBodyPlanHistory]);
+
+  const updatePlanStatus = useCallback((planId: string, status: 'active' | 'completed' | 'abandoned') => {
+    setIntegralBodyPlanHistory(prev => prev.map(entry => {
+      if (entry.planId === planId) {
+        return {
+          ...entry,
+          status,
+          completedAt: status === 'completed' ? new Date().toISOString() : entry.completedAt,
+        };
+      }
+      return entry;
+    }));
+  }, []);
+
 
   const handleSaveBigMindSession = (session: BigMindSession) => {
     setHistoryBigMind(prev => [...prev.filter(s => s.id !== session.id), session]);
@@ -467,7 +560,8 @@ export default function App() {
     const data = {
         practiceStack, practiceNotes, dailyNotes, completionHistory,
         history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan, historyRelational, historyAttachment, historyBigMind,
-        partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory, journeyProgress
+        partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory, journeyProgress,
+        integralBodyPlans, integralBodyPlanHistory, planProgressByDay
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -509,6 +603,9 @@ export default function App() {
                         setAqalReport(data.aqalReport || null);
                         setSomaticPracticeHistory(data.somaticPracticeHistory || []);
                         setJourneyProgress(data.journeyProgress || { visitedRegions: [], completedCards: [], earnedBadges: [] });
+                        setIntegralBodyPlans(data.integralBodyPlans || []);
+                        setIntegralBodyPlanHistory(data.integralBodyPlanHistory || []);
+                        setPlanProgressByDay(data.planProgressByDay || {});
                         alert('Data imported successfully!');
                     }
                 } catch (err) {
@@ -546,7 +643,14 @@ export default function App() {
       />;
       // FIX: Changed prop `setDraftIFSSession` to `setDraftIFS` to match the updated ShadowToolsTabProps interface.
       case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} draft321Session={draft321} draftIFSSession={draftIFS} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;
-      case 'body-tools': return <BodyToolsTab setActiveWizard={setActiveWizardAndLink} />;
+      case 'body-tools': return <BodyToolsTab
+        setActiveWizard={setActiveWizardAndLink}
+        integralBodyPlans={integralBodyPlans}
+        planHistory={integralBodyPlanHistory}
+        onLogPlanFeedback={logPlanFeedback}
+        getPlanProgress={getPlanProgress}
+        onUpdatePlanStatus={updatePlanStatus}
+      />;
       case 'spirit-tools': return <SpiritToolsTab setActiveWizard={setActiveWizardAndLink} historyBigMind={historyBigMind} />;
       case 'library': return <LibraryTab />;
       case 'quiz': return <ILPGraphQuiz />;

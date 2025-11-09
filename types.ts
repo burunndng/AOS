@@ -879,3 +879,40 @@ export interface InsightPracticeMapSession {
   notes?: string;
 }
 
+// Plan History Types
+export interface PlanDayFeedback {
+  date: string; // ISO date string (YYYY-MM-DD)
+  dayName: string; // e.g., "Monday"
+  completedWorkout: boolean;
+  completedYinPractices: string[]; // Array of practice names completed
+  intensityFelt: number; // 1-10 scale
+  energyLevel: number; // 1-10 scale
+  blockers?: string; // Notes about what got in the way
+  notes?: string; // General reflections
+  timestamp: string; // ISO timestamp when feedback was logged
+}
+
+export interface PlanHistoryEntry {
+  planId: string;
+  planDate: string;
+  weekStartDate: string;
+  goalStatement: string;
+  startedAt: string; // ISO timestamp when plan was activated
+  dailyFeedback: PlanDayFeedback[]; // One entry per day
+  aggregateMetrics?: {
+    workoutComplianceRate: number; // % of planned workouts completed
+    yinComplianceRate: number; // % of planned yin practices completed
+    averageIntensity: number;
+    averageEnergy: number;
+    totalBlockerDays: number;
+  };
+  completedAt?: string; // ISO timestamp when plan was completed (end of week)
+  status: 'active' | 'completed' | 'abandoned';
+}
+
+export interface PlanProgressByDay {
+  [planId: string]: {
+    [dateKey: string]: PlanDayFeedback; // dateKey is ISO date string
+  };
+}
+
