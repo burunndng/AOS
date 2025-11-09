@@ -46,7 +46,14 @@ export default function BigMindProcessWizard({
     };
   });
 
-  const [currentStageIndex, setCurrentStageIndex] = useState(0);
+  const [currentStageIndex, setCurrentStageIndex] = useState(() => {
+    // Resume from draft if available
+    if (draft?.currentStage) {
+      const idx = STAGE_ORDER.indexOf(draft.currentStage);
+      return idx >= 0 ? idx : 0;
+    }
+    return 0;
+  });
   const [userInput, setUserInput] = useState('');
   const [selectedVoice, setSelectedVoice] = useState<string | undefined>(session.voices?.[0]?.name);
   const [newVoiceName, setNewVoiceName] = useState('');
@@ -149,6 +156,19 @@ export default function BigMindProcessWizard({
       }));
     } else {
       setError(result.error || 'Failed to generate response');
+    }
+  };
+
+  const handleNavigateToStage = (targetIndex: number) => {
+    // Allow navigation backwards freely
+    if (targetIndex < currentStageIndex) {
+      setCurrentStageIndex(targetIndex);
+      return;
+    }
+
+    // For forward navigation, use the standard transition
+    if (targetIndex === currentStageIndex + 1) {
+      handleStageTransition('next');
     }
   };
 
@@ -442,13 +462,15 @@ export default function BigMindProcessWizard({
           {STAGE_ORDER.map((stage, idx) => (
             <React.Fragment key={stage}>
               <button
-                onClick={() => setCurrentStageIndex(idx)}
-                disabled={idx > currentStageIndex}
+                onClick={() => handleNavigateToStage(idx)}
+                disabled={idx > currentStageIndex && idx !== currentStageIndex + 1}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition ${
                   idx === currentStageIndex
                     ? 'bg-amber-500/30 border border-amber-400 text-amber-200'
                     : idx < currentStageIndex
-                    ? 'bg-slate-700/50 border border-slate-600 text-slate-300 hover:border-slate-500'
+                    ? 'bg-slate-700/50 border border-slate-600 text-slate-300 hover:border-slate-500 cursor-pointer'
+                    : idx === currentStageIndex + 1
+                    ? 'bg-slate-700/50 border border-slate-600 text-slate-300 hover:border-slate-500 cursor-pointer'
                     : 'bg-slate-900/50 border border-slate-700 text-slate-500 cursor-not-allowed'
                 }`}
               >
