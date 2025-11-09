@@ -188,6 +188,7 @@ export default function App() {
   // Flabbergaster Easter Egg
   const [isFlabbergasterPortalOpen, setIsFlabbergasterPortalOpen] = useLocalStorage<boolean>('isFlabbergasterPortalOpen', false);
   const [hasUnlockedFlabbergaster, setHasUnlockedFlabbergaster] = useLocalStorage<boolean>('hasUnlockedFlabbergaster', false);
+  const [hasDiscoveredHiddenMode, setHasDiscoveredHiddenMode] = useLocalStorage<boolean>('hasDiscoveredHiddenMode', false);
 
   const onSummonFlabbergaster = () => {
     console.log('🌑 onSummonFlabbergaster called! Current state:', isFlabbergasterPortalOpen);
@@ -198,6 +199,13 @@ export default function App() {
     if (!hasUnlockedFlabbergaster) {
       setHasUnlockedFlabbergaster(true);
       console.log('🌑 Marked Flabbergaster as unlocked');
+    }
+  };
+
+  const onHiddenModeDiscovered = () => {
+    if (!hasDiscoveredHiddenMode) {
+      setHasDiscoveredHiddenMode(true);
+      console.log('🌈 Prismatic Flux mode discovered!');
     }
   };
 
@@ -932,6 +940,7 @@ export default function App() {
       <FlabbergasterPortal
         isOpen={isFlabbergasterPortalOpen}
         onClose={() => setIsFlabbergasterPortalOpen(false)}
+        onHiddenModeDiscovered={onHiddenModeDiscovered}
       />
     </div>
   );
