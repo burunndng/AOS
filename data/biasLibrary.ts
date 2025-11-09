@@ -203,6 +203,500 @@ export const BIAS_LIBRARY: BiasDefinition[] = [
       'What did you actually know at the moment of decision versus what you know now?',
       'Are you being fair to your past self\'s state of knowledge?'
     ]
+  },
+  {
+    id: 'dunning-kruger-effect',
+    name: 'Dunning-Kruger Effect',
+    category: 'Self-Assessment',
+    definition: 'The tendency for people with low ability at a task to overestimate their competence, while experts underestimate theirs.',
+    commonTriggers: ['Limited expertise', 'Rapid skill gain', 'New domain knowledge'],
+    examples: [
+      'A novice programmer believing they can architect a system without consulting experienced developers',
+      'A new manager overestimating their capability to handle complex personnel decisions',
+      'Someone with surface knowledge of a topic confidently arguing with experts'
+    ],
+    questions: [
+      'How much experience do you have with similar decisions or tasks?',
+      'What would experts in this field say about your competence level?',
+      'Are you aware of what you don\'t know about this domain?',
+      'Did you seek input from someone more experienced than yourself?',
+      'How might your confidence change after learning more about the complexity?'
+    ]
+  },
+  {
+    id: 'planning-fallacy',
+    name: 'Planning Fallacy',
+    category: 'Decision Making',
+    definition: 'The tendency to underestimate the time, costs, and risks of future actions while overestimating the benefits.',
+    commonTriggers: ['Complex projects', 'Optimistic thinking', 'Unfamiliar tasks'],
+    examples: [
+      'Estimating a project will take 2 weeks when it historically takes 4 weeks',
+      'Underestimating household renovation costs and timelines',
+      'Starting a business with overly optimistic revenue projections'
+    ],
+    questions: [
+      'How have similar projects gone in the past—how much longer did they take?',
+      'What uncertainties or potential obstacles did you factor in?',
+      'Did you add buffer time for unexpected issues?',
+      'Did you consult historical data or base rates for your estimates?',
+      'What assumptions did you make that could prove false?'
+    ]
+  },
+  {
+    id: 'illusion-of-control',
+    name: 'Illusion of Control',
+    category: 'Self-Assessment',
+    definition: 'The tendency to overestimate one\'s ability to control or influence outcomes that depend partly on chance or external factors.',
+    commonTriggers: ['Routine tasks', 'Familiarity with process', 'Past successes'],
+    examples: [
+      'Believing your lucky socks improve your sports performance',
+      'Thinking you can consistently beat the stock market through individual stock picks',
+      'Overestimating your influence on a negotiation outcome'
+    ],
+    questions: [
+      'How much of this outcome actually depends on factors outside your control?',
+      'What would happen if you removed yourself from the equation?',
+      'Are you taking credit for outcomes that may have happened regardless?',
+      'What external variables could override your efforts?',
+      'How much of your past success was due to luck versus your actions?'
+    ]
+  },
+  {
+    id: 'fundamental-attribution-error',
+    name: 'Fundamental Attribution Error',
+    category: 'Judgment',
+    definition: 'The tendency to attribute others\' actions to their character or abilities rather than to situational factors.',
+    commonTriggers: ['Evaluating others\' behavior', 'Conflict situations', 'Performance reviews'],
+    examples: [
+      'Assuming a coworker missed a deadline because they\'re lazy, not because they were overloaded',
+      'Concluding someone is rude based on one interaction, ignoring they might have been having a bad day',
+      'Blaming an employee\'s poor performance on lack of competence rather than inadequate training'
+    ],
+    questions: [
+      'What situational factors might have contributed to this person\'s behavior?',
+      'What would you do in their situation with their constraints?',
+      'Are you considering the full context of their circumstances?',
+      'What might they say about why they acted that way?',
+      'Have you asked them about the circumstances before drawing conclusions?'
+    ]
+  },
+  {
+    id: 'false-consensus-effect',
+    name: 'False Consensus Effect',
+    category: 'Social Influence',
+    definition: 'The tendency to overestimate the extent to which others share our beliefs, attitudes, values, and behaviors.',
+    commonTriggers: ['Group settings', 'Common interests', 'Strongly held beliefs'],
+    examples: [
+      'Assuming most people hold the same political views as you do',
+      'Thinking your colleagues agree with your assessment when they may have reservations',
+      'Believing your lifestyle or values are more mainstream than they actually are'
+    ],
+    questions: [
+      'How do you know that others share your perspective on this?',
+      'Have you tested this assumption with a diverse group?',
+      'Could the people around you simply be agreeing to avoid conflict?',
+      'What percentage of people beyond your immediate circle would agree?',
+      'Did you seek out people who think differently to challenge this assumption?'
+    ]
+  },
+  {
+    id: 'cognitive-dissonance',
+    name: 'Cognitive Dissonance',
+    category: 'Information Processing',
+    definition: 'The discomfort experienced when holding two contradictory beliefs, leading to rationalization or selective exposure.',
+    commonTriggers: ['Conflicting values', 'Behavioral inconsistency', 'New contradictory information'],
+    examples: [
+      'Continuing to buy from companies whose values contradict your beliefs, while justifying exceptions',
+      'Dismissing evidence that contradicts a past decision you made',
+      'Feeling uncomfortable with data that conflicts with your preferred outcome'
+    ],
+    questions: [
+      'Are you experiencing discomfort because of contradictory beliefs?',
+      'Are you rationalizing inconsistencies in your values or behavior?',
+      'Is there information you\'re avoiding because it contradicts your position?',
+      'Could you acknowledge both perspectives without needing to resolve the tension?',
+      'What core values might be in conflict here?'
+    ]
+  },
+  {
+    id: 'in-group-bias',
+    name: 'In-group Bias',
+    category: 'Social Influence',
+    definition: 'The tendency to favor members of your own group and disfavor those from outside groups.',
+    commonTriggers: ['Group identity', 'Competition between groups', 'In-group loyalty'],
+    examples: [
+      'Viewing your company\'s choices more favorably than a competitor\'s identical choices',
+      'Assuming team members from your department are more competent than equally qualified people from other departments',
+      'Being more lenient with mistakes made by "our team" than by rivals'
+    ],
+    questions: [
+      'Are you judging this person or group differently because of their group membership?',
+      'Would you evaluate the same action differently if it came from someone in your group?',
+      'What would an outsider say about the fairness of your assessment?',
+      'Are you giving in-group members the benefit of the doubt more than out-group members?',
+      'Can you identify specific criteria beyond group membership for your judgment?'
+    ]
+  },
+  {
+    id: 'bandwagon-effect',
+    name: 'Bandwagon Effect',
+    category: 'Social Influence',
+    definition: 'The tendency to do, believe, or want something because many other people do.',
+    commonTriggers: ['Popular trends', 'Majority opinion', 'Social proof'],
+    examples: [
+      'Adopting an investment strategy because many others are doing it, without independent research',
+      'Supporting a position primarily because it\'s gaining traction on social media',
+      'Choosing technology or products because "everyone" is using them'
+    ],
+    questions: [
+      'Why do you believe this—because of the evidence or because others believe it?',
+      'Would you hold this position if fewer people agreed with it?',
+      'Did you arrive at this independently or through social influence?',
+      'What would your decision be based on the merits alone?',
+      'Can you identify reasons beyond "popularity" for this choice?'
+    ]
+  },
+  {
+    id: 'endowment-effect',
+    name: 'Endowment Effect',
+    category: 'Decision Making',
+    definition: 'The tendency to place higher value on something simply because you own or possess it.',
+    commonTriggers: ['Ownership', 'Possession length', 'Personal attachment'],
+    examples: [
+      'Asking a higher price for your car than you would pay for an identical car from someone else',
+      'Overvaluing ideas you proposed versus those suggested by colleagues',
+      'Thinking your possessions are worth more than objective market value'
+    ],
+    questions: [
+      'Would you value this differently if you didn\'t own it?',
+      'What would you pay for this if you didn\'t already have it?',
+      'Is your valuation based on objective factors or possession?',
+      'How long have you owned or been attached to this?',
+      'Would an outside valuer agree with your assessment?'
+    ]
+  },
+  {
+    id: 'loss-aversion',
+    name: 'Loss Aversion',
+    category: 'Decision Making',
+    definition: 'The tendency to feel the pain of losses about twice as strongly as the pleasure of equivalent gains.',
+    commonTriggers: ['Risk of loss', 'Change from status quo', 'Past losses'],
+    examples: [
+      'Holding a losing investment longer than a winning one to avoid realizing a loss',
+      'Avoiding a change that could improve outcomes due to fear of losing what you have',
+      'Overweighting potential downsides when comparing options'
+    ],
+    questions: [
+      'Are you giving more weight to potential losses than potential gains?',
+      'What specifically are you afraid of losing?',
+      'How likely is that loss compared to potential gains?',
+      'Would you be more willing to change if there were no loss involved?',
+      'Are you being proportional in weighing gains and losses?'
+    ]
+  },
+  {
+    id: 'optimism-bias',
+    name: 'Optimism Bias',
+    category: 'Self-Assessment',
+    definition: 'The tendency to believe that you are more likely to experience positive outcomes and less likely to experience negative ones than others.',
+    commonTriggers: ['Future planning', 'Personal capabilities', 'Comparative thinking'],
+    examples: [
+      'Thinking you\'re less likely to get sick or have an accident than average',
+      'Believing your relationship is stronger than average and less likely to fail',
+      'Overestimating the likelihood of job success or career advancement'
+    ],
+    questions: [
+      'Are you assuming this will work out better for you than for others in similar situations?',
+      'What negative outcomes are possible that you haven\'t considered?',
+      'How do comparable situations typically turn out?',
+      'Are you treating your situation as somehow special or exempt from normal probabilities?',
+      'What would a pessimist or realist say about the actual odds?'
+    ]
+  },
+  {
+    id: 'negativity-bias',
+    name: 'Negativity Bias',
+    category: 'Information Processing',
+    definition: 'The tendency to give more weight and attention to negative experiences or information than positive ones.',
+    commonTriggers: ['Mixed feedback', 'Media exposure', 'Performance reviews'],
+    examples: [
+      'Focusing on one critical comment while ignoring nine compliments',
+      'Disproportionately remembering a failed project over multiple successes',
+      'Overestimating risks or problems while underestimating benefits'
+    ],
+    questions: [
+      'Are you focusing disproportionately on negative information?',
+      'How many positive data points are you balancing against the negative?',
+      'What would the full picture look like if you weighted all information equally?',
+      'Is the negative information actually more important or are you just paying it more attention?',
+      'What positive aspects are you overlooking?'
+    ]
+  },
+  {
+    id: 'false-memory',
+    name: 'False Memory',
+    category: 'Memory',
+    definition: 'The tendency to remember things differently than they actually occurred, filling in gaps with plausible but inaccurate details.',
+    commonTriggers: ['Distant past events', 'Emotionally significant experiences', 'Repeated recounting'],
+    examples: [
+      'Misremembering the exact details of a conflict while being confident in your version',
+      'Believing you said something in a conversation when you didn\'t, but thought of it later',
+      'Reconstructing past conversations based on what seems logical rather than what was said'
+    ],
+    questions: [
+      'How certain are you about these specific details?',
+      'Is anyone else present who remembers this differently?',
+      'Have you filled in gaps in your memory with what seems logical?',
+      'How often have you recounted this story, and could it have changed in the retelling?',
+      'What physical evidence or records exist that could confirm your memory?'
+    ]
+  },
+  {
+    id: 'clustering-illusion',
+    name: 'Clustering Illusion',
+    category: 'Pattern Recognition',
+    definition: 'The tendency to see patterns or clusters in random data and attribute them to meaningful causes.',
+    commonTriggers: ['Data interpretation', 'Pattern seeking', 'Small sample sizes'],
+    examples: [
+      'Seeing a trend in three consecutive months of sales data when it\'s just random variation',
+      'Concluding a sports team is "on a winning streak" based on short-term results',
+      'Attributing meaning to coincidences or random patterns in data'
+    ],
+    questions: [
+      'Is this pattern based on enough data to be statistically meaningful?',
+      'Could this pattern occur by chance alone?',
+      'What would you expect from random data over this time period?',
+      'Do you have a causal explanation, or are you just identifying a pattern?',
+      'How large is your sample size compared to what would be needed for significance?'
+    ]
+  },
+  {
+    id: 'regression-to-mean',
+    name: 'Regression to the Mean (Misunderstanding)',
+    category: 'Statistical Understanding',
+    definition: 'The failure to recognize that extreme outcomes tend to be followed by more moderate ones, leading to incorrect causal conclusions.',
+    commonTriggers: ['Extreme events', 'Intervention timing', 'Performance fluctuations'],
+    examples: [
+      'Attributing improvement after an extreme poor performance to a management change, when improvement was natural',
+      'Crediting a coach for improvement when it\'s simply the athlete returning to their average level',
+      'Implementing changes after terrible results and attributing the recovery to those changes'
+    ],
+    questions: [
+      'Was this extreme result exceptional or typical for this situation?',
+      'If nothing had changed, would performance have improved anyway?',
+      'What would natural variation alone predict for the next period?',
+      'Are you assuming the change you made caused the improvement?',
+      'How do results compare to the historical average or trend?'
+    ]
+  },
+  {
+    id: 'survivorship-bias',
+    name: 'Survivorship Bias',
+    category: 'Information Processing',
+    definition: 'The tendency to focus on successful examples while overlooking failed ones, leading to overly optimistic conclusions.',
+    commonTriggers: ['Visible successes', 'Business analysis', 'Career decisions'],
+    examples: [
+      'Learning business strategies from billionaires\' advice while ignoring those who failed trying the same approach',
+      'Following career paths of successful people while ignoring equally talented people who didn\'t succeed',
+      'Believing risky strategies work because you see the wins, not the hidden losses'
+    ],
+    questions: [
+      'Are you only looking at the successes while ignoring the failures?',
+      'How many people tried this approach and failed?',
+      'What happened to those who followed similar strategies but didn\'t succeed?',
+      'Does the success rate match the visibility you have of it?',
+      'What would the analysis look like if you included all attempts, not just successes?'
+    ]
+  },
+  {
+    id: 'selection-bias',
+    name: 'Selection Bias',
+    category: 'Information Processing',
+    definition: 'The tendency to draw conclusions from non-representative samples that aren\'t properly randomized or selected.',
+    commonTriggers: ['Convenience sampling', 'Self-selection', 'Filtered information'],
+    examples: [
+      'Assuming customer satisfaction based only on feedback from satisfied customers who bothered to respond',
+      'Evaluating a product based only on reviews from enthusiasts, not average users',
+      'Concluding a training program works based on employees who completed it, ignoring those who dropped out'
+    ],
+    questions: [
+      'Are you drawing conclusions from a representative sample or only from readily available examples?',
+      'Who is missing from your analysis that might have different experiences?',
+      'Is there a systematic reason why certain people or cases are included while others are excluded?',
+      'Would the conclusion change if you included all relevant cases, not just the ones you\'ve seen?',
+      'What selection mechanism determined who got included in your sample?'
+    ]
+  },
+  {
+    id: 'backfire-effect',
+    name: 'Backfire Effect',
+    category: 'Information Processing',
+    definition: 'The tendency to become more entrenched in a belief when presented with contradictory evidence.',
+    commonTriggers: ['Identity-threatening information', 'Strongly held beliefs', 'Polarized issues'],
+    examples: [
+      'Dismissing fact-checks and becoming more convinced in a false belief',
+      'Reacting negatively to evidence that contradicts your initial stance and doubling down',
+      'Interpreting corrections as attacks and defending your position more strongly'
+    ],
+    questions: [
+      'Are you rejecting evidence because it feels like an attack on your identity?',
+      'How would you respond to this same information if it came from a trusted source?',
+      'Are you becoming more entrenched rather than genuinely reconsidering?',
+      'What would it take for you to reconsider your position?',
+      'Can you separate the evidence from the messenger\'s intent?'
+    ]
+  },
+  {
+    id: 'empathy-gap',
+    name: 'Empathy Gap',
+    category: 'Judgment',
+    definition: 'The difficulty in accurately imagining how differently you would think, feel, or act in a different emotional or physical state.',
+    commonTriggers: ['Future emotions', 'Different experiences', 'Emotional transitions'],
+    examples: [
+      'Judging hungry people for overeating when you\'re full and not hungry',
+      'Not understanding why someone made an angry decision when you\'re calm',
+      'Thinking you\'ll stick to a strict diet while hungry at the grocery store'
+    ],
+    questions: [
+      'Are you judging someone in a different emotional state than your current one?',
+      'How would you feel or act if you were in their specific circumstances?',
+      'Is it easy for you to remember what it was like to be in that state?',
+      'Are you being fair to past or future versions of yourself?',
+      'What would that person say about why they acted that way?'
+    ]
+  },
+  {
+    id: 'actor-observer-bias',
+    name: 'Actor-Observer Bias',
+    category: 'Judgment',
+    definition: 'The tendency to attribute your own behaviors to external circumstances while attributing others\' behaviors to their character.',
+    commonTriggers: ['Success/failure interpretation', 'Comparative judgment', 'Self-serving needs'],
+    examples: [
+      'Blaming a poor presentation on being tired, but assuming someone else did poorly because they\'re not good at presenting',
+      'Attributing your late arrival to traffic while assuming someone else was just disorganized',
+      'Crediting your success to effort while assuming others\' success came from luck or privilege'
+    ],
+    questions: [
+      'Are you applying different standards to explain your behavior versus others\' behavior?',
+      'What external factors affected the other person\'s situation that you might be overlooking?',
+      'Would you accept the same explanation for your behavior that you\'re giving them?',
+      'What role did character or ability play in your performance versus theirs?',
+      'Are you being symmetrical in your attributions?'
+    ]
+  },
+  {
+    id: 'curse-of-knowledge',
+    name: 'Curse of Knowledge',
+    category: 'Mental Shortcut',
+    definition: 'The difficulty in imagining what it\'s like to not know something you already know, or to imagine others lack knowledge you have.',
+    commonTriggers: ['Expertise', 'Teaching', 'Communication gaps'],
+    examples: [
+      'A developer explaining technical concepts at too high a level for beginners to understand',
+      'Assuming team members understand your context when you haven\'t explained it',
+      'Writing instructions that are unclear because you know the process too well'
+    ],
+    questions: [
+      'Are you assuming others understand things you take for granted?',
+      'What basic steps or context might someone new need to know?',
+      'How would you explain this to someone with no background in the field?',
+      'What assumptions are embedded in your communication that aren\'t obvious?',
+      'Have you tested your explanation with someone unfamiliar with the topic?'
+    ]
+  },
+  {
+    id: 'spotlight-effect',
+    name: 'Spotlight Effect',
+    category: 'Self-Assessment',
+    definition: 'The tendency to overestimate how much others notice or care about your appearance, behavior, or mistakes.',
+    commonTriggers: ['Self-consciousness', 'Social settings', 'Noticeable errors'],
+    examples: [
+      'Being extremely self-conscious about a small stain on your shirt when others don\'t notice it',
+      'Believing everyone noticed your mistake or awkward comment when most people didn\'t register it',
+      'Thinking you stand out negatively more than you actually do'
+    ],
+    questions: [
+      'How much do you actually think others noticed or cared about this?',
+      'If the situation were reversed, would you notice or remember this about someone else?',
+      'Are you in a genuine spotlight or is it imagined?',
+      'How long will people actually remember or care about this?',
+      'Is your worry proportional to actual consequences?'
+    ]
+  },
+  {
+    id: 'mere-exposure-effect',
+    name: 'Mere Exposure Effect',
+    category: 'Mental Shortcut',
+    definition: 'The tendency to develop a preference for things or people simply because you are familiar with them, even without positive interaction.',
+    commonTriggers: ['Repeated exposure', 'Familiarity', 'Status quo'],
+    examples: [
+      'Growing to like a song you didn\'t enjoy initially through repeated listening',
+      'Preferring a familiar brand even when objective quality hasn\'t changed',
+      'Favoring existing team members in hiring because you\'re familiar with them'
+    ],
+    questions: [
+      'Is your preference based on actual qualities or on familiarity?',
+      'Would you like this equally if you hadn\'t been exposed to it repeatedly?',
+      'Have you tried quality alternatives you might prefer but are less familiar with?',
+      'Is familiarity creating an unfair advantage in your decision?',
+      'What would a fresh evaluation reveal compared to your current preference?'
+    ]
+  },
+  {
+    id: 'semmelweis-reflex',
+    name: 'Semmelweis Reflex',
+    category: 'Information Processing',
+    definition: 'The tendency to reject new information or evidence because it contradicts established practices or norms.',
+    commonTriggers: ['Established methods', 'Institutional inertia', 'Expert credentials'],
+    examples: [
+      'Resisting a new technology because "we\'ve always done it this way"',
+      'Dismissing research findings because they contradict established protocols',
+      'Defending current practices against evidence of better alternatives'
+    ],
+    questions: [
+      'Are you rejecting this idea because it\'s genuinely flawed, or because it\'s new?',
+      'What would change your mind about the current approach?',
+      'Has the evidence been properly reviewed by qualified experts?',
+      'What are the costs of being wrong in clinging to the old way versus adopting the new?',
+      'Are you defending the practice or defending your investment in it?'
+    ]
+  },
+  {
+    id: 'authority-bias',
+    name: 'Authority Bias',
+    category: 'Social Influence',
+    definition: 'The tendency to attribute greater accuracy to the opinions of authority figures and be more likely to accept their statements as truth.',
+    commonTriggers: ['Expert opinions', 'Hierarchical settings', 'Credentials'],
+    examples: [
+      'Accepting a doctor\'s recommendation without seeking second opinions from other qualified professionals',
+      'Automatically deferring to senior management\'s views without independent analysis',
+      'Trusting a celebrity endorser\'s claims about a product because of their status'
+    ],
+    questions: [
+      'Are you accepting this because it\'s true or because of who said it?',
+      'What would you think about this same statement from a non-authority?',
+      'Have you independently verified the claims being made?',
+      'Is this person actually an authority in this specific domain?',
+      'What would other qualified experts say?'
+    ]
+  },
+  {
+    id: 'false-dilemma',
+    name: 'False Dilemma (False Choice)',
+    category: 'Decision Making',
+    definition: 'The tendency to incorrectly limit decision-making to only two options when more alternatives exist.',
+    commonTriggers: ['Extreme framing', 'Polarized debates', 'Limited information'],
+    examples: [
+      'Thinking you either need to accept a bad deal or walk away, when negotiation is possible',
+      'Believing it\'s either their way or completely wrong, with no middle ground',
+      'Presenting options as "stay or leave" when many intermediate choices exist'
+    ],
+    questions: [
+      'Are there more than two options available?',
+      'What middle-ground or hybrid approaches haven\'t you considered?',
+      'Who benefits from you seeing only these two choices?',
+      'What would happen if you combined elements of both approaches?',
+      'What alternatives are you not seeing?'
+    ]
   }
 ];
 
