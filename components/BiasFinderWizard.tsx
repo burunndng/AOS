@@ -14,7 +14,10 @@ import {
   generateSocraticQuestions,
   generateDiagnostic,
   generateFinalReport,
-  generateBiasFinderResponseStream
+  generateBiasFinderResponseStream,
+  generateHypothesesStreaming,
+  generateSocraticQuestionsStreaming,
+  generateDiagnosticStreaming
 } from '../services/biasFinderService';
 import { getBiasById } from '../data/biasLibrary';
 
@@ -115,6 +118,24 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
     }
   }, [currentPhase, targetDecision, parameters, hypotheses, currentHypothesisIndex, messages, diagnosticReport]);
 
+  /**
+   * Helper function to consume async generators and display streaming text
+   * Returns a promise that resolves when streaming is complete
+   */
+  const consumeStreaming = async <T,>(
+    generator: AsyncGenerator<string, T, unknown>,
+    onChunk: (chunk: string) => void,
+    onComplete: (result: T) => void
+  ): Promise<void> => {
+    let result: T;
+    for await (const chunk of generator) {
+      onChunk(chunk);
+    }
+    // Get the final return value
+    result = (await generator.next()).value!;
+    onComplete(result);
+  };
+
   const handleSendMessage = async () => {
     if (!userInput.trim() || isLoading) return;
 
@@ -169,26 +190,35 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
   const handleParametersSubmit = async (params: BiasFinderParameters) => {
     setParameters(params);
     setIsLoading(true);
+    setStreamingMessage('');
 
     const userMessage = `Stakes: ${params.stakes}, Time Pressure: ${params.timePressure}, Emotional State: ${params.emotionalState}${params.decisionType ? `, Decision Type: ${params.decisionType}` : ''}${params.context ? `, Context: ${params.context}` : ''}`;
     addMessage('user', userMessage, 'PARAMETERS');
 
     try {
-      // Generate hypotheses
-      const { message, hypotheses: newHypotheses } = await generateHypotheses(targetDecision, params);
+      // Generate hypotheses with streaming
+      const generator = generateHypothesesStreaming(targetDecision, params);
 
-      if (!newHypotheses || newHypotheses.length === 0) {
-        throw new Error('No biases identified for this decision. This might be a temporary issue.');
-      }
+      await consumeStreaming(
+        generator,
+        (chunk) => setStreamingMessage(prev => prev + chunk),
+        ({ message, hypotheses: newHypotheses }) => {
+          if (!newHypotheses || newHypotheses.length === 0) {
+            throw new Error('No biases identified for this decision. This might be a temporary issue.');
+          }
 
-      setHypotheses(newHypotheses);
-      setCurrentPhase('HYPOTHESIS');
-      addMessage('assistant', message, 'HYPOTHESIS');
+          setHypotheses(newHypotheses);
+          setCurrentPhase('HYPOTHESIS');
+          addMessage('assistant', message, 'HYPOTHESIS');
+          setStreamingMessage('');
+        }
+      );
     } catch (error) {
       console.error('Error generating hypotheses:', error);
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while analyzing your parameters. Please try again.';
       addMessage('system', `I encountered an issue: ${errorMessage}. Would you like to try again with different parameters?`, 'PARAMETERS');
       setParameters(undefined); // Reset parameters so form stays visible
+      setStreamingMessage('');
     }
 
     setIsLoading(false);
@@ -222,21 +252,31 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
       setCurrentPhase('INTERROGATION');
       setQuestionCount(0);
       setIsLoading(true);
+      setStreamingMessage('');
 
       try {
         const selectedBias = hypotheses[selectedIndex];
-        const questions = await generateSocraticQuestions(
+        const generator = generateSocraticQuestionsStreaming(
           targetDecision,
           parameters!,
           selectedBias.biasId,
           messages
         );
-        addMessage('assistant', questions, 'INTERROGATION');
+
+        await consumeStreaming(
+          generator,
+          (chunk) => setStreamingMessage(prev => prev + chunk),
+          (questions) => {
+            addMessage('assistant', questions, 'INTERROGATION');
+            setStreamingMessage('');
+          }
+        );
       } catch (error) {
         console.error('Error generating Socratic questions:', error);
         const errorMsg = error instanceof Error ? error.message : 'An error occurred';
         addMessage('system', `I had trouble generating questions for this bias: ${errorMsg}. Would you like to try another bias?`, 'HYPOTHESIS');
         setCurrentPhase('HYPOTHESIS');
+        setStreamingMessage('');
       }
 
       setIsLoading(false);
@@ -255,35 +295,52 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
 
     setQuestionCount(prev => prev + 1);
     setIsLoading(true);
+    setStreamingMessage('');
 
     try {
       // After 3-5 questions, move to diagnostic
       if (questionCount >= 3) {
         setCurrentPhase('DIAGNOSTIC');
-        const { conclusion, confidence } = await generateDiagnostic(
+        const generator = generateDiagnosticStreaming(
           targetDecision,
           parameters!,
           currentHypothesis.biasId,
           currentHypothesis.evidence || []
         );
 
-        currentHypothesis.confidence = confidence;
-        setHypotheses([...hypotheses]);
-        addMessage('assistant', conclusion, 'DIAGNOSTIC');
+        await consumeStreaming(
+          generator,
+          (chunk) => setStreamingMessage(prev => prev + chunk),
+          ({ conclusion, confidence }) => {
+            currentHypothesis.confidence = confidence;
+            setHypotheses([...hypotheses]);
+            addMessage('assistant', conclusion, 'DIAGNOSTIC');
+            setStreamingMessage('');
+          }
+        );
       } else {
-        // Ask next question
-        const nextQuestions = await generateSocraticQuestions(
+        // Ask next question with streaming
+        const generator = generateSocraticQuestionsStreaming(
           targetDecision,
           parameters!,
           currentHypothesis.biasId,
           [...messages, { id: 'temp', role: 'user', content: userMessage, phase: 'INTERROGATION', timestamp: new Date().toISOString() }]
         );
-        addMessage('assistant', nextQuestions, 'INTERROGATION');
+
+        await consumeStreaming(
+          generator,
+          (chunk) => setStreamingMessage(prev => prev + chunk),
+          (nextQuestions) => {
+            addMessage('assistant', nextQuestions, 'INTERROGATION');
+            setStreamingMessage('');
+          }
+        );
       }
     } catch (error) {
       console.error('Error during interrogation:', error);
       const errorMsg = error instanceof Error ? error.message : 'An error occurred while processing your response';
       addMessage('system', `I encountered a temporary issue: ${errorMsg}. Let's try the next question.`, 'INTERROGATION');
+      setStreamingMessage('');
     }
 
     setIsLoading(false);
