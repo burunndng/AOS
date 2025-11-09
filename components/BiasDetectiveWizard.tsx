@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { BiasDetectiveSession, DiscoveryAnswers, BiasScenario } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, BrainCircuit, Lightbulb, Check, ChevronRight, Download } from 'lucide-react';
 import { generateBiasedDecisionAnalysis, generateBiasScenarios } from '../services/biasDetectiveService.ts';
+import * as ragService from '../services/ragService.ts';
 
 interface BiasDetectiveWizardProps {
   onClose: () => void;
   onSave: (session: BiasDetectiveSession) => void;
   session: BiasDetectiveSession | null;
   setDraft: (session: BiasDetectiveSession | null) => void;
+  userId: string;
 }
 
 type WizardStep = 'DECISION' | 'REASONING' | 'DISCOVERY' | 'DISCOVERING' | 'DIAGNOSIS' | 'SCENARIOS' | 'COMMITMENT' | 'LEARNING' | 'COMPLETE';
@@ -28,7 +30,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 const STEPS: WizardStep[] = ['DECISION', 'REASONING', 'DISCOVERY', 'DIAGNOSIS', 'SCENARIOS', 'COMMITMENT', 'LEARNING'];
 
-export default function BiasDetectiveWizard({ onClose, onSave, session: draft, setDraft }: BiasDetectiveWizardProps) {
+export default function BiasDetectiveWizard({ onClose, onSave, session: draft, setDraft, userId }: BiasDetectiveWizardProps) {
   const [step, setStep] = useState<WizardStep>(draft?.currentStep as WizardStep || 'DECISION');
   const [decisionText, setDecisionText] = useState(draft?.decisionText || '');
   const [reasoning, setReasoning] = useState(draft?.reasoning || '');
@@ -46,6 +48,8 @@ export default function BiasDetectiveWizard({ onClose, onSave, session: draft, s
   const [learning, setLearning] = useState(draft?.oneThingToRemember || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [ragSyncing, setRagSyncing] = useState(false);
+  const [ragInsights, setRagInsights] = useState<string[]>([]);
 
   // Hydrate from draft if it exists
   useEffect(() => {
@@ -73,11 +77,63 @@ export default function BiasDetectiveWizard({ onClose, onSave, session: draft, s
       oneThingToRemember: learning,
       nextTimeAction: commitment,
       // Deprecated fields, kept for type compatibility
-      identifiedBiases: [], 
+      identifiedBiases: [],
       alternativeFramings: [],
     };
     setDraft(session);
     onClose();
+  };
+
+  // RAG: Generate insights and sync session
+  const handleCompleteWithRAG = async (session: BiasDetectiveSession) => {
+    // First save the session normally
+    onSave(session);
+
+    // Then generate RAG insights and sync
+    setRagSyncing(true);
+    try {
+      // Extract identified biases from diagnosis text
+      const biasPatterns = biasesIdentified.match(/\b\w+\s+bias\b/gi) || [];
+      const identifiedBiases = biasPatterns.length > 0
+        ? biasPatterns
+        : ['confirmation bias', 'availability bias', 'anchoring bias']; // Fallback
+
+      // Generate RAG insights
+      const insights = await ragService.generateBiasDetectiveInsights(userId, {
+        decision: decisionText,
+        reasoning: reasoning,
+        identifiedBiases: identifiedBiases,
+        scenarios: scenarios.reduce((acc: Record<string, string>, s, i) => {
+          acc[`scenario_${i}`] = s.scenario;
+          return acc;
+        }, {}),
+      });
+
+      setRagInsights(insights.metadata?.insights || []);
+
+      // Sync the completed session to backend
+      await ragService.syncUserSession(userId, {
+        id: session.id,
+        userId: userId,
+        type: 'bias_detective',
+        content: {
+          decision: decisionText,
+          reasoning: reasoning,
+          identifiedBiases: identifiedBiases,
+          diagnosis: biasesIdentified,
+          scenarios: scenarios,
+        },
+        insights: insights.metadata?.insights || [],
+        completedAt: new Date(),
+      });
+
+      console.log('[BiasDetectiveWizard] Session synced and indexed');
+    } catch (err) {
+      console.error('[BiasDetectiveWizard] RAG sync error:', err);
+      // Don't block completion if RAG fails - session is already saved locally
+    } finally {
+      setRagSyncing(false);
+    }
   };
 
   const handleNext = async () => {
@@ -137,10 +193,11 @@ export default function BiasDetectiveWizard({ onClose, onSave, session: draft, s
             oneThingToRemember: learning,
             nextTimeAction: commitment,
             // Deprecated fields
-            identifiedBiases: [], 
+            identifiedBiases: [],
             alternativeFramings: [],
         };
-        onSave(session);
+        // Use RAG-aware completion handler
+        handleCompleteWithRAG(session);
     } else {
         const nextStep = STEPS[currentIdx + 1];
         if (nextStep) {

@@ -701,7 +701,7 @@ export default function App() {
       case 'browse': return <BrowseTab practiceStack={practiceStack} addToStack={addToStack} onExplainClick={handleExplainPractice} onPersonalizeClick={setCustomizationModalPractice} />;
       case 'tracker': return <TrackerTab practiceStack={practiceStack} completedPractices={completedToday} togglePracticeCompletion={togglePracticeCompletion} dailyNotes={dailyNotes} updateDailyNote={updateDailyNote} findModuleKey={findModuleKey} />;
       case 'streaks': return <StreaksTab practiceStack={practiceStack} completionHistory={completionHistory} findModuleKey={findModuleKey} />;
-      case 'recommendations': return <RecommendationsTab starterStacks={starterStacks} applyStarterStack={applyStarterStack} recommendations={recommendations} isLoading={aiLoading} error={aiError} onGenerate={generateRecommendations} />;
+      case 'recommendations': return <RecommendationsTab userId={userId} starterStacks={starterStacks} applyStarterStack={applyStarterStack} recommendations={recommendations} isLoading={aiLoading} error={aiError} onGenerate={generateRecommendations} />;
       case 'aqal': return <AqalTab report={aqalReport} isLoading={aiLoading} error={aiError} onGenerate={generateAqalReport} />;
       case 'mind-tools': return <MindToolsTab
         setActiveWizard={setActiveWizardAndLink}
@@ -758,6 +758,7 @@ export default function App() {
       case 'bias':
         return (
           <BiasDetectiveWizard
+            userId={userId}
             onClose={() => setActiveWizard(null)}
             onSave={handleSaveBiasSession}
             session={draftBias}
@@ -931,7 +932,7 @@ export default function App() {
       )}
       {customizationModalPractice && (
         <Suspense fallback={<ModalLoadingFallback />}>
-          <PracticeCustomizationModal practice={customizationModalPractice} onClose={() => setCustomizationModalPractice(null)} onSave={handlePersonalizePractice} />
+          <PracticeCustomizationModal userId={userId} practice={customizationModalPractice} onClose={() => setCustomizationModalPractice(null)} onSave={handlePersonalizePractice} />
         </Suspense>
       )}
       {isCustomPracticeModalOpen && (
