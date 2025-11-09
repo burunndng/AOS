@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { BiasFinderSession, BiasFinderPhase, BiasFinderParameters, BiasHypothesis, BiasFinderMessage, BiasFinderDiagnosticReport } from '../types';
-import { X, ArrowLeft, Download, BrainCircuit, CheckCircle, Circle } from 'lucide-react';
+import { X, ArrowLeft, Download, BrainCircuit, CheckCircle, Circle, BookOpen } from 'lucide-react';
 import {
   generateOnboardingMessage,
   processTargetDecision,
@@ -20,6 +20,8 @@ import {
   generateDiagnosticStreaming
 } from '../services/biasFinderService';
 import { getBiasById } from '../data/biasLibrary';
+import BiasFinderAudioPlayer from './BiasFinderAudioPlayer';
+import BiasPracticeSessionGenerator from './BiasPracticeSessionGenerator';
 
 interface BiasFinderWizardProps {
   onClose: () => void;
@@ -52,6 +54,7 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [questionCount, setQuestionCount] = useState(0); // Track questions in interrogation
+  const [showPracticeGenerator, setShowPracticeGenerator] = useState(false); // Practice session modal
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -678,13 +681,23 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
           <div className="border-t border-gray-200 p-6 bg-gray-50 overflow-y-auto max-h-96">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-800">Diagnostic Report</h3>
-              <button
-                onClick={handleDownloadReport}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-              >
-                <Download size={16} />
-                Download
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowPracticeGenerator(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  title="Generate a guided practice session based on identified biases"
+                >
+                  <BookOpen size={16} />
+                  Practice
+                </button>
+                <button
+                  onClick={handleDownloadReport}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                >
+                  <Download size={16} />
+                  Download
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -786,6 +799,17 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
           </div>
         )}
       </div>
+
+      {/* Practice Session Generator Modal */}
+      {parameters && hypotheses.length > 0 && (
+        <BiasPracticeSessionGenerator
+          isOpen={showPracticeGenerator}
+          onClose={() => setShowPracticeGenerator(false)}
+          decision={targetDecision}
+          parameters={parameters}
+          identifiedBiases={hypotheses}
+        />
+      )}
     </div>
   );
 }
