@@ -46,6 +46,7 @@ const MeditationWizard = lazy(() => import('./components/MeditationWizard.tsx'))
 const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.tsx'));
 const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
 const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizard.tsx'));
+const IntegralBodyArchitectWizard = lazy(() => import('./components/IntegralBodyArchitectWizard.tsx'));
 
 
 // Constants & Types
@@ -72,7 +73,8 @@ import {
   JhanaSession,
   JourneyProgress,
   AttachmentAssessmentSession,
-  BigMindSession
+  BigMindSession,
+  IntegralBodyPlan
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -143,6 +145,7 @@ export default function App() {
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
   const [historyBigMind, setHistoryBigMind] = useLocalStorage<BigMindSession[]>('historyBigMind', []);
+  const [integralBodyPlans, setIntegralBodyPlans] = useLocalStorage<IntegralBodyPlan[]>('integralBodyPlans', []);
   
   // AI-generated data
   const [recommendations, setRecommendations] = useState<string[]>([]);
@@ -158,6 +161,7 @@ export default function App() {
   const [customizationModalPractice, setCustomizationModalPractice] = useState<Practice | null>(null);
   const [isCustomPracticeModalOpen, setIsCustomPracticeModalOpen] = useState(false);
   const [isGuidedPracticeGeneratorOpen, setIsGuidedPracticeGeneratorOpen] = useState(false);
+  const [bodyArchitectHandoff, setBodyArchitectHandoff] = useState<{ type: 'yin' | 'yang'; payload: any } | null>(null);
   
   // Integrated Insights
   const [integratedInsights, setIntegratedInsights] = useLocalStorage<IntegratedInsight[]>('integratedInsights', []);
@@ -425,6 +429,11 @@ export default function App() {
     setActiveTab('library');
   };
 
+  const handleSaveIntegralBodyPlan = (plan: IntegralBodyPlan) => {
+    setIntegralBodyPlans(prev => [...prev.filter(p => p.id !== plan.id), plan]);
+    alert(`Your Integral Week has been saved! Access it from your Library.`);
+  };
+
   const handleSaveBigMindSession = (session: BigMindSession) => {
     setHistoryBigMind(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftBigMind(null);
@@ -680,6 +689,16 @@ export default function App() {
               if (practice && !practiceStack.some(p => p.id === practiceId)) {
                 addToStack(practice);
               }
+            }}
+          />
+        );
+      case 'integral-body-architect':
+        return (
+          <IntegralBodyArchitectWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveIntegralBodyPlan}
+            onLaunchSomaticPractice={(practiceIntent: string) => {
+              setActiveWizard('somatic');
             }}
           />
         );
