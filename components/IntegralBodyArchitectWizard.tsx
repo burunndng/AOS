@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2 } from 'lucide-react';
+import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2, Calendar, ShoppingCart, User, AlertTriangle, Target, Zap, Clock, TrendingUp } from 'lucide-react';
 import {
   IntegralBodyPlan,
   YangConstraints,
@@ -240,6 +240,7 @@ export default function IntegralBodyArchitectWizard({
             onToggleDay={setExpandedDay}
             onLaunchYin={handleYinLaunch}
             onLaunchYang={handleYangLaunch}
+            personalizationSummary={personalizationSummary}
           />
         );
       case 'HANDOFF':
@@ -596,27 +597,29 @@ interface DeliveryStepProps {
   onToggleDay: (day: string | null) => void;
   onLaunchYin: (practice: YinPracticeDetail, dayName: string) => void;
   onLaunchYang: (workout: WorkoutRoutine, dayName: string) => void;
+  personalizationSummary?: PersonalizationSummary | null;
 }
 
-function DeliveryStep({ plan, expandedDay, onToggleDay, onLaunchYin, onLaunchYang }: DeliveryStepProps) {
+function DeliveryStep({ plan, expandedDay, onToggleDay, onLaunchYin, onLaunchYang, personalizationSummary }: DeliveryStepProps) {
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-900/30 to-teal-900/30 border border-blue-700 rounded-lg p-5">
-        <h3 className="text-xl font-bold text-slate-100 mb-2">Integrated Weekly Blueprint</h3>
-        <p className="text-slate-300 text-sm">{plan.weekSummary}</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          <StatCard label="Daily Protein" value={`${plan.dailyTargets.proteinGrams}g`} accent="text-accent" />
-          <StatCard label="Workouts" value={`${plan.dailyTargets.workoutDays}x`} accent="text-blue-400" />
-          <StatCard label="Yin Practice" value={`${plan.dailyTargets.yinPracticeMinutes}min`} accent="text-teal-400" />
-          <StatCard label="Sleep" value={`${plan.dailyTargets.sleepHours}h`} accent="text-purple-400" />
-        </div>
-      </div>
+      {/* Enhanced Summary Panel */}
+      <WeeklySummaryPanel plan={plan} personalizationSummary={personalizationSummary} />
 
-      <div className="space-y-3">
-        {plan.days.map((day) => (
-          <DayCard
+      {/* Quick Action Tiles */}
+      <QuickActionTiles plan={plan} />
+
+      {/* Timeline-style Daily Accordions */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <div className="w-2 h-2 bg-accent rounded-full"></div>
+          Daily Timeline
+        </h3>
+        {plan.days.map((day, index) => (
+          <TimelineDayCard
             key={day.dayName}
             day={day}
+            dayIndex={index}
             isExpanded={expandedDay === day.dayName}
             onToggle={() => onToggleDay(expandedDay === day.dayName ? null : day.dayName)}
             onLaunchYin={practice => onLaunchYin(practice, day.dayName)}
@@ -628,125 +631,313 @@ function DeliveryStep({ plan, expandedDay, onToggleDay, onLaunchYin, onLaunchYan
   );
 }
 
-function DayCard({ day, isExpanded, onToggle, onLaunchYin, onLaunchYang }: {
+// Enhanced Summary Panel Component
+function WeeklySummaryPanel({ plan, personalizationSummary }: { 
+  plan: IntegralBodyPlan; 
+  personalizationSummary?: PersonalizationSummary | null;
+}) {
+  const hasSynergyData = plan.synthesisMetadata?.synergyScoring;
+  const hasPersonalization = personalizationSummary && personalizationSummary.planCount > 0;
+  const hasConflicts = plan.synthesisMetadata?.constraintConflicts && plan.synthesisMetadata.constraintConflicts.length > 0;
+
+  return (
+    <div className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 border border-slate-700 rounded-xl p-4 md:p-6 space-y-4">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+        <div className="flex-1">
+          <h3 className="text-lg md:text-xl font-bold text-slate-100 mb-2">Weekly Integration Blueprint</h3>
+          <p className="text-slate-300 text-sm leading-relaxed">{plan.weekSummary}</p>
+        </div>
+        {hasConflicts && (
+          <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg px-3 py-2 flex items-center gap-2 shrink-0">
+            <AlertTriangle size={16} className="text-amber-400" />
+            <span className="text-xs text-amber-300 font-medium">
+              {plan.synthesisMetadata!.constraintConflicts.length} Adjustments
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard label="Daily Protein" value={`${plan.dailyTargets.proteinGrams}g`} accent="text-accent" />
+        <StatCard label="Workouts" value={`${plan.dailyTargets.workoutDays}x`} accent="text-blue-400" />
+        <StatCard label="Yin Practice" value={`${plan.dailyTargets.yinPracticeMinutes}min`} accent="text-teal-400" />
+        <StatCard label="Sleep" value={`${plan.dailyTargets.sleepHours}h`} accent="text-purple-400" />
+      </div>
+
+      {/* Synergy Insights */}
+      {hasSynergyData && (
+        <div className="bg-gradient-to-r from-blue-900/20 to-teal-900/20 border border-blue-700/50 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-blue-300 mb-3 flex items-center gap-2">
+            <Target size={16} />
+            Synergy Intelligence
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Yang-Yin Balance</span>
+              <span className="text-blue-300 font-medium">{plan.synthesisMetadata!.synergyScoring.yangYinPairingScore}%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Rest Spacing</span>
+              <span className="text-teal-300 font-medium">{plan.synthesisMetadata!.synergyScoring.restSpacingScore}%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">Integration</span>
+              <span className="text-accent font-medium">{plan.synthesisMetadata!.synergyScoring.overallIntegrationScore}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Personalization Highlights */}
+      {hasPersonalization && (
+        <div className="bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-700/50 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-purple-300 mb-3 flex items-center gap-2">
+            <TrendingUp size={16} />
+            Personalization Insights
+          </h4>
+          <div className="space-y-2 text-xs">
+            {personalizationSummary!.adjustmentDirectives.slice(0, 3).map((directive, idx) => (
+              <div key={idx} className="flex items-start gap-2">
+                <div className={`w-1.5 h-1.5 rounded-full mt-1 ${
+                  directive.impact === 'high' ? 'bg-red-400' :
+                  directive.impact === 'medium' ? 'bg-amber-400' : 'bg-green-400'
+                }`} />
+                <div>
+                  <span className="text-purple-200 font-medium">{directive.type}:</span>
+                  <span className="text-slate-300 ml-1">{directive.description}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Conflict Warnings */}
+      {hasConflicts && (
+        <div className="bg-amber-900/20 border border-amber-700/50 rounded-lg p-4">
+          <h4 className="text-sm font-semibold text-amber-300 mb-3 flex items-center gap-2">
+            <AlertTriangle size={16} />
+            Constraint Resolutions
+          </h4>
+          <div className="space-y-2 text-xs">
+            {plan.synthesisMetadata!.constraintConflicts.slice(0, 2).map((conflict, idx) => (
+              <div key={idx} className="text-slate-300">
+                <span className="text-amber-200 font-medium">{conflict.type}:</span>
+                <span className="ml-1">{conflict.resolution}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Quick Action Tiles Component
+function QuickActionTiles({ plan }: { plan: IntegralBodyPlan }) {
+  const handleCalendarSync = () => {
+    const ics = buildCalendarICS(plan);
+    downloadFile('integral-body-architect-week.ics', ics, 'text/calendar');
+  };
+
+  const handleExportShoppingList = () => {
+    if (!plan.shoppingList) return;
+    const text = `Shopping List for Week of ${new Date(plan.weekStartDate).toLocaleDateString()}\n\n${plan.shoppingList.map((item, i) => `${i + 1}. ${item}`).join('\n')}`;
+    downloadFile('integral-body-architect-shopping-list.txt', text, 'text/plain');
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <button
+        onClick={handleCalendarSync}
+        className="bg-gradient-to-r from-blue-600/20 to-blue-700/20 border border-blue-600/50 hover:border-blue-500/70 rounded-lg p-4 transition-all hover:scale-[1.02] group"
+      >
+        <Calendar size={20} className="text-blue-400 mb-2 group-hover:text-blue-300" />
+        <div className="text-left">
+          <div className="text-sm font-medium text-blue-300">Calendar Sync</div>
+          <div className="text-xs text-slate-400">Add to your calendar</div>
+        </div>
+      </button>
+
+      <button
+        onClick={handleExportShoppingList}
+        disabled={!plan.shoppingList}
+        className="bg-gradient-to-r from-green-600/20 to-green-700/20 border border-green-600/50 hover:border-green-500/70 rounded-lg p-4 transition-all hover:scale-[1.02] group disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <ShoppingCart size={20} className="text-green-400 mb-2 group-hover:text-green-300" />
+        <div className="text-left">
+          <div className="text-sm font-medium text-green-300">Shopping List</div>
+          <div className="text-xs text-slate-400">{plan.shoppingList ? `${plan.shoppingList.length} items` : 'Not available'}</div>
+        </div>
+      </button>
+
+      <div className="bg-gradient-to-r from-purple-600/20 to-purple-700/20 border border-purple-600/50 rounded-lg p-4">
+        <User size={20} className="text-purple-400 mb-2" />
+        <div className="text-left">
+          <div className="text-sm font-medium text-purple-300">Specialist Handoff</div>
+          <div className="text-xs text-slate-400">Launch practices for coaching</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Timeline Day Card Component
+function TimelineDayCard({ day, dayIndex, isExpanded, onToggle, onLaunchYin, onLaunchYang }: {
   day: DayPlan;
+  dayIndex: number;
   isExpanded: boolean;
   onToggle: () => void;
   onLaunchYin: (practice: YinPracticeDetail) => void;
   onLaunchYang: (workout: WorkoutRoutine) => void;
 }) {
+  // Calculate energy demand and focus theme
+  const energyDemand = day.workout 
+    ? (day.workout.exercises.length > 4 ? 'High' : day.workout.exercises.length > 2 ? 'Medium' : 'Low')
+    : 'Rest';
+  
+  const focusTheme = day.workout ? 'Strength' : day.yinPractices.length > 0 ? 'Recovery' : 'Rest';
+
   return (
-    <div className="bg-slate-900/50 border border-slate-700 rounded-lg overflow-hidden">
-      <button
-        onClick={onToggle}
-        className="w-full p-4 flex justify-between items-center hover:bg-slate-800/50 transition text-left"
-      >
-        <div>
-          <h4 className="font-bold text-slate-100">{day.dayName}</h4>
-          <p className="text-sm text-slate-400 mt-1">{day.summary}</p>
-        </div>
-        {isExpanded ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-      </button>
+    <div className="relative">
+      {/* Timeline connector */}
+      {dayIndex > 0 && (
+        <div className="absolute left-6 top-0 w-0.5 h-4 bg-slate-700 -translate-y-full"></div>
+      )}
 
-      {isExpanded && (
-        <div className="p-4 border-t border-slate-700 space-y-4 text-sm">
-          {day.workout && (
-            <div className="bg-blue-900/20 border border-blue-700 rounded-md p-3">
-              <h5 className="font-semibold text-blue-300 mb-2 flex items-center gap-2">
-                <Dumbbell size={16} /> {day.workout.name}
-              </h5>
-              <div className="space-y-2">
-                {day.workout.exercises.map((ex, idx) => (
-                  <div key={idx} className="text-slate-300">
-                    <span className="font-medium">{ex.name}</span>: {ex.sets} sets × {ex.reps}
-                    {ex.notes && <span className="text-slate-500 text-xs ml-2">({ex.notes})</span>}
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                {day.workout.notes && (
-                  <p className="text-xs text-blue-200 italic max-w-sm">{day.workout.notes}</p>
-                )}
-                <button
-                  onClick={() => onLaunchYang(day.workout as WorkoutRoutine)}
-                  className="text-blue-300 hover:text-blue-200 text-xs font-medium underline"
-                >
-                  Launch Dynamic Workout Architect
-                </button>
-              </div>
-            </div>
-          )}
+      <div className="bg-slate-900/50 border border-slate-700 rounded-lg overflow-hidden hover:border-slate-600 transition-all">
+        {/* Header with badges */}
+        <button
+          onClick={onToggle}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onToggle();
+            }
+          }}
+          className="w-full p-3 md:p-4 flex flex-col md:flex-row md:justify-between md:items-center hover:bg-slate-800/50 transition text-left gap-3 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-inset rounded-lg"
+        >
+          <div className="flex items-center gap-3">
+            {/* Timeline dot */}
+            <div className={`w-3 h-3 rounded-full border-2 shrink-0 ${
+              energyDemand === 'High' ? 'bg-red-500 border-red-600' :
+              energyDemand === 'Medium' ? 'bg-amber-500 border-amber-600' :
+              energyDemand === 'Low' ? 'bg-green-500 border-green-600' :
+              'bg-slate-500 border-slate-600'
+            }`}></div>
 
-          {day.yinPractices.length > 0 && (
-            <div className="bg-teal-900/20 border border-teal-700 rounded-md p-3">
-              <h5 className="font-semibold text-teal-300 mb-2 flex items-center gap-2">
-                <Wind size={16} /> Yin Practices
-              </h5>
-              <div className="space-y-3">
-                {day.yinPractices.map((practice, idx) => (
-                  <div key={idx} className="border-l-2 border-teal-600 pl-3">
-                    <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <div className="font-medium text-teal-200">{practice.name}</div>
-                        <div className="text-xs text-slate-400">{practice.practiceType} • {practice.duration} min • {practice.timeOfDay}</div>
-                        <p className="text-xs text-slate-300 mt-1 italic">{practice.intention}</p>
-                      </div>
-                      <button
-                        onClick={() => onLaunchYin(practice)}
-                        className="text-teal-400 hover:text-teal-300 transition"
-                        title="Launch practice"
-                      >
-                        <Play size={16} />
-                      </button>
-                    </div>
-                    <details className="mt-2">
-                      <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-400">View instructions</summary>
-                      <ul className="list-disc list-inside text-xs text-slate-300 mt-2 space-y-1">
-                        {practice.instructions.map((inst, i) => (
-                          <li key={i}>{inst}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  </div>
-                ))}
-              </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-bold text-slate-100 text-sm md:text-base">{day.dayName}</h4>
+              <p className="text-xs md:text-sm text-slate-400 mt-1 line-clamp-2">{day.summary}</p>
             </div>
-          )}
-
-          <div className="bg-slate-800/50 border border-slate-600 rounded-md p-3">
-            <h5 className="font-semibold text-slate-300 mb-2">Nutrition</h5>
-            <div className="space-y-1 text-slate-300">
-              <div><span className="text-slate-500">Breakfast:</span> {day.nutrition.breakfast.description} ({day.nutrition.breakfast.protein}g protein)</div>
-              <div><span className="text-slate-500">Lunch:</span> {day.nutrition.lunch.description} ({day.nutrition.lunch.protein}g protein)</div>
-              <div><span className="text-slate-500">Dinner:</span> {day.nutrition.dinner.description} ({day.nutrition.dinner.protein}g protein)</div>
-              {day.nutrition.snacks && (
-                <div><span className="text-slate-500">Snacks:</span> {day.nutrition.snacks.description} ({day.nutrition.snacks.protein}g protein)</div>
-              )}
-              <div className="pt-2 border-t border-slate-700 mt-2">
-                <span className="font-medium text-accent">Total:</span> {day.nutrition.totalProtein}g protein
-                {day.nutrition.totalCalories && <span className="text-slate-500"> • {day.nutrition.totalCalories} cal</span>}
-              </div>
-            </div>
-            {day.nutrition.notes && (
-              <p className="text-xs text-slate-400 mt-2 italic">{day.nutrition.notes}</p>
-            )}
           </div>
 
-          {day.sleepHygiene.length > 0 && (
-            <div className="bg-purple-900/20 border border-purple-700 rounded-md p-3">
-              <h5 className="font-semibold text-purple-300 mb-2">Sleep Hygiene</h5>
-              <ul className="list-disc list-inside text-slate-300 space-y-1 text-xs">
-                {day.sleepHygiene.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
+          {/* Quick glance badges */}
+          <div className="flex items-center gap-2 justify-between w-full md:w-auto">
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                focusTheme === 'Strength' ? 'bg-blue-900/30 text-blue-300 border border-blue-700/50' :
+                focusTheme === 'Recovery' ? 'bg-teal-900/30 text-teal-300 border border-teal-700/50' :
+                'bg-slate-700/50 text-slate-400 border border-slate-600/50'
+              }`}>
+                {focusTheme}
+              </span>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                energyDemand === 'High' ? 'bg-red-900/30 text-red-300 border border-red-700/50' :
+                energyDemand === 'Medium' ? 'bg-amber-900/30 text-amber-300 border border-amber-700/50' :
+                energyDemand === 'Low' ? 'bg-green-900/30 text-green-300 border border-green-700/50' :
+                'bg-slate-700/50 text-slate-400 border border-slate-600/50'
+              }`}>
+                {energyDemand}
+              </span>
             </div>
-          )}
+            {isExpanded ? <ChevronUp size={20} className="text-slate-400 shrink-0" /> : <ChevronDown size={20} className="text-slate-400 shrink-0" />}
+          </div>
+        </button>
 
+        {/* Expanded content with tabs */}
+        {isExpanded && (
+          <div className="border-t border-slate-700">
+            <DayCardContent day={day} onLaunchYin={onLaunchYin} onLaunchYang={onLaunchYang} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Day Content with Tabs
+function DayCardContent({ day, onLaunchYin, onLaunchYang }: {
+  day: DayPlan;
+  onLaunchYin: (practice: YinPracticeDetail) => void;
+  onLaunchYang: (workout: WorkoutRoutine) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'workout' | 'yin' | 'nutrition' | 'sleep'>('workout');
+
+  const tabs = [
+    { key: 'workout' as const, label: 'Workout', icon: Dumbbell, hasContent: !!day.workout },
+    { key: 'yin' as const, label: 'Yin', icon: Wind, hasContent: day.yinPractices.length > 0 },
+    { key: 'nutrition' as const, label: 'Nutrition', icon: Target, hasContent: true },
+    { key: 'sleep' as const, label: 'Sleep', icon: Clock, hasContent: day.sleepHygiene.length > 0 },
+  ].filter(tab => tab.hasContent);
+
+  return (
+    <div className="p-4">
+      {/* Tab Navigation */}
+      <div className="flex gap-1 mb-4 bg-slate-800/50 rounded-lg p-1 overflow-x-auto">
+        {tabs.map(tab => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setActiveTab(tab.key);
+                }
+              }}
+              className={`flex items-center justify-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-md text-xs font-medium transition whitespace-nowrap min-w-0 flex-1 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-inset ${
+                activeTab === tab.key
+                  ? 'bg-accent text-slate-900'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              }`}
+            >
+              <Icon size={14} />
+              <span className="hidden md:inline">{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Content */}
+      <div className="min-h-[200px]">
+        {activeTab === 'workout' && day.workout && (
+          <WorkoutTab workout={day.workout} onLaunch={() => onLaunchYang(day.workout!)} />
+        )}
+        {activeTab === 'yin' && (
+          <YinTab practices={day.yinPractices} onLaunch={onLaunchYin} />
+        )}
+        {activeTab === 'nutrition' && (
+          <NutritionTab nutrition={day.nutrition} />
+        )}
+        {activeTab === 'sleep' && (
+          <SleepTab sleepHygiene={day.sleepHygiene} />
+        )}
+      </div>
+
+      {/* Additional metadata */}
+      {(day.synergyMetadata || day.notes) && (
+        <div className="mt-4 pt-4 border-t border-slate-700 space-y-3">
           {day.synergyMetadata && (
-            <div className="bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-700 rounded-md p-3">
-              <h5 className="font-semibold text-amber-300 mb-2">Synergy Notes</h5>
-              <div className="space-y-2 text-xs text-slate-300">
+            <div className="bg-gradient-to-r from-amber-900/20 to-orange-900/20 border border-amber-700/50 rounded-md p-3">
+              <h5 className="text-xs font-semibold text-amber-300 mb-2 flex items-center gap-2">
+                <Zap size={12} />
+                Synergy Notes
+              </h5>
+              <div className="space-y-1 text-xs text-slate-300">
                 {day.synergyMetadata.yangYinBalance && (
                   <p><span className="text-amber-400 font-medium">Balance:</span> {day.synergyMetadata.yangYinBalance}</p>
                 )}
@@ -760,38 +951,187 @@ function DayCard({ day, isExpanded, onToggle, onLaunchYin, onLaunchYang }: {
             </div>
           )}
 
-          {day.yinPractices.length > 0 && day.yinPractices.some(p => p.schedulingConfidence) && (
-            <div className="bg-slate-800/30 border border-slate-600 rounded-md p-3">
-              <h5 className="font-semibold text-slate-300 mb-2 text-xs">Scheduling Confidence</h5>
-              <div className="space-y-1">
-                {day.yinPractices.map((practice, idx) => (
-                  practice.schedulingConfidence && (
-                    <div key={idx} className="flex justify-between items-center text-xs">
-                      <span className="text-slate-400">{practice.name}</span>
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 bg-slate-700 rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-teal-500 to-teal-400"
-                            style={{ width: `${practice.schedulingConfidence}%` }}
-                          />
-                        </div>
-                        <span className="text-teal-300 w-8 text-right">{practice.schedulingConfidence}%</span>
-                      </div>
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
-          )}
-
           {day.notes && (
             <div className="text-xs text-slate-400 italic">Note: {day.notes}</div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Tab Components
+function WorkoutTab({ workout, onLaunch }: { workout: WorkoutRoutine; onLaunch: () => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h5 className="font-semibold text-blue-300 flex items-center gap-2">
+          <Dumbbell size={16} />
+          {workout.name}
+        </h5>
+        <button
+          onClick={onLaunch}
+          className="text-xs text-blue-400 hover:text-blue-300 font-medium underline"
+        >
+          Launch Workout Architect
+        </button>
+      </div>
+      
+      <div className="space-y-2">
+        {workout.exercises.map((ex, idx) => (
+          <div key={idx} className="bg-slate-800/30 rounded-md p-3 border border-slate-700/50">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <span className="font-medium text-slate-200">{ex.name}</span>
+                <div className="text-slate-400 text-sm mt-1">
+                  {ex.sets} sets × {ex.reps}
+                </div>
+                {ex.notes && (
+                  <div className="text-slate-500 text-xs mt-2 italic">{ex.notes}</div>
+                )}
+              </div>
+            </div>
           </div>
-          )}
+        ))}
+      </div>
+
+      {workout.notes && (
+        <div className="bg-blue-900/20 border border-blue-700/30 rounded-md p-3">
+          <p className="text-xs text-blue-200 italic">{workout.notes}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function YinTab({ practices, onLaunch }: { practices: YinPracticeDetail[]; onLaunch: (practice: YinPracticeDetail) => void }) {
+  return (
+    <div className="space-y-3">
+      {practices.map((practice, idx) => (
+        <div key={idx} className="bg-teal-900/20 border border-teal-700/50 rounded-md p-3">
+          <div className="flex justify-between items-start gap-3">
+            <div className="flex-1">
+              <div className="font-medium text-teal-200">{practice.name}</div>
+              <div className="text-xs text-slate-400 mt-1">
+                {practice.practiceType} • {practice.duration} min • {practice.timeOfDay}
+              </div>
+              <p className="text-xs text-slate-300 mt-2 italic">{practice.intention}</p>
+              
+              {practice.schedulingConfidence && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-slate-400">Confidence:</span>
+                  <div className="flex-1 bg-slate-700 rounded-full h-1.5 overflow-hidden max-w-24">
+                    <div
+                      className="h-full bg-gradient-to-r from-teal-500 to-teal-400"
+                      style={{ width: `${practice.schedulingConfidence}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-teal-300 w-8 text-right">{practice.schedulingConfidence}%</span>
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={() => onLaunch(practice)}
+              className="text-teal-400 hover:text-teal-300 transition p-1"
+              title="Launch practice"
+            >
+              <Play size={16} />
+            </button>
           </div>
-          );
-          }
+
+          <details className="mt-3">
+            <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-400">View instructions</summary>
+            <ul className="list-disc list-inside text-xs text-slate-300 mt-2 space-y-1">
+              {practice.instructions.map((inst, i) => (
+                <li key={i}>{inst}</li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NutritionTab({ nutrition }: { nutrition: DayPlan['nutrition'] }) {
+  return (
+    <div className="space-y-3">
+      <h5 className="font-semibold text-green-300 flex items-center gap-2">
+        <Target size={16} />
+        Nutrition Plan
+      </h5>
+      
+      <div className="space-y-2">
+        <div className="bg-slate-800/30 rounded-md p-3 border border-slate-700/50">
+          <div className="font-medium text-slate-200 text-sm">Breakfast</div>
+          <div className="text-slate-300 text-xs mt-1">{nutrition.breakfast.description}</div>
+          <div className="text-green-400 text-xs mt-2">{nutrition.breakfast.protein}g protein</div>
+        </div>
+
+        <div className="bg-slate-800/30 rounded-md p-3 border border-slate-700/50">
+          <div className="font-medium text-slate-200 text-sm">Lunch</div>
+          <div className="text-slate-300 text-xs mt-1">{nutrition.lunch.description}</div>
+          <div className="text-green-400 text-xs mt-2">{nutrition.lunch.protein}g protein</div>
+        </div>
+
+        <div className="bg-slate-800/30 rounded-md p-3 border border-slate-700/50">
+          <div className="font-medium text-slate-200 text-sm">Dinner</div>
+          <div className="text-slate-300 text-xs mt-1">{nutrition.dinner.description}</div>
+          <div className="text-green-400 text-xs mt-2">{nutrition.dinner.protein}g protein</div>
+        </div>
+
+        {nutrition.snacks && (
+          <div className="bg-slate-800/30 rounded-md p-3 border border-slate-700/50">
+            <div className="font-medium text-slate-200 text-sm">Snacks</div>
+            <div className="text-slate-300 text-xs mt-1">{nutrition.snacks.description}</div>
+            <div className="text-green-400 text-xs mt-2">{nutrition.snacks.protein}g protein</div>
+          </div>
+        )}
+      </div>
+
+      <div className="bg-green-900/20 border border-green-700/50 rounded-md p-3">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium text-green-300">Daily Total</span>
+          <div className="text-right">
+            <div className="text-lg font-bold text-green-300">{nutrition.totalProtein}g protein</div>
+            {nutrition.totalCalories && (
+              <div className="text-xs text-slate-400">{nutrition.totalCalories} calories</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {nutrition.notes && (
+        <div className="text-xs text-slate-400 italic">{nutrition.notes}</div>
+      )}
+    </div>
+  );
+}
+
+function SleepTab({ sleepHygiene }: { sleepHygiene: string[] }) {
+  return (
+    <div className="space-y-3">
+      <h5 className="font-semibold text-purple-300 flex items-center gap-2">
+        <Clock size={16} />
+        Sleep Hygiene
+      </h5>
+      
+      <div className="bg-purple-900/20 border border-purple-700/50 rounded-md p-3">
+        <ul className="space-y-2">
+          {sleepHygiene.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-2 text-xs text-slate-300">
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 flex-shrink-0"></div>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// Old DayCard function removed - replaced with TimelineDayCard above
 
 function SectionHeading({ icon, title }: { icon: React.ReactNode; title: string; }) {
   return (
