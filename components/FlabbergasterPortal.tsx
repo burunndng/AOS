@@ -187,18 +187,7 @@ export default function FlabbergasterPortal({
     }
   };
 
-  if (!isOpen) {
-    console.log('🌑 FlabbergasterPortal: isOpen is false, not rendering');
-    return null;
-  }
-
-  console.log('🌑 FlabbergasterPortal: RENDERING MODAL - isOpen is true!');
-  console.log('🌑 Portal state from props - isOpen:', isOpen);
-
-  // TEST: Show alert to verify component is rendering
-  if (typeof window !== 'undefined') {
-    window.alert('🌑 FLABBERGASTER PORTAL IS RENDERING! If you see this, the modal should appear.');
-  }
+  if (!isOpen) return null;
 
   const suggestedPrompts = [
     'What lies beneath my surface?',
@@ -208,7 +197,7 @@ export default function FlabbergasterPortal({
   ];
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 99999, backgroundColor: 'rgba(0, 0, 0, 0.9)' }}>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm" style={{ zIndex: 9999 }}>
       <div className="w-full max-w-2xl h-[85vh] flex flex-col rounded-lg overflow-hidden border-2" style={{
         background: 'linear-gradient(135deg, #1a0a0a 0%, #2d1a1a 50%, #1a0a0a 100%)',
         borderColor: 'rgba(139, 0, 0, 0.4)'
