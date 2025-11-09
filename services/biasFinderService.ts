@@ -425,6 +425,204 @@ Return your response as a JSON object with this structure:
 }
 
 /**
+ * Streaming version of generateHypotheses - yields text chunks and returns structured data
+ */
+export async function* generateHypothesesStreaming(
+  decision: string,
+  parameters: BiasFinderParameters
+): AsyncGenerator<string, { message: string; hypotheses: BiasHypothesis[] }> {
+  // Get likely biases from our library
+  const likelyBiases = getLikelyBiases({
+    stakes: parameters.stakes,
+    timePressure: parameters.timePressure,
+    emotionalState: parameters.emotionalState,
+    decisionType: parameters.decisionType,
+    context: parameters.context
+  });
+
+  // Create hypothesis objects
+  const hypotheses: BiasHypothesis[] = likelyBiases.map(bias => ({
+    biasId: bias.id,
+    biasName: bias.name,
+  }));
+
+  // Generate the presentation message
+  const biasListText = likelyBiases.map((bias, i) =>
+    `${i + 1}. ${bias.name} - ${bias.definition}`
+  ).join('\n');
+
+  const prompt = `${BIAS_FINDER_SYSTEM_PROMPT}
+
+**Current Phase:** Phase 2 (Hypothesis Formulation)
+
+**Decision Being Analyzed:** "${decision}"
+**Parameters:**
+- Stakes: ${parameters.stakes}
+- Time Pressure: ${parameters.timePressure}
+- Emotional State: ${parameters.emotionalState}
+${parameters.decisionType ? `- Decision Type: ${parameters.decisionType}` : ''}
+${parameters.context ? `- Context: ${parameters.context}` : ''}
+
+**Identified Likely Biases:**
+${biasListText}
+
+**Your Task:**
+1. Explain your reasoning: WHY are these biases likely given these specific parameters?
+   - For example: "You described being excited and time-pressured. That combination often triggers overconfidence and anchoring bias..."
+2. Present these as "lines of inquiry" or "potential flags" - not accusations
+3. Ask which ones they want to explore, or if any seem obviously not relevant to them
+4. Invite them to help you refine the list - they know their own thinking better than anyone
+
+Be conversational, transparent, and curious. Do NOT use markdown formatting - plain text only.`;
+
+  const result = await ai.models.generateContentStream({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+  });
+
+  let fullMessage = '';
+  for await (const chunk of result) {
+    if (chunk.text) {
+      fullMessage += chunk.text;
+      yield chunk.text;
+    }
+  }
+
+  return { message: fullMessage, hypotheses };
+}
+
+/**
+ * Streaming version of generateSocraticQuestions
+ */
+export async function* generateSocraticQuestionsStreaming(
+  decision: string,
+  parameters: BiasFinderParameters,
+  biasId: string,
+  conversationHistory: BiasFinderMessage[]
+): AsyncGenerator<string, string> {
+  const bias = getBiasById(biasId);
+  if (!bias) {
+    throw new Error(`Bias not found: ${biasId}`);
+  }
+
+  // Get conversation context
+  const historyText = conversationHistory
+    .map(msg => `${msg.role}: ${msg.content}`)
+    .join('\n');
+
+  const prompt = `${BIAS_FINDER_SYSTEM_PROMPT}
+
+**Current Phase:** Phase 3 (Socratic Interrogation Sub-routine)
+
+**Decision Being Analyzed:** "${decision}"
+**Parameters:**
+- Stakes: ${parameters.stakes}
+- Time Pressure: ${parameters.timePressure}
+- Emotional State: ${parameters.emotionalState}
+
+**Current Bias Under Investigation:** ${bias.name}
+**Bias Definition:** ${bias.definition}
+
+**Recommended Questions for This Bias:**
+${bias.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
+
+**Conversation So Far:**
+${historyText}
+
+**Your Task:**
+1. If starting: Introduce the bias being investigated, explain briefly why it might be relevant, then ask the first question(s)
+2. If continuing: Acknowledge their previous answer. Explain what their answer suggests about this bias. Then ask the next question.
+3. Be conversational—don't just read questions. Adapt them to their specific situation.
+4. After 3-5 good exchanges, you should have enough evidence. Tell them: "I think I have a good sense of whether this bias was at play. Let me share my preliminary diagnosis."
+
+Questions should be precise and curious, not leading. If they say something interesting but off-topic, note it and gently guide back to the bias at hand.
+
+Do NOT use markdown formatting - plain text only.`;
+
+  const result = await ai.models.generateContentStream({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+  });
+
+  let fullMessage = '';
+  for await (const chunk of result) {
+    if (chunk.text) {
+      fullMessage += chunk.text;
+      yield chunk.text;
+    }
+  }
+
+  return fullMessage;
+}
+
+/**
+ * Streaming version of generateDiagnostic
+ */
+export async function* generateDiagnosticStreaming(
+  decision: string,
+  parameters: BiasFinderParameters,
+  biasId: string,
+  evidence: string[]
+): AsyncGenerator<string, { conclusion: string; confidence: number }> {
+  const bias = getBiasById(biasId);
+  if (!bias) {
+    throw new Error(`Bias not found: ${biasId}`);
+  }
+
+  const evidenceText = evidence.map((e, i) => `${i + 1}. ${e}`).join('\n');
+
+  const prompt = `${BIAS_FINDER_SYSTEM_PROMPT}
+
+**Current Phase:** Phase 4 (Diagnostic Assessment)
+
+**Decision Being Analyzed:** "${decision}"
+**Bias Under Investigation:** ${bias.name}
+**Definition:** ${bias.definition}
+
+**Evidence Gathered:**
+${evidenceText}
+
+**Your Task:**
+1. Analyze the evidence: Does it suggest this bias was present?
+2. Provide a confidence score (0-100) - this is your best estimate, not absolute truth
+3. EXPLAIN YOUR REASONING: Point to 2-3 specific things they said that support this conclusion
+4. Present assessment: "Based on our conversation, I'd say [Bias Name] was likely a [significant/moderate/minor] factor. Here's why: [specific evidence]."
+5. Invite their perspective: "Does this match how you remember your thinking? I might be off."
+6. Ask next step: Would they like to investigate another bias, or are we ready to wrap up?
+
+Your diagnosis is a working hypothesis, not a verdict. Be humble about uncertainty.
+
+Do NOT use markdown formatting - plain text only.
+
+Return your response in this format:
+CONCLUSION: [your conclusion]
+CONFIDENCE: [numerical score 0-100]
+MESSAGE: [full message to user including reasoning and concurrence request]`;
+
+  const result = await ai.models.generateContentStream({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+  });
+
+  let fullMessage = '';
+  for await (const chunk of result) {
+    if (chunk.text) {
+      fullMessage += chunk.text;
+      yield chunk.text;
+    }
+  }
+
+  // Parse the response
+  const confidenceMatch = fullMessage.match(/CONFIDENCE:\s*(\d+)/);
+  const confidence = confidenceMatch ? parseInt(confidenceMatch[1]) : 70;
+
+  const messageMatch = fullMessage.match(/MESSAGE:\s*([\s\S]+)/);
+  const conclusion = messageMatch ? messageMatch[1].trim() : fullMessage;
+
+  return { conclusion, confidence };
+}
+
+/**
  * Streaming response for real-time chat experience
  */
 export async function* generateBiasFinderResponseStream(
