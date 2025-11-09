@@ -170,17 +170,25 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
     setParameters(params);
     setIsLoading(true);
 
-    addMessage('user', `Stakes: ${params.stakes}, Time Pressure: ${params.timePressure}, Emotional State: ${params.emotionalState}`, 'PARAMETERS');
+    const userMessage = `Stakes: ${params.stakes}, Time Pressure: ${params.timePressure}, Emotional State: ${params.emotionalState}${params.decisionType ? `, Decision Type: ${params.decisionType}` : ''}${params.context ? `, Context: ${params.context}` : ''}`;
+    addMessage('user', userMessage, 'PARAMETERS');
 
     try {
       // Generate hypotheses
       const { message, hypotheses: newHypotheses } = await generateHypotheses(targetDecision, params);
+
+      if (!newHypotheses || newHypotheses.length === 0) {
+        throw new Error('No biases identified for this decision. This might be a temporary issue.');
+      }
+
       setHypotheses(newHypotheses);
       setCurrentPhase('HYPOTHESIS');
       addMessage('assistant', message, 'HYPOTHESIS');
     } catch (error) {
       console.error('Error generating hypotheses:', error);
-      addMessage('system', 'Error generating hypotheses. Please try again.', 'PARAMETERS');
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while analyzing your parameters. Please try again.';
+      addMessage('system', `I encountered an issue: ${errorMessage}. Would you like to try again with different parameters?`, 'PARAMETERS');
+      setParameters(undefined); // Reset parameters so form stays visible
     }
 
     setIsLoading(false);
@@ -213,15 +221,25 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
       setCurrentHypothesisIndex(selectedIndex);
       setCurrentPhase('INTERROGATION');
       setQuestionCount(0);
+      setIsLoading(true);
 
-      const selectedBias = hypotheses[selectedIndex];
-      const questions = await generateSocraticQuestions(
-        targetDecision,
-        parameters!,
-        selectedBias.biasId,
-        messages
-      );
-      addMessage('assistant', questions, 'INTERROGATION');
+      try {
+        const selectedBias = hypotheses[selectedIndex];
+        const questions = await generateSocraticQuestions(
+          targetDecision,
+          parameters!,
+          selectedBias.biasId,
+          messages
+        );
+        addMessage('assistant', questions, 'INTERROGATION');
+      } catch (error) {
+        console.error('Error generating Socratic questions:', error);
+        const errorMsg = error instanceof Error ? error.message : 'An error occurred';
+        addMessage('system', `I had trouble generating questions for this bias: ${errorMsg}. Would you like to try another bias?`, 'HYPOTHESIS');
+        setCurrentPhase('HYPOTHESIS');
+      }
+
+      setIsLoading(false);
     } else {
       addMessage('assistant', 'I didn\'t understand your selection. Please specify the number or name of the bias you\'d like to investigate.', 'HYPOTHESIS');
     }
@@ -236,30 +254,39 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
     }
 
     setQuestionCount(prev => prev + 1);
+    setIsLoading(true);
 
-    // After 3-5 questions, move to diagnostic
-    if (questionCount >= 3) {
-      setCurrentPhase('DIAGNOSTIC');
-      const { conclusion, confidence } = await generateDiagnostic(
-        targetDecision,
-        parameters!,
-        currentHypothesis.biasId,
-        currentHypothesis.evidence || []
-      );
+    try {
+      // After 3-5 questions, move to diagnostic
+      if (questionCount >= 3) {
+        setCurrentPhase('DIAGNOSTIC');
+        const { conclusion, confidence } = await generateDiagnostic(
+          targetDecision,
+          parameters!,
+          currentHypothesis.biasId,
+          currentHypothesis.evidence || []
+        );
 
-      currentHypothesis.confidence = confidence;
-      setHypotheses([...hypotheses]);
-      addMessage('assistant', conclusion, 'DIAGNOSTIC');
-    } else {
-      // Ask next question
-      const nextQuestions = await generateSocraticQuestions(
-        targetDecision,
-        parameters!,
-        currentHypothesis.biasId,
-        [...messages, { id: 'temp', role: 'user', content: userMessage, phase: 'INTERROGATION', timestamp: new Date().toISOString() }]
-      );
-      addMessage('assistant', nextQuestions, 'INTERROGATION');
+        currentHypothesis.confidence = confidence;
+        setHypotheses([...hypotheses]);
+        addMessage('assistant', conclusion, 'DIAGNOSTIC');
+      } else {
+        // Ask next question
+        const nextQuestions = await generateSocraticQuestions(
+          targetDecision,
+          parameters!,
+          currentHypothesis.biasId,
+          [...messages, { id: 'temp', role: 'user', content: userMessage, phase: 'INTERROGATION', timestamp: new Date().toISOString() }]
+        );
+        addMessage('assistant', nextQuestions, 'INTERROGATION');
+      }
+    } catch (error) {
+      console.error('Error during interrogation:', error);
+      const errorMsg = error instanceof Error ? error.message : 'An error occurred while processing your response';
+      addMessage('system', `I encountered a temporary issue: ${errorMsg}. Let's try the next question.`, 'INTERROGATION');
     }
+
+    setIsLoading(false);
   };
 
   const handleDiagnosticInput = async (userMessage: string) => {
@@ -282,9 +309,16 @@ export default function BiasFinderWizard({ onClose, onSave, session: draft, setD
       // Generate final report
       setCurrentPhase('REPORT');
       setIsLoading(true);
-      const report = await generateFinalReport(targetDecision, parameters!, hypotheses);
-      setDiagnosticReport(report);
-      addMessage('assistant', 'Diagnostic protocol complete. Your report is ready.', 'REPORT');
+      try {
+        const report = await generateFinalReport(targetDecision, parameters!, hypotheses);
+        setDiagnosticReport(report);
+        addMessage('assistant', 'Diagnostic protocol complete. Your report is ready.', 'REPORT');
+      } catch (error) {
+        console.error('Error generating final report:', error);
+        const errorMsg = error instanceof Error ? error.message : 'An error occurred while generating your report';
+        addMessage('system', `I encountered an issue generating your report: ${errorMsg}. Your data has been saved. Please try again or download what we have so far.`, 'REPORT');
+        // Keep report phase but show error
+      }
       setIsLoading(false);
     } else {
       addMessage('assistant', 'Would you like to investigate another bias, or are we done? (Type "another" or "done")', 'DIAGNOSTIC');
@@ -444,9 +478,17 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
         {currentPhase === 'PARAMETERS' && !parameters && (
           <div className="border-t border-gray-200 p-6 bg-gray-50">
             <h3 className="font-bold text-gray-800 mb-4">Decision Parameters</h3>
-            <div className="grid grid-cols-3 gap-4 mb-4">
+
+            {/* Error message display */}
+            {userInput && userInput.startsWith('ERROR:') && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm">
+                {userInput.replace('ERROR:', '').trim()}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Stakes</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Stakes <span className="text-red-500">*</span></label>
                 <select
                   id="stakes-select"
                   className="w-full border border-gray-300 rounded-lg p-2"
@@ -459,7 +501,7 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Time Pressure</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Time Pressure <span className="text-red-500">*</span></label>
                 <select
                   id="time-select"
                   className="w-full border border-gray-300 rounded-lg p-2"
@@ -472,24 +514,71 @@ ${diagnosticReport.nextTimeChecklist.map((item, i) => `[ ] ${item}`).join('\n')}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Emotional State</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Emotional State <span className="text-red-500">*</span></label>
                 <input
                   id="emotion-input"
                   type="text"
-                  placeholder="e.g., Calm, Anxious..."
+                  placeholder="e.g., Calm, Anxious, Excited..."
                   className="w-full border border-gray-300 rounded-lg p-2"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Decision Type <span className="text-gray-500">(optional)</span></label>
+                <select
+                  id="decision-type-select"
+                  className="w-full border border-gray-300 rounded-lg p-2"
+                  defaultValue=""
+                >
+                  <option value="">Not specified</option>
+                  <option value="hiring">Hiring</option>
+                  <option value="financial">Financial</option>
+                  <option value="strategic">Strategic/Planning</option>
+                  <option value="interpersonal">Interpersonal</option>
+                  <option value="evaluation">Evaluation/Review</option>
+                  <option value="technical">Technical/Data</option>
+                  <option value="belief">Belief/Opinion</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Additional Context <span className="text-gray-500">(optional)</span></label>
+              <textarea
+                id="context-input"
+                placeholder="e.g., group decision, involves team, time-sensitive, involves money, performance review..."
+                className="w-full border border-gray-300 rounded-lg p-2 h-20 resize-none"
+              />
+            </div>
+
             <button
               onClick={() => {
-                const stakes = (document.getElementById('stakes-select') as HTMLSelectElement).value as 'Low' | 'Medium' | 'High';
-                const timePressure = (document.getElementById('time-select') as HTMLSelectElement).value as 'Ample' | 'Moderate' | 'Rushed';
-                const emotionalState = (document.getElementById('emotion-input') as HTMLInputElement).value;
+                const stakes = (document.getElementById('stakes-select') as HTMLSelectElement).value.trim() as 'Low' | 'Medium' | 'High';
+                const timePressure = (document.getElementById('time-select') as HTMLSelectElement).value.trim() as 'Ample' | 'Moderate' | 'Rushed';
+                const emotionalState = (document.getElementById('emotion-input') as HTMLInputElement).value.trim();
+                const decisionType = (document.getElementById('decision-type-select') as HTMLSelectElement).value.trim() as any;
+                const context = (document.getElementById('context-input') as HTMLTextAreaElement).value.trim();
 
-                if (stakes && timePressure && emotionalState) {
-                  handleParametersSubmit({ stakes, timePressure, emotionalState });
+                // Validation
+                const errors: string[] = [];
+                if (!stakes) errors.push('Please select stakes level');
+                if (!timePressure) errors.push('Please select time pressure');
+                if (!emotionalState) errors.push('Please describe your emotional state');
+                if (emotionalState && emotionalState.length < 3) errors.push('Emotional state should be at least 3 characters');
+
+                if (errors.length > 0) {
+                  setUserInput('ERROR: ' + errors.join('. '));
+                  return;
                 }
+
+                setUserInput(''); // Clear error
+                handleParametersSubmit({
+                  stakes,
+                  timePressure,
+                  emotionalState,
+                  decisionType: decisionType || undefined,
+                  context: context || undefined
+                });
               }}
               className="w-full bg-purple-600 text-white rounded-lg p-3 font-semibold hover:bg-purple-700"
             >
