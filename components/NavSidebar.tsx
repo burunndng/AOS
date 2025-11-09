@@ -122,10 +122,11 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
                                 handleSparkClick(e as any);
                             }
                         }}
-                        className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full opacity-20 hover:opacity-40 transition-opacity duration-300 blur-sm animate-pulse"
+                        className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full opacity-60 hover:opacity-100 transition-opacity duration-300 animate-pulse"
                         style={{
                             background: 'linear-gradient(135deg, rgb(217, 170, 239), rgb(255, 215, 0))',
-                            animation: 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                            animation: 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                            boxShadow: '0 0 8px rgba(217, 170, 239, 0.8)'
                         }}
                         aria-label="Flabbergaster spark (triple-click to unlock)"
                         title="🗝️"
