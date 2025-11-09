@@ -123,10 +123,17 @@ export default function App() {
   // RAG System & User Context
   const [userId] = useLocalStorage<string>('userId', (() => {
     const stored = typeof window !== 'undefined' ? window.localStorage.getItem('userId') : null;
-    if (stored) return stored;
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        // Fallback for old format stored as plain string
+        return stored;
+      }
+    }
     const newId = `user-${Math.random().toString(36).substr(2, 9)}`;
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem('userId', newId);
+      window.localStorage.setItem('userId', JSON.stringify(newId));
     }
     return newId;
   })());
