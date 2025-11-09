@@ -8,10 +8,14 @@ import {
   DayPlan,
   YinPracticeDetail,
   WorkoutRoutine,
-  PersonalizationSummary
+  PersonalizationSummary,
+  PlanHistoryEntry,
+  PlanDayFeedback
 } from '../types.ts';
 import { generateIntegralWeeklyPlan } from '../services/integralBodyArchitectService.ts';
 import { buildPersonalizationPromptInsertion } from '../services/integralBodyPersonalization.ts';
+import PlanFeedbackModal from './PlanFeedbackModal.tsx';
+import PlanHandoffReview from './PlanHandoffReview.tsx';
 
 interface PracticeHandoffPayload {
   name: string;
@@ -36,6 +40,10 @@ interface IntegralBodyArchitectWizardProps {
   onLaunchYinPractice?: (payload: PracticeHandoffPayload) => void;
   onLaunchYangPractice?: (payload: WorkoutHandoffPayload) => void;
   personalizationSummary?: PersonalizationSummary | null;
+  onLogPlanFeedback?: (planId: string, dayDate: string, dayName: string, feedback: Omit<PlanDayFeedback, 'date' | 'timestamp' | 'dayName'>) => void;
+  onToggleTrackerCompletion?: (practiceId: string) => void;
+  planHistory?: PlanHistoryEntry | null;
+  onUpdatePlanStatus?: (planId: string, status: 'active' | 'completed' | 'abandoned') => void;
 }
 
 type WizardStep = 'BLUEPRINT' | 'SYNTHESIS' | 'DELIVERY' | 'HANDOFF';
@@ -81,11 +89,16 @@ export default function IntegralBodyArchitectWizard({
   onSave,
   onLaunchYinPractice,
   onLaunchYangPractice,
-  personalizationSummary
+  personalizationSummary,
+  onLogPlanFeedback,
+  onToggleTrackerCompletion,
+  planHistory,
+  onUpdatePlanStatus
 }: IntegralBodyArchitectWizardProps) {
   const [step, setStep] = useState<WizardStep>('BLUEPRINT');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
 
   const [goalStatement, setGoalStatement] = useState('');
   const [bodyweight, setBodyweight] = useState('');
@@ -243,30 +256,42 @@ export default function IntegralBodyArchitectWizard({
           />
         );
       case 'HANDOFF':
-        return (
-          <div className="text-center py-12 space-y-6">
-            <CheckCircle size={64} className="mx-auto text-green-400" />
-            <div>
+        return generatedPlan ? (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-slate-100">Your Integral Week is Locked In</h3>
-              <p className="text-slate-400 mt-2">Calendar-ready and ready to hand off to specialist coaches.</p>
+              <p className="text-slate-400 mt-2">Review progress and collect feedback to refine future plans.</p>
             </div>
-            <div className="space-y-3">
+            
+            <PlanHandoffReview
+              plan={generatedPlan}
+              planHistory={planHistory || null}
+              personalizationSummary={personalizationSummary || null}
+              onReviewFeedback={() => setIsFeedbackModalOpen(true)}
+              onMarkPlanComplete={() => {
+                if (onUpdatePlanStatus) {
+                  onUpdatePlanStatus(generatedPlan.id, 'completed');
+                }
+              }}
+            />
+
+            <div className="pt-4 border-t border-slate-700 space-y-3">
               <button
                 onClick={handleCalendarSync}
-                className="btn-luminous px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2 mx-auto"
+                className="w-full btn-luminous px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2"
               >
                 <Share2 size={20} /> Sync to Calendar
               </button>
               <button
                 onClick={handleExportShoppingList}
-                className="px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2 mx-auto bg-slate-700 hover:bg-slate-600 text-slate-100"
+                className="w-full px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-100"
               >
                 <Download size={20} /> Export Shopping List
               </button>
-              <p className="text-xs text-slate-500">Tap practices in your daily briefings to launch specialist agents.</p>
+              <p className="text-xs text-slate-500 text-center">Tap practices in your daily briefings to launch specialist agents.</p>
             </div>
           </div>
-        );
+        ) : null;
       default:
         return null;
     }
@@ -288,70 +313,83 @@ export default function IntegralBodyArchitectWizard({
   }, [step]);
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-6 flex justify-between items-center z-10">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-100 font-mono">The Integral Body Architect</h2>
-            <p className="text-sm text-slate-400 mt-1">Master planner for Yang & Yin integration</p>
+    <>
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="bg-slate-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-slate-800 border-b border-slate-700 p-6 flex justify-between items-center z-10">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-100 font-mono">The Integral Body Architect</h2>
+              <p className="text-sm text-slate-400 mt-1">Master planner for Yang & Yin integration</p>
+            </div>
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition">
+              <X size={24} />
+            </button>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 transition">
-            <X size={24} />
-          </button>
-        </div>
 
-        <div className="p-6">
-          <ProgressHeader currentStep={step} completedSteps={completedSteps} />
-          {renderContent()}
+          <div className="p-6">
+            <ProgressHeader currentStep={step} completedSteps={completedSteps} />
+            {renderContent()}
 
-          {step === 'BLUEPRINT' && (
-            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-700">
-              <button
-                onClick={onClose}
-                className="px-6 py-2 rounded-md font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleGenerate}
-                disabled={isLoading}
-                className="btn-luminous px-6 py-2 rounded-md font-medium flex items-center gap-2"
-              >
-                Generate Plan <ArrowRight size={20} />
-              </button>
-            </div>
-          )}
+            {step === 'BLUEPRINT' && (
+              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-700">
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2 rounded-md font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGenerate}
+                  disabled={isLoading}
+                  className="btn-luminous px-6 py-2 rounded-md font-medium flex items-center gap-2"
+                >
+                  Generate Plan <ArrowRight size={20} />
+                </button>
+              </div>
+            )}
 
-          {step === 'DELIVERY' && (
-            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-700">
-              <button
-                onClick={() => setStep('BLUEPRINT')}
-                className="px-6 py-2 rounded-md font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 transition"
-              >
-                Regenerate
-              </button>
-              <button
-                onClick={handleSavePlan}
-                className="btn-luminous px-6 py-2 rounded-md font-medium flex items-center gap-2"
-              >
-                Save & Continue <ArrowRight size={20} />
-              </button>
-            </div>
-          )}
+            {step === 'DELIVERY' && (
+              <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-700">
+                <button
+                  onClick={() => setStep('BLUEPRINT')}
+                  className="px-6 py-2 rounded-md font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 transition"
+                >
+                  Regenerate
+                </button>
+                <button
+                  onClick={handleSavePlan}
+                  className="btn-luminous px-6 py-2 rounded-md font-medium flex items-center gap-2"
+                >
+                  Save & Continue <ArrowRight size={20} />
+                </button>
+              </div>
+            )}
 
-          {step === 'HANDOFF' && (
-            <div className="flex justify-center mt-6 pt-6 border-t border-slate-700">
-              <button
-                onClick={onClose}
-                className="btn-luminous px-8 py-3 rounded-md font-medium"
-              >
-                Close
-              </button>
-            </div>
-          )}
+            {step === 'HANDOFF' && (
+              <div className="flex justify-center mt-6 pt-6 border-t border-slate-700">
+                <button
+                  onClick={onClose}
+                  className="btn-luminous px-8 py-3 rounded-md font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <PlanFeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+        plan={generatedPlan}
+        onSubmitFeedback={(dayDate, dayName, feedback) => {
+          if (onLogPlanFeedback && generatedPlan) {
+            onLogPlanFeedback(generatedPlan.id, dayDate, dayName, feedback);
+          }
+        }}
+      />
+    </>
   );
 }
 
