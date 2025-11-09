@@ -4,6 +4,7 @@
  */
 
 import { generateRecommendationPrompt } from '../rag/generate-prompt.js';
+import { initializeDatabase } from '../lib/db.js';
 import type { GenerationRequest, RecommendationResponse, PersonalizedRecommendation } from '../lib/types.js';
 
 /**
@@ -18,6 +19,9 @@ export async function generatePersonalizedRecommendations(
   console.log(`[Recommendations] Generating recommendations for user: ${userId}`);
 
   try {
+    // Initialize database (required for serverless environment)
+    await initializeDatabase();
+
     // Generate RAG prompt with context
     const ragPrompt = await generateRecommendationPrompt(request);
 
