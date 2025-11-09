@@ -10,6 +10,7 @@ import {
 } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Sparkles, Brain, Users, Target, MessageSquare, User, Download } from 'lucide-react';
 import * as geminiService from '../services/geminiService.ts';
+import * as ragService from '../services/ragService.ts';
 import KeganPostDialogueProbe from './KeganPostDialogueProbe.tsx';
 
 interface KeganAssessmentWizardProps {
@@ -17,6 +18,7 @@ interface KeganAssessmentWizardProps {
   onSave: (session: KeganAssessmentSession) => void;
   session: KeganAssessmentSession | null;
   setDraft: (session: KeganAssessmentSession | null) => void;
+  userId: string;
 }
 
 // Research-validated prompts based on Kegan & Lahey's work and the Subject-Object Interview
@@ -138,7 +140,7 @@ const domainIcons: Record<KeganDomain, ElementType> = {
   'Identity & Self': User
 };
 
-export default function KeganAssessmentWizard({ onClose, onSave, session: draft, setDraft }: KeganAssessmentWizardProps) {
+export default function KeganAssessmentWizard({ onClose, onSave, session: draft, setDraft, userId }: KeganAssessmentWizardProps) {
   const [session, setSession] = useState<KeganAssessmentSession>(draft || {
     id: `kegan-${Date.now()}`,
     date: new Date().toISOString(),
@@ -153,10 +155,46 @@ export default function KeganAssessmentWizard({ onClose, onSave, session: draft,
   const [error, setError] = useState<string | null>(null);
   const [showProbeDialogue, setShowProbeDialogue] = useState(false);
   const [probeSession, setProbeSession] = useState<KeganProbeSession | null>(null);
+  const [ragSyncing, setRagSyncing] = useState(false);
 
   useEffect(() => { if (draft) setSession(draft); }, [draft]);
 
   const handleSaveDraftAndClose = () => { setDraft(session); onClose(); };
+
+  const handleCompleteWithRAG = async (completedSession: KeganAssessmentSession) => {
+    setRagSyncing(true);
+    try {
+      // Generate RAG insights
+      const insights = await ragService.generateSessionInsights(userId, {
+        responses: completedSession.responses.map(r => ({
+          domain: r.domain,
+          response: r.response,
+        })),
+        developmentalStage: completedSession.detectedStage || 'unknown',
+      }, 'kegan_assessment');
+
+      // Sync the completed session to backend
+      await ragService.syncUserSession(userId, {
+        id: completedSession.id,
+        userId: userId,
+        type: 'kegan_assessment',
+        content: {
+          domainsExplored: Array.from(new Set(completedSession.responses.map(r => r.domain))),
+          responsesProvided: completedSession.responses.length,
+          detectedStage: completedSession.detectedStage || '',
+        },
+        insights: insights.metadata?.insights || [],
+        completedAt: new Date(),
+      });
+
+      console.log('[KeganAssessmentWizard] Session synced and indexed');
+    } catch (err) {
+      console.error('[KeganAssessmentWizard] RAG sync error:', err);
+      // Don't block completion if RAG fails
+    } finally {
+      setRagSyncing(false);
+    }
+  };
 
   const getCurrentDomain = (): KeganDomain | null => {
     const domainMap: Record<string, KeganDomain> = {
@@ -247,7 +285,9 @@ export default function KeganAssessmentWizard({ onClose, onSave, session: draft,
     } else if (currentStep === 'REFLECTION') {
         // Final step - save and close
         setSession(prev => ({ ...prev!, responses: tempResponses })); // Ensure final responses are part of session for onSave
-        onSave({ ...session, responses: tempResponses } as KeganAssessmentSession); // Pass the updated session to onSave
+        const completedSession = { ...session, responses: tempResponses } as KeganAssessmentSession;
+        onSave(completedSession); // Pass the updated session to onSave
+        handleCompleteWithRAG(completedSession);
         onClose();
         return; // Exit
     }

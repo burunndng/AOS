@@ -2,17 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { PerspectiveShifterSession, Perspective } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Download, Check } from 'lucide-react';
-import { 
-  generatePerspectiveReflection, 
-  synthesizeAllPerspectives, 
-  generateActionPlanFromPerspectives 
+import {
+  generatePerspectiveReflection,
+  synthesizeAllPerspectives,
+  generateActionPlanFromPerspectives
 } from '../services/perspectiveShifterService.ts';
+import * as ragService from '../services/ragService.ts';
 
 interface PerspectiveShifterWizardProps {
   onClose: () => void;
   onSave: (session: PerspectiveShifterSession) => void;
   session: PerspectiveShifterSession | null;
   setDraft: (session: PerspectiveShifterSession | null) => void;
+  userId: string;
 }
 
 type SimplifiedStep = 'SITUATION' | 'FIRST_PERSON' | 'SECOND_PERSON' | 'THIRD_PERSON' | 'WITNESS' | 'MAP' | 'ACTION' | 'COMPLETE';
@@ -95,11 +97,12 @@ const PerspectiveCard: React.FC<PerspectiveCardProps> = ({
   );
 };
 
-export default function PerspectiveShifterWizard({ 
-  onClose, 
-  onSave, 
-  session: draft, 
-  setDraft 
+export default function PerspectiveShifterWizard({
+  onClose,
+  onSave,
+  session: draft,
+  setDraft,
+  userId
 }: PerspectiveShifterWizardProps) {
   const [step, setStep] = useState<SimplifiedStep>('SITUATION');
   // FIX: Added 'situation' state to manage the stuck situation description.
@@ -115,6 +118,7 @@ export default function PerspectiveShifterWizard({
   const [actionPlan, setActionPlan] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [ragSyncing, setRagSyncing] = useState(false);
 
   useEffect(() => {
     if (draft) {
@@ -161,6 +165,44 @@ export default function PerspectiveShifterWizard({
     };
     setDraft(session);
     onClose();
+  };
+
+  const handleCompleteWithRAG = async (session: PerspectiveShifterSession) => {
+    setRagSyncing(true);
+    try {
+      // Generate RAG insights
+      const insights = await ragService.generateSessionInsights(userId, {
+        stuckSituation: session.stuckSituation,
+        perspectives: Object.entries(perspectives).reduce((acc, [type, data]) => {
+          acc[type] = data.description;
+          return acc;
+        }, {} as Record<string, string>),
+        synthesis: session.synthesis,
+        actionPlan: session.realityCheckRefinement,
+      }, 'perspective_shifter');
+
+      // Sync the completed session to backend
+      await ragService.syncUserSession(userId, {
+        id: session.id,
+        userId: userId,
+        type: 'perspective_shifter',
+        content: {
+          stuckSituation: session.stuckSituation,
+          perspectiveCount: Object.keys(perspectives).length,
+          synthesis: session.synthesis,
+          actionPlan: session.realityCheckRefinement,
+        },
+        insights: insights.metadata?.insights || [],
+        completedAt: new Date(),
+      });
+
+      console.log('[PerspectiveShifterWizard] Session synced and indexed');
+    } catch (err) {
+      console.error('[PerspectiveShifterWizard] RAG sync error:', err);
+      // Don't block completion if RAG fails
+    } finally {
+      setRagSyncing(false);
+    }
   };
 
   const currentPerspectiveType = (): Perspective['type'] | null => {
@@ -258,6 +300,7 @@ export default function PerspectiveShifterWizard({
           dailyTracking: {}
         };
         onSave(session);
+        handleCompleteWithRAG(session);
         setStep('COMPLETE');
       } else {
         const currentIndex = STEPS.indexOf(step);

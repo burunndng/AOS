@@ -2,18 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { AttachmentAssessmentSession } from '../types.ts';
 import { attachmentQuestions, calculateAttachmentScores, determineAttachmentStyle, getScoreLabel } from '../data/attachmentAssessment.ts';
 import { X, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import * as ragService from '../services/ragService.ts';
 
 interface AttachmentAssessmentWizardProps {
   onClose: () => void;
   onComplete: (session: AttachmentAssessmentSession) => void;
+  userId: string;
 }
 
 type WizardStep = 'intro' | 'questions' | 'results';
 
-export default function AttachmentAssessmentWizard({ onClose, onComplete }: AttachmentAssessmentWizardProps) {
+export default function AttachmentAssessmentWizard({ onClose, onComplete, userId }: AttachmentAssessmentWizardProps) {
   const [step, setStep] = useState<WizardStep>('intro');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [ragSyncing, setRagSyncing] = useState(false);
 
   useEffect(() => {
     // Scroll to top when modal opens to ensure it's visible
@@ -54,7 +57,41 @@ export default function AttachmentAssessmentWizard({ onClose, onComplete }: Atta
     };
 
     onComplete(session);
+    handleCompleteWithRAG(session);
     setStep('results');
+  };
+
+  const handleCompleteWithRAG = async (session: AttachmentAssessmentSession) => {
+    setRagSyncing(true);
+    try {
+      // Generate RAG insights
+      const insights = await ragService.generateSessionInsights(userId, {
+        attachmentStyle: session.style,
+        scores: session.scores,
+        answerCount: Object.keys(session.answers).length,
+      }, 'attachment_assessment');
+
+      // Sync the completed session to backend
+      await ragService.syncUserSession(userId, {
+        id: session.id,
+        userId: userId,
+        type: 'attachment_assessment',
+        content: {
+          attachmentStyle: session.style,
+          scores: session.scores,
+          description: session.description,
+        },
+        insights: insights.metadata?.insights || [],
+        completedAt: new Date(),
+      });
+
+      console.log('[AttachmentAssessmentWizard] Session synced and indexed');
+    } catch (err) {
+      console.error('[AttachmentAssessmentWizard] RAG sync error:', err);
+      // Don't block completion if RAG fails
+    } finally {
+      setRagSyncing(false);
+    }
   };
 
   if (step === 'intro') {
