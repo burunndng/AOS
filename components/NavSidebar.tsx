@@ -53,7 +53,7 @@ const navItems = [
 const NavButton = ({ item, isActive, onClick }: { item: any, isActive: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 group relative overflow-hidden ${
+        className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-300 group relative overflow-hidden touch-target ${
             isActive
                 ? 'bg-gradient-to-r from-accent/20 to-accent/8 text-accent font-semibold border border-accent/40 shadow-lg'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 hover:border hover:border-accent/30 hover:shadow-md'
@@ -170,16 +170,16 @@ export default function NavSidebar({ activeTab, setActiveTab, onExport, onImport
                     App Settings
                 </h2>
                 <div className="space-y-1">
-                    <button onClick={onExport} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:border hover:border-accent/30 transition-all duration-300 group shadow-sm hover:shadow-md" style={{boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.05)'}}>
-                        <Download size={18} className="group-hover:scale-110 transition-transform duration-300" />
+                    <button onClick={onExport} className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:border hover:border-accent/30 transition-all duration-300 group shadow-sm hover:shadow-md touch-target" style={{boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.05)'}}>
+                        <Download size={18} className="group-hover:scale-110 transition-transform duration-300 flex-shrink-0" />
                         <span>Export Data</span>
                     </button>
-                    <button onClick={onImport} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:border hover:border-accent/30 transition-all duration-300 group shadow-sm hover:shadow-md" style={{boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.05)'}}>
-                        <Upload size={18} className="group-hover:scale-110 transition-transform duration-300" />
+                    <button onClick={onImport} className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:border hover:border-accent/30 transition-all duration-300 group shadow-sm hover:shadow-md touch-target" style={{boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.05)'}}>
+                        <Upload size={18} className="group-hover:scale-110 transition-transform duration-300 flex-shrink-0" />
                         <span>Import Data</span>
                     </button>
-                     <button onClick={onReset} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-900/30 hover:border hover:border-red-500/40 transition-all duration-300 group shadow-sm hover:shadow-md" style={{boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.05)'}}>
-                        <Trash2 size={18} className="group-hover:scale-110 transition-transform duration-300" />
+                     <button onClick={onReset} className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-900/30 hover:border hover:border-red-500/40 transition-all duration-300 group shadow-sm hover:shadow-md touch-target" style={{boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.05)'}}>
+                        <Trash2 size={18} className="group-hover:scale-110 transition-transform duration-300 flex-shrink-0" />
                         <span>Reset App</span>
                     </button>
                 </div>
