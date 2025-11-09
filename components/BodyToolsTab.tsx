@@ -1,9 +1,27 @@
 import React from 'react';
 import { Activity, CalendarRange } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
+import { IntegralBodyPlan, PlanHistoryEntry } from '../types.ts';
 
 interface BodyToolsTabProps {
   setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
+  integralBodyPlans?: IntegralBodyPlan[];
+  planHistory?: PlanHistoryEntry[];
+  onLogPlanFeedback?: (
+    planId: string,
+    dayDate: string,
+    dayName: string,
+    feedback: {
+      completedWorkout: boolean;
+      completedYinPractices: string[];
+      intensityFelt: number;
+      energyLevel: number;
+      blockers?: string;
+      notes?: string;
+    }
+  ) => void;
+  getPlanProgress?: (planId: string) => PlanHistoryEntry | null;
+  onUpdatePlanStatus?: (planId: string, status: 'active' | 'completed' | 'abandoned') => void;
 }
 
 const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode; title: string; description: string; onStart: () => void }) => (
