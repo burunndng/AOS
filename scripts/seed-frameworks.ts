@@ -1,6 +1,7 @@
 /**
  * Seed Frameworks Script
  * Seeds all developmental frameworks into MongoDB and indexes in Pinecone
+ * Frameworks: Kegan, AQAL, Attachment, Biases, IFS
  * Run with: npx ts-node scripts/seed-frameworks.ts
  */
 
@@ -112,16 +113,17 @@ function getFrameworksData(): any[] {
  * Seed all frameworks
  */
 async function seedFrameworks(): Promise<void> {
-  console.log('\n=== SEEDING FRAMEWORKS ===\n');
+  console.log('\n🎯 SEEDING FRAMEWORKS\n');
 
   try {
-    // Initialize database and pinecone
+    // Initialize services
+    console.log('📦 Initializing services...');
     const db = await initializeDatabase();
-    const pinecone = await initializePinecone();
+    await initializePinecone();
 
     // Get all frameworks
     const frameworksData = getFrameworksData();
-    console.log(`Found ${frameworksData.length} frameworks to seed`);
+    console.log(`✓ Found ${frameworksData.length} frameworks to seed\n`);
 
     // Create framework documents and vectors
     const frameworkDocuments: FrameworkDocument[] = [];
@@ -130,80 +132,89 @@ async function seedFrameworks(): Promise<void> {
     for (let i = 0; i < frameworksData.length; i++) {
       const framework = frameworksData[i];
 
-      // Create framework document
-      const document: FrameworkDocument = {
-        id: framework.id,
-        type: framework.type as any,
-        title: framework.title,
-        description: framework.description,
-        stages: framework.stages || [],
-        dimensions: framework.dimensions || [],
-        content: framework.content || {},
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      try {
+        // Create framework document
+        const document: FrameworkDocument = {
+          id: framework.id,
+          type: framework.type as any,
+          title: framework.title,
+          description: framework.description,
+          stages: framework.stages || [],
+          dimensions: framework.dimensions || [],
+          content: framework.content || {},
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-      frameworkDocuments.push(document);
+        frameworkDocuments.push(document);
 
-      // Generate embedding
-      const summary = `${framework.title}: ${framework.description}. ${
-        framework.stages?.join(', ') || framework.dimensions?.join(', ') || ''
-      }`;
-      const embeddingResult = await generateEmbeddingWithMetadata(summary, {
-        type: 'framework',
-        frameworkId: framework.id,
-        frameworkType: framework.type,
-        description: framework.description,
-        tags: [framework.type.toLowerCase()],
-      } as PineconeVectorMetadata);
+        // Generate embedding
+        const summary = `${framework.title}: ${framework.description}. ${
+          framework.stages?.join(', ') || framework.dimensions?.join(', ') || ''
+        }`;
+        const embeddingResult = await generateEmbeddingWithMetadata(summary, {
+          type: 'framework',
+          frameworkId: framework.id,
+          frameworkType: framework.type,
+          description: framework.description,
+          tags: [framework.type.toLowerCase()],
+        } as PineconeVectorMetadata);
 
-      // Create vector
-      const vector: PineconeVector = {
-        id: `framework-${framework.id}`,
-        values: embeddingResult.embedding,
-        metadata: embeddingResult.metadata as PineconeVectorMetadata,
-      };
+        // Create vector
+        const vector: PineconeVector = {
+          id: `framework-${framework.id}`,
+          values: embeddingResult.embedding,
+          metadata: embeddingResult.metadata as PineconeVectorMetadata,
+        };
 
-      vectors.push(vector);
+        vectors.push(vector);
 
-      // Progress indicator
-      const progress = ((i + 1) / frameworksData.length) * 100;
-      process.stdout.write(
-        `\rProcessing frameworks: ${progress.toFixed(1)}% (${i + 1}/${frameworksData.length})`,
-      );
+        // Progress indicator
+        const progress = ((i + 1) / frameworksData.length) * 100;
+        process.stdout.write(
+          `\rProcessing: ${progress.toFixed(1)}% (${i + 1}/${frameworksData.length}) - ${framework.title}`,
+        );
+      } catch (err) {
+        console.error(`\n✗ Error processing framework ${framework.id}:`, err);
+      }
     }
 
     console.log('\n');
 
     // Insert into database
-    console.log('Inserting frameworks into MongoDB...');
+    console.log(`📝 Inserting ${frameworkDocuments.length} frameworks into database...`);
     const insertedIds = await db.addFrameworks(frameworkDocuments);
-    console.log(`✓ Inserted ${insertedIds.length} frameworks into MongoDB`);
+    console.log(`✓ Inserted ${insertedIds.length} frameworks`);
 
     // Insert into Pinecone
-    console.log('Indexing frameworks in Pinecone...');
+    console.log(`📍 Indexing ${vectors.length} frameworks in Pinecone...`);
+    let indexed = 0;
     await batchUpsertVectors(vectors, 10, (current, total) => {
       const progress = (current / total) * 100;
+      indexed = current;
       process.stdout.write(
-        `\rIndexing in Pinecone: ${progress.toFixed(1)}% (${current}/${total})`,
+        `\rIndexing: ${progress.toFixed(1)}% (${current}/${total})`,
       );
     });
-
-    console.log('\n✓ All frameworks indexed in Pinecone');
+    console.log(`\n✓ All ${indexed} frameworks indexed in Pinecone`);
 
     // Get stats
     const stats = await db.getStats();
-    console.log(`\n=== SEED COMPLETE ===`);
-    console.log(`Practices in database: ${stats.practicesCount}`);
-    console.log(`Frameworks in database: ${stats.frameworksCount}`);
-    console.log(`User sessions indexed: ${stats.userSessionsCount}`);
+    console.log(`\n📊 SEED SUMMARY:`);
+    console.log(`  • Practices in database: ${stats.practicesCount}`);
+    console.log(`  • Frameworks in database: ${stats.frameworksCount}`);
+    console.log(`  • User sessions indexed: ${stats.userSessionsCount}`);
+    console.log(`\n✅ SEEDING COMPLETE!\n`);
+
   } catch (error) {
-    console.error('Error seeding frameworks:', error);
+    console.error('❌ Error seeding frameworks:', error);
     process.exit(1);
   }
 }
 
 // Run seed if this is the main module
-seedFrameworks().then(() => {
-  process.exit(0);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedFrameworks().then(() => {
+    process.exit(0);
+  });
+}
