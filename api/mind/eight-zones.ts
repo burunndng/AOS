@@ -4,7 +4,7 @@
  * using the 8 Zones framework via Gemini API
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { ZoneAnalysis } from '../../types.js';
 
 const ai = new GoogleGenAI({
@@ -72,21 +72,12 @@ Keep your response focused, insightful, and specific to their focal question. Us
 
 Respond with a cohesive enhancement that flows naturally, not bullet points.`;
 
-    const message = await ai.messages.create({
+    const response = await ai.models.generateContent({
       model: MODEL,
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
+      contents: prompt,
     });
 
-    const enhancement = message.content
-      .filter((block) => block.type === 'text')
-      .map((block) => (block as any).text)
-      .join('\n');
+    const enhancement = response.text;
 
     if (!enhancement) {
       throw new Error('No text response from AI');
@@ -177,35 +168,48 @@ ${zonesSummary}
    - How does Zone X influence or shape Zone Y?
    - What feedback loops exist?
 
-Format your response as a JSON object with keys: blindSpots (array), novelInsights (array), recommendations (array), synthesisReport (string), connections (array of objects with fromZone, toZone, relationship).`;
+Format your response as a JSON object with keys: blindSpots (array of strings), novelInsights (array of strings), recommendations (array of strings), synthesisReport (string), connections (array of objects with fromZone (number), toZone (number), relationship (string)).`;
 
-    const message = await ai.messages.create({
+    const response = await ai.models.generateContent({
       model: MODEL,
-      max_tokens: 2048,
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            blindSpots: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+            },
+            novelInsights: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+            },
+            recommendations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+            },
+            synthesisReport: { type: Type.STRING },
+            connections: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  fromZone: { type: Type.NUMBER },
+                  toZone: { type: Type.NUMBER },
+                  relationship: { type: Type.STRING },
+                },
+                required: ['fromZone', 'toZone', 'relationship'],
+              },
+            },
+          },
+          required: ['blindSpots', 'novelInsights', 'recommendations', 'synthesisReport', 'connections'],
         },
-      ],
+      },
     });
 
-    const responseText = message.content
-      .filter((block) => block.type === 'text')
-      .map((block) => (block as any).text)
-      .join('\n');
-
-    if (!responseText) {
-      throw new Error('No text response from AI');
-    }
-
-    // Parse JSON response
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse JSON response from synthesis');
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = JSON.parse(response.text) as SynthesizeResponse;
 
     return {
       blindSpots: parsed.blindSpots || [],
