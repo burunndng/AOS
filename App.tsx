@@ -198,6 +198,7 @@ export default function App() {
   const [isCustomPracticeModalOpen, setIsCustomPracticeModalOpen] = useState(false);
   const [isGuidedPracticeGeneratorOpen, setIsGuidedPracticeGeneratorOpen] = useState(false);
   const [bodyArchitectHandoff, setBodyArchitectHandoff] = useState<{ type: 'yin' | 'yang'; payload: any } | null>(null);
+  const [workoutHandoffSource, setWorkoutHandoffSource] = useState<'integral-body' | 'standalone' | null>(null);
   
   // Integrated Insights
   const [integratedInsights, setIntegratedInsights] = useLocalStorage<IntegratedInsight[]>('integratedInsights', []);
@@ -623,8 +624,23 @@ export default function App() {
     }
   };
 
+  const handleLaunchYangPractice = (payload: any) => {
+    // Store the handoff payload and switch to Dynamic Workout Architect
+    setBodyArchitectHandoff({ type: 'yang', payload });
+    setWorkoutHandoffSource('integral-body');
+    setActiveWizard('dynamic-workout-architect');
+  };
+
+  const handleLaunchYinPractice = (payload: any) => {
+    // Store the handoff payload (for future Yin practice launcher)
+    setBodyArchitectHandoff({ type: 'yin', payload });
+    // For now, just keep this handler available for future expansion
+  };
+
   const handleSaveWorkoutProgram = (program: WorkoutProgram) => {
     setWorkoutPrograms(prev => [...prev.filter(p => p.id !== program.id), program]);
+    // Clear handoff source after saving
+    setWorkoutHandoffSource(null);
     setActiveWizard(null);
     alert(`Your personalized workout program has been saved!`);
   };
@@ -893,6 +909,8 @@ export default function App() {
           <IntegralBodyArchitectWizard
             onClose={() => setActiveWizard(null)}
             onSave={handleSaveIntegralBodyPlan}
+            onLaunchYangPractice={handleLaunchYangPractice}
+            onLaunchYinPractice={handleLaunchYinPractice}
             personalizationSummary={currentPersonalizationSummary}
           />
         );

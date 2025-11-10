@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2, AlertCircle, Plus, Trash2, Clock } from 'lucide-react';
+import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2, AlertCircle, Plus, Trash2, Clock, FileText } from 'lucide-react';
 import {
   IntegralBodyPlan,
   YangConstraints,
@@ -14,6 +14,7 @@ import {
 } from '../types.ts';
 import { generateIntegralWeeklyPlan } from '../services/integralBodyArchitectService.ts';
 import { buildPersonalizationPromptInsertion } from '../services/integralBodyPersonalization.ts';
+import { formatIntegralBodyPlanAsText, downloadAsFile } from '../services/planExportUtils.ts';
 
 interface PracticeHandoffPayload {
   name: string;
@@ -359,13 +360,41 @@ export default function IntegralBodyArchitectWizard({
           )}
 
           {step === 'HANDOFF' && (
-            <div className="flex justify-center mt-6 pt-6 border-t border-slate-700">
-              <button
-                onClick={onClose}
-                className="btn-luminous px-8 py-3 rounded-md font-medium"
-              >
-                Close
-              </button>
+            <div className="flex flex-col gap-3 mt-6 pt-6 border-t border-slate-700">
+              <div className="flex flex-wrap gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    if (generatedPlan) {
+                      const textContent = formatIntegralBodyPlanAsText(generatedPlan);
+                      downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'txt');
+                    }
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors"
+                >
+                  <FileText size={18} />
+                  Download as TXT
+                </button>
+                <button
+                  onClick={() => {
+                    if (generatedPlan) {
+                      const textContent = formatIntegralBodyPlanAsText(generatedPlan);
+                      downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'pdf');
+                    }
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors"
+                >
+                  <Download size={18} />
+                  Download as PDF
+                </button>
+              </div>
+              <div className="flex justify-center">
+                <button
+                  onClick={onClose}
+                  className="btn-luminous px-8 py-3 rounded-md font-medium"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           )}
         </div>

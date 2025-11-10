@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { X, ArrowRight, Dumbbell, Zap, CheckCircle, Download, ChevronDown, ChevronUp, Bookmark, Share2, AlertCircle } from 'lucide-react';
+import { X, ArrowRight, Dumbbell, Zap, CheckCircle, Download, ChevronDown, ChevronUp, Bookmark, Share2, AlertCircle, FileText } from 'lucide-react';
 import { generateDynamicWorkout, WorkoutProgram, GeneratedWorkout } from '../services/dynamicWorkoutArchitectService.ts';
+import { formatWorkoutProgramAsText, downloadAsFile } from '../services/planExportUtils.ts';
 
 interface DynamicWorkoutArchitectWizardProps {
   onClose: () => void;
@@ -262,13 +263,41 @@ export default function DynamicWorkoutArchitectWizard({
           )}
 
           {step === 'HANDOFF' && (
-            <div className="flex justify-center mt-6 pt-6 border-t border-slate-700">
-              <button
-                onClick={onClose}
-                className="btn-luminous px-8 py-3 rounded-md font-medium"
-              >
-                Close
-              </button>
+            <div className="flex flex-col gap-3 mt-6 pt-6 border-t border-slate-700">
+              <div className="flex flex-wrap gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    if (generatedProgram) {
+                      const textContent = formatWorkoutProgramAsText(generatedProgram);
+                      downloadAsFile(textContent, `Dynamic-Workout-${new Date().toISOString().split('T')[0]}`, 'txt');
+                    }
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors"
+                >
+                  <FileText size={18} />
+                  Download as TXT
+                </button>
+                <button
+                  onClick={() => {
+                    if (generatedProgram) {
+                      const textContent = formatWorkoutProgramAsText(generatedProgram);
+                      downloadAsFile(textContent, `Dynamic-Workout-${new Date().toISOString().split('T')[0]}`, 'pdf');
+                    }
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors"
+                >
+                  <Download size={18} />
+                  Download as PDF
+                </button>
+              </div>
+              <div className="flex justify-center">
+                <button
+                  onClick={onClose}
+                  className="btn-luminous px-8 py-3 rounded-md font-medium"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           )}
         </div>
