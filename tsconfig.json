@@ -25,5 +25,11 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalEsm": true,
+    "resolveJsonModule": true,
+    "allowJs": true
   }
 }

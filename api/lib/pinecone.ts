@@ -5,8 +5,8 @@
  */
 
 import { Pinecone } from '@pinecone-database/pinecone';
-import { cosineSimilarity } from './embeddings.js';
-import type { PineconeVector, QueryResult, PineconeVectorMetadata } from './types.js';
+import { cosineSimilarity } from './embeddings.ts';
+import type { PineconeVector, QueryResult, PineconeVectorMetadata } from './types.ts';
 
 interface PineconeIndexClient {
   upsert(vectors: PineconeVector[]): Promise<number>;

@@ -3,7 +3,7 @@
  * Handles generation of 1536-dimensional embeddings using Google's embedding model
  */
 
-import type { EmbeddingResult } from './types.js';
+import type { EmbeddingResult } from './types.ts';
 
 // Using a mock implementation for embeddings
 // In production, use: @google/generative-ai's embedContent method

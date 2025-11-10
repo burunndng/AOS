@@ -7,9 +7,9 @@
 
 import express, { Request, Response, NextFunction, Router } from 'express';
 import cors from 'cors';
-import { initializeDatabase, getDatabase } from './lib/db.js';
-import { initializePinecone, getIndexStats, healthCheck as pineconeHealth } from './lib/pinecone.js';
-import { initializeEmbeddingClient, healthCheck as embeddingsHealth } from './lib/embeddings.js';
+import { initializeDatabase, getDatabase } from './lib/db.ts';
+import { initializePinecone, getIndexStats, healthCheck as pineconeHealth } from './lib/pinecone.ts';
+import { initializeEmbeddingClient, healthCheck as embeddingsHealth } from './lib/embeddings.ts';
 
 // Import endpoint handlers
 import {
@@ -18,7 +18,7 @@ import {
   getStackRecommendations,
   getAssessmentBasedRecommendations,
   healthCheck as recommendationsHealth,
-} from './recommendations/personalized.js';
+} from './recommendations/personalized.ts';
 
 import {
   generateInsights,
@@ -26,14 +26,14 @@ import {
   generateIFSInsights,
   generatePatternInsights,
   healthCheck as insightsHealth,
-} from './insights/generate.js';
+} from './insights/generate.ts';
 
 import {
   personalizePractice,
   getSuggestedCustomizations,
   saveCustomizedPractice,
   healthCheck as practicesHealth,
-} from './practices/personalize.js';
+} from './practices/personalize.ts';
 
 import {
   syncUserSession,
@@ -41,20 +41,20 @@ import {
   getUserSyncStatus,
   deleteUserData,
   healthCheck as syncHealth,
-} from './user/sync.js';
+} from './user/sync.ts';
 
 import {
   extractBeliefsFromMemory,
   mineContradictions,
   completeSession,
   healthCheck as shadowHealth,
-} from './shadow/memory-reconsolidation.js';
+} from './shadow/memory-reconsolidation.ts';
 
 import {
   enhanceZoneAnalysis,
   synthesizeZones,
   submitSessionCompletion,
-} from './mind/eight-zones.js';
+} from './mind/eight-zones.ts';
 
 // ============================================
 // SERVER SETUP
@@ -82,17 +82,31 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Initialize services middleware (runs once on first request)
 let servicesInitialized = false;
+let pineconeInitialized = false;
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   if (!servicesInitialized) {
     try {
       console.log('[Server] Initializing services on first request...');
       await initializeDatabase();
-      await initializePinecone();
       initializeEmbeddingClient();
       servicesInitialized = true;
-      console.log('[Server] ✓ All services initialized');
+      console.log('[Server] ✓ Core services initialized');
+
+      // Initialize Pinecone asynchronously without blocking
+      if (!pineconeInitialized) {
+        initializePinecone()
+          .then(() => {
+            pineconeInitialized = true;
+            console.log('[Server] ✓ Pinecone initialized');
+          })
+          .catch((error) => {
+            console.error('[Server] Failed to initialize Pinecone:', error);
+            console.log('[Server] Using mock Pinecone for development');
+            pineconeInitialized = true;
+          });
+      }
     } catch (error) {
-      console.error('[Server] Failed to initialize services:', error);
+      console.error('[Server] Failed to initialize core services:', error);
       // Continue anyway - some endpoints might still work
     }
   }
