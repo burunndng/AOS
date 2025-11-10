@@ -86,7 +86,6 @@ import {
   WorkoutProgram,
   MemoryReconsolidationSession,
   MemoryReconsolidationDraft
-  MemoryReconsolidationSession
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
