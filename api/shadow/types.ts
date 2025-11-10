@@ -3,12 +3,15 @@
  * Type definitions for Memory Reconsolidation and belief work features
  */
 
+export type BeliefCategory = 'identity' | 'capability' | 'worthiness' | 'safety' | 'belonging' | 'possibility' | 'other';
+export type AffectTone = 'shame' | 'fear' | 'anger' | 'sadness' | 'grief' | 'confusion' | 'mixed' | 'neutral';
+
 export interface ImplicitBelief {
   id: string;
   belief: string;
   emotionalCharge: number;
-  category?: string;
-  affectTone?: string;
+  category: BeliefCategory;
+  affectTone: AffectTone;
   bodyLocation?: string;
   originStory?: string;
   limitingPatterns?: string[];
@@ -25,9 +28,9 @@ export interface ContradictionInsight {
 }
 
 export interface SessionCompletionSummary {
-  acknowledgeement?: string;
-  closingPrompt?: string;
-  integrationReminder?: string;
+  acknowledgement: string;
+  closingPrompt: string;
+  integrationReminder: string;
 }
 
 export interface ExtractBeliefsRequest {
