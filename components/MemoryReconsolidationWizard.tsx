@@ -13,8 +13,13 @@ import {
   IntegrationChoiceType
 } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Play, Pause, Download, Copy, Search, CheckCircle } from 'lucide-react';
-import { extractImplicitBeliefs, mineContradictions, submitSessionCompletion } from '../services/memoryReconsolidationService.ts';
-import { memoryReconsolidationIntegrationOptions, memoryReconsolidationGroundingOptions } from '../constants.ts';
+import { 
+  extractImplicitBeliefs, 
+  mineContradictions,
+  type ExtractImplicitBeliefsPayload,
+  type MineContradictionsPayload
+} from '../services/memoryReconsolidationService.ts';
+import { GROUNDING_OPTIONS } from '../constants.ts';
 
 interface MemoryReconsolidationWizardProps {
   onClose: () => void;
@@ -35,7 +40,7 @@ const createBaseSession = (): MemoryReconsolidationSession => ({
   implicitBeliefs: [],
   contradictionInsights: [],
   juxtapositionCycles: [],
-  groundingOptions: memoryReconsolidationGroundingOptions,
+  groundingOptions: GROUNDING_OPTIONS,
   integrationSelections: [],
   baselineIntensity: 5,
 });
@@ -94,6 +99,7 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
   
   // Belief identification state
   const [beliefContext, setBeliefContext] = useState('');
+  const [selectedBeliefId, setSelectedBeliefId] = useState<string | null>(null);
   
   // Juxtaposition state
   const [currentCycleIndex, setCurrentCycleIndex] = useState(0);
@@ -167,6 +173,36 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
     }
   };
 
+  const handleExtractBeliefs = async () => {
+    if (beliefContext.trim().length < 50) {
+      setError('Please provide at least 50 characters of context');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const payload: ExtractImplicitBeliefsPayload = {
+        memoryNarrative: beliefContext,
+        baselineIntensity: session.baselineIntensity
+      };
+      
+      const response = await extractImplicitBeliefs(payload);
+      
+      updateSession({ 
+        implicitBeliefs: response.beliefs,
+        baselineIntensity: response.beliefs[0]?.emotionalCharge || session.baselineIntensity
+      });
+      setSelectedBeliefId(response.beliefs[0]?.id ?? null);
+    } catch (err) {
+      console.error('[MemoryRecon] Error extracting beliefs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to extract beliefs. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const startJuxtapositionCycle = (cycleNum: number) => {
     if (prefersReducedMotion || isPaused) return;
     
@@ -204,22 +240,24 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
       let nextStep = STEPS[currentIndex + 1] || session.currentStep;
 
       if (session.currentStep === 'BELIEF_IDENTIFICATION') {
-        const beliefs = await extractImplicitBeliefs(userId, beliefContext);
-        updateSession({ 
-          implicitBeliefs: beliefs,
-          baselineIntensity: beliefs[0]?.emotionalCharge || 5
-        });
+        // Beliefs should already be extracted via handleExtractBeliefs
+        // Just move to next step
         nextStep = 'CONTRADICTION_MINING';
       } else if (session.currentStep === 'CONTRADICTION_MINING') {
-        const contradictions = await mineContradictions(userId, session.implicitBeliefs);
+        const payload: MineContradictionsPayload = {
+          beliefs: session.implicitBeliefs.map(b => ({ id: b.id, belief: b.belief })),
+          beliefIds: session.implicitBeliefs.map(b => b.id)
+        };
+        
+        const response = await mineContradictions(payload);
         
         // Generate juxtaposition cycles from contradictions
-        const cycles: JuxtapositionCycle[] = contradictions.flatMap((insight, idx) => 
+        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, idx) => 
           insight.anchors.slice(0, 5).map((anchor, anchorIdx) => ({
             id: `cycle-${idx}-${anchorIdx}`,
             beliefId: insight.beliefId,
             cycleNumber: idx * 5 + anchorIdx + 1,
-            steps: insight.juxtapositionPrompts.map((prompt, stepNum) => ({
+            steps: response.juxtapositionCyclePrompts.map((prompt, stepNum) => ({
               stepNumber: stepNum + 1,
               prompt,
               timestamp: new Date().toISOString()
@@ -230,13 +268,13 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
           }))
         );
         
-        updateSession({ contradictionInsights: contradictions, juxtapositionCycles: cycles });
+        updateSession({ contradictionInsights: response.contradictions, juxtapositionCycles: cycles });
         nextStep = 'JUXTAPOSITION';
       } else if (session.currentStep === 'INTEGRATION') {
         // Build integration selections
         const selections: IntegrationSelection[] = integrationChoice === 'curated'
           ? selectedPractices.map(practiceId => {
-              const practice = memoryReconsolidationIntegrationOptions.find(p => p.practiceId === practiceId);
+              const practice = integrationOptions.find(p => p.practiceId === practiceId);
               return {
                 id: `integration-${Date.now()}-${practiceId}`,
                 practiceId,
@@ -265,18 +303,14 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
           selectedGrounding: session.groundingOptions.find(g => selectedGrounding.includes(g.id))
         });
         
-        // Submit to backend
-        const response = await submitSessionCompletion({
+        // Set completion data for display
+        setCompletionData({
+          success: true,
           sessionId: session.id,
-          userId,
-          finalBeliefs: session.implicitBeliefs,
-          contradictionInsights: session.contradictionInsights,
-          personalReflection: `${emotionalNotes}\n\n${somaticNotes}\n\n${cognitiveShifts}`,
-          commitments: integrationChoice === 'curated' ? selectedPractices : [customPlan],
-          timestamp: new Date(),
+          integrationSummary: 'Your memory reconsolidation work has been saved',
+          suggestedPractices: selections.map(s => s.practiceName)
         });
         
-        setCompletionData(response);
         nextStep = 'COMPLETE';
       }
 
@@ -374,7 +408,14 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const filteredPractices = memoryReconsolidationIntegrationOptions.filter(p =>
+  const integrationOptions = [
+    { practiceId: 'meditation', practiceName: 'Daily Meditation', description: 'Mindful awareness practice', bestFor: ['grounding', 'awareness'] },
+    { practiceId: 'expressive-writing', practiceName: 'Expressive Writing', description: 'Process emotions through writing', bestFor: ['emotional-regulation', 'integration'] },
+    { practiceId: 'loving-kindness', practiceName: 'Loving-Kindness Meditation', description: 'Cultivate self-compassion', bestFor: ['compassion', 'self-acceptance'] },
+    { practiceId: 'coherent-breathing', practiceName: 'Coherent Breathing', description: 'Regulate nervous system through breath', bestFor: ['regulation', 'grounding'] },
+  ];
+  
+  const filteredPractices = integrationOptions.filter(p =>
     p.practiceName.toLowerCase().includes(searchFilter.toLowerCase()) ||
     p.description.toLowerCase().includes(searchFilter.toLowerCase())
   );
@@ -455,11 +496,11 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
               </div>
             ) : (
               <button
-                onClick={handleNext}
-                disabled={beliefContext.trim().length < 50}
-                className="btn-luminous px-6 py-3 rounded-lg font-semibold"
+                onClick={handleExtractBeliefs}
+                disabled={beliefContext.trim().length < 50 || isLoading}
+                className="btn-luminous px-6 py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Identify Beliefs
+                {isLoading ? 'Identifying...' : 'Identify Beliefs'}
               </button>
             )}
           </div>
@@ -833,7 +874,7 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
               <div>
                 <span className="text-slate-300 font-medium mb-3 block">Nervous System Support:</span>
                 <div className="space-y-2">
-                  {memoryReconsolidationGroundingOptions.slice(0, 5).map(grounding => (
+                  {session.groundingOptions.slice(0, 5).map(grounding => (
                     <div
                       key={grounding.id}
                       onClick={() => {
