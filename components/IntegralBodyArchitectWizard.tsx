@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2, AlertCircle, Plus, Trash2, Clock } from 'lucide-react';
 import {
   IntegralBodyPlan,
@@ -65,6 +65,7 @@ const TIME_OF_DAY_SLOTS: Record<TimeSlotKey, { label: string; hour: number; minu
   bedtime: { label: 'Before Bed', hour: 21, minute: 30 }
 };
 
+// Pre-compile regex patterns for O(1) access and faster matching
 const TIME_KEYWORDS: { pattern: RegExp; slot: TimeSlotKey }[] = [
   { pattern: /(early\s*)?morning/i, slot: 'morning' },
   { pattern: /(mid\s*-?morning|late morning)/i, slot: 'midmorning' },
@@ -74,6 +75,9 @@ const TIME_KEYWORDS: { pattern: RegExp; slot: TimeSlotKey }[] = [
   { pattern: /(wind[- ]?down|30 ?min before bed|pre-bed)/i, slot: 'winddown' },
   { pattern: /(bedtime|before sleep|night)/i, slot: 'bedtime' }
 ];
+
+// Cache for time slot inference to avoid repeated regex matching
+const timeSlotCache = new Map<string | undefined, { hour: number; minute: number }>();
 
 const DEFAULT_WORKOUT_SLOT: TimeSlotKey = 'morning';
 const DEFAULT_PRACTICE_SLOT: TimeSlotKey = 'evening';
@@ -170,17 +174,17 @@ export default function IntegralBodyArchitectWizard({
     setStep('HANDOFF');
   };
 
-  const handleExportShoppingList = () => {
+  const handleExportShoppingList = useCallback(() => {
     if (!generatedPlan || !generatedPlan.shoppingList) return;
     const text = `Shopping List for Week of ${new Date(generatedPlan.weekStartDate).toLocaleDateString()}\n\n${generatedPlan.shoppingList.map((item, i) => `${i + 1}. ${item}`).join('\n')}`;
     downloadFile('integral-body-architect-shopping-list.txt', text, 'text/plain');
-  };
+  }, [generatedPlan]);
 
-  const handleCalendarSync = () => {
+  const handleCalendarSync = useCallback(() => {
     if (!generatedPlan) return;
     const ics = buildCalendarICS(generatedPlan);
     downloadFile('integral-body-architect-week.ics', ics, 'text/calendar');
-  };
+  }, [generatedPlan]);
 
   const handleYinLaunch = (practice: YinPracticeDetail, dayName: string) => {
     if (!onLaunchYinPractice) return;
@@ -1293,10 +1297,23 @@ function toUTCDate(base: Date, hour: number, minute: number): Date {
 }
 
 function inferTimeSlot(label: string | undefined): { hour: number; minute: number } {
-  if (!label) return TIME_OF_DAY_SLOTS[DEFAULT_PRACTICE_SLOT];
-  const match = TIME_KEYWORDS.find(entry => entry.pattern.test(label));
-  if (match) {
-    return TIME_OF_DAY_SLOTS[match.slot];
+  // Check cache first - O(1) lookup
+  if (timeSlotCache.has(label)) {
+    return timeSlotCache.get(label)!;
   }
-  return TIME_OF_DAY_SLOTS[DEFAULT_PRACTICE_SLOT];
+
+  let result: { hour: number; minute: number };
+
+  if (!label) {
+    result = TIME_OF_DAY_SLOTS[DEFAULT_PRACTICE_SLOT];
+  } else {
+    const match = TIME_KEYWORDS.find(entry => entry.pattern.test(label));
+    result = match
+      ? TIME_OF_DAY_SLOTS[match.slot]
+      : TIME_OF_DAY_SLOTS[DEFAULT_PRACTICE_SLOT];
+  }
+
+  // Cache the result
+  timeSlotCache.set(label, result);
+  return result;
 }

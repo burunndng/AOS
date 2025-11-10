@@ -79,14 +79,162 @@ interface LLMPlanGenerationResponse {
   };
 }
 
+// Pre-create the response schema to avoid recreating it on every call
+const RESPONSE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    weekSummary: { type: Type.STRING },
+    constraintNotes: { type: Type.STRING },
+    fallbackOptions: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING }
+    },
+    schedulingConfidence: { type: Type.NUMBER },
+    dailyTargets: {
+      type: Type.OBJECT,
+      properties: {
+        proteinGrams: { type: Type.NUMBER },
+        sleepHours: { type: Type.NUMBER },
+        workoutDays: { type: Type.NUMBER },
+        yinPracticeMinutes: { type: Type.NUMBER }
+      },
+      required: ['proteinGrams', 'sleepHours', 'workoutDays', 'yinPracticeMinutes']
+    },
+    days: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          dayName: { type: Type.STRING },
+          summary: { type: Type.STRING },
+          yangYinBalance: { type: Type.STRING },
+          constraintResolution: { type: Type.STRING },
+          workout: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              exercises: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    name: { type: Type.STRING },
+                    sets: { type: Type.NUMBER },
+                    reps: { type: Type.STRING },
+                    notes: { type: Type.STRING }
+                  },
+                  required: ['name', 'sets', 'reps']
+                }
+              },
+              duration: { type: Type.NUMBER },
+              notes: { type: Type.STRING }
+            },
+            required: ['name', 'exercises', 'duration']
+          },
+          yinPractices: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                practiceType: { type: Type.STRING },
+                duration: { type: Type.NUMBER },
+                timeOfDay: { type: Type.STRING },
+                intention: { type: Type.STRING },
+                instructions: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING }
+                },
+                synergyReason: { type: Type.STRING },
+                schedulingConfidence: { type: Type.NUMBER }
+              },
+              required: ['name', 'practiceType', 'duration', 'timeOfDay', 'intention', 'instructions']
+            }
+          },
+          nutrition: {
+            type: Type.OBJECT,
+            properties: {
+              breakfast: {
+                type: Type.OBJECT,
+                properties: {
+                  description: { type: Type.STRING },
+                  protein: { type: Type.NUMBER }
+                },
+                required: ['description', 'protein']
+              },
+              lunch: {
+                type: Type.OBJECT,
+                properties: {
+                  description: { type: Type.STRING },
+                  protein: { type: Type.NUMBER }
+                },
+                required: ['description', 'protein']
+              },
+              dinner: {
+                type: Type.OBJECT,
+                properties: {
+                  description: { type: Type.STRING },
+                  protein: { type: Type.NUMBER }
+                },
+                required: ['description', 'protein']
+              },
+              snacks: {
+                type: Type.OBJECT,
+                properties: {
+                  description: { type: Type.STRING },
+                  protein: { type: Type.NUMBER }
+                },
+                required: ['description', 'protein']
+              },
+              totalProtein: { type: Type.NUMBER },
+              totalCalories: { type: Type.NUMBER },
+              notes: { type: Type.STRING }
+            },
+            required: ['breakfast', 'lunch', 'dinner', 'totalProtein']
+          },
+          sleepHygiene: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          },
+          notes: { type: Type.STRING }
+        },
+        required: ['dayName', 'summary', 'yinPractices', 'nutrition', 'sleepHygiene']
+      }
+    },
+    shoppingList: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING }
+    },
+    synergyScoring: {
+      type: Type.OBJECT,
+      properties: {
+        yangYinPairingScore: { type: Type.NUMBER },
+        restSpacingScore: { type: Type.NUMBER },
+        overallIntegrationScore: { type: Type.NUMBER }
+      },
+      required: ['yangYinPairingScore', 'restSpacingScore', 'overallIntegrationScore']
+    }
+  },
+  required: [
+    'weekSummary',
+    'constraintNotes',
+    'fallbackOptions',
+    'schedulingConfidence',
+    'dailyTargets',
+    'days',
+    'shoppingList',
+    'synergyScoring'
+  ]
+};
+
 export async function generateIntegralWeeklyPlan(input: GeneratePlanInput): Promise<IntegralBodyPlan> {
   const historicalContext = input.historicalContext ? buildHistoricalContextPrompt(input.historicalContext) : '';
-  
+
   // Build personalization insertion if summary is provided
-  const personalizationInsertion = input.personalizationSummary 
+  const personalizationInsertion = input.personalizationSummary
     ? buildPersonalizationPromptInsertion(input.personalizationSummary)
     : '';
-  
+
   const prompt = `You are The Integral Body Architect—an expert at synthesizing comprehensive, integrated weekly plans that balance Yang practices (workouts, nutrition, sleep) with Yin practices (Qigong, breathing, Microcosmic Orbit, etc.).
 
 USER'S GOAL:
@@ -157,161 +305,36 @@ Create a comprehensive, integrated 7-day plan that:
 Return a comprehensive 7-day plan with detailed synergy metadata and constraint analysis.
 Be specific, actionable, evidence-based, and explicit about scheduling reasoning.`;
 
-  const response = await ai.models.generateContent({
+  // Add timeout to API call (60 seconds)
+  const apiPromise = ai.models.generateContent({
     model: 'gemini-2.5-pro',
     contents: prompt,
     config: {
       responseMimeType: 'application/json',
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          weekSummary: { type: Type.STRING },
-          constraintNotes: { type: Type.STRING },
-          fallbackOptions: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
-          },
-          schedulingConfidence: { type: Type.NUMBER },
-          dailyTargets: {
-            type: Type.OBJECT,
-            properties: {
-              proteinGrams: { type: Type.NUMBER },
-              sleepHours: { type: Type.NUMBER },
-              workoutDays: { type: Type.NUMBER },
-              yinPracticeMinutes: { type: Type.NUMBER }
-            },
-            required: ['proteinGrams', 'sleepHours', 'workoutDays', 'yinPracticeMinutes']
-          },
-          days: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                dayName: { type: Type.STRING },
-                summary: { type: Type.STRING },
-                yangYinBalance: { type: Type.STRING },
-                constraintResolution: { type: Type.STRING },
-                workout: {
-                  type: Type.OBJECT,
-                  properties: {
-                    name: { type: Type.STRING },
-                    exercises: {
-                      type: Type.ARRAY,
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          name: { type: Type.STRING },
-                          sets: { type: Type.NUMBER },
-                          reps: { type: Type.STRING },
-                          notes: { type: Type.STRING }
-                        },
-                        required: ['name', 'sets', 'reps']
-                      }
-                    },
-                    duration: { type: Type.NUMBER },
-                    notes: { type: Type.STRING }
-                  },
-                  required: ['name', 'exercises', 'duration']
-                },
-                yinPractices: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      name: { type: Type.STRING },
-                      practiceType: { type: Type.STRING },
-                      duration: { type: Type.NUMBER },
-                      timeOfDay: { type: Type.STRING },
-                      intention: { type: Type.STRING },
-                      instructions: {
-                        type: Type.ARRAY,
-                        items: { type: Type.STRING }
-                      },
-                      synergyReason: { type: Type.STRING },
-                      schedulingConfidence: { type: Type.NUMBER }
-                    },
-                    required: ['name', 'practiceType', 'duration', 'timeOfDay', 'intention', 'instructions']
-                  }
-                },
-                nutrition: {
-                  type: Type.OBJECT,
-                  properties: {
-                    breakfast: {
-                      type: Type.OBJECT,
-                      properties: {
-                        description: { type: Type.STRING },
-                        protein: { type: Type.NUMBER }
-                      },
-                      required: ['description', 'protein']
-                    },
-                    lunch: {
-                      type: Type.OBJECT,
-                      properties: {
-                        description: { type: Type.STRING },
-                        protein: { type: Type.NUMBER }
-                      },
-                      required: ['description', 'protein']
-                    },
-                    dinner: {
-                      type: Type.OBJECT,
-                      properties: {
-                        description: { type: Type.STRING },
-                        protein: { type: Type.NUMBER }
-                      },
-                      required: ['description', 'protein']
-                    },
-                    snacks: {
-                      type: Type.OBJECT,
-                      properties: {
-                        description: { type: Type.STRING },
-                        protein: { type: Type.NUMBER }
-                      },
-                      required: ['description', 'protein']
-                    },
-                    totalProtein: { type: Type.NUMBER },
-                    totalCalories: { type: Type.NUMBER },
-                    notes: { type: Type.STRING }
-                  },
-                  required: ['breakfast', 'lunch', 'dinner', 'totalProtein']
-                },
-                sleepHygiene: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING }
-                },
-                notes: { type: Type.STRING }
-              },
-              required: ['dayName', 'summary', 'yinPractices', 'nutrition', 'sleepHygiene']
-            }
-          },
-          shoppingList: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
-          },
-          synergyScoring: {
-            type: Type.OBJECT,
-            properties: {
-              yangYinPairingScore: { type: Type.NUMBER },
-              restSpacingScore: { type: Type.NUMBER },
-              overallIntegrationScore: { type: Type.NUMBER }
-            },
-            required: ['yangYinPairingScore', 'restSpacingScore', 'overallIntegrationScore']
-          }
-        },
-        required: [
-          'weekSummary',
-          'constraintNotes',
-          'fallbackOptions',
-          'schedulingConfidence',
-          'dailyTargets',
-          'days',
-          'shoppingList',
-          'synergyScoring'
-        ]
-      }
+      responseSchema: RESPONSE_SCHEMA as any
     }
   });
 
-  const planData: LLMPlanGenerationResponse = JSON.parse(response.text);
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Plan generation timed out after 60 seconds. Please try again.')), 60000)
+  );
+
+  let response;
+  try {
+    response = await Promise.race([apiPromise, timeoutPromise]);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('timed out')) {
+      throw error;
+    }
+    throw new Error(`Failed to generate plan: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  let planData: LLMPlanGenerationResponse;
+  try {
+    planData = JSON.parse(response.text);
+  } catch (error) {
+    throw new Error('Failed to parse plan response. Please try again.');
+  }
 
   const now = new Date();
   const monday = getNextMonday(now);
@@ -462,8 +485,26 @@ function validateConstraints(
 ): { conflicts: Array<{ type: string; description: string; resolution: string }> } {
   const conflicts: Array<{ type: string; description: string; resolution: string }> = [];
 
-  days.forEach((day, index) => {
-    if (constraints.unavailableDays.includes(day.dayName)) {
+  // Pre-compute for O(1) lookups
+  const unavailableDaysSet = new Set(constraints.unavailableDays);
+
+  // Build injury restriction map for O(1) lookup
+  const injuryRestrictionMap = new Map<string, { bodyPart: string; restrictedKeywords: Set<string> }>();
+  if (constraints.injuryRestrictions) {
+    constraints.injuryRestrictions.forEach(injury => {
+      const restrictedKeywords = new Set(
+        injury.restrictions.map(r => r.toLowerCase())
+      );
+      injuryRestrictionMap.set(injury.bodyPart, {
+        bodyPart: injury.bodyPart,
+        restrictedKeywords
+      });
+    });
+  }
+
+  days.forEach((day) => {
+    // Check unavailable days - O(1) lookup with Set
+    if (unavailableDaysSet.has(day.dayName)) {
       if (day.workout) {
         conflicts.push({
           type: 'unavailable-window',
@@ -473,24 +514,25 @@ function validateConstraints(
       }
     }
 
-    if (constraints.injuryRestrictions && constraints.injuryRestrictions.length > 0) {
-      constraints.injuryRestrictions.forEach(injury => {
-        if (day.workout) {
-          const hasRestrictedExercise = day.workout.exercises.some(ex =>
-            injury.restrictions.some(r =>
-              ex.name.toLowerCase().includes(r.toLowerCase())
-            )
-          );
+    // Check injury restrictions - O(e × r) instead of O(i × e × r)
+    if (day.workout && injuryRestrictionMap.size > 0) {
+      const exerciseNames = day.workout.exercises.map(ex => ex.name.toLowerCase());
 
-          if (hasRestrictedExercise) {
-            conflicts.push({
-              type: 'injury-restriction',
-              description: `${day.dayName} has exercise conflicting with ${injury.bodyPart} restriction`,
-              resolution: `Exercise should be modified or removed per injury restriction`
-            });
-          }
+      for (const [bodyPart, restriction] of injuryRestrictionMap) {
+        const hasRestrictedExercise = exerciseNames.some(exName =>
+          Array.from(restriction.restrictedKeywords).some(keyword =>
+            exName.includes(keyword)
+          )
+        );
+
+        if (hasRestrictedExercise) {
+          conflicts.push({
+            type: 'injury-restriction',
+            description: `${day.dayName} has exercise conflicting with ${bodyPart} restriction`,
+            resolution: `Exercise should be modified or removed per injury restriction`
+          });
         }
-      });
+      }
     }
   });
 
