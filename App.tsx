@@ -84,6 +84,8 @@ import {
   PlanProgressByDay,
   PersonalizationSummary,
   WorkoutProgram,
+  MemoryReconsolidationSession,
+  MemoryReconsolidationDraft
   MemoryReconsolidationSession
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
@@ -161,7 +163,7 @@ export default function App() {
   const [draftKegan, setDraftKegan] = useLocalStorage<KeganAssessmentSession | null>('draftKegan', null);
   const [draftRelational, setDraftRelational] = useLocalStorage<RelationalPatternSession | null>('draftRelational', null);
   const [draftBigMind, setDraftBigMind] = useLocalStorage<Partial<BigMindSession> | null>('draftBigMind', null);
-  const [draftMemoryRecon, setDraftMemoryRecon] = useLocalStorage<MemoryReconsolidationSession | null>('draftMemoryRecon', null);
+  const [draftMemoryRecon, setDraftMemoryRecon] = useLocalStorage<MemoryReconsolidationDraft | null>('memoryReconDraft', null);
 
   // Session History
   const [history321, setHistory321] = useLocalStorage<ThreeTwoOneSession[]>('history321', []);
@@ -655,6 +657,30 @@ export default function App() {
     alert(`Your personalized workout program has been saved!`);
   };
 
+  const handleSaveMemoryReconSession = async (session: MemoryReconsolidationSession) => {
+    setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftMemoryRecon(null);
+    setActiveWizard(null);
+
+    const selectedBelief = session.implicitBeliefs[0];
+    const shiftPercentage = session.completionSummary?.intensityShift
+      ? Math.round((session.completionSummary.intensityShift / session.baselineIntensity) * -100)
+      : 0;
+
+    const report = `# Memory Reconsolidation: ${selectedBelief?.belief || 'N/A'}\n- Intensity Shift: ${shiftPercentage}%\n- Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceName).join(', ')}`;
+
+    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
+      'Memory Reconsolidation',
+      session.id,
+      report,
+      Object.values(corePractices.shadow),
+    );
+
+    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+
+    alert('Memory Reconsolidation session saved! Your shift has been added to history.');
+  };
+
   const markInsightAsAddressed = (insightId: string, shadowToolType: string, shadowSessionId: string) => {
     setIntegratedInsights(prev => prev.map(insight => {
         if (insight.id === insightId) {
@@ -758,7 +784,7 @@ export default function App() {
         practiceStack={practiceStack}
       />;
       // FIX: Changed prop `setDraftIFSSession` to `setDraftIFS` to match the updated ShadowToolsTabProps interface.
-      case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} draft321Session={draft321} draftIFSSession={draftIFS} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} draftMemoryRecon={draftMemoryRecon} />;
+      case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} onStartMemoryRecon={(id) => setActiveWizardAndLink('memory-reconsolidation', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} memoryReconHistory={memoryReconHistory} draft321Session={draft321} draftIFSSession={draftIFS} draftMemoryRecon={draftMemoryRecon} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;
       case 'body-tools': return <BodyToolsTab
         setActiveWizard={setActiveWizardAndLink}
         integralBodyPlans={integralBodyPlans}
@@ -946,6 +972,16 @@ export default function App() {
         return (
           <InsightPracticeMapWizard
             onClose={() => setActiveWizard(null)}
+          />
+        );
+      case 'memory-reconsolidation':
+        return (
+          <MemoryReconsolidationWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveMemoryReconSession}
+            session={draftMemoryRecon}
+            setDraft={setDraftMemoryRecon}
+            userId={userId}
           />
         );
       default:
