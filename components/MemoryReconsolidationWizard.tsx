@@ -420,7 +420,7 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
           <div className="space-y-6">
             <h3 className="text-2xl font-bold font-mono text-slate-100">Belief Identification</h3>
             <p className="text-slate-300">
-              Describe a situation, pattern, or recurring feeling that you'd like to work with. 
+              Describe a situation, pattern, or recurring feeling that you'd like to work with.
               The AI will help identify the implicit beliefs underneath.
             </p>
             <textarea
@@ -433,7 +433,12 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
             <div className="text-sm text-slate-400">
               Minimum 50 characters • {beliefContext.length}/50
             </div>
-            {session.implicitBeliefs.length > 0 && (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-slate-400">Identifying implicit beliefs...</p>
+              </div>
+            ) : session.implicitBeliefs.length > 0 ? (
               <div className="space-y-4 mt-6">
                 <h4 className="font-semibold text-slate-200">Identified Beliefs:</h4>
                 {session.implicitBeliefs.map((belief, idx) => (
@@ -448,6 +453,14 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                   </div>
                 ))}
               </div>
+            ) : (
+              <button
+                onClick={handleNext}
+                disabled={beliefContext.trim().length < 50}
+                className="btn-luminous px-6 py-3 rounded-lg font-semibold"
+              >
+                Identify Beliefs
+              </button>
             )}
           </div>
         );
