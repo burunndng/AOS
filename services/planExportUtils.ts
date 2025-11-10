@@ -286,18 +286,35 @@ const downloadAsPDF = (content: string, filename: string) => {
       element.style.fontFamily = 'monospace';
       element.style.fontSize = '11px';
       element.style.padding = '20px';
+      element.style.margin = '0';
+      element.style.width = '100%';
       element.textContent = content;
+
+      // IMPORTANT: Add element to DOM so html2pdf can render it fully
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.width = '210mm'; // A4 width
+      container.appendChild(element);
+      document.body.appendChild(container);
 
       const opt = {
         margin: 10,
         filename: `${filename}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: { scale: 2, useCORS: true },
         jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
       };
 
       // @ts-ignore
-      html2pdf().set(opt).from(element).save();
+      html2pdf()
+        .set(opt)
+        .from(element)
+        .save()
+        .finally(() => {
+          // Clean up: remove the temporary element from DOM
+          document.body.removeChild(container);
+        });
     };
     // Fallback if CDN fails
     script.onerror = () => {
