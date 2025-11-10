@@ -79,7 +79,7 @@ Respond with a cohesive enhancement that flows naturally, not bullet points.`;
 
     const response = await getAIClient().models.generateContent({
       model: MODEL,
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
     });
 
     const enhancement = response.text;
@@ -177,7 +177,7 @@ Format your response as a JSON object with keys: blindSpots (array of strings), 
 
     const response = await getAIClient().models.generateContent({
       model: MODEL,
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
         responseMimeType: 'application/json',
         responseSchema: {
