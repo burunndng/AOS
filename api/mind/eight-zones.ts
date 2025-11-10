@@ -79,7 +79,7 @@ Respond with a cohesive enhancement that flows naturally, not bullet points.`;
 
     const response = await ai.models.generateContent({
       model: MODEL,
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
     });
 
     const enhancement = response.text;
@@ -186,9 +186,10 @@ Format your response as a JSON object with keys: blindSpots (array of strings), 
 
     let response;
     try {
+      console.log('[8 Zones] Calling Gemini API with model:', MODEL);
       response = await ai.models.generateContent({
         model: MODEL,
-        contents: prompt,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           responseMimeType: 'application/json',
           responseSchema: {
@@ -229,10 +230,17 @@ Format your response as a JSON object with keys: blindSpots (array of strings), 
         throw new Error('No response received from Gemini API');
       }
 
-      console.log('[8 Zones] Gemini API response received, text length:', response.text?.length || 'unknown');
+      if (!response.text) {
+        console.error('[8 Zones] Response object:', JSON.stringify(response, null, 2));
+        throw new Error('Gemini API response has no text property');
+      }
+
+      console.log('[8 Zones] Gemini API response received, text length:', response.text.length);
     } catch (apiError) {
-      console.error('[8 Zones] Gemini API call failed:', apiError);
-      throw apiError instanceof Error ? apiError : new Error('Failed to call Gemini API');
+      const errorMsg = apiError instanceof Error ? apiError.message : String(apiError);
+      console.error('[8 Zones] Gemini API call failed:', errorMsg);
+      console.error('[8 Zones] Full error:', apiError);
+      throw new Error(`Gemini API error: ${errorMsg}`);
     }
 
     let parsed: SynthesizeResponse;

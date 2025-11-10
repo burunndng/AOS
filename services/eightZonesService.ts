@@ -49,6 +49,8 @@ export const generateSynthesis = async (
   connections: Array<{ fromZone: number; toZone: number; relationship: string }>;
 }> => {
   try {
+    console.log('[8Zones] Starting synthesis request with', Object.keys(zoneAnalyses).length, 'zones');
+
     const response = await fetch('/api/mind/eight-zones/synthesize', {
       method: 'POST',
       headers: {
@@ -61,23 +63,38 @@ export const generateSynthesis = async (
       }),
     });
 
+    console.log('[8Zones] Synthesis API response status:', response.status);
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: response.statusText }));
-      const errorMessage = errorData.message || errorData.error || response.statusText;
-      throw new Error(`Failed to generate synthesis: ${errorMessage}`);
+      let errorMessage = response.statusText;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || response.statusText;
+        console.error('[8Zones] Server error details:', errorData);
+      } catch (e) {
+        console.error('[8Zones] Could not parse error response:', e);
+      }
+      throw new Error(`API returned ${response.status}: ${errorMessage}`);
     }
 
     const data = await response.json();
+    console.log('[8Zones] Synthesis response received, keys:', Object.keys(data));
 
     // Validate response structure
     if (!data.blindSpots || !data.novelInsights || !data.recommendations || !data.synthesisReport) {
+      console.error('[8Zones] Invalid response structure:', {
+        hasBlindSpots: !!data.blindSpots,
+        hasNovelInsights: !!data.novelInsights,
+        hasRecommendations: !!data.recommendations,
+        hasSynthesisReport: !!data.synthesisReport,
+      });
       throw new Error('Invalid synthesis response structure: missing required fields');
     }
 
     return data;
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error generating synthesis';
-    console.error('[8Zones] Synthesis error:', message);
+    console.error('[8Zones] Synthesis error:', message, err);
     throw new Error(message);
   }
 };
