@@ -1000,3 +1000,60 @@ export interface WorkoutProgram {
   progressionRecommendations?: string[];
 }
 
+// ============================================
+// Memory Reconsolidation Types
+// ============================================
+
+export interface ImplicitBelief {
+  id: string;
+  belief: string;
+  confidence: number; // 0-1 scale
+  sourceContext: string; // Where the belief came from
+  emotionalCharge?: string; // Associated emotions
+  limitingPattern?: string; // How it limits the user
+}
+
+export interface JuxtapositionCycle {
+  beliefA: ImplicitBelief;
+  beliefB: ImplicitBelief;
+  contradiction: string; // Description of the contradiction
+  depth: 'surface' | 'moderate' | 'deep'; // How fundamental the contradiction is
+}
+
+export interface ContradictionInsight {
+  id: string;
+  juxtapositionCycles: JuxtapositionCycle[];
+  integrationPath: string; // How to move beyond the contradiction
+  underlyingUnity?: string; // What both beliefs have in common
+  psychologicalContext?: string; // Why the mind holds both
+}
+
+export interface MemoryReconsolidationSession {
+  id: string;
+  date: string;
+  initialBeliefs: ImplicitBelief[];
+  contradictions: ContradictionInsight[];
+  sessionNotes?: string;
+  status: 'in_progress' | 'completed' | 'archived';
+  completionSummary?: string; // AI-generated summary of insights
+  linkedPractices?: string[]; // Practice IDs to support the integration
+}
+
+export interface SessionCompletionPayload {
+  sessionId: string;
+  userId: string;
+  finalBeliefs: ImplicitBelief[];
+  contradictionInsights: ContradictionInsight[];
+  personalReflection: string;
+  commitments?: string[]; // What the user commits to exploring
+  timestamp: Date;
+}
+
+export interface SessionCompletionResponse {
+  success: boolean;
+  sessionId: string;
+  integrationSummary: string;
+  suggestedPractices: string[];
+  followUpRecommendations: string[];
+}
+
