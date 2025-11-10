@@ -952,3 +952,51 @@ export interface PersonalizationSummary {
   summary: string; // Human-readable summary of personalization insights
 }
 
+// Workout Architecture Types
+export interface WorkoutExercise {
+  name: string;
+  sets: number;
+  reps: string;
+  duration?: number;
+  tempo?: string;
+  restSeconds?: number;
+  notes?: string;
+  modifications?: string[];
+  formGuidance?: string[];
+}
+
+export interface GeneratedWorkout {
+  id: string;
+  name: string;
+  intensity: 'light' | 'moderate' | 'intense';
+  duration: number;
+  equipment: string[];
+  exercises: WorkoutExercise[];
+  warmup?: {
+    name: string;
+    duration: number;
+    description: string;
+  };
+  cooldown?: {
+    name: string;
+    duration: number;
+    description: string;
+  };
+  muscleGroupsFocused: string[];
+  caloriesBurned?: number;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  notes?: string;
+  somaticGuidance?: string;
+}
+
+export interface WorkoutProgram {
+  id: string;
+  date: string;
+  title: string;
+  summary: string;
+  workouts: GeneratedWorkout[];
+  weekView?: Record<string, GeneratedWorkout>;
+  personalizationNotes?: string;
+  progressionRecommendations?: string[];
+}
+

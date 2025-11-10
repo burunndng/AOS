@@ -56,6 +56,12 @@ export default function BodyToolsTab({ setActiveWizard }: BodyToolsTabProps) {
         />
         <ToolCard
           icon={<Activity size={28} className="text-teal-400" />}
+          title="Dynamic Workout Architect"
+          description="Generate personalized, adaptive workout programs tailored to your goals, equipment, experience level, and somatic awareness."
+          onStart={() => setActiveWizard('dynamic-workout-architect')}
+        />
+        <ToolCard
+          icon={<Activity size={28} className="text-teal-400" />}
           title="Somatic Practice Generator"
           description="Generate precise, spatially-aware guided practices like Qigong or Somatic Movement using an AI trained on human movement."
           onStart={() => setActiveWizard('somatic')}
