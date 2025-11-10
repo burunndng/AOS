@@ -43,9 +43,6 @@ import {
   healthCheck as syncHealth,
 } from './user/sync.js';
 
-import { healthCheck as retrievalHealth } from './rag/retrieve.js';
-import { healthCheck as promptHealth } from './rag/generate-prompt.js';
-
 import {
   extractBeliefsFromMemory,
   mineContradictions,
@@ -454,10 +451,7 @@ app.get(`${API_BASE}/health`, async (req: Request, res: Response) => {
       }
     })();
 
-    services.pinecone = await pineconeHealth();
     services.embeddings = await embeddingsHealth();
-    services.retrieval = await retrievalHealth();
-    services.prompts = await promptHealth();
     services.recommendations = await recommendationsHealth();
     services.insights = await insightsHealth();
     services.practices = await practicesHealth();
