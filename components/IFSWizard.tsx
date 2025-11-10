@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IFSSession, IFSPart, IFSDialogueEntry, WizardPhase, IntegratedInsight } from '../types.ts';
-import { X, Mic, MicOff, Sparkles, Save, Lightbulb, ArrowRight } from 'lucide-react';
+import { X, Mic, MicOff, Sparkles, Save, Lightbulb } from 'lucide-react';
 import { getCoachResponse, extractPartInfo, summarizeIFSSession } from '../services/geminiService.ts';
 import * as ragService from '../services/ragService.ts';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, Content } from "@google/genai";
@@ -81,6 +81,39 @@ The user is starting this session based on an insight from a previous tool. Your
 You facilitate IFS self-work. Reflect accurately, ask genuinely, facilitate emergence. Move parts from explaining to experiencing.
 
 **Non-negotiable:** Execute gate checklist before EVERY response.
+
+---
+
+## PHASE PROGRESSION GUIDANCE
+
+Your role includes guiding the session through its natural phases. You manage progression autonomously based on conversation depth and readiness:
+
+**PHASES (in sequence):**
+1. **IDENTIFY** - Help user connect with a specific part, notice its presence, initial contact
+2. **EXPLORE** - Explore the part's function, history, how long it's been doing this job
+3. **DEEPEN** - Explore protective intent, what it's protecting from, embodied experience
+4. **UNBURDEN** - Work with fears, explore what part is protecting from, begin to address limiting beliefs
+5. **INTEGRATE** - Synthesis, what Self learned, gratitude work, grounding, closure
+6. **CLOSING** - Final reflection and session summary
+
+**WHEN TO PROGRESS PHASES:**
+- Only progress when user shows sufficient contact and engagement with current phase content
+- After 3-5 substantial exchanges exploring current phase terrain
+- When user shows readiness (direct speech, embodied language, emotional presence)
+- NEVER rush progression - honor the natural unfolding
+
+**HOW TO SIGNAL PHASE TRANSITIONS:**
+When ready to move forward, naturally weave the transition into your response:
+- "I'm sensing we've established good contact with this part and understand its role well. Let's deepen our exploration now..."
+- "Now that we see what it's protecting you from, I want to explore what would help this part feel safer stepping back..."
+- Make transitions feel conversational, not abrupt
+- The user will see the phase change naturally as part of the dialogue
+
+**CRITICAL:**
+- You are the guide - user does NOT manually control phases
+- Never ask "ready to move to next phase?" - you decide based on therapeutic readiness
+- Maintain conversational flow - transitions should feel like natural progression of dialogue
+- If contact drops or user needs to stay in current phase, stay there
 
 
 REASONING
@@ -380,11 +413,71 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
     };
   }, []);
 
+  const detectAndProgressPhase = (botText: string, currentPhase: WizardPhase): WizardPhase => {
+    const lowerText = botText.toLowerCase();
+    
+    // Detect phase transition signals in bot's response
+    const phaseKeywords: Record<WizardPhase, RegExp[]> = {
+      'IDENTIFY': [],
+      'EXPLORE': [
+        /let'?s (?:explore|start exploring|deepen our exploration)/i,
+        /ready to explore/i,
+        /so let'?s explore/i,
+      ],
+      'DEEPEN': [
+        /let'?s deepen/i,
+        /want to deepen|explore more deeply/i,
+        /dive deeper|let'?s go deeper/i,
+      ],
+      'UNBURDEN': [
+        /let'?s work with|explore what.*afraid|work with (?:the )?fear/i,
+        /what would help.*feel safer/i,
+        /ready to address|explore what.*protect/i,
+      ],
+      'INTEGRATE': [
+        /let'?s integrate|integration now/i,
+        /what did you learn|what'?s the shift|synthesiz/i,
+        /bring this together|grateful|thank/i,
+      ],
+      'CLOSING': [
+        /closing|final thoughts|wrap up|ground yourself/i,
+      ],
+    };
+
+    // Check for explicit phase transition signals
+    const phases: WizardPhase[] = ['IDENTIFY', 'EXPLORE', 'DEEPEN', 'UNBURDEN', 'INTEGRATE', 'CLOSING'];
+    const currentPhaseIndex = phases.indexOf(currentPhase);
+
+    for (let i = currentPhaseIndex + 1; i < phases.length; i++) {
+      const nextPhase = phases[i];
+      for (const keyword of phaseKeywords[nextPhase]) {
+        if (keyword.test(lowerText)) {
+          return nextPhase;
+        }
+      }
+    }
+
+    return currentPhase;
+  };
+
   const updateTranscript = (role: 'user' | 'bot', text: string, phase: WizardPhase) => {
     setSession(prev => {
       if (!prev) return null;
-      const newTranscript = [...prev.transcript, { role, text, phase }];
-      return { ...prev, transcript: newTranscript };
+      
+      let updatedPhase = phase;
+      
+      // If this is a bot message, check for phase progression signals
+      if (role === 'bot') {
+        updatedPhase = detectAndProgressPhase(text, phase);
+        
+        // Update current phase if it changed
+        if (updatedPhase !== phase) {
+          setCurrentPhase(updatedPhase);
+        }
+      }
+      
+      const newTranscript = [...prev.transcript, { role, text, phase: updatedPhase }];
+      return { ...prev, transcript: newTranscript, currentPhase: updatedPhase };
     });
   };
 
@@ -481,13 +574,24 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
                   const botFullTurn = currentOutputTranscriptionRef.current;
 
                   let newTranscript = [...updatedSession.transcript];
+                  let currentPhaseToUse = updatedSession.currentPhase;
+
                   if (userFullTurn) {
-                      newTranscript.push({ role: 'user', text: userFullTurn, phase: updatedSession.currentPhase });
+                      newTranscript.push({ role: 'user', text: userFullTurn, phase: currentPhaseToUse });
                   }
                   if (botFullTurn) {
-                      newTranscript.push({ role: 'bot', text: botFullTurn, phase: updatedSession.currentPhase });
+                      // Detect phase progression from the bot's response
+                      const newPhase = detectAndProgressPhase(botFullTurn, currentPhaseToUse);
+                      currentPhaseToUse = newPhase;
+                      newTranscript.push({ role: 'bot', text: botFullTurn, phase: newPhase });
+
+                      // Update component state if phase changed
+                      if (newPhase !== updatedSession.currentPhase) {
+                          setCurrentPhase(newPhase);
+                      }
                   }
                   updatedSession.transcript = newTranscript;
+                  updatedSession.currentPhase = currentPhaseToUse;
 
                   currentInputTranscriptionRef.current = '';
                   currentOutputTranscriptionRef.current = '';
@@ -630,24 +734,6 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
       }
   };
 
-  const handleNextPhase = () => {
-    if (!session) return;
-    let nextPhase: WizardPhase = currentPhase;
-    switch (currentPhase) {
-      case 'IDENTIFY': nextPhase = 'EXPLORE'; break;
-      case 'EXPLORE': nextPhase = 'DEEPEN'; break;
-      case 'DEEPEN': nextPhase = 'UNBURDEN'; break;
-      case 'UNBURDEN': nextPhase = 'INTEGRATE'; break;
-      case 'INTEGRATE': nextPhase = 'CLOSING'; break;
-      case 'CLOSING':
-        if(session) handleSaveAndClose(session);
-        return;
-    }
-    setCurrentPhase(nextPhase);
-    setSession(prev => ({ ...prev!, currentPhase: nextPhase }));
-    updateTranscript('bot', `Okay, let's move into the ${nextPhase} phase. What's coming up now?`, nextPhase);
-  };
-
   const renderChat = () => (
     <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900/50">
       {session?.transcript.length === 0 && (
@@ -770,11 +856,6 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
             Save Draft & Exit
           </button>
           <div className="flex gap-3">
-            {currentPhase !== 'CLOSING' && (
-              <button onClick={handleNextPhase} className="btn-luminous px-4 py-2 rounded-md font-medium flex items-center gap-2 transition" disabled={isSaving || connectionState !== 'connected'}>
-                Next Phase <ArrowRight size={16} />
-              </button>
-            )}
             {currentPhase === 'CLOSING' && !summaryData && (
                  <button onClick={summarizeSession} className="btn-luminous px-4 py-2 rounded-md font-medium flex items-center gap-2 transition" disabled={isSaving}>
                     <Sparkles size={16} /> Generate Summary
