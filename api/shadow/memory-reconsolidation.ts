@@ -53,10 +53,12 @@ ${payload.memoryNarrative}${emotionalToneContext}${bodySensationsContext}${basel
 Extract implicit beliefs that are embedded in this narrative. For each belief, identify:
 1. The core belief statement
 2. Emotional charge (1-10 scale where 10 is most charged)
-3. Physical location where this belief is held in the body (if mentioned or implied)
-4. The origin story or context that established this belief
-5. Limiting patterns that result from this belief
-6. Depth assessment (surface, moderate, or deep)
+3. Category - Categorize the belief as one of: 'identity', 'capability', 'worthiness', 'safety', 'belonging', 'possibility', or 'other'
+4. Affect tone - Identify the dominant emotional signature as one of: 'shame', 'fear', 'anger', 'sadness', 'grief', 'confusion', 'mixed', or 'neutral'
+5. Physical location where this belief is held in the body (if mentioned or implied)
+6. The origin story or context that established this belief
+7. Limiting patterns that result from this belief
+8. Depth assessment (surface, moderate, or deep)
 
 Return a JSON array of beliefs with proper structure.`;
 
@@ -76,6 +78,8 @@ Return a JSON array of beliefs with proper structure.`;
                   id: { type: Type.STRING },
                   belief: { type: Type.STRING },
                   emotionalCharge: { type: Type.NUMBER },
+                  category: { type: Type.STRING },
+                  affectTone: { type: Type.STRING },
                   bodyLocation: { type: Type.STRING },
                   originStory: { type: Type.STRING },
                   limitingPatterns: {
@@ -84,7 +88,7 @@ Return a JSON array of beliefs with proper structure.`;
                   },
                   depth: { type: Type.STRING },
                 },
-                required: ['id', 'belief', 'emotionalCharge', 'depth'],
+                required: ['id', 'belief', 'emotionalCharge', 'category', 'affectTone', 'depth'],
               },
             },
             summary: { type: Type.STRING },
@@ -107,6 +111,12 @@ Return a JSON array of beliefs with proper structure.`;
       }
       if (!belief.depth) {
         belief.depth = 'moderate';
+      }
+      if (!belief.category) {
+        belief.category = 'other';
+      }
+      if (!belief.affectTone) {
+        belief.affectTone = 'mixed';
       }
     });
 
