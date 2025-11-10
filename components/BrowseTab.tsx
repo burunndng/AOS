@@ -51,19 +51,6 @@ export default function BrowseTab({ practiceStack, addToStack, onExplainClick, o
       
       <SectionDivider />
 
-      <video
-        src="https://files.catbox.moe/l82wnf.avif"
-        alt="Browse Practices"
-        className="w-full rounded-lg"
-        controls
-        preload="metadata"
-        autoplay
-        loop
-        muted
-      />
-
-      <SectionDivider />
-
       <div className="space-y-10">
         {Object.keys(filteredPractices).length === 0 && (
           <p className="text-slate-500 text-center py-10">No practices found for "{searchTerm}".</p>
