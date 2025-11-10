@@ -49,6 +49,7 @@ const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.ts
 const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
 const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizard.tsx'));
 const IntegralBodyArchitectWizard = lazy(() => import('./components/IntegralBodyArchitectWizard.tsx'));
+const DynamicWorkoutArchitectWizard = lazy(() => import('./components/DynamicWorkoutArchitectWizard.tsx'));
 const InsightPracticeMapWizard = lazy(() => import('./components/InsightPracticeMapWizard.tsx'));
 
 
@@ -80,7 +81,8 @@ import {
   IntegralBodyPlan,
   PlanHistoryEntry,
   PlanProgressByDay,
-  PersonalizationSummary
+  PersonalizationSummary,
+  WorkoutProgram
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -174,6 +176,7 @@ export default function App() {
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
   const [historyBigMind, setHistoryBigMind] = useLocalStorage<BigMindSession[]>('historyBigMind', []);
   const [integralBodyPlans, setIntegralBodyPlans] = useLocalStorage<IntegralBodyPlan[]>('integralBodyPlans', []);
+  const [workoutPrograms, setWorkoutPrograms] = useLocalStorage<WorkoutProgram[]>('workoutPrograms', []);
   
   // Plan History State
   const [integralBodyPlanHistory, setIntegralBodyPlanHistory] = useLocalStorage<PlanHistoryEntry[]>('integralBodyPlanHistory', []);
@@ -620,6 +623,12 @@ export default function App() {
     }
   };
 
+  const handleSaveWorkoutProgram = (program: WorkoutProgram) => {
+    setWorkoutPrograms(prev => [...prev.filter(p => p.id !== program.id), program]);
+    setActiveWizard(null);
+    alert(`Your personalized workout program has been saved!`);
+  };
+
   const markInsightAsAddressed = (insightId: string, shadowToolType: string, shadowSessionId: string) => {
     setIntegratedInsights(prev => prev.map(insight => {
         if (insight.id === insightId) {
@@ -885,6 +894,13 @@ export default function App() {
             onClose={() => setActiveWizard(null)}
             onSave={handleSaveIntegralBodyPlan}
             personalizationSummary={currentPersonalizationSummary}
+          />
+        );
+      case 'dynamic-workout-architect':
+        return (
+          <DynamicWorkoutArchitectWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveWorkoutProgram}
           />
         );
       case 'insight-practice-map':
