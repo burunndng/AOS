@@ -1,4 +1,5 @@
 import React, { lazy, Suspense } from 'react';
+import HealingAudios from './HealingAudios';
 
 const ILPKnowledgeGraph = lazy(() => import('./ILPKnowledgeGraph.tsx').then(module => ({ default: module.ILPKnowledgeGraph })));
 
@@ -16,6 +17,10 @@ export default function LibraryTab() {
         <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="text-neutral-400">Loading knowledge graph...</div></div>}>
           <ILPKnowledgeGraph />
         </Suspense>
+      </section>
+
+      <section className="pt-8 border-t border-slate-800">
+        <HealingAudios />
       </section>
 
       <div className="space-y-10 pt-8 border-t border-slate-800">
