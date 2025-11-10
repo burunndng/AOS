@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import AlchemicalAudioPlayer from './AlchemicalAudioPlayer';
+import { MerkabaIcon } from './MerkabaIcon';
 import { healingAudios, audioCategories } from '../data/healingAudios';
 
 export default function HealingAudios() {
@@ -22,18 +23,18 @@ export default function HealingAudios() {
 
   return (
     <section className="space-y-8">
-      {/* Section Header */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-purple-600/10 blur-2xl opacity-50 rounded-lg" />
-        <div className="relative">
-          <h2 className="text-3xl font-semibold font-mono tracking-tight text-slate-200 mb-2 flex items-center gap-3">
-            <span className="text-4xl">✨</span>
+      {/* Section Header - Dark and serious with Merkaba */}
+      <div className="space-y-4 mb-8">
+        <div className="flex items-center gap-4">
+          <MerkabaIcon size={48} className="text-amber-900/60" />
+          <h2 className="text-3xl font-semibold font-serif tracking-wide text-amber-100">
             Healing Audios & Guided Practices
           </h2>
-          <p className="text-slate-400">
-            A collection of transformative audio practices to support your nervous system, ground your presence, regulate your breath, and deepen your connection to yourself.
-          </p>
         </div>
+        <div className="w-12 h-0.5 bg-gradient-to-r from-amber-900 to-transparent" />
+        <p className="text-slate-400 text-sm font-mono tracking-wide">
+          A collection of transformative audio practices to support your nervous system, ground your presence, regulate your breath, and deepen your connection to yourself.
+        </p>
       </div>
 
       {/* Render each category */}
@@ -48,25 +49,24 @@ export default function HealingAudios() {
         return (
           <div key={categoryKey} className="space-y-4">
             {/* Category Header */}
-            <div className="relative pl-4 border-l-2 border-purple-500/50 hover:border-purple-500 transition-colors">
-              <h3 className="text-xl font-semibold text-purple-300 font-mono tracking-tight">
+            <div className="relative pl-4 border-l border-amber-900/50 hover:border-amber-900 transition-colors">
+              <h3 className="text-base font-semibold text-amber-100 font-serif tracking-wider uppercase text-opacity-90">
                 {categoryName}
               </h3>
-              <p className="text-sm text-slate-500 mt-1">
-                {audios.length} {audios.length === 1 ? 'practice' : 'practices'}
+              <p className="text-xs text-slate-500 mt-2 font-mono tracking-widest">
+                {audios.length} {audios.length === 1 ? 'PRACTICE' : 'PRACTICES'}
               </p>
             </div>
 
             {/* Audio Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {audios.map((audio) => (
                 <AlchemicalAudioPlayer
                   key={audio.id}
                   title={audio.title}
                   description={audio.description}
                   url={audio.url}
-                  icon={audio.icon}
-                  alchemicalSymbol="◇"
+                  symbol={audio.symbol}
                 />
               ))}
             </div>
@@ -74,10 +74,10 @@ export default function HealingAudios() {
         );
       })}
 
-      {/* Footer message */}
-      <div className="mt-10 p-6 bg-gradient-to-r from-slate-800/50 to-purple-900/20 border border-purple-500/20 rounded-lg">
-        <p className="text-slate-400 text-sm">
-          💫 <span className="text-purple-300 font-semibold">Tip:</span> Find a quiet, comfortable space. Allow yourself to fully immerse in these practices. Regular engagement with these audios can deepen your somatic awareness and support your overall wellbeing.
+      {/* Footer note - Minimalist */}
+      <div className="mt-12 pt-6 border-t border-amber-900/30">
+        <p className="text-xs text-slate-500 font-mono tracking-wider uppercase">
+          ⬥ Find a quiet, comfortable space. Allow yourself to fully immerse in these practices. Regular engagement deepens somatic awareness and supports wellbeing.
         </p>
       </div>
     </section>

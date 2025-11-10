@@ -1,20 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Volume2 } from 'lucide-react';
+import { Play, Pause, RotateCcw } from 'lucide-react';
 
 interface AlchemicalAudioPlayerProps {
   title: string;
   description: string;
   url: string;
-  icon: string;
-  alchemicalSymbol?: string;
+  symbol?: string;
 }
 
 export default function AlchemicalAudioPlayer({
   title,
   description,
   url,
-  icon,
-  alchemicalSymbol = '◇',
+  symbol = '⟐',
 }: AlchemicalAudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -83,56 +81,46 @@ export default function AlchemicalAudioPlayer({
 
   return (
     <div className="group relative">
-      {/* Alchemical background glow effect */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-900/20 via-blue-900/10 to-indigo-900/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      {/* Main container - Dark occult aesthetic */}
+      <div className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-amber-900/40 rounded-lg p-6 backdrop-blur-sm hover:border-amber-900/70 transition-all duration-500 shadow-2xl">
+        {/* Occult divider line at top */}
+        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-amber-900/50 to-transparent" />
 
-      {/* Main container */}
-      <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-purple-500/30 rounded-2xl p-6 backdrop-blur-sm hover:border-purple-500/60 transition-all duration-300 shadow-2xl hover:shadow-purple-900/50">
-        {/* Header with icon and title */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-3xl filter drop-shadow-lg">{icon}</span>
-              <h3 className="text-xl font-semibold text-slate-100 font-mono tracking-tight">
-                {title}
-              </h3>
-            </div>
-            <p className="text-sm text-slate-400">{description}</p>
-          </div>
-
-          {/* Alchemical corner symbol */}
-          <div className="text-2xl text-purple-400/40 opacity-50 group-hover:opacity-100 transition-opacity">
-            {alchemicalSymbol}
-          </div>
+        {/* Header section */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-amber-100 font-serif tracking-wider mb-1">
+            {title}
+          </h3>
+          <p className="text-xs text-slate-400 font-mono tracking-widest uppercase">
+            {symbol} {description}
+          </p>
         </div>
 
         {/* Player Controls Section */}
-        <div className="mt-6 space-y-4">
+        <div className="space-y-5">
           {/* Play Button and Controls */}
-          <div className="flex items-center gap-4">
-            {/* Main Play/Pause Button - Circular with Alchemical Design */}
+          <div className="flex items-center gap-5">
+            {/* Main Play/Pause Button - Occult style */}
             <button
               onClick={togglePlayback}
               disabled={isLoading}
-              className="relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-300 transform hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group/btn"
-              title={isPlaying ? 'Pause audio' : 'Play audio'}
+              className="relative flex items-center justify-center w-14 h-14 transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group/btn"
+              title={isPlaying ? 'Pause' : 'Play'}
             >
-              {/* Outer glow ring */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600/50 via-blue-600/50 to-purple-600/50 blur-md opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-
-              {/* Middle ring */}
-              <div className="absolute inset-1 rounded-full border-2 border-purple-400/50 group-hover/btn:border-purple-400/100 transition-colors" />
+              {/* Outer occult ring with minimal glow */}
+              <div className="absolute inset-0 rounded-full border border-amber-900/60 group-hover/btn:border-amber-700 transition-colors duration-300" />
+              <div className="absolute inset-1 rounded-full border border-amber-900/20" />
 
               {/* Inner button */}
-              <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 flex items-center justify-center shadow-lg transition-all">
+              <div className="relative w-12 h-12 rounded-full bg-gradient-to-b from-amber-950 to-slate-950 flex items-center justify-center border border-amber-900/50 group-hover/btn:border-amber-700 transition-all shadow-inner">
                 {isLoading ? (
-                  <div className="animate-spin">
-                    <Volume2 size={24} className="text-purple-100" />
+                  <div className="animate-spin text-amber-700">
+                    <RotateCcw size={20} />
                   </div>
                 ) : isPlaying ? (
-                  <Pause size={24} className="text-purple-100" fill="currentColor" />
+                  <Pause size={18} className="text-amber-700 fill-amber-700" />
                 ) : (
-                  <Play size={24} className="text-purple-100 ml-1" fill="currentColor" />
+                  <Play size={18} className="text-amber-700 fill-amber-700 ml-0.5" />
                 )}
               </div>
             </button>
@@ -140,35 +128,30 @@ export default function AlchemicalAudioPlayer({
             {/* Reset Button */}
             <button
               onClick={resetPlayback}
-              className="p-3 rounded-full text-slate-300 hover:text-purple-300 hover:bg-purple-900/30 transition-all duration-200 border border-slate-700/50 hover:border-purple-500/50"
-              title="Reset audio"
+              className="p-2.5 text-slate-400 hover:text-amber-700 transition-colors duration-200 border border-slate-700/50 hover:border-amber-900/50 rounded hover:bg-amber-950/30"
+              title="Reset"
             >
-              <RotateCcw size={18} />
+              <RotateCcw size={16} />
             </button>
 
             {/* Time Display */}
             <div className="flex-1">
-              <div className="text-sm font-mono text-purple-300 text-right">
+              <div className="text-xs font-mono text-amber-700 text-right tracking-wider">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </div>
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="relative h-1 bg-slate-700 rounded-full overflow-hidden cursor-pointer group/progress hover:h-2 transition-all duration-200">
-              {/* Background progress */}
-              <div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-600 via-blue-500 to-purple-600 rounded-full transition-all duration-100"
-                style={{ width: `${progressPercent}%` }}
-              />
-
-              {/* Glowing progress indicator */}
-              <div
-                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full shadow-lg shadow-purple-500/50 opacity-0 group-hover/progress:opacity-100 transition-opacity"
-                style={{ left: `${progressPercent}%`, transform: 'translate(-50%, -50%)' }}
-              />
-            </div>
+          {/* Progress Bar - Minimalist occult style */}
+          <div className="relative h-0.5 bg-slate-800 rounded-full overflow-hidden cursor-pointer group/progress hover:h-1 transition-all duration-200">
+            <div
+              className="absolute inset-y-0 left-0 bg-amber-900 transition-all duration-100"
+              style={{ width: `${progressPercent}%` }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-amber-800 rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity shadow-lg shadow-amber-900/50"
+              style={{ left: `${progressPercent}%`, transform: 'translate(-50%, -50%)' }}
+            />
           </div>
 
           {/* Audio element */}
@@ -185,13 +168,12 @@ export default function AlchemicalAudioPlayer({
           />
         </div>
 
-        {/* Decorative alchemical elements */}
-        <div className="absolute top-3 left-3 text-purple-500/20 text-xs opacity-30 group-hover:opacity-50 transition-opacity">
-          ◇◆◇
-        </div>
-        <div className="absolute bottom-3 right-3 text-blue-500/20 text-xs opacity-30 group-hover:opacity-50 transition-opacity">
-          ◆◇◆
-        </div>
+        {/* Occult divider line at bottom */}
+        <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-amber-900/50 to-transparent" />
+
+        {/* Subtle corner glyphs */}
+        <div className="absolute top-2 right-3 text-amber-900/30 text-xs font-serif">⬥</div>
+        <div className="absolute bottom-2 left-3 text-amber-900/30 text-xs font-serif">⬥</div>
       </div>
     </div>
   );
