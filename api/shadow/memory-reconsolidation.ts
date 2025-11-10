@@ -61,7 +61,7 @@ Extract implicit beliefs that are embedded in this narrative. For each belief, i
 Return a JSON array of beliefs with proper structure.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -175,7 +175,7 @@ Return a JSON object with:
 - integrationGuidance: guidance on embodying and integrating these new truths`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -276,7 +276,7 @@ Create a JSON response with:
 Make the response warm, affirming, and genuinely supportive.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
