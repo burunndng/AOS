@@ -1298,44 +1298,59 @@ export async function analyzeRelationalPatterns(
   shadowWork: string;
   recommendations: string[];
 }> {
-  const prompt = `Analyze relational patterns from this shadow work session.
+  // Build relationship context from both structured data and conversation
+  const relationshipSummaries = relationships.map((r, i) => `
+${i + 1}. **${r.type}**${r.personDescription ? ` (${r.personDescription})` : ''}
+   - Trigger: ${r.triggerSituation || 'Not captured'}
+   - Reaction: ${r.yourReaction || 'Not captured'}
+   - Fear/Need: ${r.underlyingFear || 'Not captured'}
+   - Pattern: ${r.pattern || 'Not captured'}
+`).join('\n');
+
+  // Include relevant conversation excerpts for additional context
+  const conversationContext = conversation
+    .filter(m => m.role === 'user')
+    .slice(-10) // Last 10 user messages for context
+    .map(m => `User: ${m.text.substring(0, 200)}...`)
+    .join('\n');
+
+  const prompt = `You are an expert depth psychologist and relational coach. Analyze this relational pattern session and identify recurring themes, reactive signatures, and developmental insights.
 
 # Relationships Explored
-${relationships.map((r, i) => `
-${i + 1}. **${r.type}**${r.personDescription ? ` (${r.personDescription})` : ''}
-   - Trigger: ${r.triggerSituation}
-   - Reaction: ${r.yourReaction}
-   - Fear/Need: ${r.underlyingFear}
-   - Pattern: ${r.pattern}
-`).join('\n')}
+${relationshipSummaries}
 
-# Analysis Task
+# Recent Conversation Context (for additional insight)
+${conversationContext}
 
-Look for:
-1. **Core patterns that repeat across multiple relationships** (e.g., "fear of abandonment driving people-pleasing," "collapse when criticized")
-2. **Reactive signatures** - HOW reactivity shows up (withdrawal, anger, freeze, fawn, control, etc.)
-3. **Relationship-specific patterns** - Different behaviors in different contexts (e.g., "compliant with authority, controlling with subordinates")
-4. **Developmental hypothesis** - Where might this come from? Early attachment? Developmental trauma? Cultural conditioning?
-5. **Shadow work needed** - What's being disowned or projected?
-6. **Recommendations** - Specific practices to work with these patterns
+# Your Analysis Task
 
-Return JSON with thoughtful, psychologically sophisticated analysis:
+Analyze the patterns for:
+1. **Core patterns** - Recurring themes/beliefs that show up across different relationships (2-3 key patterns)
+2. **Reactive signatures** - HOW the person reacts when triggered (e.g., withdraws, gets defensive, people-pleases, collapses, controls, etc.) - list 3-5 signature reactions
+3. **Relationship-specific patterns** - Different ways these show up in different contexts
+4. **Developmental hypothesis** - What early experiences might have shaped these patterns? (Early attachment, family dynamics, trauma, cultural messaging, etc.)
+5. **Shadow work needed** - What's being disowned, rejected, or unconscious? What needs integration?
+6. **Recommendations** - 2-3 specific, actionable practices or approaches to work with these patterns
+
+Be specific and psychologically sophisticated. Base your analysis on the actual relationship data provided.
+
+Return ONLY valid JSON (no markdown, no code blocks):
 {
-  "corePatterns": ["pattern 1", "pattern 2", ...],
-  "reactiveSignatures": ["how reactivity shows up 1", "how it shows up 2", ...],
+  "corePatterns": ["pattern 1", "pattern 2", "pattern 3"],
+  "reactiveSignatures": ["signature 1", "signature 2", "signature 3"],
   "relationshipSpecificPatterns": {
-    "Romantic Partner": "pattern in romantic contexts",
-    "Boss/Authority": "pattern with authority figures",
-    etc.
+    "Romantic Partner": "specific pattern",
+    "Boss/Authority": "specific pattern",
+    "Friend": "specific pattern"
   },
-  "developmentalHypothesis": "2-3 sentences about developmental origins",
+  "developmentalHypothesis": "2-3 sentences about origins",
   "shadowWork": "2-3 sentences about what needs integration",
-  "recommendations": ["specific practice 1", "specific practice 2", ...]
+  "recommendations": ["recommendation 1", "recommendation 2", "recommendation 3"]
 }`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-2.5-flash-lite',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -1344,7 +1359,10 @@ Return JSON with thoughtful, psychologically sophisticated analysis:
           properties: {
             corePatterns: { type: Type.ARRAY, items: { type: Type.STRING } },
             reactiveSignatures: { type: Type.ARRAY, items: { type: Type.STRING } },
-            relationshipSpecificPatterns: { type: Type.OBJECT },
+            relationshipSpecificPatterns: {
+              type: Type.OBJECT,
+              additionalProperties: { type: Type.STRING }
+            },
             developmentalHypothesis: { type: Type.STRING },
             shadowWork: { type: Type.STRING },
             recommendations: { type: Type.ARRAY, items: { type: Type.STRING } }
@@ -1354,17 +1372,73 @@ Return JSON with thoughtful, psychologically sophisticated analysis:
       }
     });
 
-    return JSON.parse(response.text);
+    const result = JSON.parse(response.text);
+
+    // Validate that we got good data
+    if (result.corePatterns?.length > 0 && result.reactiveSignatures?.length > 0) {
+      return result;
+    }
+
+    // If analysis is empty, throw error to trigger fallback
+    throw new Error('Analysis returned empty results');
   } catch (error) {
     console.error('Error analyzing relational patterns:', error);
-    // Fallback
+
+    // Generate a basic analysis from the data we have
+    if (relationships.length > 0) {
+      // Extract patterns from the relationship data itself
+      const allPatterns = relationships
+        .map(r => r.pattern)
+        .filter(p => p && p.length > 0);
+
+      const allReactions = relationships
+        .map(r => r.yourReaction)
+        .filter(r => r && r.length > 0);
+
+      const allFears = relationships
+        .map(r => r.underlyingFear)
+        .filter(f => f && f.length > 0);
+
+      return {
+        corePatterns: allPatterns.length > 0
+          ? allPatterns.slice(0, 3)
+          : ['Pattern identified across relationships'],
+        reactiveSignatures: allReactions.length > 0
+          ? Array.from(new Set(allReactions.map(r => {
+              // Extract main reactive signature from reaction text
+              if (r.toLowerCase().includes('withdraw')) return 'Withdrawal/Avoidance';
+              if (r.toLowerCase().includes('defend')) return 'Defensiveness';
+              if (r.toLowerCase().includes('please')) return 'People-pleasing';
+              if (r.toLowerCase().includes('collapse')) return 'Collapse/Shutdown';
+              if (r.toLowerCase().includes('control')) return 'Control/Dominance';
+              if (r.toLowerCase().includes('angry') || r.toLowerCase().includes('anger')) return 'Anger/Reactivity';
+              return 'Reactive Pattern';
+            })))
+          : ['Reactive patterns present across relationships'],
+        relationshipSpecificPatterns: relationships.reduce((acc, r) => {
+          if (r.type) {
+            acc[r.type] = r.pattern || r.yourReaction || 'Pattern observed';
+          }
+          return acc;
+        }, {} as Record<string, string>),
+        developmentalHypothesis: 'These patterns likely stem from early relational experiences and how safety and connection were established in your family of origin.',
+        shadowWork: 'Integration work involves making conscious the reactive patterns that operate automatically, and discovering what needs or fears are being protected by these reactions.',
+        recommendations: [
+          'Work with a therapist or coach to trace these patterns to their origins',
+          'Practice mindfulness to observe reactions before they automatic',
+          'Experiment with responding differently in low-stakes situations'
+        ]
+      };
+    }
+
+    // Final fallback if no relationships
     return {
-      corePatterns: ['Analysis could not be completed'],
-      reactiveSignatures: ['Please try again'],
+      corePatterns: ['Explore more relationships to identify patterns'],
+      reactiveSignatures: ['Please share more details about your reactions'],
       relationshipSpecificPatterns: {},
-      developmentalHypothesis: 'Analysis pending',
-      shadowWork: 'Analysis pending',
-      recommendations: ['Retake the session with more detail', 'Work with a therapist or relational coach']
+      developmentalHypothesis: 'Additional relationship contexts would help build a fuller picture of your patterns.',
+      shadowWork: 'As patterns emerge across relationships, shadow work will focus on integrating disowned aspects.',
+      recommendations: ['Continue exploring different relationship types', 'Share specific triggers and reactions', 'Work with a skilled relational coach or therapist']
     };
   }
 }
