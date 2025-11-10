@@ -1000,3 +1000,28 @@ export interface WorkoutProgram {
   progressionRecommendations?: string[];
 }
 
+// Shadow Memory Reconsolidation Types
+export interface ImplicitBelief {
+  id: string;
+  belief: string;
+  emotionalCharge: number; // 1-10 scale
+  bodyLocation?: string;
+  originStory?: string;
+  limitingPatterns?: string[];
+  depth: 'surface' | 'moderate' | 'deep';
+}
+
+export interface ContradictionInsight {
+  beliefId: string;
+  anchors: string[]; // Counter-evidence or grounding points
+  newTruths: string[]; // Alternative perspectives
+  regulationCues: string[]; // Somatic/cognitive resources
+  juxtapositionPrompts: string[]; // Prompts for the juxtaposition cycle
+}
+
+export interface SessionCompletionSummary {
+  intensityShift: number; // Change from baseline intensity (e.g., -2, 0, +1)
+  integrationChoice: 'embodied_action' | 'cognitive_reframe' | 'somatic_anchor' | 'relational_shift';
+  notes?: string;
+}
+
