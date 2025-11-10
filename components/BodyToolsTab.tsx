@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Activity, CalendarRange, FileText, ChevronDown, ChevronUp, Calendar, Dumbbell } from 'lucide-react';
+import { Activity, CalendarRange, FileText, ChevronDown, ChevronUp, Calendar, Dumbbell, Download } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 import { IntegralBodyPlan, PlanHistoryEntry, WorkoutProgram } from '../types.ts';
+import { formatIntegralBodyPlanAsText, formatWorkoutProgramAsText, downloadAsFile } from '../services/planExportUtils.ts';
 
 interface BodyToolsTabProps {
   setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
@@ -162,6 +163,32 @@ function PlanReportCard({
 
       {isExpanded && (
         <div className="border-t border-slate-700 p-4 bg-slate-900/30 space-y-4">
+          {/* Export Buttons */}
+          <div className="flex flex-wrap gap-2 pb-4 border-b border-slate-700">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const textContent = formatIntegralBodyPlanAsText(plan);
+                downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'txt');
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors text-sm"
+            >
+              <FileText size={16} />
+              Download as TXT
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const textContent = formatIntegralBodyPlanAsText(plan);
+                downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'pdf');
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors text-sm"
+            >
+              <Download size={16} />
+              Download as PDF
+            </button>
+          </div>
+
           <div>
             <h5 className="font-semibold text-slate-200 mb-2">Week Summary</h5>
             <p className="text-slate-300 text-sm">{plan.weekSummary}</p>
@@ -243,6 +270,32 @@ function WorkoutReportCard({
 
       {isExpanded && (
         <div className="border-t border-slate-700 p-4 bg-slate-900/30 space-y-4">
+          {/* Export Buttons */}
+          <div className="flex flex-wrap gap-2 pb-4 border-b border-slate-700">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const textContent = formatWorkoutProgramAsText(program);
+                downloadAsFile(textContent, `Dynamic-Workout-${new Date().toISOString().split('T')[0]}`, 'txt');
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors text-sm"
+            >
+              <FileText size={16} />
+              Download as TXT
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const textContent = formatWorkoutProgramAsText(program);
+                downloadAsFile(textContent, `Dynamic-Workout-${new Date().toISOString().split('T')[0]}`, 'pdf');
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors text-sm"
+            >
+              <Download size={16} />
+              Download as PDF
+            </button>
+          </div>
+
           <div>
             <h5 className="font-semibold text-slate-200 mb-2">Program Summary</h5>
             <p className="text-slate-300 text-sm">{program.summary}</p>
