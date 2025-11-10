@@ -751,6 +751,7 @@ export default function App() {
       case 'body-tools': return <BodyToolsTab
         setActiveWizard={setActiveWizardAndLink}
         integralBodyPlans={integralBodyPlans}
+        workoutPrograms={workoutPrograms}
         planHistory={integralBodyPlanHistory}
         onLogPlanFeedback={logPlanFeedback}
         getPlanProgress={getPlanProgress}

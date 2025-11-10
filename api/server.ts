@@ -46,6 +46,13 @@ import {
 import { healthCheck as retrievalHealth } from './rag/retrieve.js';
 import { healthCheck as promptHealth } from './rag/generate-prompt.js';
 
+import {
+  extractBeliefsFromMemory,
+  mineContradictions,
+  completeSession,
+  healthCheck as shadowHealth,
+} from './shadow/memory-reconsolidation.js';
+
 // ============================================
 // SERVER SETUP
 // ============================================
@@ -317,6 +324,59 @@ userRouter.delete('/delete-data', async (req: Request, res: Response) => {
 app.use(`${API_BASE}/user`, userRouter);
 
 // ============================================
+// SHADOW MEMORY RECONSOLIDATION ENDPOINTS
+// ============================================
+
+const shadowRouter = Router();
+
+shadowRouter.post('/extract-beliefs', async (req: Request, res: Response) => {
+  try {
+    const payload = req.body;
+    const response = await extractBeliefsFromMemory(payload);
+    res.json(response);
+  } catch (error) {
+    console.error('[Shadow] Error extracting beliefs:', error);
+    const statusCode = error instanceof Error && error.message.includes('required') ? 400 : 502;
+    res.status(statusCode).json({
+      error: 'Failed to extract beliefs',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+shadowRouter.post('/mine-contradictions', async (req: Request, res: Response) => {
+  try {
+    const payload = req.body;
+    const response = await mineContradictions(payload);
+    res.json(response);
+  } catch (error) {
+    console.error('[Shadow] Error mining contradictions:', error);
+    const statusCode = error instanceof Error && error.message.includes('required') ? 400 : 502;
+    res.status(statusCode).json({
+      error: 'Failed to mine contradictions',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+shadowRouter.post('/complete', async (req: Request, res: Response) => {
+  try {
+    const payload = req.body;
+    const response = await completeSession(payload);
+    res.json(response);
+  } catch (error) {
+    console.error('[Shadow] Error completing session:', error);
+    const statusCode = error instanceof Error && error.message.includes('required') ? 400 : 502;
+    res.status(statusCode).json({
+      error: 'Failed to complete session',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+app.use(`${API_BASE}/shadow/memory-reconsolidation`, shadowRouter);
+
+// ============================================
 // HEALTH CHECK ENDPOINT
 // ============================================
 
@@ -343,6 +403,7 @@ app.get(`${API_BASE}/health`, async (req: Request, res: Response) => {
     services.insights = await insightsHealth();
     services.practices = await practicesHealth();
     services.sync = await syncHealth();
+    services.shadow = await shadowHealth();
 
     // Determine overall health
     const allHealthy = Object.values(services).every((s) => s.status === 'ok');
@@ -419,6 +480,9 @@ async function startServer() {
       console.log(`  • POST ${API_BASE}/user/sync-batch`);
       console.log(`  • GET  ${API_BASE}/user/status`);
       console.log(`  • DELETE ${API_BASE}/user/delete-data`);
+      console.log(`  • POST ${API_BASE}/shadow/memory-reconsolidation/extract-beliefs`);
+      console.log(`  • POST ${API_BASE}/shadow/memory-reconsolidation/mine-contradictions`);
+      console.log(`  • POST ${API_BASE}/shadow/memory-reconsolidation/complete`);
       console.log(`\n🌐 CORS enabled for: http://localhost:3000, http://localhost:5173`);
       console.log('\n💡 To test health: curl http://localhost:3001/api/health\n');
     });
