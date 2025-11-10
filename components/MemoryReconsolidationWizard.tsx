@@ -12,7 +12,7 @@ import {
   SessionCompletionSummary,
   IntegrationChoiceType
 } from '../types.ts';
-import { X, ArrowLeft, ArrowRight, Play, Pause, Download, Copy, Search, CheckCircle } from 'lucide-react';
+import { X, ArrowRight, Play, Pause, Download, Copy, Search, CheckCircle } from 'lucide-react';
 import { 
   extractImplicitBeliefs, 
   mineContradictions,
@@ -323,13 +323,6 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
     }
   };
 
-  const handleBack = () => {
-    const currentIndex = STEPS.indexOf(session.currentStep);
-    if (currentIndex > 0) {
-      updateSession({ currentStep: STEPS[currentIndex - 1] });
-    }
-  };
-
   const handleComplete = () => {
     const finalSession: MemoryReconsolidationSession = {
       ...session,
@@ -426,31 +419,61 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-bold font-mono text-slate-100">Welcome to Memory Reconsolidation</h3>
-            <p className="text-slate-300 leading-relaxed">
-              Memory reconsolidation is a neurobiological process that allows deeply held beliefs to be updated at their source.
-              This guided protocol will help you:
-            </p>
-            <ul className="space-y-3 text-slate-300">
-              <li className="flex items-start gap-3">
-                <span className="text-cyan-400 font-bold">1.</span>
-                <span>Identify implicit beliefs that shape your experience</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="text-cyan-400 font-bold">2.</span>
-                <span>Discover contradictory evidence that challenges these beliefs</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="text-cyan-400 font-bold">3.</span>
-                <span>Hold both old and new truths simultaneously (juxtaposition)</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="text-cyan-400 font-bold">4.</span>
-                <span>Ground and integrate the shift with ongoing practices</span>
-              </li>
-            </ul>
+            
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+              <p className="text-cyan-100 font-medium mb-2">What You're About to Do:</p>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Memory reconsolidation is a neurobiological process that allows deeply held beliefs to be updated at their source. 
+                This isn't just talk therapy—it's a guided protocol that creates the precise conditions for lasting change.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-slate-200 font-medium">This session will guide you through:</p>
+              <ul className="space-y-3 text-slate-300">
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 font-bold">1.</span>
+                  <div>
+                    <span className="font-medium text-slate-200">Belief Identification</span>
+                    <p className="text-sm text-slate-400 mt-1">We'll help you uncover the implicit beliefs driving your patterns</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 font-bold">2.</span>
+                  <div>
+                    <span className="font-medium text-slate-200">Contradiction Mining</span>
+                    <p className="text-sm text-slate-400 mt-1">Find real evidence that contradicts these beliefs</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 font-bold">3.</span>
+                  <div>
+                    <span className="font-medium text-slate-200">Juxtaposition Experience</span>
+                    <p className="text-sm text-slate-400 mt-1">Hold both truths simultaneously—this is where reconsolidation happens</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-cyan-400 font-bold">4.</span>
+                  <div>
+                    <span className="font-medium text-slate-200">Grounding & Integration</span>
+                    <p className="text-sm text-slate-400 mt-1">Anchor the shift with practices that support lasting change</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-6">
-              <p className="text-amber-200 text-sm font-medium">
-                💡 This process works best when you have 30-45 minutes of uninterrupted time and feel emotionally resourced.
+              <p className="text-amber-200 text-sm font-medium mb-2">⏱️ Time & Readiness:</p>
+              <p className="text-amber-100 text-sm">
+                Set aside 30-45 minutes of uninterrupted time. This process works best when you feel emotionally 
+                resourced and have the capacity to engage with difficult material.
+              </p>
+            </div>
+
+            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 mt-4">
+              <p className="text-slate-300 text-sm">
+                <span className="text-cyan-300 font-medium">What's next: </span>
+                You'll describe a situation or pattern you'd like to work with, and we'll identify the beliefs underneath.
               </p>
             </div>
           </div>
@@ -460,19 +483,32 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-bold font-mono text-slate-100">Belief Identification</h3>
-            <p className="text-slate-300">
-              Describe a situation, pattern, or recurring feeling that you'd like to work with.
-              The AI will help identify the implicit beliefs underneath.
-            </p>
-            <textarea
-              value={beliefContext}
-              onChange={e => setBeliefContext(e.target.value)}
-              rows={8}
-              placeholder="Example: 'Whenever I try to speak up in meetings, I feel my throat tighten and I convince myself that what I have to say isn't important enough. I end up staying quiet and feeling frustrated with myself afterward...'"
-              className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            />
-            <div className="text-sm text-slate-400">
-              Minimum 50 characters • {beliefContext.length}/50
+            
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+              <p className="text-cyan-100 font-medium mb-2">What You're Doing:</p>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Most beliefs that shape our experience operate outside conscious awareness. By describing a situation 
+                or pattern in detail, we can help you identify the implicit beliefs underneath—the hidden assumptions 
+                that drive your reactions, feelings, and behaviors.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-slate-200 font-medium mb-2 block">
+                  Describe a situation, pattern, or recurring feeling:
+                </span>
+                <textarea
+                  value={beliefContext}
+                  onChange={e => setBeliefContext(e.target.value)}
+                  rows={8}
+                  placeholder="Example: 'Whenever I try to speak up in meetings, I feel my throat tighten and I convince myself that what I have to say isn't important enough. I end up staying quiet and feeling frustrated with myself afterward...'"
+                  className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                />
+              </label>
+              <div className="text-sm text-slate-400">
+                Minimum 50 characters • {beliefContext.length}/50
+              </div>
             </div>
             {isLoading ? (
               <div className="text-center py-12">
@@ -481,6 +517,11 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
               </div>
             ) : session.implicitBeliefs.length > 0 ? (
               <div className="space-y-4 mt-6">
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
+                  <p className="text-emerald-100 text-sm">
+                    We mapped the core beliefs hidden inside your description. If you add more detail later, we'll bring you back here automatically so your contradictions stay aligned with the updated narrative.
+                  </p>
+                </div>
                 <h4 className="font-semibold text-slate-200">Identified Beliefs:</h4>
                 {session.implicitBeliefs.map((belief, idx) => (
                   <div key={belief.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-2">
@@ -493,6 +534,10 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                     </div>
                   </div>
                 ))}
+                <div className="bg-slate-800/40 border border-slate-700/60 rounded-lg p-4 text-sm text-slate-300">
+                  <span className="text-cyan-300 font-medium">What's next: </span>
+                  We'll surface real-life contradictions that loosen these beliefs.
+                </div>
               </div>
             ) : (
               <button
@@ -510,10 +555,21 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-bold font-mono text-slate-100">Contradiction Mining</h3>
-            <p className="text-slate-300">
-              Now we'll search for evidence and experiences that contradict your identified beliefs.
-              These contradictions create the conditions for belief reconsolidation.
-            </p>
+            
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+              <p className="text-cyan-100 font-medium mb-2">What You're Doing:</p>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Memory reconsolidation requires a specific condition: your brain must experience contradictory evidence 
+                that disconfirms the old belief <em>while the belief is active</em>. We'll mine your life experience 
+                for moments that contradict what you just identified—these become the anchors for new neural patterns.
+              </p>
+            </div>
+            
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+              <p className="text-amber-100 text-sm">
+                💡 These contradictions don't have to be dramatic—small, real moments are often more powerful than grand narratives.
+              </p>
+            </div>
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -521,6 +577,13 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
               </div>
             ) : session.contradictionInsights.length > 0 ? (
               <div className="space-y-4">
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
+                  <p className="text-emerald-100 text-sm">
+                    These are the real-life experiences that contradict your old belief. We'll automatically carry forward 
+                    the rich contradictions for juxtaposition. If you refine your belief narrative, we'll loop you back here 
+                    so everything stays coherent.
+                  </p>
+                </div>
                 {session.contradictionInsights.map((insight, idx) => {
                   const belief = session.implicitBeliefs.find(b => b.id === insight.beliefId);
                   return (
@@ -551,6 +614,10 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                     </div>
                   );
                 })}
+                <div className="bg-slate-800/40 border border-slate-700/60 rounded-lg p-4 text-sm text-slate-300">
+                  <span className="text-cyan-300 font-medium">What's next: </span>
+                  We'll move into juxtaposition to let your nervous system hold both realities at once.
+                </div>
               </div>
             ) : (
               <button
@@ -558,7 +625,7 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                 disabled={session.implicitBeliefs.length === 0}
                 className="btn-luminous px-6 py-3 rounded-lg font-semibold"
               >
-                Start Contradiction Mining
+                Surface Contradictions
               </button>
             )}
           </div>
@@ -576,9 +643,21 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
               <h3 className="text-2xl font-bold font-mono text-slate-100">Juxtaposition Experience</h3>
               <div className="text-slate-400">Cycle {currentCycleIndex + 1} of {totalCycles}</div>
             </div>
-            <p className="text-slate-300">
-              Hold both the old belief and new truth in awareness simultaneously. Notice what happens in your body and mind.
-            </p>
+            
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+              <p className="text-cyan-100 font-medium mb-2">What You're Doing:</p>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                This is the core reconsolidation moment. You'll hold your old belief and the contradictory truth in 
+                awareness simultaneously. Your nervous system needs to experience both as <em>real</em> at the same time—this 
+                mismatch triggers memory reconsolidation, allowing the old neural pattern to update.
+              </p>
+            </div>
+
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+              <p className="text-amber-100 text-sm">
+                💡 Stay present with whatever arises—confusion, discomfort, or relief. All of it is part of the process.
+              </p>
+            </div>
             
             {prefersReducedMotion ? (
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
@@ -701,9 +780,15 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-bold font-mono text-slate-100">Post-Session Check-In</h3>
-            <p className="text-slate-300">
-              Take a moment to assess how you're feeling now compared to when we started.
-            </p>
+            
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+              <p className="text-cyan-100 font-medium mb-2">What You're Doing:</p>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                After juxtaposition work, it's important to ground and assess what's shifted. You'll track changes in 
+                emotional intensity, body sensations, and cognitive patterns. This data helps you see the impact of 
+                the work and prepares you for integration.
+              </p>
+            </div>
             
             <div className="grid grid-cols-2 gap-6">
               <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
@@ -766,6 +851,11 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                 />
               </label>
             </div>
+
+            <div className="bg-slate-800/40 border border-slate-700/60 rounded-lg p-4 text-sm text-slate-300">
+              <span className="text-cyan-300 font-medium">What's next: </span>
+              Once you capture your check-in, we'll guide you into integration planning so the new learning has a home in daily life.
+            </div>
           </div>
         );
 
@@ -773,9 +863,21 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-bold font-mono text-slate-100">Integration Protocol</h3>
-            <p className="text-slate-300">
-              Choose how you'll integrate and anchor this shift. Selection is required to complete the session.
-            </p>
+            
+            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
+              <p className="text-cyan-100 font-medium mb-2">What You're Doing:</p>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Reconsolidation is a window—it opens the belief for updating, but integration is what cements the new pattern. 
+                You'll select practices, schedule them into your life, and choose nervous system support to help the shift 
+                stabilize over the coming days and weeks.
+              </p>
+            </div>
+            
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+              <p className="text-amber-100 text-sm">
+                💡 Concrete commitments (specific time + context) are far more effective than vague intentions.
+              </p>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <button
@@ -903,6 +1005,11 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                   ))}
                 </div>
               </div>
+            </div>
+
+            <div className="bg-slate-800/40 border border-slate-700/60 rounded-lg p-4 text-sm text-slate-300">
+              <span className="text-cyan-300 font-medium">What's next: </span>
+              Once your integration plan is set, we'll generate a session summary you can download or copy for future reference.
             </div>
           </div>
         );
@@ -1034,16 +1141,7 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
           {renderStep()}
         </div>
 
-        <div className="p-6 border-t border-slate-700 flex items-center justify-between bg-slate-900/50">
-          <button
-            onClick={handleBack}
-            disabled={currentStepIndex === 0 || session.currentStep === 'COMPLETE'}
-            className="flex items-center gap-2 px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ArrowLeft size={18} />
-            Back
-          </button>
-
+        <div className="p-6 border-t border-slate-700 flex items-center justify-end bg-slate-900/50">
           {session.currentStep !== 'COMPLETE' && (
             <button
               onClick={handleNext}
@@ -1057,7 +1155,7 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                 </>
               ) : (
                 <>
-                  Next
+                  Continue
                   <ArrowRight size={18} />
                 </>
               )}
