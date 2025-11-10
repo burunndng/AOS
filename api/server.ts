@@ -53,6 +53,12 @@ import {
   healthCheck as shadowHealth,
 } from './shadow/memory-reconsolidation.js';
 
+import {
+  enhanceZoneAnalysis,
+  synthesizeZones,
+  submitSessionCompletion,
+} from './mind/eight-zones.js';
+
 // ============================================
 // SERVER SETUP
 // ============================================
@@ -375,6 +381,59 @@ shadowRouter.post('/complete', async (req: Request, res: Response) => {
 });
 
 app.use(`${API_BASE}/shadow/memory-reconsolidation`, shadowRouter);
+
+// ============================================
+// MIND ROUTER - 8 ZONES OF KNOWING
+// ============================================
+
+const mindRouter = Router();
+
+mindRouter.post('/eight-zones/enhance-zone', async (req: Request, res: Response) => {
+  try {
+    const payload = req.body;
+    const response = await enhanceZoneAnalysis(payload);
+    res.json(response);
+  } catch (error) {
+    console.error('[Mind] Error enhancing zone:', error);
+    const statusCode = error instanceof Error && error.message.includes('required') ? 400 : 502;
+    res.status(statusCode).json({
+      error: 'Failed to enhance zone analysis',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+mindRouter.post('/eight-zones/synthesize', async (req: Request, res: Response) => {
+  try {
+    const payload = req.body;
+    const response = await synthesizeZones(payload);
+    res.json(response);
+  } catch (error) {
+    console.error('[Mind] Error synthesizing zones:', error);
+    const statusCode = error instanceof Error && error.message.includes('required') ? 400 : 502;
+    res.status(statusCode).json({
+      error: 'Failed to synthesize zones',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+mindRouter.post('/eight-zones/submit', async (req: Request, res: Response) => {
+  try {
+    const payload = req.body;
+    const response = await submitSessionCompletion(payload);
+    res.json(response);
+  } catch (error) {
+    console.error('[Mind] Error submitting session:', error);
+    const statusCode = error instanceof Error && error.message.includes('required') ? 400 : 502;
+    res.status(statusCode).json({
+      error: 'Failed to submit session',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+app.use(`${API_BASE}/mind`, mindRouter);
 
 // ============================================
 // HEALTH CHECK ENDPOINT

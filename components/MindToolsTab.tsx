@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrainCircuit, GitCompareArrows, Layers, Shuffle, TrendingUp, Sparkles, Target, Heart, SearchCode } from 'lucide-react'; // Removed Activity
+import { BrainCircuit, GitCompareArrows, Layers, Shuffle, TrendingUp, Sparkles, Target, Heart, SearchCode, Compass } from 'lucide-react'; // Removed Activity
 import { SectionDivider } from './SectionDivider.tsx';
 import { ActiveTab, AttachmentAssessmentSession, Practice } from '../types.ts';
 import { AttachmentStyle } from '../data/attachmentMappings.ts';
@@ -206,6 +206,23 @@ export default function MindToolsTab({
           title="Role Alignment Wizard"
           description="Align your key roles with your deeper values. Score each role, identify misalignments, and discover small shifts to increase harmony."
           onStart={() => setActiveWizard('role-alignment')}
+        />
+        </div>
+      </section>
+
+      <SectionDivider />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-1">Integral Analysis</h2>
+          <p className="text-sm text-slate-400">Comprehensive frameworks for understanding complex systems</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ToolCard
+          icon={<Compass size={28} className="text-teal-400"/>}
+          title="8 Zones of Knowing"
+          description="Apply Integral Theory to understand any complex topic through eight interconnected perspectives. Avoid flatland thinking and generate holistic insights."
+          onStart={() => setActiveWizard('eight-zones')}
         />
         </div>
       </section>

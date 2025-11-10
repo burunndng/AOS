@@ -47,6 +47,7 @@ const JhanaTracker = lazy(() => import('./components/JhanaTracker.tsx'));
 const MeditationWizard = lazy(() => import('./components/MeditationWizard.tsx'));
 const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.tsx'));
 const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
+const EightZonesWizard = lazy(() => import('./components/EightZonesWizard.tsx'));
 const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizard.tsx'));
 const IntegralBodyArchitectWizard = lazy(() => import('./components/IntegralBodyArchitectWizard.tsx'));
 const DynamicWorkoutArchitectWizard = lazy(() => import('./components/DynamicWorkoutArchitectWizard.tsx'));
@@ -85,7 +86,9 @@ import {
   PersonalizationSummary,
   WorkoutProgram,
   MemoryReconsolidationSession,
-  MemoryReconsolidationDraft
+  MemoryReconsolidationDraft,
+  EightZonesSession,
+  EightZonesDraft
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -163,6 +166,7 @@ export default function App() {
   const [draftRelational, setDraftRelational] = useLocalStorage<RelationalPatternSession | null>('draftRelational', null);
   const [draftBigMind, setDraftBigMind] = useLocalStorage<Partial<BigMindSession> | null>('draftBigMind', null);
   const [draftMemoryRecon, setDraftMemoryRecon] = useLocalStorage<MemoryReconsolidationDraft | null>('memoryReconDraft', null);
+  const [draftEightZones, setDraftEightZones] = useLocalStorage<EightZonesDraft | null>('draftEightZones', null);
 
   // Session History
   const [history321, setHistory321] = useLocalStorage<ThreeTwoOneSession[]>('history321', []);
@@ -176,6 +180,7 @@ export default function App() {
   const [historyRelational, setHistoryRelational] = useLocalStorage<RelationalPatternSession[]>('historyRelational', []);
   const [historyJhana, setHistoryJhana] = useLocalStorage<JhanaSession[]>('historyJhana', []);
   const [memoryReconHistory, setMemoryReconHistory] = useLocalStorage<MemoryReconsolidationSession[]>('memoryReconHistory', []);
+  const [eightZonesHistory, setEightZonesHistory] = useLocalStorage<EightZonesSession[]>('eightZonesHistory', []);
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
@@ -635,6 +640,12 @@ export default function App() {
     setActiveWizard(null);
   };
 
+  const handleSaveEightZonesSession = (session: EightZonesSession) => {
+    setEightZonesHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftEightZones(null);
+    setActiveWizard(null);
+  };
+
   const handleLaunchYangPractice = (payload: any) => {
     // Store the handoff payload and switch to Dynamic Workout Architect
     setBodyArchitectHandoff({ type: 'yang', payload });
@@ -922,6 +933,16 @@ export default function App() {
         return (
           <RoleAlignmentWizard
             onClose={() => setActiveWizard(null)}
+          />
+        );
+      case 'eight-zones':
+        return (
+          <EightZonesWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveEightZonesSession}
+            session={draftEightZones}
+            setDraft={setDraftEightZones}
+            userId={userId}
           />
         );
       case 'big-mind':
