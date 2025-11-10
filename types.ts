@@ -1000,3 +1000,125 @@ export interface WorkoutProgram {
   progressionRecommendations?: string[];
 }
 
+// Memory Reconsolidation Types
+export type MemoryReconsolidationStep = 'ONBOARDING' | 'BELIEF_IDENTIFICATION' | 'CONTRADICTION_MINING' | 'JUXTAPOSITION' | 'GROUNDING' | 'INTEGRATION' | 'COMPLETE';
+
+export type BeliefCategory = 'identity' | 'capability' | 'worthiness' | 'safety' | 'belonging' | 'possibility' | 'other';
+
+export type AffectTone = 'shame' | 'fear' | 'anger' | 'sadness' | 'grief' | 'confusion' | 'mixed' | 'neutral';
+
+export type NervousSystemCueType = 'breath' | 'body-sensation' | 'grounding' | 'resourcing' | 'movement' | 'sound';
+
+export type GroundingModality = 'breath' | 'somatic' | 'cognitive' | 'relational' | 'environmental' | 'sound';
+
+export type IntegrationChoiceType = 'embodied-action' | 'cognitive-reframe' | 'somatic-anchor' | 'relational-shift' | 'practice-stack';
+
+/** Represents an implicit belief surfaced during session. */
+export interface ImplicitBelief {
+  id: string;
+  belief: string; // The belief statement itself (e.g., "I'm not good enough")
+  emotionalCharge: number; // 1-10 intensity scale
+  category: BeliefCategory; // Categorization of belief type
+  affectTone: AffectTone; // Emotional signature
+  bodyLocation?: string; // Where held in body (e.g., "chest", "stomach")
+  originStory?: string; // When/how belief formed
+  limitingPatterns?: string[]; // Behaviors/thoughts this belief drives
+  depth: 'surface' | 'moderate' | 'deep'; // How entrenched the belief is
+}
+
+/** Baseline and post-shift intensity tracking. */
+export interface IntensityReading {
+  baselineIntensity: number; // 1-10 scale at session start
+  postIntensity?: number; // 1-10 scale after processing
+  shiftPercentage?: number; // % change: ((post - baseline) / baseline) * 100
+}
+
+/** Contradictory evidence and resources for working with a belief. */
+export interface ContradictionInsight {
+  beliefId: string; // References the ImplicitBelief being worked with
+  anchors: string[]; // Counter-evidence or lived examples contradicting the belief
+  newTruths: string[]; // Alternative, more empowering perspectives
+  regulationCues: string[]; // Somatic/cognitive resources (breath, grounding statements, sensations)
+  juxtapositionPrompts: string[]; // Guided prompts for holding both old belief and new truth
+  dateIdentified: string; // ISO timestamp when contradiction was mined
+}
+
+/** Metadata for a juxtaposition cycle step. */
+export interface JuxtapositionCycleStep {
+  stepNumber: number; // 1, 2, 3... for cycling through prompts
+  prompt: string; // The juxtaposition prompt given to user
+  userResponse?: string; // User's response to the prompt
+  timestamp?: string; // When step was completed
+  somaticNotations?: string; // Observations of body/nervous system state
+}
+
+/** A cycle of holding both belief and contradiction. */
+export interface JuxtapositionCycle {
+  id: string;
+  beliefId: string; // The belief being worked with
+  cycleNumber: number; // 1st, 2nd, 3rd cycle through prompts
+  steps: JuxtapositionCycleStep[];
+  intensity: IntensityReading; // Intensity before/after cycle
+  completedAt?: string;
+  notes?: string;
+}
+
+/** Grounding/regulation resource selected for nervous system support. */
+export interface GroundingOption {
+  id: string;
+  name: string; // e.g., "5-4-3-2-1 Grounding", "Vagus Tapping", "Safe Place Visualization"
+  modality: GroundingModality;
+  description: string;
+  duration: number; // seconds or minutes
+  instructions: string[];
+  cueType: NervousSystemCueType;
+  supportedAffects: AffectTone[];
+}
+
+/** Integration practice selection for post-reconsolidation anchoring. */
+export interface IntegrationSelection {
+  id: string;
+  practiceId: string; // References existing practice from constants
+  practiceName: string;
+  rationale: string; // Why this practice supports the new perspective
+  frequency?: 'daily' | 'weekly' | 'as-needed';
+  durationMinutes?: number;
+  notes?: string;
+}
+
+/** Summary of session outcomes. */
+export interface SessionCompletionSummary {
+  intensityShift: number; // Change from baseline intensity (e.g., -2, 0, +1)
+  integrationChoice: IntegrationChoiceType;
+  selectedPractices: IntegrationSelection[];
+  userInsights?: string; // User's own reflections on the shift
+  nextStepRecommendations?: string[];
+  notes?: string;
+  completedAt?: string;
+}
+
+/** Main Memory Reconsolidation session data. */
+export interface MemoryReconsolidationSession {
+  id: string;
+  date: string;
+  currentStep: MemoryReconsolidationStep;
+  implicitBeliefs: ImplicitBelief[];
+  contradictionInsights: ContradictionInsight[];
+  juxtapositionCycles: JuxtapositionCycle[];
+  groundingOptions: GroundingOption[];
+  selectedGrounding?: GroundingOption; // Currently active grounding resource
+  integrationSelections: IntegrationSelection[];
+  baselineIntensity: number; // Overall intensity at session start
+  completionSummary?: SessionCompletionSummary;
+  sessionNotes?: string;
+  completedAt?: string;
+  linkedInsightId?: string; // Link to IntegratedInsight for tracking patterns
+}
+
+/** Draft/in-progress Memory Reconsolidation session (extends Session with partial fields). */
+export interface MemoryReconsolidationDraft extends Partial<MemoryReconsolidationSession> {
+  currentStep: MemoryReconsolidationStep;
+  id: string;
+  date: string;
+}
+
