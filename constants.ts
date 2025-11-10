@@ -1,6 +1,6 @@
 
 // FIX: Corrected import path for types
-import { PracticesData, ModuleInfo, StarterStacksData, ModuleKey, SomaticPracticeType, PracticeTypeInfo, SomaticPreset } from './types.ts';
+import { PracticesData, ModuleInfo, StarterStacksData, ModuleKey, SomaticPracticeType, PracticeTypeInfo, SomaticPreset, GroundingOption } from './types.ts';
 
 export const practices: PracticesData = {
     body: [
@@ -665,3 +665,36 @@ export const practices: PracticesData = {
       safetyNotes: ["Use only small, gentle movements", "Stop if sharp pain"]
     }
   ];
+
+export const GROUNDING_OPTIONS: GroundingOption[] = [
+  {
+    id: 'breathwork',
+    name: 'Breathwork',
+    description: 'Use physiological sighs or coherent breathing to calm your nervous system',
+    icon: 'Wind'
+  },
+  {
+    id: 'orienting',
+    name: 'Orienting',
+    description: 'Look around the room slowly, notice 5 things you can see, hear, and touch',
+    icon: 'Eye'
+  },
+  {
+    id: 'movement',
+    name: 'Gentle Movement',
+    description: 'Stand up, stretch, or take a short walk to ground back in your body',
+    icon: 'Activity'
+  },
+  {
+    id: 'pause',
+    name: 'Take a Pause',
+    description: 'Save your progress and return when you feel ready',
+    icon: 'Pause'
+  },
+  {
+    id: 'support',
+    name: 'Contact Support',
+    description: 'Reach out to a therapist or trusted friend if you need support',
+    icon: 'Phone'
+  }
+];

@@ -51,6 +51,7 @@ const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizar
 const IntegralBodyArchitectWizard = lazy(() => import('./components/IntegralBodyArchitectWizard.tsx'));
 const DynamicWorkoutArchitectWizard = lazy(() => import('./components/DynamicWorkoutArchitectWizard.tsx'));
 const InsightPracticeMapWizard = lazy(() => import('./components/InsightPracticeMapWizard.tsx'));
+const MemoryReconsolidationWizard = lazy(() => import('./components/MemoryReconsolidationWizard.tsx'));
 
 
 // Constants & Types
@@ -82,7 +83,8 @@ import {
   PlanHistoryEntry,
   PlanProgressByDay,
   PersonalizationSummary,
-  WorkoutProgram
+  WorkoutProgram,
+  MemoryReconsolidationSession
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -159,6 +161,7 @@ export default function App() {
   const [draftKegan, setDraftKegan] = useLocalStorage<KeganAssessmentSession | null>('draftKegan', null);
   const [draftRelational, setDraftRelational] = useLocalStorage<RelationalPatternSession | null>('draftRelational', null);
   const [draftBigMind, setDraftBigMind] = useLocalStorage<Partial<BigMindSession> | null>('draftBigMind', null);
+  const [draftMemoryRecon, setDraftMemoryRecon] = useLocalStorage<MemoryReconsolidationSession | null>('draftMemoryRecon', null);
 
   // Session History
   const [history321, setHistory321] = useLocalStorage<ThreeTwoOneSession[]>('history321', []);
@@ -171,6 +174,7 @@ export default function App() {
   const [historyKegan, setHistoryKegan] = useLocalStorage<KeganAssessmentSession[]>('historyKegan', []);
   const [historyRelational, setHistoryRelational] = useLocalStorage<RelationalPatternSession[]>('historyRelational', []);
   const [historyJhana, setHistoryJhana] = useLocalStorage<JhanaSession[]>('historyJhana', []);
+  const [memoryReconHistory, setMemoryReconHistory] = useLocalStorage<MemoryReconsolidationSession[]>('memoryReconHistory', []);
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
@@ -624,6 +628,12 @@ export default function App() {
     }
   };
 
+  const handleSaveMemoryReconsolidationSession = (session: MemoryReconsolidationSession) => {
+    setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftMemoryRecon(null);
+    setActiveWizard(null);
+  };
+
   const handleLaunchYangPractice = (payload: any) => {
     // Store the handoff payload and switch to Dynamic Workout Architect
     setBodyArchitectHandoff({ type: 'yang', payload });
@@ -666,7 +676,7 @@ export default function App() {
         practiceStack, practiceNotes, dailyNotes, completionHistory,
         history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan, historyRelational, historyAttachment, historyBigMind,
         partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory, journeyProgress,
-        integralBodyPlans, integralBodyPlanHistory, planProgressByDay
+        integralBodyPlans, integralBodyPlanHistory, planProgressByDay, memoryReconHistory
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -703,6 +713,7 @@ export default function App() {
                         setHistoryRelational(data.historyRelational || []);
                         setHistoryAttachment(data.historyAttachment || []);
                         setHistoryBigMind(data.historyBigMind || []);
+                        setMemoryReconHistory(data.memoryReconHistory || []);
                         setPartsLibrary(data.partsLibrary || []);
                         setIntegratedInsights(data.integratedInsights || []);
                         setAqalReport(data.aqalReport || null);
@@ -747,7 +758,7 @@ export default function App() {
         practiceStack={practiceStack}
       />;
       // FIX: Changed prop `setDraftIFSSession` to `setDraftIFS` to match the updated ShadowToolsTabProps interface.
-      case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} draft321Session={draft321} draftIFSSession={draftIFS} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;
+      case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} draft321Session={draft321} draftIFSSession={draftIFS} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} draftMemoryRecon={draftMemoryRecon} />;
       case 'body-tools': return <BodyToolsTab
         setActiveWizard={setActiveWizardAndLink}
         integralBodyPlans={integralBodyPlans}
@@ -903,6 +914,15 @@ export default function App() {
               }
             }}
             userId={userId}
+          />
+        );
+      case 'memory-recon':
+        return (
+          <MemoryReconsolidationWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveMemoryReconsolidationSession}
+            session={draftMemoryRecon}
+            setDraft={setDraftMemoryRecon}
           />
         );
       case 'integral-body-architect':

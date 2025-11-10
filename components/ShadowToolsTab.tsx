@@ -1,8 +1,8 @@
 
 // FIX: Add file content for components/ShadowToolsTab.tsx
 import React, { useState } from 'react';
-import { ThreeTwoOneSession, IFSSession, IFSPart } from '../types.ts';
-import { ChevronDown, ChevronUp, Shield, GitMerge, Users, MessageCircle } from 'lucide-react';
+import { ThreeTwoOneSession, IFSSession, IFSPart, MemoryReconsolidationSession } from '../types.ts';
+import { ChevronDown, ChevronUp, Shield, GitMerge, Users, MessageCircle, Brain } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 
 interface ShadowToolsTabProps {
@@ -18,6 +18,7 @@ interface ShadowToolsTabProps {
   setDraftIFS: (draft: IFSSession | null) => void;
   partsLibrary: IFSPart[];
   markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void; // NEW
+  draftMemoryRecon?: MemoryReconsolidationSession | null;
 }
 
 const ToolCard = ({ icon, title, description, onStart, onResume, hasDraft }: { icon: React.ReactNode, title: string, description: string, onStart: (linkedInsightId?: string) => void, onResume: (linkedInsightId?: string) => void, hasDraft: boolean }) => (
@@ -47,7 +48,8 @@ export default function ShadowToolsTab({
   setDraft321Session,
   // FIX: Renamed prop from `setDraftIFSSession` to `setDraftIFS`.
   setDraftIFS,
-  markInsightAsAddressed // Not directly used here, but passed through App.tsx
+  markInsightAsAddressed, // Not directly used here, but passed through App.tsx
+  draftMemoryRecon
 }: ShadowToolsTabProps) {
 
   return (
@@ -79,6 +81,14 @@ export default function ShadowToolsTab({
           onStart={() => onStartIFS()}
           onResume={() => onStartIFS(draftIFSSession?.linkedInsightId)} // Pass linkedInsightId if resuming
           hasDraft={!!draftIFSSession}
+        />
+        <ToolCard
+          icon={<Brain size={28} className="text-emerald-400"/>}
+          title="Memory Reconsolidation"
+          description="Transform limiting shadow beliefs by identifying meaningful contradictions and somatic anchors."
+          onStart={() => setActiveWizard('memory-recon')}
+          onResume={() => setActiveWizard('memory-recon')}
+          hasDraft={!!draftMemoryRecon}
         />
         <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6 flex flex-col lg:col-span-2">
           <div className="flex items-center gap-4 mb-3">

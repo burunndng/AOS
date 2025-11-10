@@ -1025,3 +1025,46 @@ export interface SessionCompletionSummary {
   notes?: string;
 }
 
+export type MemoryReconsolidationStep = 'ONBOARDING' | 'MEMORY_SELECTION' | 'BELIEF_EXTRACTION' | 'CONTRADICTION_MINING';
+
+export interface MemoryReconsolidationSession {
+  id: string;
+  date: string;
+  currentStep: MemoryReconsolidationStep;
+  
+  // ONBOARDING
+  intention?: string;
+  safetyAcknowledged?: boolean;
+  baselineIntensity?: number;
+  
+  // MEMORY_SELECTION
+  memoryTitle?: string;
+  memoryEra?: string;
+  keyEmotions?: string;
+  bodySensations?: string;
+  protectorStrategies?: string;
+  sensoryAnchors?: string;
+  memoryNarrative?: string;
+  
+  // BELIEF_EXTRACTION
+  extractedBeliefs?: ImplicitBelief[];
+  selectedBeliefIds?: string[];
+  beliefExtractionError?: string;
+  
+  // CONTRADICTION_MINING
+  contradictionSeeds?: string[];
+  contradictionInsights?: ContradictionInsight[];
+  juxtapositionPrompts?: string[];
+  integrationGuidance?: string;
+  contradictionMiningError?: string;
+  
+  completedAt?: string;
+}
+
+export interface GroundingOption {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
