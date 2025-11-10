@@ -147,39 +147,55 @@ export const formatWorkoutProgramAsText = (program: WorkoutProgram): string => {
   lines.push('═══════════════════════════════════════════════════════════');
   lines.push('');
 
-  if (program.goal) lines.push(`Goal: ${program.goal}`);
-  if (program.focusAreas && program.focusAreas.length > 0) {
-    lines.push(`Focus Areas: ${program.focusAreas.join(', ')}`);
+  // Program title and summary
+  if (program.title) lines.push(`Title: ${program.title}`);
+  if (program.date) lines.push(`Date: ${new Date(program.date).toLocaleDateString()}`);
+  if (program.summary) {
+    lines.push('');
+    lines.push('PROGRAM SUMMARY:');
+    lines.push(program.summary);
   }
-  if (program.intensity) lines.push(`Intensity Level: ${program.intensity}`);
-  if (program.duration) lines.push(`Duration: ${program.duration} minutes`);
-  if (program.experienceLevel) lines.push(`Experience Level: ${program.experienceLevel}`);
   lines.push('');
 
-  // Workout Sessions
-  if (program.workoutSessions && program.workoutSessions.length > 0) {
+  // Personalization Notes
+  if (program.personalizationNotes) {
+    lines.push('───────────────────────────────────────────────────────────');
+    lines.push('PERSONALIZATION NOTES');
+    lines.push('───────────────────────────────────────────────────────────');
+    lines.push(program.personalizationNotes);
+    lines.push('');
+  }
+
+  // Workout Sessions - FIXED: use 'workouts' not 'workoutSessions'
+  if (program.workouts && program.workouts.length > 0) {
     lines.push('───────────────────────────────────────────────────────────');
     lines.push('WORKOUT SESSIONS');
     lines.push('───────────────────────────────────────────────────────────');
 
-    program.workoutSessions.forEach((session, sessionIdx) => {
+    program.workouts.forEach((workout, workoutIdx) => {
       lines.push('');
-      lines.push(`SESSION ${sessionIdx + 1}: ${session.name}`);
-      lines.push(`Duration: ${session.duration} minutes`);
-      if (session.focusArea) lines.push(`Focus: ${session.focusArea}`);
+      lines.push(`SESSION ${workoutIdx + 1}: ${workout.name}`);
+      lines.push(`Intensity: ${workout.intensity} | Duration: ${workout.duration} minutes | Difficulty: ${workout.difficulty}`);
+      if (workout.muscleGroupsFocused && workout.muscleGroupsFocused.length > 0) {
+        lines.push(`Muscle Groups: ${workout.muscleGroupsFocused.join(', ')}`);
+      }
+      if (workout.caloriesBurned) {
+        lines.push(`Estimated Calories Burned: ${workout.caloriesBurned}`);
+      }
       lines.push('');
 
       // Warmup
-      if (session.warmup) {
+      if (workout.warmup) {
         lines.push('WARMUP:');
-        lines.push(session.warmup);
+        lines.push(`${workout.warmup.name} (${workout.warmup.duration} minutes)`);
+        lines.push(workout.warmup.description);
         lines.push('');
       }
 
       // Main Exercises
-      if (session.exercises && session.exercises.length > 0) {
-        lines.push('MAIN EXERCISES:');
-        session.exercises.forEach((exercise, exIdx) => {
+      if (workout.exercises && workout.exercises.length > 0) {
+        lines.push('EXERCISES:');
+        workout.exercises.forEach((exercise, exIdx) => {
           lines.push(`  ${exIdx + 1}. ${exercise.name}`);
           if (exercise.sets && exercise.reps) {
             lines.push(`     Sets: ${exercise.sets} | Reps: ${exercise.reps}`);
@@ -193,8 +209,8 @@ export const formatWorkoutProgramAsText = (program: WorkoutProgram): string => {
           if (exercise.restSeconds) {
             lines.push(`     Rest: ${exercise.restSeconds} seconds`);
           }
-          if (exercise.formGuidance) {
-            lines.push(`     Form: ${exercise.formGuidance}`);
+          if (exercise.formGuidance && exercise.formGuidance.length > 0) {
+            lines.push(`     Form: ${exercise.formGuidance.join(' | ')}`);
           }
           if (exercise.modifications && exercise.modifications.length > 0) {
             lines.push(`     Modifications: ${exercise.modifications.join(', ')}`);
@@ -204,34 +220,37 @@ export const formatWorkoutProgramAsText = (program: WorkoutProgram): string => {
       }
 
       // Cooldown
-      if (session.cooldown) {
+      if (workout.cooldown) {
         lines.push('COOLDOWN:');
-        lines.push(session.cooldown);
+        lines.push(`${workout.cooldown.name} (${workout.cooldown.duration} minutes)`);
+        lines.push(workout.cooldown.description);
         lines.push('');
       }
 
       // Somatic Guidance
-      if (session.somaticGuidance) {
+      if (workout.somaticGuidance) {
         lines.push('SOMATIC GUIDANCE:');
-        lines.push(session.somaticGuidance);
+        lines.push(workout.somaticGuidance);
         lines.push('');
       }
 
       // Notes
-      if (session.notes) {
+      if (workout.notes) {
         lines.push('NOTES:');
-        lines.push(session.notes);
+        lines.push(workout.notes);
         lines.push('');
       }
     });
   }
 
   // Progression Recommendations
-  if (program.progressionRecommendations) {
+  if (program.progressionRecommendations && program.progressionRecommendations.length > 0) {
     lines.push('───────────────────────────────────────────────────────────');
     lines.push('PROGRESSION RECOMMENDATIONS');
     lines.push('───────────────────────────────────────────────────────────');
-    lines.push(program.progressionRecommendations);
+    program.progressionRecommendations.forEach((rec, i) => {
+      lines.push(`${i + 1}. ${rec}`);
+    });
     lines.push('');
   }
 
