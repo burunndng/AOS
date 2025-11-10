@@ -5,7 +5,8 @@
  * Or: node build/api/server.js (after compilation)
  */
 
-import express, { Request, Response, NextFunction, Router } from 'express';
+import express, { Router } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { initializeDatabase, getDatabase } from './lib/db.ts';
 import { initializePinecone, getIndexStats, healthCheck as pineconeHealth } from './lib/pinecone.ts';

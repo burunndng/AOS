@@ -5,10 +5,10 @@
  */
 
 import { GoogleGenAI, Type } from '@google/genai';
-import { ImplicitBelief, ContradictionInsight, SessionCompletionSummary } from '../../types.ts';
+import type { ImplicitBelief, ContradictionInsight, SessionCompletionSummary } from './types.ts';
 
 const ai = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.API_KEY,
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY,
 });
 
 // ============================================
@@ -314,7 +314,7 @@ Make the response warm, affirming, and genuinely supportive.`;
 export async function healthCheck(): Promise<{ status: 'ok' | 'error'; message?: string }> {
   try {
     // Verify Gemini API key is configured
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.API_KEY;
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
     if (!apiKey) {
       return {
         status: 'error',
