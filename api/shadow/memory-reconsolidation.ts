@@ -67,43 +67,57 @@ Extract implicit beliefs that are embedded in this narrative. For each belief, i
 
 Return a JSON array of beliefs with proper structure.`;
 
-    const response = await getAIClient().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            beliefs: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  belief: { type: Type.STRING },
-                  emotionalCharge: { type: Type.NUMBER },
-                  category: { type: Type.STRING },
-                  affectTone: { type: Type.STRING },
-                  bodyLocation: { type: Type.STRING },
-                  originStory: { type: Type.STRING },
-                  limitingPatterns: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING },
+    let response;
+    try {
+      console.log('[Memory Reconsolidation] Calling Gemini API with extracted belief schema...');
+      response = await getAIClient().models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              beliefs: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    belief: { type: Type.STRING },
+                    emotionalCharge: { type: Type.NUMBER },
+                    category: { type: Type.STRING },
+                    affectTone: { type: Type.STRING },
+                    bodyLocation: { type: Type.STRING },
+                    originStory: { type: Type.STRING },
+                    limitingPatterns: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                    },
+                    depth: { type: Type.STRING },
                   },
-                  depth: { type: Type.STRING },
+                  required: ['id', 'belief', 'emotionalCharge', 'category', 'affectTone', 'depth'],
                 },
-                required: ['id', 'belief', 'emotionalCharge', 'category', 'affectTone', 'depth'],
               },
+              summary: { type: Type.STRING },
             },
-            summary: { type: Type.STRING },
+            required: ['beliefs', 'summary'],
           },
-          required: ['beliefs', 'summary'],
         },
-      },
-    });
+      });
+      console.log('[Memory Reconsolidation] Gemini API call successful, parsing response...');
+    } catch (apiError) {
+      console.error('[Memory Reconsolidation] Gemini API call failed:', apiError);
+      throw new Error(`Gemini API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+    }
 
-    const result = JSON.parse(response.text) as ExtractBeliefsResponse;
+    let result;
+    try {
+      result = JSON.parse(response.text) as ExtractBeliefsResponse;
+    } catch (parseError) {
+      console.error('[Memory Reconsolidation] Failed to parse Gemini response:', response.text);
+      throw new Error(`Failed to parse AI response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
 
     // Validate and normalize response
     if (!Array.isArray(result.beliefs)) {
@@ -193,43 +207,57 @@ Return a JSON object with:
 - juxtapositionCyclePrompts: array of full prompts for the juxtaposition meditation/cycle
 - integrationGuidance: guidance on embodying and integrating these new truths`;
 
-    const response = await getAIClient().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            contradictions: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  beliefId: { type: Type.STRING },
-                  anchors: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  newTruths: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  regulationCues: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  juxtapositionPrompts: {
-                    type: Type.ARRAY,
-                    items: { type: Type.STRING },
+    let response;
+    try {
+      console.log('[Memory Reconsolidation] Calling Gemini API for contradiction mining...');
+      response = await getAIClient().models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              contradictions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    beliefId: { type: Type.STRING },
+                    anchors: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    newTruths: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    regulationCues: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    juxtapositionPrompts: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                    },
                   },
+                  required: ['beliefId', 'anchors', 'newTruths', 'regulationCues', 'juxtapositionPrompts'],
                 },
-                required: ['beliefId', 'anchors', 'newTruths', 'regulationCues', 'juxtapositionPrompts'],
               },
+              juxtapositionCyclePrompts: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+              },
+              integrationGuidance: { type: Type.STRING },
             },
-            juxtapositionCyclePrompts: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-            },
-            integrationGuidance: { type: Type.STRING },
+            required: ['contradictions', 'juxtapositionCyclePrompts', 'integrationGuidance'],
           },
-          required: ['contradictions', 'juxtapositionCyclePrompts', 'integrationGuidance'],
         },
-      },
-    });
+      });
+      console.log('[Memory Reconsolidation] Contradiction mining API call successful');
+    } catch (apiError) {
+      console.error('[Memory Reconsolidation] Contradiction mining API call failed:', apiError);
+      throw new Error(`Gemini API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+    }
 
-    const result = JSON.parse(response.text) as MineContradictionsResponse;
+    let result;
+    try {
+      result = JSON.parse(response.text) as MineContradictionsResponse;
+    } catch (parseError) {
+      console.error('[Memory Reconsolidation] Failed to parse contradiction mining response:', response.text);
+      throw new Error(`Failed to parse AI response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
 
     // Validate response
     if (!Array.isArray(result.contradictions)) {
@@ -294,24 +322,38 @@ Create a JSON response with:
 
 Make the response warm, affirming, and genuinely supportive.`;
 
-    const response = await getAIClient().models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            acknowledgement: { type: Type.STRING },
-            closingPrompt: { type: Type.STRING },
-            integrationReminder: { type: Type.STRING },
+    let response;
+    try {
+      console.log('[Memory Reconsolidation] Calling Gemini API for session completion...');
+      response = await getAIClient().models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              acknowledgement: { type: Type.STRING },
+              closingPrompt: { type: Type.STRING },
+              integrationReminder: { type: Type.STRING },
+            },
+            required: ['acknowledgement', 'closingPrompt', 'integrationReminder'],
           },
-          required: ['acknowledgement', 'closingPrompt', 'integrationReminder'],
         },
-      },
-    });
+      });
+      console.log('[Memory Reconsolidation] Session completion API call successful');
+    } catch (apiError) {
+      console.error('[Memory Reconsolidation] Session completion API call failed:', apiError);
+      throw new Error(`Gemini API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+    }
 
-    const result = JSON.parse(response.text) as CompleteSessionResponse;
+    let result;
+    try {
+      result = JSON.parse(response.text) as CompleteSessionResponse;
+    } catch (parseError) {
+      console.error('[Memory Reconsolidation] Failed to parse session completion response:', response.text);
+      throw new Error(`Failed to parse AI response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
 
     // Validate response
     if (!result.acknowledgement || !result.closingPrompt || !result.integrationReminder) {

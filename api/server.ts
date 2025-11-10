@@ -98,15 +98,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-// Error handling middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  console.error('[ERROR]', err);
-  res.status(500).json({
-    error: 'Internal server error',
-    message: err instanceof Error ? err.message : 'Unknown error',
-  });
-});
-
 // NOTE: Recommendations, Insights, and Practices endpoints removed
 // to reduce serverless function count. These were RAG-based features
 // that are not essential for core Memory Reconsolidation functionality.
@@ -353,6 +344,19 @@ app.get('/', (req: Request, res: Response) => {
       user: `${API_BASE}/user/*`,
       health: `${API_BASE}/health`,
     },
+  });
+});
+
+// ============================================
+// ERROR HANDLING MIDDLEWARE (MUST BE LAST)
+// ============================================
+
+// Error handling middleware - MUST be defined after all routes
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error('[ERROR]', err);
+  res.status(500).json({
+    error: 'Internal server error',
+    message: err instanceof Error ? err.message : 'Unknown error',
   });
 });
 
