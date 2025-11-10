@@ -7,11 +7,16 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import type { ZoneAnalysis } from './types.ts';
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY,
-});
-
 const MODEL = 'gemini-2.5-flash-lite';
+
+// Lazy-initialize GoogleGenAI to ensure API key is set at runtime
+function getAIClient(): GoogleGenAI {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error('No Gemini API key configured. Set GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_API_KEY, or API_KEY environment variable.');
+  }
+  return new GoogleGenAI({ apiKey });
+}
 
 // ============================================
 // ENHANCE ZONE ANALYSIS ENDPOINT
@@ -72,7 +77,7 @@ Keep your response focused, insightful, and specific to their focal question. Us
 
 Respond with a cohesive enhancement that flows naturally, not bullet points.`;
 
-    const response = await ai.models.generateContent({
+    const response = await getAIClient().models.generateContent({
       model: MODEL,
       contents: prompt,
     });
@@ -170,7 +175,7 @@ ${zonesSummary}
 
 Format your response as a JSON object with keys: blindSpots (array of strings), novelInsights (array of strings), recommendations (array of strings), synthesisReport (string), connections (array of objects with fromZone (number), toZone (number), relationship (string)).`;
 
-    const response = await ai.models.generateContent({
+    const response = await getAIClient().models.generateContent({
       model: MODEL,
       contents: prompt,
       config: {

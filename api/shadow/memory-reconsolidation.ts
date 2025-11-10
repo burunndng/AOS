@@ -7,9 +7,14 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import type { ImplicitBelief, ContradictionInsight, SessionCompletionSummary } from './types.ts';
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY,
-});
+// Lazy-initialize GoogleGenAI to ensure API key is set at runtime
+function getAIClient(): GoogleGenAI {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error('No Gemini API key configured. Set GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_API_KEY, or API_KEY environment variable.');
+  }
+  return new GoogleGenAI({ apiKey });
+}
 
 // ============================================
 // EXTRACT BELIEFS ENDPOINT
@@ -60,7 +65,7 @@ Extract implicit beliefs that are embedded in this narrative. For each belief, i
 
 Return a JSON array of beliefs with proper structure.`;
 
-    const response = await ai.models.generateContent({
+    const response = await getAIClient().models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
@@ -174,7 +179,7 @@ Return a JSON object with:
 - juxtapositionCyclePrompts: array of full prompts for the juxtaposition meditation/cycle
 - integrationGuidance: guidance on embodying and integrating these new truths`;
 
-    const response = await ai.models.generateContent({
+    const response = await getAIClient().models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
@@ -275,7 +280,7 @@ Create a JSON response with:
 
 Make the response warm, affirming, and genuinely supportive.`;
 
-    const response = await ai.models.generateContent({
+    const response = await getAIClient().models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
       config: {

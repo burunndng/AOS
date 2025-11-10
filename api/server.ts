@@ -314,9 +314,6 @@ app.get(`${API_BASE}/health`, async (req: Request, res: Response) => {
     })();
 
     services.embeddings = await embeddingsHealth();
-    services.recommendations = await recommendationsHealth();
-    services.insights = await insightsHealth();
-    services.practices = await practicesHealth();
     services.sync = await syncHealth();
     services.shadow = await shadowHealth();
 
