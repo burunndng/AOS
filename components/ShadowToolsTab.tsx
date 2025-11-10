@@ -21,6 +21,7 @@ interface ShadowToolsTabProps {
   setDraftIFS: (draft: IFSSession | null) => void;
   partsLibrary: IFSPart[];
   markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void; // NEW
+  draftMemoryRecon?: MemoryReconsolidationSession | null;
 }
 
 const ToolCard = ({ icon, title, description, onStart, onResume, hasDraft }: { icon: React.ReactNode, title: string, description: string, onStart: (linkedInsightId?: string) => void, onResume: (linkedInsightId?: string) => void, hasDraft: boolean }) => (

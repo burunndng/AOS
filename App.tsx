@@ -86,6 +86,7 @@ import {
   WorkoutProgram,
   MemoryReconsolidationSession,
   MemoryReconsolidationDraft
+  MemoryReconsolidationSession
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -629,6 +630,12 @@ export default function App() {
     }
   };
 
+  const handleSaveMemoryReconsolidationSession = (session: MemoryReconsolidationSession) => {
+    setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftMemoryRecon(null);
+    setActiveWizard(null);
+  };
+
   const handleLaunchYangPractice = (payload: any) => {
     // Store the handoff payload and switch to Dynamic Workout Architect
     setBodyArchitectHandoff({ type: 'yang', payload });
@@ -695,7 +702,7 @@ export default function App() {
         practiceStack, practiceNotes, dailyNotes, completionHistory,
         history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan, historyRelational, historyAttachment, historyBigMind,
         partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory, journeyProgress,
-        integralBodyPlans, integralBodyPlanHistory, planProgressByDay
+        integralBodyPlans, integralBodyPlanHistory, planProgressByDay, memoryReconHistory
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -732,6 +739,7 @@ export default function App() {
                         setHistoryRelational(data.historyRelational || []);
                         setHistoryAttachment(data.historyAttachment || []);
                         setHistoryBigMind(data.historyBigMind || []);
+                        setMemoryReconHistory(data.memoryReconHistory || []);
                         setPartsLibrary(data.partsLibrary || []);
                         setIntegratedInsights(data.integratedInsights || []);
                         setAqalReport(data.aqalReport || null);
@@ -932,6 +940,15 @@ export default function App() {
               }
             }}
             userId={userId}
+          />
+        );
+      case 'memory-recon':
+        return (
+          <MemoryReconsolidationWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveMemoryReconsolidationSession}
+            session={draftMemoryRecon}
+            setDraft={setDraftMemoryRecon}
           />
         );
       case 'integral-body-architect':
