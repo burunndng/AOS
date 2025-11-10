@@ -72,7 +72,7 @@ Return a JSON array of beliefs with proper structure.`;
       console.log('[Memory Reconsolidation] Calling Gemini API with extracted belief schema...');
       response = await getAIClient().models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           responseMimeType: 'application/json',
           responseSchema: {
@@ -212,7 +212,7 @@ Return a JSON object with:
       console.log('[Memory Reconsolidation] Calling Gemini API for contradiction mining...');
       response = await getAIClient().models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           responseMimeType: 'application/json',
           responseSchema: {
@@ -327,7 +327,7 @@ Make the response warm, affirming, and genuinely supportive.`;
       console.log('[Memory Reconsolidation] Calling Gemini API for session completion...');
       response = await getAIClient().models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           responseMimeType: 'application/json',
           responseSchema: {
