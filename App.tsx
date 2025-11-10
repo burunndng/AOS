@@ -46,7 +46,6 @@ const RelationalPatternChatbot = lazy(() => import('./components/RelationalPatte
 const JhanaTracker = lazy(() => import('./components/JhanaTracker.tsx'));
 const MeditationWizard = lazy(() => import('./components/MeditationWizard.tsx'));
 const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.tsx'));
-const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
 const EightZonesWizard = lazy(() => import('./components/EightZonesWizard.tsx'));
 const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizard.tsx'));
 const IntegralBodyArchitectWizard = lazy(() => import('./components/IntegralBodyArchitectWizard.tsx'));
@@ -926,12 +925,6 @@ export default function App() {
       case 'consciousness-graph':
         return (
           <ConsciousnessGraph
-            onClose={() => setActiveWizard(null)}
-          />
-        );
-      case 'role-alignment':
-        return (
-          <RoleAlignmentWizard
             onClose={() => setActiveWizard(null)}
           />
         );

@@ -201,12 +201,6 @@ export default function MindToolsTab({
           description="Reframe 'either/or' problems into 'both/and' polarities, developing the capacity to manage complex tensions productively."
           onStart={() => setActiveWizard('pm')}
         />
-        <ToolCard
-          icon={<Target size={28} className="text-orange-400"/>}
-          title="Role Alignment Wizard"
-          description="Align your key roles with your deeper values. Score each role, identify misalignments, and discover small shifts to increase harmony."
-          onStart={() => setActiveWizard('role-alignment')}
-        />
         </div>
       </section>
 

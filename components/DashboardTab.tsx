@@ -17,7 +17,7 @@ interface DashboardTabProps {
 export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab, integratedInsights, markInsightAsAddressed, setActiveWizard }: DashboardTabProps) {
 
   const getToolCategory = (toolType: string): { name: string; color: string } => {
-    const mindTools = ['Bias Detective', 'Subject-Object Explorer', 'Perspective-Shifter', 'Polarity Mapper', 'Kegan Assessment', 'Role Alignment'];
+    const mindTools = ['Bias Detective', 'Subject-Object Explorer', 'Perspective-Shifter', 'Polarity Mapper', 'Kegan Assessment'];
     const shadowTools = ['Relational Pattern'];
     const bodyTools = ['Somatic Practice'];
     const spiritTools = ['Jhana Guide', 'Meditation Finder', 'Consciousness Graph'];
@@ -68,10 +68,6 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
         case 'kegan-assessment':
             wizardName = 'kegan';
             shadowToolType = 'Kegan Stage Assessment';
-            break;
-        case 'role-alignment':
-            wizardName = 'role-alignment';
-            shadowToolType = 'Role Alignment Wizard';
             break;
         // Body Tools
         case 'somatic-generator':

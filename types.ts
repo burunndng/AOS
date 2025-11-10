@@ -254,7 +254,7 @@ export interface PolarityMapDraft extends Partial<PolarityMap> {
 
 export interface IntegratedInsight {
   id: string;
-  mindToolType: 'Bias Detective' | 'Subject-Object Explorer' | 'Perspective-Shifter' | 'Polarity Mapper' | 'Kegan Assessment' | 'Relational Pattern' | 'Role Alignment' | 'Somatic Practice' | 'Jhana Guide' | 'Meditation Finder' | 'Consciousness Graph' | 'Big Mind Process';
+  mindToolType: 'Bias Detective' | 'Subject-Object Explorer' | 'Perspective-Shifter' | 'Polarity Mapper' | 'Kegan Assessment' | 'Relational Pattern' | 'Somatic Practice' | 'Jhana Guide' | 'Meditation Finder' | 'Consciousness Graph' | 'Big Mind Process';
   mindToolSessionId: string;
   mindToolName: string;
   mindToolReport: string;
