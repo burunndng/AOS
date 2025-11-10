@@ -48,23 +48,38 @@ export const generateSynthesis = async (
   synthesisReport: string;
   connections: Array<{ fromZone: number; toZone: number; relationship: string }>;
 }> => {
-  const response = await fetch('/api/mind/eight-zones/synthesize', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      userId,
-      focalQuestion,
-      zoneAnalyses,
-    }),
-  });
+  try {
+    const response = await fetch('/api/mind/eight-zones/synthesize', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        focalQuestion,
+        zoneAnalyses,
+      }),
+    });
 
-  if (!response.ok) {
-    throw new Error(`Failed to generate synthesis: ${response.statusText}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: response.statusText }));
+      const errorMessage = errorData.message || errorData.error || response.statusText;
+      throw new Error(`Failed to generate synthesis: ${errorMessage}`);
+    }
+
+    const data = await response.json();
+
+    // Validate response structure
+    if (!data.blindSpots || !data.novelInsights || !data.recommendations || !data.synthesisReport) {
+      throw new Error('Invalid synthesis response structure: missing required fields');
+    }
+
+    return data;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error generating synthesis';
+    console.error('[8Zones] Synthesis error:', message);
+    throw new Error(message);
   }
-
-  return response.json();
 };
 
 /**

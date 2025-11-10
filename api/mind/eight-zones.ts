@@ -8,7 +8,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { ZoneAnalysis } from '../../types.js';
 
 const ai = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.API_KEY,
+  apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.API_KEY,
 });
 
 const MODEL = 'gemini-2.5-flash-lite';
@@ -36,6 +36,11 @@ export async function enhanceZoneAnalysis(
   console.log(`[8 Zones] Enhancing Zone ${payload.zoneNumber} analysis for focal question: "${payload.focalQuestion}"`);
 
   try {
+    // Validate API key
+    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.API_KEY) {
+      throw new Error('GEMINI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or API_KEY environment variable is not set');
+    }
+
     if (!payload.userInput || payload.userInput.trim().length === 0) {
       throw new Error('userInput is required and cannot be empty');
     }
@@ -123,8 +128,17 @@ export async function synthesizeZones(
   console.log('[8 Zones] Synthesizing all zones for focal question:', payload.focalQuestion);
 
   try {
+    // Validate API key
+    if (!process.env.GEMINI_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.API_KEY) {
+      throw new Error('GEMINI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, or API_KEY environment variable is not set');
+    }
+
     if (!payload.focalQuestion || payload.focalQuestion.trim().length === 0) {
       throw new Error('focalQuestion is required');
+    }
+
+    if (!payload.zoneAnalyses || Object.keys(payload.zoneAnalyses).length === 0) {
+      throw new Error('zoneAnalyses is required and must not be empty');
     }
 
     const zonesSummary = Object.entries(payload.zoneAnalyses)
@@ -170,53 +184,83 @@ ${zonesSummary}
 
 Format your response as a JSON object with keys: blindSpots (array of strings), novelInsights (array of strings), recommendations (array of strings), synthesisReport (string), connections (array of objects with fromZone (number), toZone (number), relationship (string)).`;
 
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            blindSpots: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-            },
-            novelInsights: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-            },
-            recommendations: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-            },
-            synthesisReport: { type: Type.STRING },
-            connections: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  fromZone: { type: Type.NUMBER },
-                  toZone: { type: Type.NUMBER },
-                  relationship: { type: Type.STRING },
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: MODEL,
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              blindSpots: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+              },
+              novelInsights: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+              },
+              recommendations: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+              },
+              synthesisReport: { type: Type.STRING },
+              connections: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    fromZone: { type: Type.NUMBER },
+                    toZone: { type: Type.NUMBER },
+                    relationship: { type: Type.STRING },
+                  },
+                  required: ['fromZone', 'toZone', 'relationship'],
                 },
-                required: ['fromZone', 'toZone', 'relationship'],
               },
             },
+            required: ['blindSpots', 'novelInsights', 'recommendations', 'synthesisReport', 'connections'],
           },
-          required: ['blindSpots', 'novelInsights', 'recommendations', 'synthesisReport', 'connections'],
         },
-      },
-    });
+      });
 
-    const parsed = JSON.parse(response.text) as SynthesizeResponse;
+      if (!response) {
+        throw new Error('No response received from Gemini API');
+      }
+
+      console.log('[8 Zones] Gemini API response received, text length:', response.text?.length || 'unknown');
+    } catch (apiError) {
+      console.error('[8 Zones] Gemini API call failed:', apiError);
+      throw apiError instanceof Error ? apiError : new Error('Failed to call Gemini API');
+    }
+
+    let parsed: SynthesizeResponse;
+    try {
+      parsed = JSON.parse(response.text) as SynthesizeResponse;
+    } catch (parseError) {
+      console.error('[8 Zones] JSON parse error:', parseError);
+      console.error('[8 Zones] Response text:', response.text.substring(0, 500));
+      throw new Error(`Failed to parse synthesis response as JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
+
+    // Validate required fields
+    if (!parsed.blindSpots || !parsed.novelInsights || !parsed.recommendations || !parsed.synthesisReport) {
+      console.error('[8 Zones] Missing required fields in synthesis response:', {
+        hasBlindSpots: !!parsed.blindSpots,
+        hasNovelInsights: !!parsed.novelInsights,
+        hasRecommendations: !!parsed.recommendations,
+        hasSynthesisReport: !!parsed.synthesisReport,
+      });
+      throw new Error('Synthesis response missing required fields');
+    }
 
     return {
-      blindSpots: parsed.blindSpots || [],
-      novelInsights: parsed.novelInsights || [],
-      recommendations: parsed.recommendations || [],
-      synthesisReport: parsed.synthesisReport || '',
-      connections: parsed.connections || [],
+      blindSpots: Array.isArray(parsed.blindSpots) ? parsed.blindSpots : [],
+      novelInsights: Array.isArray(parsed.novelInsights) ? parsed.novelInsights : [],
+      recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
+      synthesisReport: typeof parsed.synthesisReport === 'string' ? parsed.synthesisReport : '',
+      connections: Array.isArray(parsed.connections) ? parsed.connections : [],
     };
   } catch (error) {
     console.error('[8 Zones] Error synthesizing zones:', error);
