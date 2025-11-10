@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import AlchemicalAudioPlayer from './AlchemicalAudioPlayer';
+import { MerkabaIcon } from './MerkabaIcon';
 import { healingAudios, audioCategories } from '../data/healingAudios';
 
 export default function HealingAudios() {
@@ -22,11 +23,14 @@ export default function HealingAudios() {
 
   return (
     <section className="space-y-8">
-      {/* Section Header - Dark and serious */}
-      <div className="space-y-3 mb-8">
-        <h2 className="text-3xl font-semibold font-serif tracking-wide text-amber-100">
-          Healing Audios & Guided Practices
-        </h2>
+      {/* Section Header - Dark and serious with Merkaba */}
+      <div className="space-y-4 mb-8">
+        <div className="flex items-center gap-4">
+          <MerkabaIcon size={48} className="text-amber-900/60" />
+          <h2 className="text-3xl font-semibold font-serif tracking-wide text-amber-100">
+            Healing Audios & Guided Practices
+          </h2>
+        </div>
         <div className="w-12 h-0.5 bg-gradient-to-r from-amber-900 to-transparent" />
         <p className="text-slate-400 text-sm font-mono tracking-wide">
           A collection of transformative audio practices to support your nervous system, ground your presence, regulate your breath, and deepen your connection to yourself.

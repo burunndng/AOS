@@ -15,7 +15,7 @@ export const healingAudios: HealingAudio[] = [
     description: 'A guided practice to develop nervous system resilience through gentle pendulation between sensations.',
     url: 'https://files.catbox.moe/hl3vo9.mp3',
     category: 'nervous-system',
-    symbol: '❂', // Alchemical symbol
+    symbol: '🝅', // Alchemical symbol - essence/vibration
   },
   {
     id: 'grounding-5-4-3-2-1',
@@ -23,7 +23,7 @@ export const healingAudios: HealingAudio[] = [
     description: 'A sensory grounding technique using the 5-4-3-2-1 method to anchor yourself in the present moment.',
     url: 'https://files.catbox.moe/f52h34.mp3',
     category: 'grounding',
-    symbol: '⬇', // Descent/grounding symbol
+    symbol: '🜉', // Alchemical earth symbol
   },
   {
     id: 'coherent-breathing',
@@ -31,7 +31,7 @@ export const healingAudios: HealingAudio[] = [
     description: 'A rhythmic breathing practice to synchronize your breath and cultivate coherence within body and mind.',
     url: 'https://files.catbox.moe/shtgh3.mp3',
     category: 'breathing',
-    symbol: '∿', // Wave/breath symbol
+    symbol: '🜈', // Alchemical air/wind symbol
   },
   {
     id: 'self-hypnosis-esteem',
@@ -39,7 +39,7 @@ export const healingAudios: HealingAudio[] = [
     description: 'A hypnotic journey to strengthen your sense of worth and activate natural confidence from within.',
     url: 'https://files.catbox.moe/0x0nhh.mp3',
     category: 'hypnosis',
-    symbol: '◆', // Inner gem/essence
+    symbol: '🝦', // Alchemical transformation symbol
   },
   {
     id: 'self-hypnosis-home',
@@ -47,7 +47,7 @@ export const healingAudios: HealingAudio[] = [
     description: 'A transformative hypnotic experience to reconnect with your authentic self and inner sanctuary.',
     url: 'https://files.catbox.moe/zkplz4.mp3',
     category: 'hypnosis',
-    symbol: '⬢', // Hexagram/center
+    symbol: '🜌', // Alchemical integration/center symbol
   },
 ];
 
