@@ -3,6 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import OpenAI from 'openai';
 import { BigMindSession, BigMindMessage, BigMindVoice, BigMindInsightSummary, IntegratedInsight, ModuleKey } from '../types.ts';
 import { practices as corePractices } from '../constants.ts';
+import { generateOpenRouterResponse, buildMessagesWithSystem, DEEPSEEK_MODEL } from './openRouterService';
 
 // Initialize the Google AI client
 const googleAI = new GoogleGenAI({ apiKey: process.env.API_KEY! });
@@ -15,7 +16,7 @@ const groq = new OpenAI({
 });
 
 // Provider types
-export type BigMindProvider = 'google' | 'groq';
+export type BigMindProvider = 'google' | 'groq' | 'openrouter';
 
 // Provider configuration
 interface ProviderConfig {
@@ -36,6 +37,12 @@ const PROVIDER_CONFIGS: Record<BigMindProvider, ProviderConfig> = {
   groq: {
     provider: 'groq',
     model: 'openai/gpt-oss-120b',
+    maxTokens: 1000,
+    temperature: 0.7
+  },
+  openrouter: {
+    provider: 'openrouter',
+    model: DEEPSEEK_MODEL,
     maxTokens: 1000,
     temperature: 0.7
   }
@@ -174,6 +181,8 @@ Respond as the Guide. Keep your response to 1-3 sentences, focused on the curren
     // Use the selected provider
     if (provider === 'groq') {
       return await generateGroqResponse(userPrompt, onStreamChunk);
+    } else if (provider === 'openrouter') {
+      return await generateOpenRouterBigMindResponse(userPrompt, onStreamChunk);
     } else {
       return await generateGoogleResponse(userPrompt, onStreamChunk);
     }
@@ -276,7 +285,7 @@ async function generateGroqResponse(
         max_tokens: 1000,
         temperature: 0.7,
       });
-      
+
       const text = response.choices[0]?.message?.content || '';
       return { success: true, text };
     }
@@ -286,6 +295,50 @@ async function generateGroqResponse(
       success: false,
       text: '',
       error: `Groq API error: ${errorMessage}`
+    };
+  }
+}
+
+/**
+ * Generate response using OpenRouter API with DeepSeek
+ */
+async function generateOpenRouterBigMindResponse(
+  userPrompt: string,
+  onStreamChunk?: (chunk: string) => void
+): Promise<BigMindResponseResult> {
+  try {
+    // Prepare messages using the helper function
+    const messages = buildMessagesWithSystem(
+      BIG_MIND_SYSTEM_PROMPT,
+      [{ role: 'user' as const, content: userPrompt }]
+    );
+
+    // Call OpenRouter service with DeepSeek model
+    const response = await generateOpenRouterResponse(
+      messages,
+      onStreamChunk,
+      {
+        model: DEEPSEEK_MODEL,
+        maxTokens: 1000,
+        temperature: 0.7
+      }
+    );
+
+    if (!response.success) {
+      return {
+        success: false,
+        text: '',
+        error: `OpenRouter API error: ${response.error}`
+      };
+    }
+
+    return { success: true, text: response.text };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      success: false,
+      text: '',
+      error: `OpenRouter API error: ${errorMessage}`
     };
   }
 }
