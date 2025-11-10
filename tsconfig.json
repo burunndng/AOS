@@ -30,6 +30,9 @@
     "esm": true,
     "experimentalEsm": true,
     "resolveJsonModule": true,
-    "allowJs": true
+    "allowJs": true,
+    "moduleTypes": {
+      "express": "cjs"
+    }
   }
 }
