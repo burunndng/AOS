@@ -752,6 +752,7 @@ export default function App() {
         setActiveWizard={setActiveWizardAndLink}
         integralBodyPlans={integralBodyPlans}
         planHistory={integralBodyPlanHistory}
+        workoutPrograms={workoutPrograms}
         onLogPlanFeedback={logPlanFeedback}
         getPlanProgress={getPlanProgress}
         onUpdatePlanStatus={updatePlanStatus}

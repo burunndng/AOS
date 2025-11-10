@@ -1,12 +1,13 @@
 import React from 'react';
-import { Activity, CalendarRange } from 'lucide-react';
+import { Activity, CalendarRange, Download, Eye } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
-import { IntegralBodyPlan, PlanHistoryEntry } from '../types.ts';
+import { IntegralBodyPlan, PlanHistoryEntry, WorkoutProgram } from '../types.ts';
 
 interface BodyToolsTabProps {
   setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
   integralBodyPlans?: IntegralBodyPlan[];
   planHistory?: PlanHistoryEntry[];
+  workoutPrograms?: WorkoutProgram[];
   onLogPlanFeedback?: (
     planId: string,
     dayDate: string,
@@ -37,7 +38,7 @@ const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode
   </div>
 );
 
-export default function BodyToolsTab({ setActiveWizard }: BodyToolsTabProps) {
+export default function BodyToolsTab({ setActiveWizard, workoutPrograms = [] }: BodyToolsTabProps) {
   return (
     <div className="space-y-8">
       <header>
@@ -67,6 +68,70 @@ export default function BodyToolsTab({ setActiveWizard }: BodyToolsTabProps) {
           onStart={() => setActiveWizard('somatic')}
         />
       </div>
+
+      {workoutPrograms.length > 0 && (
+        <>
+          <SectionDivider />
+
+          <section>
+            <h2 className="text-2xl font-bold font-mono text-slate-100 mb-4">Saved Workouts</h2>
+            <p className="text-slate-400 mb-6">Your generated workout programs are saved here for easy access and reuse.</p>
+
+            <div className="grid grid-cols-1 gap-4">
+              {workoutPrograms.map((program) => (
+                <div key={program.id} className="bg-slate-800/50 border border-slate-700/80 rounded-lg p-4 hover:border-slate-600/80 transition">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex-grow">
+                      <h3 className="font-semibold text-slate-100">{program.goal || 'Untitled Workout'}</h3>
+                      <p className="text-sm text-slate-400 mt-1">
+                        {program.intensity && `${program.intensity.charAt(0).toUpperCase() + program.intensity.slice(1)} intensity`}
+                        {program.duration && ` • ${program.duration} min`}
+                        {program.focusAreas && program.focusAreas.length > 0 && ` • ${program.focusAreas.join(', ')}`}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Created {new Date(program.createdAt || '').toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        // Could expand to view full details
+                        const textContent = `
+${program.goal || 'Workout Program'}
+
+Focus: ${program.focusAreas?.join(', ') || 'N/A'}
+Intensity: ${program.intensity || 'N/A'}
+Duration: ${program.duration} minutes
+Experience Level: ${program.experienceLevel || 'N/A'}
+
+${program.workoutSessions?.map(s => `${s.name}\n${s.exercises?.map(e => `- ${e.name}`).join('\n')}`).join('\n\n') || 'No sessions'}
+                        `;
+                        downloadAsText(textContent, `Workout-${program.id}`);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-md font-medium text-sm transition whitespace-nowrap"
+                    >
+                      <Download size={16} />
+                      Download
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }
+
+// Helper function to download text
+const downloadAsText = (content: string, filename: string) => {
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
