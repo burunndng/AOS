@@ -1123,3 +1123,106 @@ export interface MemoryReconsolidationDraft extends Partial<MemoryReconsolidatio
   date: string;
 }
 
+export type MemoryReconsolidationStep = 'ONBOARDING' | 'MEMORY_SELECTION' | 'BELIEF_EXTRACTION' | 'CONTRADICTION_MINING';
+
+export interface MemoryReconsolidationSession {
+  id: string;
+  date: string;
+  currentStep: MemoryReconsolidationStep;
+  
+  // ONBOARDING
+  intention?: string;
+  safetyAcknowledged?: boolean;
+  baselineIntensity?: number;
+  
+  // MEMORY_SELECTION
+  memoryTitle?: string;
+  memoryEra?: string;
+  keyEmotions?: string;
+  bodySensations?: string;
+  protectorStrategies?: string;
+  sensoryAnchors?: string;
+  memoryNarrative?: string;
+  
+  // BELIEF_EXTRACTION
+  extractedBeliefs?: ImplicitBelief[];
+  selectedBeliefIds?: string[];
+  beliefExtractionError?: string;
+  
+  // CONTRADICTION_MINING
+  contradictionSeeds?: string[];
+  contradictionInsights?: ContradictionInsight[];
+  juxtapositionPrompts?: string[];
+  integrationGuidance?: string;
+  contradictionMiningError?: string;
+  
+  completedAt?: string;
+}
+
+export interface GroundingOption {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+// 8 Zones of Knowing Types
+export type EightZonesStep = 'ONBOARDING' | 'TOPIC_DEFINITION' | 'ZONE_1' | 'ZONE_2' | 'ZONE_3' | 'ZONE_4' | 'ZONE_5' | 'ZONE_6' | 'ZONE_7' | 'ZONE_8' | 'SYNTHESIS' | 'COMPLETE';
+
+export interface ZoneDefinition {
+  zoneNumber: number;
+  quadrant: 'UL' | 'UR' | 'LL' | 'LR';
+  perspective: 'inside' | 'outside';
+  focus: string; // e.g., "Subjective Experience"
+  keyQuestion: string; // e.g., "What is the direct, first-person experience?"
+  methodologies: string[]; // e.g., ["Phenomenology", "Meditation", "Introspection"]
+  description: string; // Detailed explanation of the zone
+  examples: string[]; // Real-world examples
+}
+
+export interface ZoneAnalysis {
+  zoneNumber: number;
+  zoneFocus: string;
+  userInput: string; // User's reflection/analysis for this zone
+  aiEnhancement?: string; // AI-generated deeper insights
+  keyInsights?: string[]; // Extracted key points
+  generatedAt?: string;
+}
+
+export interface ZoneConnection {
+  fromZone: number;
+  toZone: number;
+  relationship: string; // Describes how these zones relate
+  bidirectional?: boolean;
+}
+
+export interface EightZonesSession {
+  id: string;
+  userId: string;
+  date: string;
+  focalQuestion: string; // The main topic/issue being analyzed
+  focalQuestionContext?: string; // Additional context about the topic
+  currentStep: EightZonesStep;
+
+  // Analyses for each zone
+  zoneAnalyses: Record<number, ZoneAnalysis>; // Key: zone number 1-8, Value: analysis data
+
+  // Connections discovered between zones
+  zoneConnections?: ZoneConnection[];
+
+  // Synthesis data
+  blindSpots?: string[]; // Missing perspectives revealed
+  novelInsights?: string[]; // New understandings discovered
+  recommendations?: string[]; // Actionable recommendations
+  synthesisReport?: string; // Full integrated analysis
+
+  // Session metadata
+  completedAt?: string;
+  draftSavedAt?: string;
+}
+
+export interface EightZonesDraft extends Partial<EightZonesSession> {
+  id?: string;
+  userId: string;
+}
+

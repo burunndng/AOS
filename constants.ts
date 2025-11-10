@@ -1,6 +1,6 @@
 
 // FIX: Corrected import path for types
-import { PracticesData, ModuleInfo, StarterStacksData, ModuleKey, SomaticPracticeType, PracticeTypeInfo, SomaticPreset, GroundingOption } from './types.ts';
+import { PracticesData, ModuleInfo, StarterStacksData, ModuleKey, SomaticPracticeType, PracticeTypeInfo, SomaticPreset, GroundingOption, ZoneDefinition } from './types.ts';
 
 export const practices: PracticesData = {
     body: [
@@ -696,5 +696,126 @@ export const GROUNDING_OPTIONS: GroundingOption[] = [
     name: 'Contact Support',
     description: 'Reach out to a therapist or trusted friend if you need support',
     icon: 'Phone'
+  }
+];
+
+// Alias for Memory Reconsolidation
+export const memoryReconsolidationGroundingOptions = GROUNDING_OPTIONS;
+
+// Integration practices for Memory Reconsolidation
+export const memoryReconsolidationIntegrationOptions = [
+  {
+    practiceId: 'somatic-anchor',
+    practiceName: 'Somatic Anchoring',
+    description: 'Ground the new belief in your body through movement, sensation, or touch',
+    bestFor: ['embodied integration', 'nervous system regulation', 'belief consolidation']
+  },
+  {
+    practiceId: 'cognitive-reframe',
+    practiceName: 'Cognitive Reframing',
+    description: 'Practice thinking in new ways aligned with the emerging belief',
+    bestFor: ['thought pattern change', 'identity shifts', 'perspective work']
+  },
+  {
+    practiceId: 'relational-practice',
+    practiceName: 'Relational Practice',
+    description: 'Embody the new belief in interactions with others',
+    bestFor: ['social integration', 'attachment patterns', 'relational shifts']
+  },
+  {
+    practiceId: 'journaling',
+    practiceName: 'Reflective Journaling',
+    description: 'Write about the belief shift and track insights over time',
+    bestFor: ['cognitive integration', 'tracking progress', 'deepening insights']
+  },
+  {
+    practiceId: 'meditative-practice',
+    practiceName: 'Meditative Practice',
+    description: 'Use meditation to integrate the new belief at a deeper level',
+    bestFor: ['deep integration', 'witnessing patterns', 'inner peace']
+  }
+];
+
+// 8 Zones of Knowing Framework
+export const EIGHT_ZONES: ZoneDefinition[] = [
+  {
+    zoneNumber: 1,
+    quadrant: 'UL',
+    perspective: 'inside',
+    focus: 'Subjective Experience',
+    keyQuestion: 'What is my direct, first-person experience of this?',
+    methodologies: ['Phenomenology', 'Meditation', 'Introspection', 'Personal Reflection'],
+    description: 'Your immediate, felt experience. The subjective awareness and emotions you directly perceive. This is your Zone 1 phenomenological space—the inner world of consciousness itself.',
+    examples: ['Feelings of anxiety about AI', 'Personal awe at breakthrough research', 'Bodily sensations when thinking about the topic']
+  },
+  {
+    zoneNumber: 2,
+    quadrant: 'UL',
+    perspective: 'outside',
+    focus: 'Internal Structures',
+    keyQuestion: 'What psychological or developmental structures shape this experience?',
+    methodologies: ['Developmental Psychology', 'Structuralism', 'Cognitive Science', 'Ego Development'],
+    description: 'The underlying psychological structures, stages, and capacities that shape your experience. How your cognitive and emotional development influences your perception and response.',
+    examples: ['Moral development stages (Kohlberg/Gilligan)', 'Ego development levels (Loevinger)', 'Attachment patterns affecting trust in systems']
+  },
+  {
+    zoneNumber: 3,
+    quadrant: 'UR',
+    perspective: 'inside',
+    focus: 'Internal Processes',
+    keyQuestion: 'What internal self-organizing processes are at play?',
+    methodologies: ['Neuroscience', 'Autopoiesis', 'Systems Biology', 'Neurophenomenology'],
+    description: 'The biological and neurological mechanisms operating beneath consciousness. How your brain, nervous system, and bodily processes self-organize in response to the topic.',
+    examples: ['Neural activation patterns when engaging with the topic', 'Hormonal responses and stress signaling', 'Feedback loops between perception and physiology']
+  },
+  {
+    zoneNumber: 4,
+    quadrant: 'UR',
+    perspective: 'outside',
+    focus: 'Objective Behavior & Data',
+    keyQuestion: 'What is the objective, measurable empirical data?',
+    methodologies: ['Empiricism', 'Behavioral Science', 'Quantitative Research', 'Data Analysis'],
+    description: 'Observable, measurable facts and behaviors. Third-person data that can be verified independently. The "what actually happens" stripped of interpretation.',
+    examples: ['Productivity metrics', 'Error rates', 'Job displacement statistics', 'Performance benchmarks']
+  },
+  {
+    zoneNumber: 5,
+    quadrant: 'LL',
+    perspective: 'inside',
+    focus: 'Cultural Meaning & Values',
+    keyQuestion: 'What shared narratives and intersubjective meanings exist in my culture/group?',
+    methodologies: ['Hermeneutics', 'Cultural Studies', 'Dialogue', 'Interpretive Analysis'],
+    description: 'Shared meanings, values, narratives, and worldviews within a culture or group. The collective story we tell about this topic. Felt sense of "us."',
+    examples: ['Tech utopian vs dystopian narratives', 'Cultural myths about progress', 'Shared fears and aspirations in your community']
+  },
+  {
+    zoneNumber: 6,
+    quadrant: 'LL',
+    perspective: 'outside',
+    focus: 'Cultural Structures & Norms',
+    keyQuestion: 'What observable social norms, rules, and power dynamics exist?',
+    methodologies: ['Anthropology', 'Ethnomethodology', 'Genealogy', 'Cultural Analysis'],
+    description: 'Observable social structures, institutions, norms, rules, and power dynamics. The explicit and implicit "ways we do things" in a society.',
+    examples: ['Historical evolution of norms', 'Social hierarchies and privileges', 'Institutional rules and regulations']
+  },
+  {
+    zoneNumber: 7,
+    quadrant: 'LR',
+    perspective: 'inside',
+    focus: 'System Dynamics & Incentives',
+    keyQuestion: 'What self-organizing system dynamics and incentives drive this?',
+    methodologies: ['Game Theory', 'Social Autopoiesis', 'Complexity Science', 'Network Analysis'],
+    description: 'The internal dynamics, feedback loops, and incentive structures of social systems. How groups self-organize around goals. The "what moves" within the system.',
+    examples: ['Incentive structures in markets', 'Cooperative dynamics in communities', 'Feedback loops in organizations']
+  },
+  {
+    zoneNumber: 8,
+    quadrant: 'LR',
+    perspective: 'outside',
+    focus: 'Systemic Structures & Functions',
+    keyQuestion: 'What macro-systemic structures shape this at the societal level?',
+    methodologies: ['Systems Theory', 'Economics', 'Complexity Science', 'Legal/Policy Analysis'],
+    description: 'Large-scale systemic structures: economic systems, legal frameworks, supply chains, technological infrastructure. The "machine" operating at societal scale.',
+    examples: ['Economic models and markets', 'Legal and regulatory frameworks', 'Global supply chains and networks']
   }
 ];
