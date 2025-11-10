@@ -11,7 +11,7 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.API_KEY,
 });
 
-const MODEL = 'gemini-2.5-flash-lite';
+const MODEL = 'gemini-2.5-flash';
 
 // ============================================
 // ENHANCE ZONE ANALYSIS ENDPOINT
