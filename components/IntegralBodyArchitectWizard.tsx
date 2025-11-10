@@ -270,20 +270,51 @@ export default function IntegralBodyArchitectWizard({
               <h3 className="text-2xl font-bold text-slate-100">Your Integral Week is Locked In</h3>
               <p className="text-slate-400 mt-2">Calendar-ready and ready to hand off to specialist coaches.</p>
             </div>
-            <div className="space-y-3">
-              <button
-                onClick={handleCalendarSync}
-                className="btn-luminous px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2 mx-auto"
-              >
-                <Share2 size={20} /> Sync to Calendar
-              </button>
-              <button
-                onClick={handleExportShoppingList}
-                className="px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2 mx-auto bg-slate-700 hover:bg-slate-600 text-slate-100"
-              >
-                <Download size={20} /> Export Shopping List
-              </button>
-              <p className="text-xs text-slate-500">Tap practices in your daily briefings to launch specialist agents.</p>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-3 justify-center">
+                <button
+                  onClick={handleCalendarSync}
+                  className="btn-luminous px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2"
+                >
+                  <Share2 size={20} /> Sync to Calendar
+                </button>
+                <button
+                  onClick={handleExportShoppingList}
+                  className="px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-100"
+                >
+                  <Download size={20} /> Export Shopping List
+                </button>
+              </div>
+              <div className="border-t border-slate-600 pt-4 mt-4">
+                <p className="text-sm text-slate-400 mb-3">Download your complete plan:</p>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  <button
+                    onClick={() => {
+                      if (generatedPlan) {
+                        const textContent = formatIntegralBodyPlanAsText(generatedPlan);
+                        downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'txt');
+                      }
+                    }}
+                    className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors"
+                  >
+                    <FileText size={18} />
+                    Download as TXT
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (generatedPlan) {
+                        const textContent = formatIntegralBodyPlanAsText(generatedPlan);
+                        downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'pdf');
+                      }
+                    }}
+                    className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors"
+                  >
+                    <Download size={18} />
+                    Download as PDF
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 pt-2">Tap practices in your daily briefings to launch specialist agents.</p>
             </div>
           </div>
         );
@@ -359,44 +390,6 @@ export default function IntegralBodyArchitectWizard({
             </div>
           )}
 
-          {step === 'HANDOFF' && (
-            <div className="flex flex-col gap-3 mt-6 pt-6 border-t border-slate-700">
-              <div className="flex flex-wrap gap-3 justify-center">
-                <button
-                  onClick={() => {
-                    if (generatedPlan) {
-                      const textContent = formatIntegralBodyPlanAsText(generatedPlan);
-                      downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'txt');
-                    }
-                  }}
-                  className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors"
-                >
-                  <FileText size={18} />
-                  Download as TXT
-                </button>
-                <button
-                  onClick={() => {
-                    if (generatedPlan) {
-                      const textContent = formatIntegralBodyPlanAsText(generatedPlan);
-                      downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'pdf');
-                    }
-                  }}
-                  className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors"
-                >
-                  <Download size={18} />
-                  Download as PDF
-                </button>
-              </div>
-              <div className="flex justify-center">
-                <button
-                  onClick={onClose}
-                  className="btn-luminous px-8 py-3 rounded-md font-medium"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
