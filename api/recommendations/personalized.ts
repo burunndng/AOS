@@ -3,10 +3,10 @@
  * Generates context-aware practice recommendations for users
  */
 
-import { generateRecommendationPrompt } from '../rag/generate-prompt.js';
-import { initializeDatabase } from '../lib/db.js';
-import { initializePinecone } from '../lib/pinecone.js';
-import type { GenerationRequest, RecommendationResponse, PersonalizedRecommendation } from '../lib/types.js';
+import { generateRecommendationPrompt } from '../rag/generate-prompt.ts';
+import { initializeDatabase } from '../lib/db.ts';
+import { initializePinecone } from '../lib/pinecone.ts';
+import type { GenerationRequest, RecommendationResponse, PersonalizedRecommendation } from '../lib/types.ts';
 
 /**
  * Generate personalized recommendations for a user

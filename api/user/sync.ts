@@ -3,10 +3,10 @@
  * Synchronizes user sessions with backend and indexes them in Pinecone
  */
 
-import { generateEmbeddingWithMetadata } from '../lib/embeddings.js';
-import { upsertVectors } from '../lib/pinecone.js';
-import { getDatabase, initializeDatabase } from '../lib/db.js';
-import type { SyncPayload, SyncResponse, PineconeVector, PineconeVectorMetadata, UserSessionDocument } from '../lib/types.js';
+import { generateEmbeddingWithMetadata } from '../lib/embeddings.ts';
+import { upsertVectors } from '../lib/pinecone.ts';
+import { getDatabase, initializeDatabase } from '../lib/db.ts';
+import type { SyncPayload, SyncResponse, PineconeVector, PineconeVectorMetadata, UserSessionDocument } from '../lib/types.ts';
 
 /**
  * Sync user session data with backend

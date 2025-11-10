@@ -3,10 +3,10 @@
  * Generates personalized insights from user sessions and context
  */
 
-import { generateInsightPrompt } from '../rag/generate-prompt.js';
-import { initializeDatabase, getDatabase } from '../lib/db.js';
-import { initializePinecone } from '../lib/pinecone.js';
-import type { GenerationRequest, GenerationResponse, UserSession } from '../lib/types.js';
+import { generateInsightPrompt } from '../rag/generate-prompt.ts';
+import { initializeDatabase, getDatabase } from '../lib/db.ts';
+import { initializePinecone } from '../lib/pinecone.ts';
+import type { GenerationRequest, GenerationResponse, UserSession } from '../lib/types.ts';
 
 /**
  * Generate insights from a user session

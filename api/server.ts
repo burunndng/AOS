@@ -7,9 +7,9 @@
 
 import express, { Request, Response, NextFunction, Router } from 'express';
 import cors from 'cors';
-import { initializeDatabase, getDatabase } from './lib/db.js';
-import { initializePinecone, getIndexStats, healthCheck as pineconeHealth } from './lib/pinecone.js';
-import { initializeEmbeddingClient, healthCheck as embeddingsHealth } from './lib/embeddings.js';
+import { initializeDatabase, getDatabase } from './lib/db.ts';
+import { initializePinecone, getIndexStats, healthCheck as pineconeHealth } from './lib/pinecone.ts';
+import { initializeEmbeddingClient, healthCheck as embeddingsHealth } from './lib/embeddings.ts';
 
 // Import endpoint handlers
 import {
@@ -18,7 +18,7 @@ import {
   getStackRecommendations,
   getAssessmentBasedRecommendations,
   healthCheck as recommendationsHealth,
-} from './recommendations/personalized.js';
+} from './recommendations/personalized.ts';
 
 import {
   generateInsights,
@@ -26,14 +26,14 @@ import {
   generateIFSInsights,
   generatePatternInsights,
   healthCheck as insightsHealth,
-} from './insights/generate.js';
+} from './insights/generate.ts';
 
 import {
   personalizePractice,
   getSuggestedCustomizations,
   saveCustomizedPractice,
   healthCheck as practicesHealth,
-} from './practices/personalize.js';
+} from './practices/personalize.ts';
 
 import {
   syncUserSession,
@@ -41,20 +41,20 @@ import {
   getUserSyncStatus,
   deleteUserData,
   healthCheck as syncHealth,
-} from './user/sync.js';
+} from './user/sync.ts';
 
 import {
   extractBeliefsFromMemory,
   mineContradictions,
   completeSession,
   healthCheck as shadowHealth,
-} from './shadow/memory-reconsolidation.js';
+} from './shadow/memory-reconsolidation.ts';
 
 import {
   enhanceZoneAnalysis,
   synthesizeZones,
   submitSessionCompletion,
-} from './mind/eight-zones.js';
+} from './mind/eight-zones.ts';
 
 // ============================================
 // SERVER SETUP

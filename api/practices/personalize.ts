@@ -3,9 +3,9 @@
  * Personalizes practice instructions based on user context and preferences
  */
 
-import { generatePersonalizationPrompt } from '../rag/generate-prompt.js';
-import { getDatabase } from '../lib/db.js';
-import type { GenerationRequest, GenerationResponse } from '../lib/types.js';
+import { generatePersonalizationPrompt } from '../rag/generate-prompt.ts';
+import { getDatabase } from '../lib/db.ts';
+import type { GenerationRequest, GenerationResponse } from '../lib/types.ts';
 
 /**
  * Personalize a practice for a specific user
