@@ -72,3 +72,27 @@ export async function mineContradictions(
 
   return handleResponse<MineContradictionsResponse>(response);
 }
+
+export interface SubmitSessionCompletionPayload {
+  sessionId: string;
+  userId: string;
+  finalBeliefs: ImplicitBelief[];
+  contradictionInsights: ContradictionInsight[];
+  personalReflection: string;
+  commitments: string[];
+  timestamp: Date;
+}
+
+export async function submitSessionCompletion(
+  payload: SubmitSessionCompletionPayload,
+): Promise<{ success: boolean; sessionId: string }> {
+  const response = await fetch(`${BASE_URL}/complete`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse<{ success: boolean; sessionId: string }>(response);
+}

@@ -699,6 +699,43 @@ export const GROUNDING_OPTIONS: GroundingOption[] = [
   }
 ];
 
+// Alias for Memory Reconsolidation
+export const memoryReconsolidationGroundingOptions = GROUNDING_OPTIONS;
+
+// Integration practices for Memory Reconsolidation
+export const memoryReconsolidationIntegrationOptions = [
+  {
+    practiceId: 'somatic-anchor',
+    practiceName: 'Somatic Anchoring',
+    description: 'Ground the new belief in your body through movement, sensation, or touch',
+    bestFor: ['embodied integration', 'nervous system regulation', 'belief consolidation']
+  },
+  {
+    practiceId: 'cognitive-reframe',
+    practiceName: 'Cognitive Reframing',
+    description: 'Practice thinking in new ways aligned with the emerging belief',
+    bestFor: ['thought pattern change', 'identity shifts', 'perspective work']
+  },
+  {
+    practiceId: 'relational-practice',
+    practiceName: 'Relational Practice',
+    description: 'Embody the new belief in interactions with others',
+    bestFor: ['social integration', 'attachment patterns', 'relational shifts']
+  },
+  {
+    practiceId: 'journaling',
+    practiceName: 'Reflective Journaling',
+    description: 'Write about the belief shift and track insights over time',
+    bestFor: ['cognitive integration', 'tracking progress', 'deepening insights']
+  },
+  {
+    practiceId: 'meditative-practice',
+    practiceName: 'Meditative Practice',
+    description: 'Use meditation to integrate the new belief at a deeper level',
+    bestFor: ['deep integration', 'witnessing patterns', 'inner peace']
+  }
+];
+
 // 8 Zones of Knowing Framework
 export const EIGHT_ZONES: ZoneDefinition[] = [
   {
