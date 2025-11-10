@@ -288,61 +288,100 @@ const downloadAsText = (content: string, filename: string) => {
 };
 
 /**
- * Download as PDF (simple format using text)
- * For a more robust PDF, consider adding a library like jsPDF or pdfkit
+ * Download as PDF using html2pdf library
  */
 const downloadAsPDF = (content: string, filename: string) => {
-  // For now, we'll create a simple PDF-like format using a library if available
-  // Otherwise, fallback to text
   try {
-    // Try to use jsPDF if available, otherwise fallback to text
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    script.onload = () => {
-      const element = document.createElement('pre');
-      element.style.whiteSpace = 'pre-wrap';
-      element.style.wordWrap = 'break-word';
-      element.style.fontFamily = 'monospace';
-      element.style.fontSize = '11px';
-      element.style.padding = '20px';
-      element.style.margin = '0';
-      element.style.width = '100%';
-      element.textContent = content;
+    // Create a script loader function that returns a promise
+    const loadScript = (src: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        // Check if script is already loaded
+        const existingScript = document.querySelector(`script[src="${src}"]`);
+        if (existingScript && (window as any).html2pdf) {
+          resolve();
+          return;
+        }
 
-      // IMPORTANT: Add element to DOM so html2pdf can render it fully
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.width = '210mm'; // A4 width
-      container.appendChild(element);
-      document.body.appendChild(container);
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
 
-      const opt = {
-        margin: 10,
-        filename: `${filename}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
-      };
+        script.onload = () => {
+          // Give the library a moment to initialize
+          setTimeout(resolve, 100);
+        };
 
-      // @ts-ignore
-      html2pdf()
-        .set(opt)
-        .from(element)
-        .save()
-        .finally(() => {
-          // Clean up: remove the temporary element from DOM
-          document.body.removeChild(container);
-        });
+        script.onerror = () => {
+          reject(new Error('Failed to load html2pdf library'));
+        };
+
+        document.head.appendChild(script);
+      });
     };
-    // Fallback if CDN fails
-    script.onerror = () => {
-      console.warn('PDF library not available, downloading as TXT instead');
-      downloadAsText(content, filename);
-    };
-    document.head.appendChild(script);
+
+    // Load html2pdf and then generate the PDF
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js')
+      .then(() => {
+        // Create the element to convert
+        const element = document.createElement('div');
+        element.style.padding = '20mm';
+        element.style.fontFamily = 'monospace';
+        element.style.fontSize = '11px';
+        element.style.whiteSpace = 'pre-wrap';
+        element.style.wordWrap = 'break-word';
+        element.style.lineHeight = '1.4';
+        element.textContent = content;
+
+        // Add element to DOM so html2pdf can render it
+        const container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '-10000px';
+        container.style.top = '-10000px';
+        container.style.width = '210mm';
+        container.appendChild(element);
+        document.body.appendChild(container);
+
+        // Configure PDF options
+        const options = {
+          margin: [10, 10, 10, 10],
+          filename: `${filename}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+        };
+
+        // Generate PDF
+        const html2pdfLib = (window as any).html2pdf;
+        if (!html2pdfLib) {
+          throw new Error('html2pdf library not properly loaded');
+        }
+
+        // Execute html2pdf with proper error handling
+        html2pdfLib()
+          .set(options)
+          .from(element)
+          .save()
+          .catch((error: any) => {
+            console.error('Error generating PDF:', error);
+            // Fall back to text download
+            document.body.removeChild(container);
+            downloadAsText(content, filename);
+          })
+          .finally(() => {
+            // Clean up the temporary element after a delay
+            setTimeout(() => {
+              if (document.body.contains(container)) {
+                document.body.removeChild(container);
+              }
+            }, 1000);
+          });
+      })
+      .catch((error) => {
+        console.warn('PDF library not available, downloading as TXT instead:', error);
+        downloadAsText(content, filename);
+      });
   } catch (e) {
-    console.warn('Error loading PDF library, downloading as TXT instead');
+    console.warn('Error initiating PDF download, downloading as TXT instead:', e);
     downloadAsText(content, filename);
   }
 };
