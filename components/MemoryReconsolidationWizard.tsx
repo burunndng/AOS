@@ -13,8 +13,8 @@ import {
   IntegrationChoiceType
 } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Play, Pause, Download, Copy, Search, CheckCircle } from 'lucide-react';
-import { extractImplicitBeliefs, mineContradictions, submitSessionCompletion } from '../services/memoryReconsolidationService.ts';
-import { memoryReconsolidationIntegrationOptions, memoryReconsolidationGroundingOptions } from '../constants.ts';
+import { extractImplicitBeliefs, mineContradictions } from '../services/memoryReconsolidationService.ts';
+import { GROUNDING_OPTIONS } from '../constants.ts';
 
 interface MemoryReconsolidationWizardProps {
   onClose: () => void;
@@ -35,7 +35,7 @@ const createBaseSession = (): MemoryReconsolidationSession => ({
   implicitBeliefs: [],
   contradictionInsights: [],
   juxtapositionCycles: [],
-  groundingOptions: memoryReconsolidationGroundingOptions,
+  groundingOptions: GROUNDING_OPTIONS,
   integrationSelections: [],
   baselineIntensity: 5,
 });
@@ -374,7 +374,14 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const filteredPractices = memoryReconsolidationIntegrationOptions.filter(p =>
+  const integrationOptions = [
+    { practiceId: 'meditation', practiceName: 'Daily Meditation', description: 'Mindful awareness practice', bestFor: ['grounding', 'awareness'] },
+    { practiceId: 'expressive-writing', practiceName: 'Expressive Writing', description: 'Process emotions through writing', bestFor: ['emotional-regulation', 'integration'] },
+    { practiceId: 'loving-kindness', practiceName: 'Loving-Kindness Meditation', description: 'Cultivate self-compassion', bestFor: ['compassion', 'self-acceptance'] },
+    { practiceId: 'coherent-breathing', practiceName: 'Coherent Breathing', description: 'Regulate nervous system through breath', bestFor: ['regulation', 'grounding'] },
+  ];
+  
+  const filteredPractices = integrationOptions.filter(p =>
     p.practiceName.toLowerCase().includes(searchFilter.toLowerCase()) ||
     p.description.toLowerCase().includes(searchFilter.toLowerCase())
   );
