@@ -472,6 +472,7 @@ export interface RelationalPatternSession {
   date: string;
   conversation: RelationalPatternMessage[];
   relationships: RelationshipContext[];
+  attachmentStyle?: 'secure' | 'anxious' | 'avoidant' | 'fearful' | null;
   analysis?: {
     corePatterns: string[]; // Recurring themes across relationships
     reactiveSignatures: string[]; // How reactivity shows up (withdrawal, anger, people-pleasing, etc.)
