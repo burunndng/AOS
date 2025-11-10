@@ -82,17 +82,31 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Initialize services middleware (runs once on first request)
 let servicesInitialized = false;
+let pineconeInitialized = false;
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   if (!servicesInitialized) {
     try {
       console.log('[Server] Initializing services on first request...');
       await initializeDatabase();
-      await initializePinecone();
       initializeEmbeddingClient();
       servicesInitialized = true;
-      console.log('[Server] ✓ All services initialized');
+      console.log('[Server] ✓ Core services initialized');
+
+      // Initialize Pinecone asynchronously without blocking
+      if (!pineconeInitialized) {
+        initializePinecone()
+          .then(() => {
+            pineconeInitialized = true;
+            console.log('[Server] ✓ Pinecone initialized');
+          })
+          .catch((error) => {
+            console.error('[Server] Failed to initialize Pinecone:', error);
+            console.log('[Server] Using mock Pinecone for development');
+            pineconeInitialized = true;
+          });
+      }
     } catch (error) {
-      console.error('[Server] Failed to initialize services:', error);
+      console.error('[Server] Failed to initialize core services:', error);
       // Continue anyway - some endpoints might still work
     }
   }
