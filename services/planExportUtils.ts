@@ -147,39 +147,55 @@ export const formatWorkoutProgramAsText = (program: WorkoutProgram): string => {
   lines.push('═══════════════════════════════════════════════════════════');
   lines.push('');
 
-  if (program.goal) lines.push(`Goal: ${program.goal}`);
-  if (program.focusAreas && program.focusAreas.length > 0) {
-    lines.push(`Focus Areas: ${program.focusAreas.join(', ')}`);
+  // Program title and summary
+  if (program.title) lines.push(`Title: ${program.title}`);
+  if (program.date) lines.push(`Date: ${new Date(program.date).toLocaleDateString()}`);
+  if (program.summary) {
+    lines.push('');
+    lines.push('PROGRAM SUMMARY:');
+    lines.push(program.summary);
   }
-  if (program.intensity) lines.push(`Intensity Level: ${program.intensity}`);
-  if (program.duration) lines.push(`Duration: ${program.duration} minutes`);
-  if (program.experienceLevel) lines.push(`Experience Level: ${program.experienceLevel}`);
   lines.push('');
 
-  // Workout Sessions
-  if (program.workoutSessions && program.workoutSessions.length > 0) {
+  // Personalization Notes
+  if (program.personalizationNotes) {
+    lines.push('───────────────────────────────────────────────────────────');
+    lines.push('PERSONALIZATION NOTES');
+    lines.push('───────────────────────────────────────────────────────────');
+    lines.push(program.personalizationNotes);
+    lines.push('');
+  }
+
+  // Workout Sessions - FIXED: use 'workouts' not 'workoutSessions'
+  if (program.workouts && program.workouts.length > 0) {
     lines.push('───────────────────────────────────────────────────────────');
     lines.push('WORKOUT SESSIONS');
     lines.push('───────────────────────────────────────────────────────────');
 
-    program.workoutSessions.forEach((session, sessionIdx) => {
+    program.workouts.forEach((workout, workoutIdx) => {
       lines.push('');
-      lines.push(`SESSION ${sessionIdx + 1}: ${session.name}`);
-      lines.push(`Duration: ${session.duration} minutes`);
-      if (session.focusArea) lines.push(`Focus: ${session.focusArea}`);
+      lines.push(`SESSION ${workoutIdx + 1}: ${workout.name}`);
+      lines.push(`Intensity: ${workout.intensity} | Duration: ${workout.duration} minutes | Difficulty: ${workout.difficulty}`);
+      if (workout.muscleGroupsFocused && workout.muscleGroupsFocused.length > 0) {
+        lines.push(`Muscle Groups: ${workout.muscleGroupsFocused.join(', ')}`);
+      }
+      if (workout.caloriesBurned) {
+        lines.push(`Estimated Calories Burned: ${workout.caloriesBurned}`);
+      }
       lines.push('');
 
       // Warmup
-      if (session.warmup) {
+      if (workout.warmup) {
         lines.push('WARMUP:');
-        lines.push(session.warmup);
+        lines.push(`${workout.warmup.name} (${workout.warmup.duration} minutes)`);
+        lines.push(workout.warmup.description);
         lines.push('');
       }
 
       // Main Exercises
-      if (session.exercises && session.exercises.length > 0) {
-        lines.push('MAIN EXERCISES:');
-        session.exercises.forEach((exercise, exIdx) => {
+      if (workout.exercises && workout.exercises.length > 0) {
+        lines.push('EXERCISES:');
+        workout.exercises.forEach((exercise, exIdx) => {
           lines.push(`  ${exIdx + 1}. ${exercise.name}`);
           if (exercise.sets && exercise.reps) {
             lines.push(`     Sets: ${exercise.sets} | Reps: ${exercise.reps}`);
@@ -193,8 +209,8 @@ export const formatWorkoutProgramAsText = (program: WorkoutProgram): string => {
           if (exercise.restSeconds) {
             lines.push(`     Rest: ${exercise.restSeconds} seconds`);
           }
-          if (exercise.formGuidance) {
-            lines.push(`     Form: ${exercise.formGuidance}`);
+          if (exercise.formGuidance && exercise.formGuidance.length > 0) {
+            lines.push(`     Form: ${exercise.formGuidance.join(' | ')}`);
           }
           if (exercise.modifications && exercise.modifications.length > 0) {
             lines.push(`     Modifications: ${exercise.modifications.join(', ')}`);
@@ -204,34 +220,37 @@ export const formatWorkoutProgramAsText = (program: WorkoutProgram): string => {
       }
 
       // Cooldown
-      if (session.cooldown) {
+      if (workout.cooldown) {
         lines.push('COOLDOWN:');
-        lines.push(session.cooldown);
+        lines.push(`${workout.cooldown.name} (${workout.cooldown.duration} minutes)`);
+        lines.push(workout.cooldown.description);
         lines.push('');
       }
 
       // Somatic Guidance
-      if (session.somaticGuidance) {
+      if (workout.somaticGuidance) {
         lines.push('SOMATIC GUIDANCE:');
-        lines.push(session.somaticGuidance);
+        lines.push(workout.somaticGuidance);
         lines.push('');
       }
 
       // Notes
-      if (session.notes) {
+      if (workout.notes) {
         lines.push('NOTES:');
-        lines.push(session.notes);
+        lines.push(workout.notes);
         lines.push('');
       }
     });
   }
 
   // Progression Recommendations
-  if (program.progressionRecommendations) {
+  if (program.progressionRecommendations && program.progressionRecommendations.length > 0) {
     lines.push('───────────────────────────────────────────────────────────');
     lines.push('PROGRESSION RECOMMENDATIONS');
     lines.push('───────────────────────────────────────────────────────────');
-    lines.push(program.progressionRecommendations);
+    program.progressionRecommendations.forEach((rec, i) => {
+      lines.push(`${i + 1}. ${rec}`);
+    });
     lines.push('');
   }
 
@@ -269,61 +288,100 @@ const downloadAsText = (content: string, filename: string) => {
 };
 
 /**
- * Download as PDF (simple format using text)
- * For a more robust PDF, consider adding a library like jsPDF or pdfkit
+ * Download as PDF using html2pdf library
  */
 const downloadAsPDF = (content: string, filename: string) => {
-  // For now, we'll create a simple PDF-like format using a library if available
-  // Otherwise, fallback to text
   try {
-    // Try to use jsPDF if available, otherwise fallback to text
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-    script.onload = () => {
-      const element = document.createElement('pre');
-      element.style.whiteSpace = 'pre-wrap';
-      element.style.wordWrap = 'break-word';
-      element.style.fontFamily = 'monospace';
-      element.style.fontSize = '11px';
-      element.style.padding = '20px';
-      element.style.margin = '0';
-      element.style.width = '100%';
-      element.textContent = content;
+    // Create a script loader function that returns a promise
+    const loadScript = (src: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        // Check if script is already loaded
+        const existingScript = document.querySelector(`script[src="${src}"]`);
+        if (existingScript && (window as any).html2pdf) {
+          resolve();
+          return;
+        }
 
-      // IMPORTANT: Add element to DOM so html2pdf can render it fully
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.width = '210mm'; // A4 width
-      container.appendChild(element);
-      document.body.appendChild(container);
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
 
-      const opt = {
-        margin: 10,
-        filename: `${filename}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
-      };
+        script.onload = () => {
+          // Give the library a moment to initialize
+          setTimeout(resolve, 100);
+        };
 
-      // @ts-ignore
-      html2pdf()
-        .set(opt)
-        .from(element)
-        .save()
-        .finally(() => {
-          // Clean up: remove the temporary element from DOM
-          document.body.removeChild(container);
-        });
+        script.onerror = () => {
+          reject(new Error('Failed to load html2pdf library'));
+        };
+
+        document.head.appendChild(script);
+      });
     };
-    // Fallback if CDN fails
-    script.onerror = () => {
-      console.warn('PDF library not available, downloading as TXT instead');
-      downloadAsText(content, filename);
-    };
-    document.head.appendChild(script);
+
+    // Load html2pdf and then generate the PDF
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js')
+      .then(() => {
+        // Create the element to convert
+        const element = document.createElement('div');
+        element.style.padding = '20mm';
+        element.style.fontFamily = 'monospace';
+        element.style.fontSize = '11px';
+        element.style.whiteSpace = 'pre-wrap';
+        element.style.wordWrap = 'break-word';
+        element.style.lineHeight = '1.4';
+        element.textContent = content;
+
+        // Add element to DOM so html2pdf can render it
+        const container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '-10000px';
+        container.style.top = '-10000px';
+        container.style.width = '210mm';
+        container.appendChild(element);
+        document.body.appendChild(container);
+
+        // Configure PDF options
+        const options = {
+          margin: [10, 10, 10, 10],
+          filename: `${filename}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+        };
+
+        // Generate PDF
+        const html2pdfLib = (window as any).html2pdf;
+        if (!html2pdfLib) {
+          throw new Error('html2pdf library not properly loaded');
+        }
+
+        // Execute html2pdf with proper error handling
+        html2pdfLib()
+          .set(options)
+          .from(element)
+          .save()
+          .catch((error: any) => {
+            console.error('Error generating PDF:', error);
+            // Fall back to text download
+            document.body.removeChild(container);
+            downloadAsText(content, filename);
+          })
+          .finally(() => {
+            // Clean up the temporary element after a delay
+            setTimeout(() => {
+              if (document.body.contains(container)) {
+                document.body.removeChild(container);
+              }
+            }, 1000);
+          });
+      })
+      .catch((error) => {
+        console.warn('PDF library not available, downloading as TXT instead:', error);
+        downloadAsText(content, filename);
+      });
   } catch (e) {
-    console.warn('Error loading PDF library, downloading as TXT instead');
+    console.warn('Error initiating PDF download, downloading as TXT instead:', e);
     downloadAsText(content, filename);
   }
 };
