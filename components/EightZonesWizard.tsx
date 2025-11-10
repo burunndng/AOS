@@ -142,7 +142,12 @@ export default function EightZonesWizard({
       const currentIndex = STEPS.indexOf(session.currentStep);
       let nextStep = STEPS[currentIndex + 1] || session.currentStep;
 
-      if (session.currentStep === 'TOPIC_DEFINITION') {
+      if (session.currentStep === 'ONBOARDING') {
+        // Move from onboarding to topic definition
+        updateSession({
+          currentStep: nextStep,
+        });
+      } else if (session.currentStep === 'TOPIC_DEFINITION') {
         // Save focal question and move to Zone 1
         updateSession({
           focalQuestion: topicInput,
