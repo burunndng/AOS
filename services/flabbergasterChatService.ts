@@ -58,7 +58,8 @@ export async function generateFlabbergasterResponse(
       {
         model: DEEPSEEK_MODEL,
         maxTokens: 500,
-        temperature: 0.95 // Higher temperature for more creative/mystical responses
+        temperature: 0.95, // Higher temperature for more creative/mystical responses
+        preset: '@preset/gddeep'
       }
     );
 

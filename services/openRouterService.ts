@@ -21,6 +21,7 @@ export interface OpenRouterOptions {
   maxTokens?: number;
   temperature?: number;
   systemPrompt?: string;
+  preset?: string;
 }
 
 interface ChatResponse {
@@ -50,7 +51,8 @@ export async function generateOpenRouterResponse(
     const {
       model = DEEPSEEK_MODEL,
       maxTokens = 1000,
-      temperature = 0.7
+      temperature = 0.7,
+      preset
     } = options;
 
     // Use streaming if callback provided
@@ -61,6 +63,7 @@ export async function generateOpenRouterResponse(
         max_tokens: maxTokens,
         temperature,
         stream: true,
+        ...(preset ? { preset } : {}),
       });
 
       let fullText = '';
@@ -79,6 +82,7 @@ export async function generateOpenRouterResponse(
         messages,
         max_tokens: maxTokens,
         temperature,
+        ...(preset ? { preset } : {}),
       });
 
       const text = response.choices[0]?.message?.content || '';
