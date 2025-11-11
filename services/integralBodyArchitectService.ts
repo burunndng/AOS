@@ -173,16 +173,25 @@ IMPORTANT: Return ONLY valid JSON matching the response structure. Do not includ
       maxTokens: 4000,
       temperature: 0.7
     });
+    console.log('[IntegralBodyArchitect] Starting plan generation with OpenRouter...');
     response = await Promise.race([apiPromise, timeoutPromise]);
+    console.log('[IntegralBodyArchitect] Plan generation completed');
   } catch (error) {
     if (error instanceof Error && error.message.includes('timed out')) {
+      console.error('[IntegralBodyArchitect] Plan generation timed out');
       throw error;
     }
-    throw new Error(`Failed to generate plan: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[IntegralBodyArchitect] Plan generation failed:', errorMsg);
+    throw new Error(`Failed to generate plan: ${errorMsg}`);
   }
 
   if (!response.success) {
-    throw new Error(`Failed to generate plan: ${response.error || 'Unknown error'}`);
+    const errorMsg = response.error || 'Unknown error';
+    if (errorMsg.includes('API key')) {
+      throw new Error(`OpenRouter API key not configured. Please add OPENROUTER_API_KEY to your .env file.`);
+    }
+    throw new Error(`Failed to generate plan: ${errorMsg}`);
   }
 
   let planData: LLMPlanGenerationResponse;
