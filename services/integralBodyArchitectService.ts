@@ -242,7 +242,7 @@ const RESPONSE_SCHEMA = {
 };
 
 export async function generateIntegralWeeklyPlan(input: GeneratePlanInput): Promise<IntegralBodyPlan> {
-  const provider = input.provider || 'google';
+  const provider = input.provider || 'openrouter';
 
   if (provider === 'openrouter') {
     return await generateIntegralWeeklyPlanOpenRouter(input);
