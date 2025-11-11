@@ -10,13 +10,6 @@
       "maxDuration": 60
     }
   },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      "dest": "/api/server.ts"
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
