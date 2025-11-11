@@ -545,38 +545,47 @@ export function createBigMindIntegratedInsight(
  */
 export function getAvailableProviders(): { provider: BigMindProvider; available: boolean; error?: string }[] {
   const providers: { provider: BigMindProvider; available: boolean; error?: string }[] = [];
-  
+
   // Check Google provider
   if (process.env.API_KEY) {
     providers.push({ provider: 'google', available: true });
   } else {
     providers.push({ provider: 'google', available: false, error: 'API_KEY environment variable not set' });
   }
-  
+
   // Check Groq provider
   if (process.env.GROQ_API_KEY) {
     providers.push({ provider: 'groq', available: true });
   } else {
     providers.push({ provider: 'groq', available: false, error: 'GROQ_API_KEY environment variable not set' });
   }
-  
+
+  // Check OpenRouter provider
+  if (process.env.OPENROUTER_API_KEY) {
+    providers.push({ provider: 'openrouter', available: true });
+  } else {
+    providers.push({ provider: 'openrouter', available: false, error: 'OPENROUTER_API_KEY environment variable not set' });
+  }
+
   return providers;
 }
 
 /**
- * Get the best available provider (prefers Groq for speed)
+ * Get the best available provider (prefers Groq for speed, then Google, then OpenRouter)
  */
 export function getBestProvider(): BigMindProvider {
   const providers = getAvailableProviders();
   const available = providers.filter(p => p.available);
-  
-  // Prefer Groq if available (faster), otherwise use Google
+
+  // Prefer Groq if available (faster), then Google, then OpenRouter
   if (available.some(p => p.provider === 'groq')) {
     return 'groq';
   } else if (available.some(p => p.provider === 'google')) {
     return 'google';
+  } else if (available.some(p => p.provider === 'openrouter')) {
+    return 'openrouter';
   }
-  
+
   // Fallback to Google even if API key might be missing
   return 'google';
 }
