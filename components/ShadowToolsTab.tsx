@@ -87,14 +87,15 @@ export default function ShadowToolsTab({
           onResume={() => onStartIFS(draftIFSSession?.linkedInsightId)} // Pass linkedInsightId if resuming
           hasDraft={!!draftIFSSession}
         />
-        <ToolCard
+        {/* DISABLED: Memory Reconsolidation - keeping code for future reference */}
+        {/* <ToolCard
           icon={<Brain size={28} className="text-emerald-400"/>}
           title="Memory Reconsolidation"
           description="Unwind implicit beliefs by juxtaposing old truths with lived contradictions, then anchor the shift."
           onStart={() => onStartMemoryRecon()}
           onResume={() => onStartMemoryRecon(draftMemoryRecon?.linkedInsightId)}
           hasDraft={!!draftMemoryRecon}
-        />
+        /> */}
         <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6 flex flex-col lg:col-span-3">
           <div className="flex items-center gap-4 mb-3">
             <MessageCircle size={32} className="text-neutral-400"/>
@@ -115,7 +116,8 @@ export default function ShadowToolsTab({
         </div>
       </div>
 
-      {memoryReconHistory.length > 0 && (
+      {/* DISABLED: Memory Reconsolidation history display - keeping for future reference */}
+      {/* {memoryReconHistory.length > 0 && (
         <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-semibold text-slate-100">Recent Memory Reconsolidation Sessions</h3>
@@ -154,7 +156,7 @@ export default function ShadowToolsTab({
             })}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

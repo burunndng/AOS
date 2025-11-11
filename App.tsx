@@ -994,7 +994,8 @@ export default function App() {
             onClose={() => setActiveWizard(null)}
           />
         );
-      case 'memory-reconsolidation':
+      // DISABLED: Memory Reconsolidation - keeping code for future reference
+      /* case 'memory-reconsolidation':
         return (
           <MemoryReconsolidationWizard
             onClose={() => setActiveWizard(null)}
@@ -1003,7 +1004,7 @@ export default function App() {
             setDraft={setDraftMemoryRecon}
             userId={userId}
           />
-        );
+        ); */
       default:
         return null;
     }
