@@ -198,15 +198,37 @@ IMPORTANT: Return ONLY valid JSON matching the response structure. Do not includ
   try {
     // Clean up the response text by removing markdown code blocks if present
     let jsonText = response.text.trim();
+    console.log('[IntegralBodyArchitect] Raw response preview:', jsonText.substring(0, 200));
+
     if (jsonText.startsWith('```json')) {
       jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
     } else if (jsonText.startsWith('```')) {
       jsonText = jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '');
     }
     planData = JSON.parse(jsonText);
+    console.log('[IntegralBodyArchitect] Parsed JSON successfully, keys:', Object.keys(planData));
   } catch (error) {
+    console.error('[IntegralBodyArchitect] JSON parse error:', error);
     throw new Error('Failed to parse plan response. Please try again.');
   }
+
+  // Validate required fields
+  if (!planData.days) {
+    console.error('[IntegralBodyArchitect] Missing "days" field in response');
+    throw new Error('Plan response missing required "days" field. Please try again.');
+  }
+
+  if (!Array.isArray(planData.days)) {
+    console.error('[IntegralBodyArchitect] "days" is not an array:', typeof planData.days);
+    throw new Error('Plan response "days" field is not an array. Please try again.');
+  }
+
+  if (planData.days.length === 0) {
+    console.error('[IntegralBodyArchitect] "days" array is empty');
+    throw new Error('Plan response has no days. Please try again.');
+  }
+
+  console.log(`[IntegralBodyArchitect] Processing ${planData.days.length} days`);
 
   const now = new Date();
   const monday = getNextMonday(now);
