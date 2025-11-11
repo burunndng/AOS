@@ -1,9 +1,8 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { 
+import {
   IntegralBodyPlan,
   DayPlan,
-  YangConstraints, 
-  YinPreferences, 
+  YangConstraints,
+  YinPreferences,
   YinPracticeDetail,
   HistoricalComplianceSummary,
   PlanSynthesisMetadata,
@@ -11,8 +10,7 @@ import {
   PersonalizationSummary
 } from '../types.ts';
 import { buildPersonalizationPromptInsertion } from './integralBodyPersonalization.ts';
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+import { generateOpenRouterResponse, buildMessagesWithSystem, OpenRouterMessage, DEFAULT_MODEL } from './openRouterService.ts';
 
 interface GeneratePlanInput {
   goalStatement: string;
@@ -33,23 +31,23 @@ interface LLMPlanGenerationResponse {
     workoutDays: number;
     yinPracticeMinutes: number;
   };
-  days: {
+  days: Array<{
     dayName: string;
     summary: string;
     yangYinBalance?: string;
     constraintResolution?: string;
     workout?: {
       name: string;
-      exercises: {
+      exercises: Array<{
         name: string;
         sets: number;
         reps: string;
         notes?: string;
-      }[];
+      }>;
       duration: number;
       notes?: string;
     };
-    yinPractices: {
+    yinPractices: Array<{
       name: string;
       practiceType: string;
       duration: number;
@@ -58,7 +56,7 @@ interface LLMPlanGenerationResponse {
       instructions: string[];
       synergyReason?: string;
       schedulingConfidence?: number;
-    }[];
+    }>;
     nutrition: {
       breakfast: { description: string; protein: number };
       lunch: { description: string; protein: number };
@@ -70,7 +68,7 @@ interface LLMPlanGenerationResponse {
     };
     sleepHygiene: string[];
     notes?: string;
-  }[];
+  }>;
   shoppingList: string[];
   synergyScoring: {
     yangYinPairingScore: number;
@@ -78,154 +76,6 @@ interface LLMPlanGenerationResponse {
     overallIntegrationScore: number;
   };
 }
-
-// Pre-create the response schema to avoid recreating it on every call
-const RESPONSE_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    weekSummary: { type: Type.STRING },
-    constraintNotes: { type: Type.STRING },
-    fallbackOptions: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING }
-    },
-    schedulingConfidence: { type: Type.NUMBER },
-    dailyTargets: {
-      type: Type.OBJECT,
-      properties: {
-        proteinGrams: { type: Type.NUMBER },
-        sleepHours: { type: Type.NUMBER },
-        workoutDays: { type: Type.NUMBER },
-        yinPracticeMinutes: { type: Type.NUMBER }
-      },
-      required: ['proteinGrams', 'sleepHours', 'workoutDays', 'yinPracticeMinutes']
-    },
-    days: {
-      type: Type.ARRAY,
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          dayName: { type: Type.STRING },
-          summary: { type: Type.STRING },
-          yangYinBalance: { type: Type.STRING },
-          constraintResolution: { type: Type.STRING },
-          workout: {
-            type: Type.OBJECT,
-            properties: {
-              name: { type: Type.STRING },
-              exercises: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    name: { type: Type.STRING },
-                    sets: { type: Type.NUMBER },
-                    reps: { type: Type.STRING },
-                    notes: { type: Type.STRING }
-                  },
-                  required: ['name', 'sets', 'reps']
-                }
-              },
-              duration: { type: Type.NUMBER },
-              notes: { type: Type.STRING }
-            },
-            required: ['name', 'exercises', 'duration']
-          },
-          yinPractices: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                practiceType: { type: Type.STRING },
-                duration: { type: Type.NUMBER },
-                timeOfDay: { type: Type.STRING },
-                intention: { type: Type.STRING },
-                instructions: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING }
-                },
-                synergyReason: { type: Type.STRING },
-                schedulingConfidence: { type: Type.NUMBER }
-              },
-              required: ['name', 'practiceType', 'duration', 'timeOfDay', 'intention', 'instructions']
-            }
-          },
-          nutrition: {
-            type: Type.OBJECT,
-            properties: {
-              breakfast: {
-                type: Type.OBJECT,
-                properties: {
-                  description: { type: Type.STRING },
-                  protein: { type: Type.NUMBER }
-                },
-                required: ['description', 'protein']
-              },
-              lunch: {
-                type: Type.OBJECT,
-                properties: {
-                  description: { type: Type.STRING },
-                  protein: { type: Type.NUMBER }
-                },
-                required: ['description', 'protein']
-              },
-              dinner: {
-                type: Type.OBJECT,
-                properties: {
-                  description: { type: Type.STRING },
-                  protein: { type: Type.NUMBER }
-                },
-                required: ['description', 'protein']
-              },
-              snacks: {
-                type: Type.OBJECT,
-                properties: {
-                  description: { type: Type.STRING },
-                  protein: { type: Type.NUMBER }
-                },
-                required: ['description', 'protein']
-              },
-              totalProtein: { type: Type.NUMBER },
-              totalCalories: { type: Type.NUMBER },
-              notes: { type: Type.STRING }
-            },
-            required: ['breakfast', 'lunch', 'dinner', 'totalProtein']
-          },
-          sleepHygiene: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
-          },
-          notes: { type: Type.STRING }
-        },
-        required: ['dayName', 'summary', 'yinPractices', 'nutrition', 'sleepHygiene']
-      }
-    },
-    shoppingList: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING }
-    },
-    synergyScoring: {
-      type: Type.OBJECT,
-      properties: {
-        yangYinPairingScore: { type: Type.NUMBER },
-        restSpacingScore: { type: Type.NUMBER },
-        overallIntegrationScore: { type: Type.NUMBER }
-      },
-      required: ['yangYinPairingScore', 'restSpacingScore', 'overallIntegrationScore']
-    }
-  },
-  required: [
-    'weekSummary',
-    'constraintNotes',
-    'fallbackOptions',
-    'schedulingConfidence',
-    'dailyTargets',
-    'days',
-    'shoppingList',
-    'synergyScoring'
-  ]
-};
 
 export async function generateIntegralWeeklyPlan(input: GeneratePlanInput): Promise<IntegralBodyPlan> {
   const historicalContext = input.historicalContext ? buildHistoricalContextPrompt(input.historicalContext) : '';
@@ -303,24 +153,26 @@ Create a comprehensive, integrated 7-day plan that:
    - Ensure overall integration is coherent and realistic
 
 Return a comprehensive 7-day plan with detailed synergy metadata and constraint analysis.
-Be specific, actionable, evidence-based, and explicit about scheduling reasoning.`;
+Be specific, actionable, evidence-based, and explicit about scheduling reasoning.
 
-  // Add timeout to API call (60 seconds)
-  const apiPromise = ai.models.generateContent({
-    model: 'gemini-2.5-pro',
-    contents: prompt,
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: RESPONSE_SCHEMA as any
-    }
-  });
+IMPORTANT: Return ONLY valid JSON matching the response structure. Do not include any markdown formatting or code block delimiters.`;
 
-  const timeoutPromise = new Promise((_, reject) =>
+  const messages: OpenRouterMessage[] = buildMessagesWithSystem(
+    'You are The Integral Body Architect—an expert at synthesizing comprehensive, integrated weekly plans. Return ONLY valid JSON, no markdown or formatting.',
+    [{ role: 'user', content: prompt }]
+  );
+
+  const timeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error('Plan generation timed out after 60 seconds. Please try again.')), 60000)
   );
 
   let response;
   try {
+    const apiPromise = generateOpenRouterResponse(messages, undefined, {
+      model: DEFAULT_MODEL,
+      maxTokens: 4000,
+      temperature: 0.7
+    });
     response = await Promise.race([apiPromise, timeoutPromise]);
   } catch (error) {
     if (error instanceof Error && error.message.includes('timed out')) {
@@ -329,9 +181,20 @@ Be specific, actionable, evidence-based, and explicit about scheduling reasoning
     throw new Error(`Failed to generate plan: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 
+  if (!response.success) {
+    throw new Error(`Failed to generate plan: ${response.error || 'Unknown error'}`);
+  }
+
   let planData: LLMPlanGenerationResponse;
   try {
-    planData = JSON.parse(response.text);
+    // Clean up the response text by removing markdown code blocks if present
+    let jsonText = response.text.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    planData = JSON.parse(jsonText);
   } catch (error) {
     throw new Error('Failed to parse plan response. Please try again.');
   }

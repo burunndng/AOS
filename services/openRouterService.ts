@@ -8,7 +8,10 @@ const openRouter = new OpenAI({
   dangerouslyAllowBrowser: true // Allow usage in browser for Vercel deployment
 });
 
-// Default DeepSeek model
+// Default model for IntegralBodyArchitect
+export const DEFAULT_MODEL = 'qwen/qwen3-235b-a22b-2507';
+
+// Default DeepSeek model (kept for backward compatibility)
 export const DEEPSEEK_MODEL = 'deepseek/deepseek-v3.2-exp';
 
 export interface OpenRouterMessage {
