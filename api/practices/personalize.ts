@@ -9,6 +9,7 @@ import type { GenerationRequest, GenerationResponse, QueryResult } from '../lib/
 
 /**
  * Personalize a practice for a specific user
+ * @deprecated This feature is currently disabled due to ongoing issues
  */
 export async function personalizePractice(
   userId: string,
@@ -16,53 +17,24 @@ export async function personalizePractice(
   practiceTitle: string,
   customContext?: Record<string, any>,
 ): Promise<GenerationResponse> {
-  console.log(`[Practices] Personalizing practice: ${practiceTitle} for user: ${userId}`);
+  console.warn(`[Practices] Personalization service is disabled for practice: ${practiceTitle}`);
 
-  try {
-    const request: GenerationRequest = {
-      userId,
-      type: 'personalization',
-      query: `Please personalize ${practiceTitle} for my specific situation and preferences.${
-        customContext?.challenge ? ` I'm currently facing: ${customContext.challenge}` : ''
-      }`,
-    };
-
-    const ragPrompt = await generatePersonalizationPrompt(request, practiceTitle);
-
-    // Generate personalized steps
-    const personalizedSteps = generatePersonalizedSteps(practiceTitle, ragPrompt, customContext);
-
-    // Convert string[] to QueryResult[] for type compatibility
-    const sources: QueryResult[] = (ragPrompt.context.practices || []).map((practice, index) => ({
-      id: `practice-${index}`,
-      score: 0.8,
-      metadata: {
-        type: 'practice' as const,
-        practiceTitle: practice,
-        description: `Practice: ${practice}`,
-      },
-    }));
-
-    const response: GenerationResponse = {
-      type: 'personalized_practice',
-      content: personalizedSteps.map((step) => `${step.order}. ${step.instruction}`).join('\n'),
-      sources,
-      confidence: 0.85,
-      metadata: {
-        practiceId,
-        practiceTitle,
-        originalInstructions: customContext?.originalInstructions || [],
-        personalizedSteps,
-        adaptations: generateAdaptations(ragPrompt),
-        generatedAt: new Date(),
-      },
-    };
-
-    return response;
-  } catch (error) {
-    console.error('[Practices] Error personalizing practice:', error);
-    throw error;
-  }
+  // Return a basic response without personalization
+  return {
+    type: 'personalized_practice',
+    content: 'Practice personalization service is currently disabled. Please use the standard practice instructions.',
+    sources: [],
+    confidence: 0,
+    metadata: {
+      practiceId,
+      practiceTitle,
+      originalInstructions: customContext?.originalInstructions || [],
+      personalizedSteps: [],
+      adaptations: [],
+      generatedAt: new Date(),
+      disabled: true,
+    },
+  };
 }
 
 /**
@@ -305,60 +277,43 @@ function generateAdaptations(ragPrompt: any): string[] {
 
 /**
  * Get suggested customizations for a practice
+ * @deprecated This feature is currently disabled due to ongoing issues
  */
 export async function getSuggestedCustomizations(
   userId: string,
   practiceId: string,
 ): Promise<Record<string, any>> {
-  const db = getDatabase();
-  const practice = await db.getPractice(practiceId);
+  console.warn(`[Practices] Customization suggestions service is disabled for practice: ${practiceId}`);
 
-  if (!practice) {
-    throw new Error(`Practice ${practiceId} not found`);
-  }
-
-  const sessions = await db.getUserSessions(userId);
-  const userExperience = sessions.length;
-
+  // Return minimal customizations without personalization
   return {
     practiceId,
-    practiceTitle: practice.title,
-    suggestedDuration:
-      userExperience < 5
-        ? 'short (3-5 min)'
-        : userExperience < 20
-          ? 'medium (10-15 min)'
-          : 'extended (15-30+ min)',
-    suggestedFrequency:
-      userExperience < 5
-        ? 'Daily'
-        : userExperience < 20
-          ? '5-6 times per week'
-          : 'As part of daily practice',
-    suggestedTime: 'Morning (within 2 hours of waking)',
-    variantPractices: practice.tags?.slice(0, 3) || [],
-    commonProgressions: ['Continue with same duration', 'Extend duration by 2-3 minutes', 'Add complementary practice'],
+    practiceTitle: 'Unknown Practice',
+    suggestedDuration: 'As preferred',
+    suggestedFrequency: 'As preferred',
+    suggestedTime: 'Anytime',
+    variantPractices: [],
+    commonProgressions: [],
+    disabled: true,
+    message: 'Customization suggestions are currently unavailable',
   };
 }
 
 /**
  * Save customized practice for user
+ * @deprecated This feature is currently disabled due to ongoing issues
  */
 export async function saveCustomizedPractice(
   userId: string,
   practiceId: string,
   customSteps: Array<{ order: number; instruction: string }>,
   notes?: string,
-): Promise<{ success: boolean; message: string; customPracticeId: string }> {
-  const customPracticeId = `custom-${practiceId}-${Date.now()}`;
+): Promise<{ success: boolean; message: string; customPracticeId?: string }> {
+  console.warn(`[Practices] Save customized practice service is disabled for user: ${userId}`);
 
-  console.log(`[Practices] Saved customized practice: ${customPracticeId} for user: ${userId}`);
-
-  // In a real system, this would be saved to database
   return {
-    success: true,
-    message: `Customized practice saved successfully`,
-    customPracticeId,
+    success: false,
+    message: 'Customization save service is currently disabled',
   };
 }
 
@@ -366,23 +321,8 @@ export async function saveCustomizedPractice(
  * Health check for practice personalization service
  */
 export async function healthCheck(): Promise<{ status: 'ok' | 'error'; message: string }> {
-  try {
-    const steps = generatePersonalizedSteps('Mindfulness Meditation', {
-      context: {
-        userProfile: {
-          preferences: {
-            preferredModalities: ['visual'],
-          },
-        },
-      },
-    });
-
-    if (steps && steps.length > 0) {
-      return { status: 'ok', message: 'Practice personalization service is healthy' };
-    }
-
-    return { status: 'error', message: 'No personalization steps generated' };
-  } catch (error) {
-    return { status: 'error', message: `Personalization error: ${error}` };
-  }
+  return {
+    status: 'error',
+    message: 'Practice personalization service is currently disabled',
+  };
 }
