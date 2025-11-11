@@ -8,11 +8,12 @@ const openRouter = new OpenAI({
   dangerouslyAllowBrowser: true // Allow usage in browser for Vercel deployment
 });
 
-// Default model for IntegralBodyArchitect
-export const DEFAULT_MODEL = 'qwen/qwen3-235b-a22b-2507';
+// Default model for IntegralBodyArchitect (using a reliable model for JSON output)
+export const DEFAULT_MODEL = 'openai/gpt-4o-mini';
 
-// Default DeepSeek model (kept for backward compatibility)
+// Alternative models for testing
 export const DEEPSEEK_MODEL = 'deepseek/deepseek-v3.2-exp';
+export const QWEN_MODEL = 'qwen/qwen3-235b-a22b-2507';
 
 export interface OpenRouterMessage {
   role: 'system' | 'user' | 'assistant';
@@ -44,6 +45,7 @@ export async function generateOpenRouterResponse(
   try {
     // Check if OpenRouter API key is available
     if (!process.env.OPENROUTER_API_KEY) {
+      console.error('[OpenRouter] API key not configured');
       return {
         success: false,
         text: '',
@@ -52,14 +54,17 @@ export async function generateOpenRouterResponse(
     }
 
     const {
-      model = DEEPSEEK_MODEL,
+      model = DEFAULT_MODEL,
       maxTokens = 1000,
       temperature = 0.7,
       preset
     } = options;
 
+    console.log(`[OpenRouter] Calling model: ${model} with maxTokens: ${maxTokens}`);
+
     // Use streaming if callback provided
     if (onStreamChunk) {
+      console.log('[OpenRouter] Using streaming mode');
       const stream = await openRouter.chat.completions.create({
         model,
         messages,
@@ -77,9 +82,11 @@ export async function generateOpenRouterResponse(
           onStreamChunk(text);
         }
       }
+      console.log(`[OpenRouter] Stream complete, received ${fullText.length} characters`);
       return { success: true, text: fullText };
     } else {
       // Fallback to non-streaming
+      console.log('[OpenRouter] Using non-streaming mode');
       const response = await openRouter.chat.completions.create({
         model,
         messages,
@@ -89,10 +96,11 @@ export async function generateOpenRouterResponse(
       });
 
       const text = response.choices[0]?.message?.content || '';
+      console.log(`[OpenRouter] Received response: ${text.length} characters`);
       return { success: true, text };
     }
   } catch (error) {
-    console.error('OpenRouter API error:', error);
+    console.error('[OpenRouter] API error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     return {
