@@ -1,6 +1,10 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import OpenAI from 'openai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+const openRouter = new OpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
+  dangerouslyAllowBrowser: true,
+});
 
 export interface WorkoutExercise {
   name: string;
@@ -109,76 +113,77 @@ interface LLMWorkoutGenerationResponse {
   }>;
 }
 
+// JSON schema structure for reference (used in prompt)
 const WORKOUT_RESPONSE_SCHEMA = {
-  type: Type.OBJECT,
+  type: 'object',
   properties: {
-    title: { type: Type.STRING },
-    summary: { type: Type.STRING },
-    personalizationNotes: { type: Type.STRING },
+    title: { type: 'string' },
+    summary: { type: 'string' },
+    personalizationNotes: { type: 'string' },
     progressionRecommendations: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING }
+      type: 'array',
+      items: { type: 'string' }
     },
     workouts: {
-      type: Type.ARRAY,
+      type: 'array',
       items: {
-        type: Type.OBJECT,
+        type: 'object',
         properties: {
-          name: { type: Type.STRING },
-          intensity: { type: Type.STRING },
-          duration: { type: Type.NUMBER },
+          name: { type: 'string' },
+          intensity: { type: 'string' },
+          duration: { type: 'number' },
           equipment: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
+            type: 'array',
+            items: { type: 'string' }
           },
           exercises: {
-            type: Type.ARRAY,
+            type: 'array',
             items: {
-              type: Type.OBJECT,
+              type: 'object',
               properties: {
-                name: { type: Type.STRING },
-                sets: { type: Type.NUMBER },
-                reps: { type: Type.STRING },
-                duration: { type: Type.NUMBER },
-                tempo: { type: Type.STRING },
-                restSeconds: { type: Type.NUMBER },
-                notes: { type: Type.STRING },
+                name: { type: 'string' },
+                sets: { type: 'number' },
+                reps: { type: 'string' },
+                duration: { type: 'number' },
+                tempo: { type: 'string' },
+                restSeconds: { type: 'number' },
+                notes: { type: 'string' },
                 modifications: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING }
+                  type: 'array',
+                  items: { type: 'string' }
                 },
                 formGuidance: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING }
+                  type: 'array',
+                  items: { type: 'string' }
                 }
               },
               required: ['name', 'sets', 'reps', 'modifications', 'formGuidance']
             }
           },
           warmup: {
-            type: Type.OBJECT,
+            type: 'object',
             properties: {
-              name: { type: Type.STRING },
-              duration: { type: Type.NUMBER },
-              description: { type: Type.STRING }
+              name: { type: 'string' },
+              duration: { type: 'number' },
+              description: { type: 'string' }
             }
           },
           cooldown: {
-            type: Type.OBJECT,
+            type: 'object',
             properties: {
-              name: { type: Type.STRING },
-              duration: { type: Type.NUMBER },
-              description: { type: Type.STRING }
+              name: { type: 'string' },
+              duration: { type: 'number' },
+              description: { type: 'string' }
             }
           },
           muscleGroupsFocused: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
+            type: 'array',
+            items: { type: 'string' }
           },
-          caloriesBurned: { type: Type.NUMBER },
-          difficulty: { type: Type.STRING },
-          notes: { type: Type.STRING },
-          somaticGuidance: { type: Type.STRING }
+          caloriesBurned: { type: 'number' },
+          difficulty: { type: 'string' },
+          notes: { type: 'string' },
+          somaticGuidance: { type: 'string' }
         },
         required: ['name', 'intensity', 'duration', 'equipment', 'exercises', 'muscleGroupsFocused', 'difficulty']
       }
@@ -244,15 +249,21 @@ ${input.isWeeklyProgram ? `6. WEEKLY PROGRAMMING:
    - Include at least one active recovery or flexibility day` : ''}
 
 Return a detailed${input.isWeeklyProgram ? ', structured 7-day workout program' : ' workout session'} with comprehensive exercise descriptions and personalization notes.
-Be specific, actionable, and emphasize the mind-body connection throughout.`;
+Be specific, actionable, and emphasize the mind-body connection throughout.
 
-  const apiPromise = ai.models.generateContent({
-    model: 'gemini-2.5-pro',
-    contents: prompt,
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: WORKOUT_RESPONSE_SCHEMA as any
-    }
+IMPORTANT: Return your response as valid JSON only, with no additional text or markdown formatting. Use this schema:
+${JSON.stringify(WORKOUT_RESPONSE_SCHEMA, null, 2)}`;
+
+  const apiPromise = openRouter.chat.completions.create({
+    model: 'x-ai/grok-4-fast',
+    messages: [
+      {
+        role: 'user',
+        content: prompt
+      }
+    ],
+    temperature: 0.7,
+    max_tokens: 8000
   });
 
   const timeoutPromise = new Promise((_, reject) =>
@@ -271,7 +282,8 @@ Be specific, actionable, and emphasize the mind-body connection throughout.`;
 
   let workoutData: LLMWorkoutGenerationResponse;
   try {
-    workoutData = JSON.parse(response.text);
+    const responseText = response.choices[0]?.message?.content || '';
+    workoutData = JSON.parse(responseText);
   } catch (error) {
     throw new Error('Failed to parse workout response. Please try again.');
   }
