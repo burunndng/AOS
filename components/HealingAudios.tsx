@@ -67,6 +67,8 @@ export default function HealingAudios() {
                   description={audio.description}
                   url={audio.url}
                   symbol={audio.symbol}
+                  goal={audio.goal}
+                  mechanism={audio.mechanism}
                 />
               ))}
             </div>

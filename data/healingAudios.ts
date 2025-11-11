@@ -6,6 +6,8 @@ export interface HealingAudio {
   duration?: string;
   category: 'grounding' | 'breathing' | 'hypnosis' | 'nervous-system';
   symbol: string; // Occult/alchemical symbol
+  goal?: string;
+  mechanism?: string;
 }
 
 export const healingAudios: HealingAudio[] = [
@@ -56,6 +58,8 @@ export const healingAudios: HealingAudio[] = [
     url: 'https://files.catbox.moe/oszgba.mp3',
     category: 'nervous-system',
     symbol: '🝪', // Alchemical separation/distillation symbol
+    goal: 'Create distance from anxious thoughts via cognitive defusion',
+    mechanism: '(C) Cognitive Reframing (ACT-based defusion)',
   },
   {
     id: 'vast-perspective',

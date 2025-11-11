@@ -6,6 +6,8 @@ interface AlchemicalAudioPlayerProps {
   description: string;
   url: string;
   symbol?: string;
+  goal?: string;
+  mechanism?: string;
 }
 
 export default function AlchemicalAudioPlayer({
@@ -13,6 +15,8 @@ export default function AlchemicalAudioPlayer({
   description,
   url,
   symbol = '⟐',
+  goal,
+  mechanism,
 }: AlchemicalAudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -91,9 +95,19 @@ export default function AlchemicalAudioPlayer({
           <h3 className="text-lg font-semibold text-amber-100 font-serif tracking-wider mb-1">
             {title}
           </h3>
-          <p className="text-xs text-slate-400 font-mono tracking-widest uppercase">
+          <p className="text-xs text-slate-400 font-mono tracking-widest uppercase mb-2">
             {symbol} {description}
           </p>
+          {goal && (
+            <p className="text-xs text-amber-200/70 font-mono tracking-wide">
+              <span className="text-amber-600">Goal:</span> {goal}
+            </p>
+          )}
+          {mechanism && (
+            <p className="text-xs text-amber-200/70 font-mono tracking-wide">
+              <span className="text-amber-600">Mechanism:</span> {mechanism}
+            </p>
+          )}
         </div>
 
         {/* Player Controls Section */}
