@@ -1,0 +1,12 @@
+# Prevent individual API files from being treated as separate serverless functions
+api/practices/
+api/recommendations/
+api/insights/
+api/user/
+api/shadow/
+api/mind/
+api/rag/
+api/lib/
+
+# Only allow api/server.ts to be deployed as a serverless function
+!api/server.ts

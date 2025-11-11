@@ -5,7 +5,7 @@
 
 import { generatePersonalizationPrompt } from '../rag/generate-prompt.ts';
 import { getDatabase } from '../lib/db.ts';
-import type { GenerationRequest, GenerationResponse } from '../lib/types.ts';
+import type { GenerationRequest, GenerationResponse, QueryResult } from '../lib/types.ts';
 
 /**
  * Personalize a practice for a specific user
@@ -32,10 +32,21 @@ export async function personalizePractice(
     // Generate personalized steps
     const personalizedSteps = generatePersonalizedSteps(practiceTitle, ragPrompt, customContext);
 
+    // Convert string[] to QueryResult[] for type compatibility
+    const sources: QueryResult[] = (ragPrompt.context.practices || []).map((practice, index) => ({
+      id: `practice-${index}`,
+      score: 0.8,
+      metadata: {
+        type: 'practice' as const,
+        practiceTitle: practice,
+        description: `Practice: ${practice}`,
+      },
+    }));
+
     const response: GenerationResponse = {
       type: 'personalized_practice',
       content: personalizedSteps.map((step) => `${step.order}. ${step.instruction}`).join('\n'),
-      sources: ragPrompt.context.practices,
+      sources,
       confidence: 0.85,
       metadata: {
         practiceId,
