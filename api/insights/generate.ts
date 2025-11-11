@@ -89,7 +89,15 @@ Help me understand the deeper patterns and what practices could help.`;
   return {
     type: 'bias_detective_insights',
     content: insights.join('\n\n'),
-    sources: ragPrompt.context.practices,
+    sources: (ragPrompt.context.practices || []).map((practice: string, index: number) => ({
+      id: `practice-${index}`,
+      score: 0.8,
+      metadata: {
+        type: 'practice' as const,
+        practiceTitle: practice,
+        description: `Practice: ${practice}`,
+      },
+    })),
     confidence: 0.9,
     metadata: {
       sessionType: 'bias_detective',
@@ -129,7 +137,15 @@ Help me understand the system and suggest practices for fostering better communi
   return {
     type: 'ifs_insights',
     content: insights.join('\n\n'),
-    sources: ragPrompt.context.frameworks,
+    sources: (ragPrompt.context.frameworks || []).map((framework: string, index: number) => ({
+      id: `framework-${index}`,
+      score: 0.8,
+      metadata: {
+        type: 'framework' as const,
+        frameworkType: framework as any,
+        description: `Framework: ${framework}`,
+      },
+    })),
     confidence: 0.85,
     metadata: {
       sessionType: 'ifs_work',
@@ -180,7 +196,15 @@ I notice these patterns: ${patterns.observations.join(', ')}. What insights do y
   return {
     type: 'pattern_insights',
     content: insights.join('\n\n'),
-    sources: ragPrompt.context.practices,
+    sources: (ragPrompt.context.practices || []).map((practice: string, index: number) => ({
+      id: `practice-${index}`,
+      score: 0.8,
+      metadata: {
+        type: 'practice' as const,
+        practiceTitle: practice,
+        description: `Practice: ${practice}`,
+      },
+    })),
     confidence: 0.8,
     metadata: {
       timeWindow,
