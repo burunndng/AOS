@@ -1,0 +1,61 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                 SERVERLESS FUNCTIONS AUDIT - QUICK REFERENCE                    ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+CURRENT STATUS: 18 endpoints | Limit: 12 | Over by: 6 functions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 CRITICAL - KEEP (6 endpoints)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. POST   /api/recommendations/personalized       ✓ Core personalization
+  2. POST   /api/insights/generate                  ✓ Core insight generation
+  3. POST   /api/practices/personalize              ✓ Core practice customization
+  4. POST   /api/user/sync                          ✓ Core data persistence + RAG
+  5. DELETE /api/user/delete-data                   ✓ GDPR compliance
+  6. GET    /api/health                             ✓ Operational monitoring
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟡 MODERATE - EVALUATE (3 endpoints)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  7. POST   /api/recommendations/assessment         ⚠ Overlaps with personalized
+  8. GET    /api/practices/customizations           ⚠ Utility only
+  9. POST   /api/practices/save-custom              ⚠ Low priority
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🟠 EXPERIMENTAL - CANDIDATES FOR REMOVAL (9 endpoints)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ 10. GET    /api/user/status                        ← RECOMMEND: REMOVE
+ 11. POST   /api/user/sync-batch                    ← RECOMMEND: REMOVE
+ 12. POST   /api/insights/patterns                  ← RECOMMEND: REMOVE
+ 13. POST   /api/shadow/extract-beliefs             ← RECOMMEND: REMOVE
+ 14. POST   /api/shadow/mine-contradictions         ← RECOMMEND: REMOVE
+ 15. POST   /api/shadow/complete                    ← RECOMMEND: REMOVE
+ 16. POST   /api/mind/enhance-zone                  (optional)
+ 17. POST   /api/mind/synthesize                    (optional)
+ 18. POST   /api/mind/eight-zones/submit            (optional)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RECOMMENDATION: Remove 6 endpoints (10-15) to reach exactly 12 functions
+
+After removal:
+  • Core features preserved ✓
+  • Recommendations working ✓
+  • Insights generation working ✓
+  • Practice personalization working ✓
+  • User sync & compliance working ✓
+  • Health monitoring working ✓
+  • Assessment recommendations working ✓
+  • Practice customization working ✓
+  • Mind/8-zones features disabled (can be restored later via separate functions)
+  • Shadow work features disabled (can be restored later via separate functions)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For detailed analysis, see: SERVERLESS_AUDIT.md
