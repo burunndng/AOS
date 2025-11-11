@@ -13,7 +13,6 @@ import {
   InjuryRestriction
 } from '../types.ts';
 import { generateIntegralWeeklyPlan } from '../services/integralBodyArchitectService.ts';
-import { buildPersonalizationPromptInsertion } from '../services/integralBodyPersonalization.ts';
 import { formatIntegralBodyPlanAsText, downloadAsFile } from '../services/planExportUtils.ts';
 
 interface PracticeHandoffPayload {
@@ -178,13 +177,13 @@ export default function IntegralBodyArchitectWizard({
   const handleExportShoppingList = useCallback(() => {
     if (!generatedPlan || !generatedPlan.shoppingList) return;
     const text = `Shopping List for Week of ${new Date(generatedPlan.weekStartDate).toLocaleDateString()}\n\n${generatedPlan.shoppingList.map((item, i) => `${i + 1}. ${item}`).join('\n')}`;
-    downloadFile('integral-body-architect-shopping-list.txt', text, 'text/plain');
+    downloadAsFile(text, 'integral-body-architect-shopping-list', 'txt');
   }, [generatedPlan]);
 
   const handleCalendarSync = useCallback(() => {
     if (!generatedPlan) return;
     const ics = buildCalendarICS(generatedPlan);
-    downloadFile('integral-body-architect-week.ics', ics, 'text/calendar');
+    downloadCalendarFile('integral-body-architect-week.ics', ics, 'text/calendar');
   }, [generatedPlan]);
 
   const handleYinLaunch = (practice: YinPracticeDetail, dayName: string) => {
@@ -560,7 +559,7 @@ function BlueprintStep(props: BlueprintStepProps) {
                 <button
                   key={item}
                   onClick={() => onToggleEquipment(item)}
-                  className={`p-2.5 rounded-md text-xs font-medium transition min-h-10 capitalize touch-target ${
+                  className={`p-2.5 rounded-md text-xs font-medium transition min-h-10 capitalize ${
                     equipment.includes(item)
                       ? 'bg-accent text-slate-900'
                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
@@ -576,12 +575,12 @@ function BlueprintStep(props: BlueprintStepProps) {
           {/* Unavailable Days */}
           <div>
             <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Unavailable Days</label>
-            <div className="grid grid-cols-3.5 sm:grid-cols-7 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
               {DAYS_OF_WEEK.map(day => (
                 <button
                   key={day}
                   onClick={() => onToggleDay(day)}
-                  className={`p-2 rounded-md text-xs font-medium transition min-h-10 touch-target ${
+                  className={`p-2 rounded-md text-xs font-medium transition min-h-10 ${
                     unavailableDays.includes(day)
                       ? 'bg-red-600 text-white'
                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
@@ -639,7 +638,7 @@ function BlueprintStep(props: BlueprintStepProps) {
                 <button
                   key={option.value}
                   onClick={() => onYinGoalChange(option.value)}
-                  className={`p-3 rounded-md text-left transition text-xs touch-target ${
+                  className={`p-3 rounded-md text-left transition text-xs ${
                     yinGoal === option.value
                       ? 'bg-accent text-slate-900 border-2 border-accent'
                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600 border-2 border-transparent'
@@ -661,7 +660,7 @@ function BlueprintStep(props: BlueprintStepProps) {
                 <button
                   key={level}
                   onClick={() => onYinExperienceChange(level)}
-                  className={`p-2.5 rounded-md text-sm font-medium transition min-h-10 touch-target ${
+                  className={`p-2.5 rounded-md text-sm font-medium transition min-h-10 ${
                     yinExperience === level
                       ? 'bg-accent text-slate-900'
                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
@@ -778,7 +777,7 @@ function CollapsibleSection({
     <div className="border border-slate-700 rounded-md overflow-hidden bg-slate-900/30">
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition text-left min-h-12 touch-target"
+        className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition text-left min-h-12"
       >
         <div className="flex items-center gap-3">
           {icon}
@@ -1236,7 +1235,7 @@ function ProgressHeader({ currentStep, completedSteps }: { currentStep: WizardSt
   );
 }
 
-function downloadFile(filename: string, content: string, mimeType: string) {
+function downloadCalendarFile(filename: string, content: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
