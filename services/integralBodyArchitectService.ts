@@ -197,7 +197,20 @@ IMPORTANT: Return ONLY valid JSON matching the response structure. Do not includ
     }
     planData = JSON.parse(jsonText);
   } catch (error) {
+    console.error('JSON parse error:', error);
+    console.error('Response text:', response.text);
     throw new Error('Failed to parse plan response. Please try again.');
+  }
+
+  // Validate required fields
+  if (!planData || typeof planData !== 'object') {
+    console.error('Invalid plan data structure:', planData);
+    throw new Error('Invalid response structure from AI. Please try again.');
+  }
+
+  if (!Array.isArray(planData.days)) {
+    console.error('Missing or invalid days array:', planData);
+    throw new Error('AI response missing required "days" field. Please try again.');
   }
 
   const now = new Date();
