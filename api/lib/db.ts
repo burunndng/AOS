@@ -198,6 +198,54 @@ export class Database {
   }
 
   // ============================================
+  // USER PROFILE OPERATIONS
+  // ============================================
+
+  async getUserProfile(userId: string): Promise<Record<string, any> | null> {
+    // For now, return a mock user profile based on their sessions
+    const sessions = await this.getUserSessions(userId);
+
+    if (sessions.length === 0) {
+      return null;
+    }
+
+    // Analyze sessions to build a profile
+    const completedPractices = new Set<string>();
+    const identifiedBiases = new Set<string>();
+    const sessionTypes = new Map<string, number>();
+
+    for (const session of sessions) {
+      // Track session types
+      sessionTypes.set(session.type, (sessionTypes.get(session.type) || 0) + 1);
+
+      // Extract biases if present
+      if (session.content?.identifiedBiases) {
+        (session.content.identifiedBiases as string[]).forEach((b) => identifiedBiases.add(b));
+      }
+
+      // Extract completed practices
+      if (session.type === 'practice' && session.content?.practiceId) {
+        completedPractices.add(session.content.practiceId);
+      }
+    }
+
+    return {
+      userId,
+      completedPractices: Array.from(completedPractices),
+      currentStack: [],
+      preferences: {
+        preferredDuration: 'medium',
+        preferredModalities: [],
+        preferredFrameworks: [],
+        focusAreas: Array.from(sessionTypes.keys()),
+      },
+      identifiedBiases: Array.from(identifiedBiases),
+      sessionCount: sessions.length,
+      lastSessionDate: sessions[sessions.length - 1]?.createdAt,
+    };
+  }
+
+  // ============================================
   // UTILITY METHODS
   // ============================================
 
