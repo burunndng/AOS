@@ -46,14 +46,22 @@ export async function generateOpenRouterResponse(
   options: OpenRouterOptions = {}
 ): Promise<ChatResponse> {
   try {
+    console.log('[OpenRouter] API call started');
+    console.log('[OpenRouter] Model:', options.model || DEEPSEEK_MODEL);
+    console.log('[OpenRouter] Messages:', messages.length);
+    console.log('[OpenRouter] Max tokens:', options.maxTokens || 1000);
+
     // Check if OpenRouter API key is available
     if (!process.env.OPENROUTER_API_KEY) {
+      console.error('[OpenRouter] API key is missing!');
       return {
         success: false,
         text: '',
         error: 'OpenRouter API key is not configured.'
       };
     }
+
+    console.log('[OpenRouter] API key is configured');
 
     const {
       model = DEEPSEEK_MODEL,
@@ -64,6 +72,8 @@ export async function generateOpenRouterResponse(
 
     // Use streaming if callback provided
     if (onStreamChunk) {
+      console.log('[OpenRouter] Using streaming mode');
+      console.log('[OpenRouter] Creating stream...');
       const stream = await openRouter.chat.completions.create({
         model,
         messages,
@@ -73,17 +83,23 @@ export async function generateOpenRouterResponse(
         ...(preset ? { preset } : {}),
       });
 
+      console.log('[OpenRouter] Stream created, reading chunks...');
       let fullText = '';
+      let chunkCount = 0;
       for await (const chunk of stream) {
         const text = chunk.choices[0]?.delta?.content || '';
         fullText += text;
+        chunkCount++;
         if (text) {
           onStreamChunk(text);
         }
       }
+      console.log('[OpenRouter] Stream completed. Chunks:', chunkCount, 'Total length:', fullText.length);
       return { success: true, text: fullText };
     } else {
       // Fallback to non-streaming
+      console.log('[OpenRouter] Using non-streaming mode');
+      console.log('[OpenRouter] Making API call...');
       const response = await openRouter.chat.completions.create({
         model,
         messages,
@@ -93,6 +109,7 @@ export async function generateOpenRouterResponse(
       });
 
       const text = response.choices[0]?.message?.content || '';
+      console.log('[OpenRouter] Response received. Length:', text.length);
       return { success: true, text };
     }
   } catch (error) {

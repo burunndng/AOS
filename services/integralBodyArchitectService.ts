@@ -79,6 +79,11 @@ interface LLMPlanGenerationResponse {
 }
 
 export async function generateIntegralWeeklyPlan(input: GeneratePlanInput): Promise<IntegralBodyPlan> {
+  console.log('[IntegralBodyArchitect] Starting plan generation...');
+  console.log('[IntegralBodyArchitect] Goal:', input.goalStatement);
+  console.log('[IntegralBodyArchitect] Yang constraints:', input.yangConstraints);
+  console.log('[IntegralBodyArchitect] Yin preferences:', input.yinPreferences);
+
   const historicalContext = input.historicalContext ? buildHistoricalContextPrompt(input.historicalContext) : '';
 
   // Build personalization insertion if summary is provided
@@ -163,18 +168,31 @@ IMPORTANT: Return ONLY valid JSON matching the response structure. Do not includ
     [{ role: 'user', content: prompt }]
   );
 
+  console.log('[IntegralBodyArchitect] Calling OpenRouter API with model:', DEEPSEEK_MODEL);
+  console.log('[IntegralBodyArchitect] Message count:', messages.length);
+  console.log('[IntegralBodyArchitect] Prompt length:', prompt.length, 'characters');
+
   const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('Plan generation timed out after 120 seconds. Please try again.')), 120000)
+    setTimeout(() => {
+      console.error('[IntegralBodyArchitect] TIMEOUT after 120 seconds');
+      reject(new Error('Plan generation timed out after 120 seconds. Please try again.'));
+    }, 120000)
   );
 
   let response;
   try {
+    console.log('[IntegralBodyArchitect] Starting API call...');
+    const startTime = Date.now();
+
     const apiPromise = generateOpenRouterResponse(messages, input.onStreamChunk, {
       model: DEEPSEEK_MODEL,
       maxTokens: 16000, // Increased for complex 7-day JSON plan generation
       temperature: 0.7
     });
     response = await Promise.race([apiPromise, timeoutPromise]);
+
+    const elapsed = Date.now() - startTime;
+    console.log('[IntegralBodyArchitect] API call completed in', elapsed, 'ms');
   } catch (error) {
     if (error instanceof Error && error.message.includes('timed out')) {
       throw error;
