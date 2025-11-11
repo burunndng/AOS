@@ -517,7 +517,7 @@ Be specific, actionable, evidence-based, and explicit about scheduling reasoning
     });
 
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Plan generation timed out after 60 seconds. Please try again.')), 60000)
+      setTimeout(() => reject(new Error('Plan generation timed out after 120 seconds. Please try again.')), 120000)
     );
 
     let response;
