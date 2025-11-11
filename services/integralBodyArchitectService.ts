@@ -3,13 +3,9 @@ import {
   DayPlan,
   YangConstraints,
   YinPreferences,
-  YinPracticeDetail,
   HistoricalComplianceSummary,
-  PlanSynthesisMetadata,
-  SynergyNote,
   PersonalizationSummary
 } from '../types.ts';
-import { buildPersonalizationPromptInsertion } from './integralBodyPersonalization.ts';
 import { generateOpenRouterResponse, buildMessagesWithSystem, OpenRouterMessage, DEEPSEEK_MODEL } from './openRouterService.ts';
 
 interface GeneratePlanInput {
@@ -18,156 +14,71 @@ interface GeneratePlanInput {
   yinPreferences: YinPreferences;
   historicalContext?: HistoricalComplianceSummary;
   personalizationSummary?: PersonalizationSummary;
-  onStreamChunk?: (chunk: string) => void;
-}
-
-interface LLMPlanGenerationResponse {
-  weekSummary: string;
-  constraintNotes: string;
-  fallbackOptions: string[];
-  schedulingConfidence: number;
-  dailyTargets: {
-    proteinGrams: number;
-    sleepHours: number;
-    workoutDays: number;
-    yinPracticeMinutes: number;
-  };
-  days: Array<{
-    dayName: string;
-    summary: string;
-    yangYinBalance?: string;
-    constraintResolution?: string;
-    workout?: {
-      name: string;
-      exercises: Array<{
-        name: string;
-        sets: number;
-        reps: string;
-        notes?: string;
-      }>;
-      duration: number;
-      notes?: string;
-    };
-    yinPractices: Array<{
-      name: string;
-      practiceType: string;
-      duration: number;
-      timeOfDay: string;
-      intention: string;
-      instructions: string[];
-      synergyReason?: string;
-      schedulingConfidence?: number;
-    }>;
-    nutrition: {
-      breakfast: { description: string; protein: number };
-      lunch: { description: string; protein: number };
-      dinner: { description: string; protein: number };
-      snacks?: { description: string; protein: number };
-      totalProtein: number;
-      totalCalories?: number;
-      notes?: string;
-    };
-    sleepHygiene: string[];
-    notes?: string;
-  }>;
-  shoppingList: string[];
-  synergyScoring: {
-    yangYinPairingScore: number;
-    restSpacingScore: number;
-    overallIntegrationScore: number;
-  };
 }
 
 export async function generateIntegralWeeklyPlan(input: GeneratePlanInput): Promise<IntegralBodyPlan> {
-  console.log('[IntegralBodyArchitect] Starting plan generation...');
-  console.log('[IntegralBodyArchitect] Goal:', input.goalStatement);
-  console.log('[IntegralBodyArchitect] Yang constraints:', input.yangConstraints);
-  console.log('[IntegralBodyArchitect] Yin preferences:', input.yinPreferences);
+  console.log('[IntegralArchitect] Starting plan generation');
+  console.log('[IntegralArchitect] Goal:', input.goalStatement);
 
-  const historicalContext = input.historicalContext ? buildHistoricalContextPrompt(input.historicalContext) : '';
+  const prompt = buildPrompt(input);
 
-  // Build personalization insertion if summary is provided
-  const personalizationInsertion = input.personalizationSummary
-    ? buildPersonalizationPromptInsertion(input.personalizationSummary)
-    : '';
+  const messages: OpenRouterMessage[] = buildMessagesWithSystem(
+    'You are an expert weekly planner. Return ONLY valid JSON with no markdown.',
+    [{ role: 'user', content: prompt }]
+  );
 
-  const prompt = `You are The Integral Body Architect—an expert at synthesizing comprehensive, integrated weekly plans that balance Yang practices (workouts, nutrition, sleep) with Yin practices (Qigong, breathing, Microcosmic Orbit, etc.).
+  console.log('[IntegralArchitect] Calling API...');
 
-USER'S GOAL:
-${input.goalStatement}
+  try {
+    const response = await generateOpenRouterResponse(messages, undefined, {
+      model: DEEPSEEK_MODEL,
+      maxTokens: 16000,
+      temperature: 0.7
+    });
 
-YANG CONSTRAINTS:
-- Bodyweight: ${input.yangConstraints.bodyweight ? `${input.yangConstraints.bodyweight} kg` : 'Not specified'}
-- Target Sleep: ${input.yangConstraints.sleepHours ? `${input.yangConstraints.sleepHours} hours/night` : '7-9 hours/night'}
-- Equipment Available: ${input.yangConstraints.equipment.join(', ')}
-- Unavailable Days: ${input.yangConstraints.unavailableDays.length > 0 ? input.yangConstraints.unavailableDays.join(', ') : 'None'}
-${input.yangConstraints.availableTimeWindows && input.yangConstraints.availableTimeWindows.length > 0 ? `- Available Time Windows: ${formatTimeWindows(input.yangConstraints.availableTimeWindows)}` : ''}
-${input.yangConstraints.injuryRestrictions && input.yangConstraints.injuryRestrictions.length > 0 ? `- Injury/Pain Restrictions: ${formatInjuryRestrictions(input.yangConstraints.injuryRestrictions)}` : ''}
-- Nutrition Focus: ${input.yangConstraints.nutritionFocus || 'Balanced whole foods'}
-- Additional Constraints: ${input.yangConstraints.additionalConstraints || 'None'}
+    if (!response.success) {
+      throw new Error(response.error || 'API call failed');
+    }
 
-YIN PREFERENCES:
-- Primary Goal: ${input.yinPreferences.goal}
-- Experience Level: ${input.yinPreferences.experienceLevel}
-- Additional Intentions: ${input.yinPreferences.intentions?.join(', ') || 'None'}
-- Notes: ${input.yinPreferences.additionalNotes || 'None'}
+    console.log('[IntegralArchitect] Got response, length:', response.text.length);
 
-${historicalContext}
+    // Parse JSON
+    let jsonText = response.text.trim();
+    if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+    }
 
-${personalizationInsertion}
+    const data = JSON.parse(jsonText);
+    console.log('[IntegralArchitect] Parsed JSON successfully');
 
-YOUR TASK:
-Create a comprehensive, integrated 7-day plan that:
+    // Build the plan
+    return buildPlan(data, input);
+  } catch (error) {
+    console.error('[IntegralArchitect] Error:', error);
+    throw new Error(`Failed to generate plan: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
 
-1. YANG PLANNING:
-   - Calculate daily protein target (1.6g per kg bodyweight)
-   - Design 2 distinct resistance training workouts (Workout A & B) using available equipment
-   - Schedule workouts on available days with at least 1 rest day between sessions
-   - Structure nutrition with higher carbs/protein on workout days
-   - Include specific sleep hygiene practices
-   - RESPECT ALL HARD CONSTRAINTS: Unavailable days, time windows, and injury restrictions are non-negotiable
+function buildPrompt(input: GeneratePlanInput): string {
+  const { goalStatement, yangConstraints, yinPreferences } = input;
 
-2. YIN PLANNING:
-   - Select practices matched to user's intention and experience level
-   - For "reduce-stress": Prioritize Coherent Breathing (5.5s inhale/exhale), Progressive Relaxation
-   - For "increase-focus": Prioritize Box Breathing, Qigong movements
-   - For "wind-down": Prioritize Coherent Breathing 30min before bedtime, body scan
-   - For "increase-energy": Prioritize energizing Qigong, Wim Hof breathing (if intermediate)
-   - For "balance": Mix grounding and energizing practices
-   - Beginner: Start with 5-10 minute practices, simpler techniques
-   - Intermediate: 10-20 minute practices, can include Microcosmic Orbit, advanced Qigong
+  return `Create a 7-day wellness plan.
 
-3. SYNERGY & SCHEDULING INTELLIGENCE:
-   - Provide explicit reason for why each Yin practice is beneficial in its assigned position
-   - Explain Yang/Yin balance rationale for each day
-   - Include rest spacing notes (e.g., "2 days rest between intense sessions")
-   - Flag any potential conflicts or compromises made
-   - Suggest fallback scheduling options if primary placement becomes unavailable
-   - Provide scheduling confidence (0-100) for each practice placement
+GOAL: ${goalStatement}
 
-4. CONSTRAINT RESOLUTION:
-   - List any hard constraints and how they were resolved
-   - If conflicts arose between practices and constraints, explain the resolution
-   - Provide alternative fallback scheduling if the primary plan cannot be executed
-   - Ensure all unavailable days/times and injury restrictions are honored
+CONSTRAINTS:
+- Bodyweight: ${yangConstraints.bodyweight || 70} kg
+- Sleep target: ${yangConstraints.sleepHours || 8} hours
+- Equipment: ${yangConstraints.equipment.join(', ')}
+- Unavailable days: ${yangConstraints.unavailableDays.length > 0 ? yangConstraints.unavailableDays.join(', ') : 'None'}
 
-5. CONSOLIDATION:
-   - Provide detailed instructions for each practice
-   - Include specific exercises, sets, reps for workouts
-   - Give meal ideas with protein content
-   - Create a shopping list for the week's nutrition
-   - Ensure overall integration is coherent and realistic
+YIN PRACTICES:
+- Goal: ${yinPreferences.goal}
+- Experience: ${yinPreferences.experienceLevel}
 
-Return a comprehensive 7-day plan with detailed synergy metadata and constraint analysis.
-Be specific, actionable, evidence-based, and explicit about scheduling reasoning.
-
-CRITICAL: Return ONLY valid JSON matching this EXACT structure (no markdown, no code blocks):
-
+Return JSON with this structure:
 {
-  "weekSummary": "Brief overview of the week's focus and balance",
-  "constraintNotes": "How hard constraints were handled",
-  "fallbackOptions": ["Alternative scheduling option 1", "Alternative option 2"],
-  "schedulingConfidence": 85,
+  "weekSummary": "Brief summary of the week",
   "dailyTargets": {
     "proteinGrams": 105,
     "sleepHours": 8,
@@ -177,319 +88,91 @@ CRITICAL: Return ONLY valid JSON matching this EXACT structure (no markdown, no 
   "days": [
     {
       "dayName": "Monday",
-      "summary": "Day overview",
-      "yangYinBalance": "Balanced workout with evening practice",
-      "constraintResolution": "Scheduled within time window",
+      "summary": "Day summary",
       "workout": {
         "name": "Full Body A",
-        "exercises": [{"name": "Squats", "sets": 3, "reps": "12", "notes": ""}],
+        "exercises": [
+          {"name": "Squats", "sets": 3, "reps": "12", "notes": ""}
+        ],
         "duration": 45,
         "notes": ""
       },
       "yinPractices": [
         {
-          "name": "Coherent Breathing",
+          "name": "Breathing Exercise",
           "practiceType": "breathing",
           "duration": 10,
           "timeOfDay": "Evening",
-          "intention": "Reduce stress",
-          "instructions": ["Step 1", "Step 2"],
-          "synergyReason": "Calms post-workout activation",
-          "schedulingConfidence": 90
+          "intention": "Relax",
+          "instructions": ["Breathe in for 5s", "Breathe out for 5s", "Repeat for 10 min"]
         }
       ],
       "nutrition": {
-        "breakfast": {"description": "Oatmeal with nuts", "protein": 20},
+        "breakfast": {"description": "Oatmeal", "protein": 15},
         "lunch": {"description": "Chicken salad", "protein": 30},
-        "dinner": {"description": "Fish with vegetables", "protein": 35},
-        "snacks": {"description": "Greek yogurt", "protein": 15},
-        "totalProtein": 100,
-        "totalCalories": 2000,
-        "notes": ""
+        "dinner": {"description": "Fish and vegetables", "protein": 35},
+        "snacks": {"description": "Yogurt", "protein": 15},
+        "totalProtein": 95
       },
       "sleepHygiene": ["Dark room", "No caffeine after 2pm"],
       "notes": ""
     }
   ],
-  "shoppingList": ["Item 1", "Item 2"],
-  "synergyScoring": {
-    "yangYinPairingScore": 85,
-    "restSpacingScore": 90,
-    "overallIntegrationScore": 87
-  }
+  "shoppingList": ["Oats", "Chicken", "Fish", "Vegetables", "Yogurt"]
 }
 
-IMPORTANT: days MUST be an array with 7 objects (Monday-Sunday), not an object with day keys.`;
+IMPORTANT:
+- days must be an array with 7 day objects (Monday-Sunday)
+- Return ONLY valid JSON, no markdown or explanations`;
+}
 
-  const messages: OpenRouterMessage[] = buildMessagesWithSystem(
-    'You are The Integral Body Architect—an expert at synthesizing comprehensive, integrated weekly plans. Return ONLY valid JSON, no markdown or formatting.',
-    [{ role: 'user', content: prompt }]
-  );
-
-  console.log('[IntegralBodyArchitect] Calling OpenRouter API with model:', DEEPSEEK_MODEL);
-  console.log('[IntegralBodyArchitect] Message count:', messages.length);
-  console.log('[IntegralBodyArchitect] Prompt length:', prompt.length, 'characters');
-
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => {
-      console.error('[IntegralBodyArchitect] TIMEOUT after 120 seconds');
-      reject(new Error('Plan generation timed out after 120 seconds. Please try again.'));
-    }, 120000)
-  );
-
-  let response;
-  try {
-    console.log('[IntegralBodyArchitect] Starting API call...');
-    const startTime = Date.now();
-
-    const apiPromise = generateOpenRouterResponse(messages, input.onStreamChunk, {
-      model: DEEPSEEK_MODEL,
-      maxTokens: 16000, // Increased for complex 7-day JSON plan generation
-      temperature: 0.7
-    });
-    response = await Promise.race([apiPromise, timeoutPromise]);
-
-    const elapsed = Date.now() - startTime;
-    console.log('[IntegralBodyArchitect] API call completed in', elapsed, 'ms');
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('timed out')) {
-      throw error;
-    }
-    throw new Error(`Failed to generate plan: ${error instanceof Error ? error.message : 'Unknown error'}`);
+function buildPlan(data: any, input: GeneratePlanInput): IntegralBodyPlan {
+  // Validate structure
+  if (!data || !Array.isArray(data.days)) {
+    console.error('[IntegralArchitect] Invalid data structure:', data);
+    throw new Error('Invalid response structure - missing days array');
   }
 
-  if (!response.success) {
-    throw new Error(`Failed to generate plan: ${response.error || 'Unknown error'}`);
-  }
-
-  let planData: LLMPlanGenerationResponse;
-  try {
-    // Clean up the response text by removing markdown code blocks if present
-    let jsonText = response.text.trim();
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.replace(/^```\s*/, '').replace(/\s*```$/, '');
-    }
-    planData = JSON.parse(jsonText);
-  } catch (error) {
-    console.error('JSON parse error:', error);
-    console.error('Response text:', response.text);
-    throw new Error('Failed to parse plan response. Please try again.');
-  }
-
-  // Validate required fields
-  if (!planData || typeof planData !== 'object') {
-    console.error('Invalid plan data structure:', planData);
-    throw new Error('Invalid response structure from AI. Please try again.');
-  }
-
-  if (!Array.isArray(planData.days)) {
-    console.error('Missing or invalid days array:', planData);
-    throw new Error('AI response missing required "days" field. Please try again.');
+  if (data.days.length !== 7) {
+    console.warn('[IntegralArchitect] Expected 7 days, got', data.days.length);
   }
 
   const now = new Date();
   const monday = getNextMonday(now);
 
-  const days = planData.days.map(dayData => postProcessDay(dayData, input.yangConstraints));
-  
-  const { conflicts } = validateConstraints(days, input.yangConstraints);
+  // Ensure all days have required fields
+  const days: DayPlan[] = data.days.map((day: any) => ({
+    dayName: day.dayName || 'Unknown',
+    summary: day.summary || '',
+    workout: day.workout || undefined,
+    yinPractices: Array.isArray(day.yinPractices) ? day.yinPractices : [],
+    nutrition: day.nutrition || {
+      breakfast: { description: '', protein: 0 },
+      lunch: { description: '', protein: 0 },
+      dinner: { description: '', protein: 0 },
+      totalProtein: 0
+    },
+    sleepHygiene: Array.isArray(day.sleepHygiene) ? day.sleepHygiene : [],
+    notes: day.notes
+  }));
 
-  const plan: IntegralBodyPlan = {
-    id: `integral-body-plan-${Date.now()}`,
+  return {
+    id: `integral-plan-${Date.now()}`,
     date: now.toISOString(),
     weekStartDate: monday.toISOString(),
     goalStatement: input.goalStatement,
     yangConstraints: input.yangConstraints,
     yinPreferences: input.yinPreferences,
-    weekSummary: planData.weekSummary,
-    dailyTargets: planData.dailyTargets,
-    days,
-    shoppingList: planData.shoppingList,
-    synthesisMetadata: {
-      llmConfidenceScore: planData.schedulingConfidence,
-      constraintConflicts: conflicts,
-      synergyScoring: planData.synergyScoring,
-      fallbackOptions: planData.fallbackOptions
+    weekSummary: data.weekSummary || 'Weekly wellness plan',
+    dailyTargets: data.dailyTargets || {
+      proteinGrams: 100,
+      sleepHours: 8,
+      workoutDays: 3,
+      yinPracticeMinutes: 70
     },
-    historicalContext: input.historicalContext
+    days,
+    shoppingList: Array.isArray(data.shoppingList) ? data.shoppingList : []
   };
-
-  return plan;
-}
-
-function buildHistoricalContextPrompt(history: HistoricalComplianceSummary): string {
-  return `HISTORICAL PERFORMANCE CONTEXT:
-Based on analysis of ${history.totalPlansAnalyzed} previous plans:
-- Average workout compliance: ${history.averageWorkoutCompliance}%
-- Average Yin practice compliance: ${history.averageYinCompliance}%
-- Common blockers: ${history.commonBlockers.join(', ')}
-- Best performing day patterns: ${history.bestPerformingDayPatterns.join(', ')}
-- Recommended adjustments: ${history.recommendedAdjustments.join('; ')}
-
-Use this context to design a plan that is realistic and addresses known blockers.`;
-}
-
-function formatTimeWindows(windows: any[]): string {
-  return windows.map(w => `${w.dayOfWeek} ${w.startHour}:00-${w.endHour}:00`).join(', ');
-}
-
-function formatInjuryRestrictions(restrictions: any[]): string {
-  return restrictions
-    .map(r => `${r.bodyPart} (${r.severity}): ${r.restrictions.join(', ')}`)
-    .join('; ');
-}
-
-interface DayDataFromLLM {
-  dayName: string;
-  summary: string;
-  yangYinBalance?: string;
-  constraintResolution?: string;
-  workout?: {
-    name: string;
-    exercises: {
-      name: string;
-      sets: number;
-      reps: string;
-      notes?: string;
-    }[];
-    duration: number;
-    notes?: string;
-  };
-  yinPractices: {
-    name: string;
-    practiceType: string;
-    duration: number;
-    timeOfDay: string;
-    intention: string;
-    instructions: string[];
-    synergyReason?: string;
-    schedulingConfidence?: number;
-  }[];
-  nutrition: {
-    breakfast: { description: string; protein: number };
-    lunch: { description: string; protein: number };
-    dinner: { description: string; protein: number };
-    snacks?: { description: string; protein: number };
-    totalProtein: number;
-    totalCalories?: number;
-    notes?: string;
-  };
-  sleepHygiene: string[];
-  notes?: string;
-}
-
-function postProcessDay(dayData: DayDataFromLLM, constraints: YangConstraints): DayPlan {
-  const yinPractices: YinPracticeDetail[] = dayData.yinPractices.map(practice => {
-    const synergyNotes: SynergyNote[] = [];
-    
-    if (practice.synergyReason) {
-      synergyNotes.push({
-        type: 'pairing-benefit',
-        message: practice.synergyReason,
-        relatedItems: dayData.workout ? [dayData.workout.name] : undefined
-      });
-    }
-
-    return {
-      name: practice.name,
-      practiceType: practice.practiceType,
-      duration: practice.duration,
-      timeOfDay: practice.timeOfDay,
-      intention: practice.intention,
-      instructions: practice.instructions,
-      synergyNotes: synergyNotes.length > 0 ? synergyNotes : undefined,
-      schedulingConfidence: practice.schedulingConfidence || 80
-    };
-  });
-
-  return {
-    dayName: dayData.dayName,
-    summary: dayData.summary,
-    workout: dayData.workout,
-    yinPractices,
-    nutrition: dayData.nutrition,
-    sleepHygiene: dayData.sleepHygiene,
-    notes: dayData.notes,
-    synergyMetadata: {
-      yangYinBalance: dayData.yangYinBalance || 'Balanced',
-      restSpacingNotes: extractRestSpacingNotes(dayData),
-      constraintResolution: dayData.constraintResolution
-    }
-  };
-}
-
-function extractRestSpacingNotes(dayData: DayDataFromLLM): string | undefined {
-  if (!dayData.notes) return undefined;
-  
-  if (dayData.notes.toLowerCase().includes('rest') || 
-      dayData.notes.toLowerCase().includes('recovery') ||
-      dayData.notes.toLowerCase().includes('spacing')) {
-    return dayData.notes;
-  }
-  
-  return undefined;
-}
-
-function validateConstraints(
-  days: DayPlan[],
-  constraints: YangConstraints
-): { conflicts: Array<{ type: string; description: string; resolution: string }> } {
-  const conflicts: Array<{ type: string; description: string; resolution: string }> = [];
-
-  // Pre-compute for O(1) lookups
-  const unavailableDaysSet = new Set(constraints.unavailableDays);
-
-  // Build injury restriction map for O(1) lookup
-  const injuryRestrictionMap = new Map<string, { bodyPart: string; restrictedKeywords: Set<string> }>();
-  if (constraints.injuryRestrictions) {
-    constraints.injuryRestrictions.forEach(injury => {
-      const restrictedKeywords = new Set(
-        injury.restrictions.map(r => r.toLowerCase())
-      );
-      injuryRestrictionMap.set(injury.bodyPart, {
-        bodyPart: injury.bodyPart,
-        restrictedKeywords
-      });
-    });
-  }
-
-  days.forEach((day) => {
-    // Check unavailable days - O(1) lookup with Set
-    if (unavailableDaysSet.has(day.dayName)) {
-      if (day.workout) {
-        conflicts.push({
-          type: 'unavailable-window',
-          description: `${day.dayName} is marked unavailable but has a workout`,
-          resolution: `Workout should be rescheduled to available day`
-        });
-      }
-    }
-
-    // Check injury restrictions - O(e × r) instead of O(i × e × r)
-    if (day.workout && injuryRestrictionMap.size > 0) {
-      const exerciseNames = day.workout.exercises.map(ex => ex.name.toLowerCase());
-
-      for (const [bodyPart, restriction] of injuryRestrictionMap) {
-        const hasRestrictedExercise = exerciseNames.some(exName =>
-          Array.from(restriction.restrictedKeywords).some(keyword =>
-            exName.includes(keyword)
-          )
-        );
-
-        if (hasRestrictedExercise) {
-          conflicts.push({
-            type: 'injury-restriction',
-            description: `${day.dayName} has exercise conflicting with ${bodyPart} restriction`,
-            resolution: `Exercise should be modified or removed per injury restriction`
-          });
-        }
-      }
-    }
-  });
-
-  return { conflicts };
 }
 
 function getNextMonday(date: Date): Date {
