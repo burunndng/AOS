@@ -16,5 +16,11 @@
       "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       "dest": "/api/server.ts"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/server.ts"
+    }
   ]
 }
