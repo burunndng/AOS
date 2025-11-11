@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import OpenAI from 'openai';
 import { BigMindSession, BigMindMessage, BigMindVoice, BigMindInsightSummary, IntegratedInsight, ModuleKey } from '../types.ts';
 import { practices as corePractices } from '../constants.ts';
-import { generateOpenRouterResponse, buildMessagesWithSystem, DEEPSEEK_MODEL } from './openRouterService';
+import { generateOpenRouterResponse, buildMessagesWithSystem, deepseek-v3.2-exp } from './openRouterService';
 
 // Initialize the Google AI client
 const googleAI = new GoogleGenAI({ apiKey: process.env.API_KEY! });
@@ -42,7 +42,7 @@ const PROVIDER_CONFIGS: Record<BigMindProvider, ProviderConfig> = {
   },
   openrouter: {
     provider: 'openrouter',
-    model: DEEPSEEK_MODEL,
+    model: deepseek-v3.2-exp,
     maxTokens: 1000,
     temperature: 0.7
   }
@@ -318,7 +318,7 @@ async function generateOpenRouterBigMindResponse(
       messages,
       onStreamChunk,
       {
-        model: DEEPSEEK_MODEL,
+        model: deepseek-v3.2-exp,
         maxTokens: 1000,
         temperature: 0.7
       }
