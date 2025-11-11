@@ -171,7 +171,7 @@ IMPORTANT: Return ONLY valid JSON matching the response structure. Do not includ
   try {
     const apiPromise = generateOpenRouterResponse(messages, input.onStreamChunk, {
       model: DEEPSEEK_MODEL,
-      maxTokens: 4000,
+      maxTokens: 16000, // Increased for complex 7-day JSON plan generation
       temperature: 0.7
     });
     response = await Promise.race([apiPromise, timeoutPromise]);
