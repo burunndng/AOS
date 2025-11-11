@@ -1,11 +1,16 @@
 /**
  * Insight Generation API Endpoint
  * Generates personalized insights from user sessions and context
+ * Includes wizard-to-practice linking for integrated learning
  */
 
 import { generateInsightPrompt } from '../rag/generate-prompt.ts';
 import { initializeDatabase, getDatabase } from '../lib/db.ts';
 import { initializePinecone } from '../lib/pinecone.ts';
+import {
+  generateWizardLinkedRecommendations,
+  buildIntegratedInsightWithPractices,
+} from './wizard-linking.ts';
 import type { GenerationRequest, GenerationResponse, UserSession } from '../lib/types.ts';
 
 /**
@@ -63,6 +68,7 @@ export async function generateInsights(
 
 /**
  * Generate insights specifically from a Bias Detective session
+ * Links to shadow work and integration practices
  */
 export async function generateBiasDetectiveInsights(
   userId: string,
@@ -84,24 +90,43 @@ Help me understand the deeper patterns and what practices could help.`;
 
   const ragPrompt = await generateInsightPrompt(request);
 
-  const insights = await generateInsightsFromBiasSessions(sessionData, ragPrompt);
+  // Generate base insights
+  const baseInsights = await generateInsightsFromBiasSessions(sessionData, ragPrompt);
+
+  // Link to aligned practices through wizard-linking
+  const { linkedPractices, rationale } = await generateWizardLinkedRecommendations(
+    'bias_detective',
+    sessionData,
+  );
+
+  // Build integrated insight with practice recommendations
+  const integratedContent = buildIntegratedInsightWithPractices(
+    'bias_detective',
+    sessionData,
+    linkedPractices,
+    baseInsights,
+  );
 
   return {
     type: 'bias_detective_insights',
-    content: insights.join('\n\n'),
-    sources: (ragPrompt.context.practices || []).map((practice: string, index: number) => ({
-      id: `practice-${index}`,
-      score: 0.8,
-      metadata: {
-        type: 'practice' as const,
-        practiceTitle: practice,
-        description: `Practice: ${practice}`,
-      },
-    })),
-    confidence: 0.9,
+    content: integratedContent,
+    sources: linkedPractices.length > 0
+      ? linkedPractices
+      : (ragPrompt.context.practices || []).map((practice: any, index: number) => ({
+          id: `practice-${index}`,
+          score: 0.8,
+          metadata: {
+            type: 'practice' as const,
+            practiceTitle: practice?.metadata?.practiceTitle || practice,
+            description: `Practice: ${practice?.metadata?.practiceTitle || practice}`,
+          },
+        })),
+    confidence: linkedPractices.length > 0 ? 0.95 : 0.85,
     metadata: {
       sessionType: 'bias_detective',
       identifiedBiases: sessionData.identifiedBiases,
+      linkedPracticesCount: linkedPractices.length,
+      practiceRationale: rationale,
       generatedAt: new Date(),
     },
   };
@@ -109,6 +134,7 @@ Help me understand the deeper patterns and what practices could help.`;
 
 /**
  * Generate insights from IFS work session
+ * Links to relational and parts-work practices
  */
 export async function generateIFSInsights(
   userId: string,
@@ -132,24 +158,44 @@ Help me understand the system and suggest practices for fostering better communi
   };
 
   const ragPrompt = await generateInsightPrompt(request);
-  const insights = await generateInsightsFromIFSSessions(sessionData, ragPrompt);
+
+  // Generate base insights
+  const baseInsights = await generateInsightsFromIFSSessions(sessionData, ragPrompt);
+
+  // Link to aligned practices through wizard-linking
+  const { linkedPractices, rationale } = await generateWizardLinkedRecommendations(
+    'ifs_work',
+    sessionData,
+  );
+
+  // Build integrated insight with practice recommendations
+  const integratedContent = buildIntegratedInsightWithPractices(
+    'ifs_work',
+    sessionData,
+    linkedPractices,
+    baseInsights,
+  );
 
   return {
     type: 'ifs_insights',
-    content: insights.join('\n\n'),
-    sources: (ragPrompt.context.frameworks || []).map((framework: string, index: number) => ({
-      id: `framework-${index}`,
-      score: 0.8,
-      metadata: {
-        type: 'framework' as const,
-        frameworkType: framework as any,
-        description: `Framework: ${framework}`,
-      },
-    })),
-    confidence: 0.85,
+    content: integratedContent,
+    sources: linkedPractices.length > 0
+      ? linkedPractices
+      : (ragPrompt.context.frameworks || []).map((framework: any, index: number) => ({
+          id: `framework-${index}`,
+          score: 0.8,
+          metadata: {
+            type: 'framework' as const,
+            frameworkType: framework?.metadata?.frameworkType || framework,
+            description: `Framework: ${framework?.metadata?.frameworkType || framework}`,
+          },
+        })),
+    confidence: linkedPractices.length > 0 ? 0.95 : 0.85,
     metadata: {
       sessionType: 'ifs_work',
       identifiedParts: sessionData.identifiedParts,
+      linkedPracticesCount: linkedPractices.length,
+      practiceRationale: rationale,
       generatedAt: new Date(),
     },
   };
@@ -157,6 +203,7 @@ Help me understand the system and suggest practices for fostering better communi
 
 /**
  * Generate pattern insights from user history
+ * Identifies cross-session patterns and recommends integrative practices
  */
 export async function generatePatternInsights(
   userId: string,
@@ -191,25 +238,49 @@ I notice these patterns: ${patterns.observations.join(', ')}. What insights do y
   };
 
   const ragPrompt = await generateInsightPrompt(request);
-  const insights = generatePatternInsights_(patterns, ragPrompt);
+  const baseInsights = generatePatternInsights_(patterns, ragPrompt);
+
+  // Find practices that integrate across multiple areas
+  const integrationSessionData = {
+    patterns: patterns.focusAreas,
+    biases: patterns.biasesEncountered,
+  };
+
+  // Link to integrative practices
+  const { linkedPractices, rationale } = await generateWizardLinkedRecommendations(
+    'eight_zones', // Use eight_zones as integrative practice finder
+    integrationSessionData,
+  );
+
+  // Build integrated insight
+  const integratedContent = buildIntegratedInsightWithPractices(
+    'pattern_analysis',
+    integrationSessionData,
+    linkedPractices,
+    baseInsights,
+  );
 
   return {
     type: 'pattern_insights',
-    content: insights.join('\n\n'),
-    sources: (ragPrompt.context.practices || []).map((practice: string, index: number) => ({
-      id: `practice-${index}`,
-      score: 0.8,
-      metadata: {
-        type: 'practice' as const,
-        practiceTitle: practice,
-        description: `Practice: ${practice}`,
-      },
-    })),
-    confidence: 0.8,
+    content: integratedContent,
+    sources: linkedPractices.length > 0
+      ? linkedPractices
+      : (ragPrompt.context.practices || []).map((practice: any, index: number) => ({
+          id: `practice-${index}`,
+          score: 0.8,
+          metadata: {
+            type: 'practice' as const,
+            practiceTitle: practice?.metadata?.practiceTitle || practice,
+            description: `Practice: ${practice?.metadata?.practiceTitle || practice}`,
+          },
+        })),
+    confidence: linkedPractices.length > 0 ? 0.9 : 0.8,
     metadata: {
       timeWindow,
       sessionCount: filteredSessions.length,
       patterns,
+      linkedPracticesCount: linkedPractices.length,
+      practiceRationale: rationale,
       generatedAt: new Date(),
     },
   };

@@ -13,11 +13,23 @@ import { initializePinecone, getIndexStats, healthCheck as pineconeHealth } from
 import { initializeEmbeddingClient, healthCheck as embeddingsHealth } from './lib/embeddings.ts';
 
 // Import endpoint handlers
-// Recommendations endpoints disabled (Pinecone dependency)
-// import { generatePersonalizedRecommendations, ... } from './recommendations/personalized.ts';
+// Recommendations endpoints re-enabled - now with proper RAG via semantic search
+import {
+  generatePersonalizedRecommendations,
+  getRecommendationsForNeed,
+  getStackRecommendations,
+  getAssessmentBasedRecommendations,
+  healthCheck as recommendationsHealth,
+} from './recommendations/personalized.ts';
 
-// Insights endpoints disabled (Pinecone dependency)
-// import { generateInsights, ... } from './insights/generate.ts';
+// Insights endpoints re-enabled - now with proper RAG via semantic search
+import {
+  generateInsights,
+  generateBiasDetectiveInsights,
+  generateIFSInsights,
+  generatePatternInsights,
+  healthCheck as insightsHealth,
+} from './insights/generate.ts';
 
 import {
   getSuggestedCustomizations,
@@ -117,30 +129,176 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // ============================================
-// RECOMMENDATIONS ENDPOINTS - DISABLED (Pinecone dependency)
+// RECOMMENDATIONS ENDPOINTS - RE-ENABLED
 // ============================================
 
-// Recommendations endpoints disabled to reduce serverless function count
-// These endpoints require Pinecone for RAG and recommendations
-// const recommendationsRouter = Router();
-//
-// recommendationsRouter.post('/personalized', ...);
-// recommendationsRouter.post('/assessment', ...);
-//
-// app.use(`${API_BASE}/recommendations`, recommendationsRouter);
+// Recommendations endpoints re-enabled with proper RAG implementation
+const recommendationsRouter = Router();
+
+recommendationsRouter.post('/personalized', async (req: Request, res: Response) => {
+  try {
+    const { userId, query, topK, filters } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId required' });
+    }
+    const recommendations = await generatePersonalizedRecommendations({
+      userId,
+      type: 'recommendation',
+      query: query || 'general guidance',
+      topK: topK || 10,
+      filters,
+    });
+    res.json(recommendations);
+  } catch (error) {
+    console.error('[Recommendations] Error:', error);
+    res.status(500).json({
+      error: 'Failed to generate recommendations',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+recommendationsRouter.post('/need', async (req: Request, res: Response) => {
+  try {
+    const { userId, need } = req.body;
+    if (!userId || !need) {
+      return res.status(400).json({ error: 'userId and need required' });
+    }
+    const recommendations = await getRecommendationsForNeed(userId, need);
+    res.json(recommendations);
+  } catch (error) {
+    console.error('[Recommendations] Error:', error);
+    res.status(500).json({
+      error: 'Failed to get recommendations for need',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+recommendationsRouter.post('/stack', async (req: Request, res: Response) => {
+  try {
+    const { userId, currentStack } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId required' });
+    }
+    const recommendations = await getStackRecommendations(userId, currentStack || []);
+    res.json(recommendations);
+  } catch (error) {
+    console.error('[Recommendations] Error:', error);
+    res.status(500).json({
+      error: 'Failed to get stack recommendations',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+recommendationsRouter.post('/assessment', async (req: Request, res: Response) => {
+  try {
+    const { userId, assessmentType, assessmentResults } = req.body;
+    if (!userId || !assessmentType || !assessmentResults) {
+      return res.status(400).json({
+        error: 'userId, assessmentType, and assessmentResults required',
+      });
+    }
+    const recommendations = await getAssessmentBasedRecommendations(
+      userId,
+      assessmentType,
+      assessmentResults,
+    );
+    res.json(recommendations);
+  } catch (error) {
+    console.error('[Recommendations] Error:', error);
+    res.status(500).json({
+      error: 'Failed to get assessment-based recommendations',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+app.use(`${API_BASE}/recommendations`, recommendationsRouter);
 
 // ============================================
-// INSIGHTS ENDPOINTS - DISABLED (Pinecone dependency)
+// INSIGHTS ENDPOINTS - RE-ENABLED
 // ============================================
 
-// Insights endpoints disabled to reduce serverless function count
-// These endpoints require RAG and Pinecone for context retrieval
-// const insightsRouter = Router();
-//
-// insightsRouter.post('/generate', ...);
-// insightsRouter.post('/patterns', ...);
-//
-// app.use(`${API_BASE}/insights`, insightsRouter);
+// Insights endpoints re-enabled with proper RAG implementation
+const insightsRouter = Router();
+
+insightsRouter.post('/generate', async (req: Request, res: Response) => {
+  try {
+    const { userId, sessionData, sessionType } = req.body;
+    if (!userId || !sessionData || !sessionType) {
+      return res.status(400).json({
+        error: 'userId, sessionData, and sessionType required',
+      });
+    }
+    const insights = await generateInsights(userId, sessionData, sessionType);
+    res.json(insights);
+  } catch (error) {
+    console.error('[Insights] Error:', error);
+    res.status(500).json({
+      error: 'Failed to generate insights',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+insightsRouter.post('/bias-detective', async (req: Request, res: Response) => {
+  try {
+    const { userId, sessionData } = req.body;
+    if (!userId || !sessionData) {
+      return res.status(400).json({
+        error: 'userId and sessionData required',
+      });
+    }
+    const insights = await generateBiasDetectiveInsights(userId, sessionData);
+    res.json(insights);
+  } catch (error) {
+    console.error('[Insights] Error:', error);
+    res.status(500).json({
+      error: 'Failed to generate bias detective insights',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+insightsRouter.post('/ifs', async (req: Request, res: Response) => {
+  try {
+    const { userId, sessionData } = req.body;
+    if (!userId || !sessionData) {
+      return res.status(400).json({
+        error: 'userId and sessionData required',
+      });
+    }
+    const insights = await generateIFSInsights(userId, sessionData);
+    res.json(insights);
+  } catch (error) {
+    console.error('[Insights] Error:', error);
+    res.status(500).json({
+      error: 'Failed to generate IFS insights',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+insightsRouter.post('/patterns', async (req: Request, res: Response) => {
+  try {
+    const { userId, timeWindow } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'userId required' });
+    }
+    const insights = await generatePatternInsights(userId, timeWindow || 'month');
+    res.json(insights);
+  } catch (error) {
+    console.error('[Insights] Error:', error);
+    res.status(500).json({
+      error: 'Failed to generate pattern insights',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+app.use(`${API_BASE}/insights`, insightsRouter);
 
 // ============================================
 // PRACTICES ENDPOINTS
@@ -349,8 +507,9 @@ app.get(`${API_BASE}/health`, async (req: Request, res: Response) => {
     })();
 
     services.embeddings = await embeddingsHealth();
-    // services.recommendations = await recommendationsHealth(); // disabled
-    // services.insights = await insightsHealth(); // disabled
+    services.pinecone = await pineconeHealth();
+    services.recommendations = await recommendationsHealth();
+    services.insights = await insightsHealth();
     services.practices = await practicesHealth();
     services.sync = await syncHealth();
     services.shadow = await shadowHealth();
@@ -384,9 +543,20 @@ app.get('/', (req: Request, res: Response) => {
   res.json({
     name: 'Aura OS RAG Backend API',
     version: '1.0.0',
+    description: 'Personalized insights and recommendations via semantic search and RAG',
     endpoints: {
-      // recommendations: `${API_BASE}/recommendations/*`, // DISABLED
-      // insights: `${API_BASE}/insights/*`, // DISABLED
+      recommendations: {
+        personalized: `POST ${API_BASE}/recommendations/personalized`,
+        need: `POST ${API_BASE}/recommendations/need`,
+        stack: `POST ${API_BASE}/recommendations/stack`,
+        assessment: `POST ${API_BASE}/recommendations/assessment`,
+      },
+      insights: {
+        generate: `POST ${API_BASE}/insights/generate`,
+        biasDetective: `POST ${API_BASE}/insights/bias-detective`,
+        ifs: `POST ${API_BASE}/insights/ifs`,
+        patterns: `POST ${API_BASE}/insights/patterns`,
+      },
       practices: `${API_BASE}/practices/customizations, /practices/save-custom`,
       user: `${API_BASE}/user/status`,
       shadow: `${API_BASE}/shadow/memory-reconsolidation/*`,
