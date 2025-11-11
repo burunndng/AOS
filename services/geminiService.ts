@@ -544,7 +544,7 @@ export async function refinePractice(name: string, description: string, why: str
     Return a JSON array of strings.
     Return ONLY the JSON array.`;
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
