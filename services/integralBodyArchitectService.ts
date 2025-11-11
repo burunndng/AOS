@@ -513,7 +513,8 @@ Be specific, actionable, evidence-based, and explicit about scheduling reasoning
         }
       ],
       max_tokens: 4000,
-      temperature: 0.7
+      temperature: 0.7,
+      reasoning: { enabled: true }
     });
 
     const timeoutPromise = new Promise((_, reject) =>
