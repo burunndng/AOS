@@ -5,7 +5,11 @@ import OpenAI from 'openai';
 const openRouter = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: 'https://openrouter.ai/api/v1',
-  dangerouslyAllowBrowser: true // Allow usage in browser for Vercel deployment
+  dangerouslyAllowBrowser: true, // Allow usage in browser for Vercel deployment
+  defaultHeaders: {
+    "HTTP-Referer": process.env.SITE_URL || "https://auraos.app",
+    "X-Title": "Aura OS - Integral Life Practice"
+  }
 });
 
 // Default model for IntegralBodyArchitect
