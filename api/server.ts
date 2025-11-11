@@ -13,34 +13,20 @@ import { initializePinecone, getIndexStats, healthCheck as pineconeHealth } from
 import { initializeEmbeddingClient, healthCheck as embeddingsHealth } from './lib/embeddings.ts';
 
 // Import endpoint handlers
-import {
-  generatePersonalizedRecommendations,
-  getRecommendationsForNeed,
-  getStackRecommendations,
-  getAssessmentBasedRecommendations,
-  healthCheck as recommendationsHealth,
-} from './recommendations/personalized.ts';
+// Recommendations endpoints disabled (Pinecone dependency)
+// import { generatePersonalizedRecommendations, ... } from './recommendations/personalized.ts';
+
+// Insights endpoints disabled (Pinecone dependency)
+// import { generateInsights, ... } from './insights/generate.ts';
 
 import {
-  generateInsights,
-  generateBiasDetectiveInsights,
-  generateIFSInsights,
-  generatePatternInsights,
-  healthCheck as insightsHealth,
-} from './insights/generate.ts';
-
-import {
-  personalizePractice,
   getSuggestedCustomizations,
   saveCustomizedPractice,
   healthCheck as practicesHealth,
 } from './practices/personalize.ts';
 
 import {
-  syncUserSession,
-  batchSyncUserSessions,
   getUserSyncStatus,
-  deleteUserData,
   healthCheck as syncHealth,
 } from './user/sync.ts';
 
@@ -131,82 +117,30 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // ============================================
-// RECOMMENDATIONS ENDPOINTS
+// RECOMMENDATIONS ENDPOINTS - DISABLED (Pinecone dependency)
 // ============================================
 
-const recommendationsRouter = Router();
-
-recommendationsRouter.post('/personalized', async (req: Request, res: Response) => {
-  try {
-    const { userId, query, filters, topK } = req.body;
-    const response = await generatePersonalizedRecommendations({
-      userId,
-      type: 'recommendation',
-      query: query || 'What practices should I do next?',
-      filters,
-      topK: topK || 5,
-    });
-    res.json(response);
-  } catch (error) {
-    console.error('[Recommendations] Error:', error);
-    res.status(500).json({
-      error: 'Failed to generate recommendations',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-recommendationsRouter.post('/assessment', async (req: Request, res: Response) => {
-  try {
-    const { userId, assessmentType, assessmentResults } = req.body;
-    const response = await getAssessmentBasedRecommendations(userId, assessmentType, assessmentResults);
-    res.json(response);
-  } catch (error) {
-    console.error('[Assessment Recommendations] Error:', error);
-    res.status(500).json({
-      error: 'Failed to generate assessment recommendations',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-app.use(`${API_BASE}/recommendations`, recommendationsRouter);
+// Recommendations endpoints disabled to reduce serverless function count
+// These endpoints require Pinecone for RAG and recommendations
+// const recommendationsRouter = Router();
+//
+// recommendationsRouter.post('/personalized', ...);
+// recommendationsRouter.post('/assessment', ...);
+//
+// app.use(`${API_BASE}/recommendations`, recommendationsRouter);
 
 // ============================================
-// INSIGHTS ENDPOINTS
+// INSIGHTS ENDPOINTS - DISABLED (Pinecone dependency)
 // ============================================
 
-const insightsRouter = Router();
-
-insightsRouter.post('/generate', async (req: Request, res: Response) => {
-  try {
-    const { userId, sessionData, sessionType } = req.body;
-    const response = await generateInsights(userId, sessionData, sessionType);
-    res.json(response);
-  } catch (error) {
-    console.error('[Insights] Error:', error);
-    res.status(500).json({
-      error: 'Failed to generate insights',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-insightsRouter.post('/patterns', async (req: Request, res: Response) => {
-  try {
-    const { userId, timeWindow } = req.body;
-    const response = await generatePatternInsights(userId, timeWindow || 'month');
-    res.json(response);
-  } catch (error) {
-    console.error('[Pattern Insights] Error:', error);
-    res.status(500).json({
-      error: 'Failed to generate pattern insights',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-app.use(`${API_BASE}/insights`, insightsRouter);
+// Insights endpoints disabled to reduce serverless function count
+// These endpoints require RAG and Pinecone for context retrieval
+// const insightsRouter = Router();
+//
+// insightsRouter.post('/generate', ...);
+// insightsRouter.post('/patterns', ...);
+//
+// app.use(`${API_BASE}/insights`, insightsRouter);
 
 // ============================================
 // PRACTICES ENDPOINTS
@@ -214,20 +148,10 @@ app.use(`${API_BASE}/insights`, insightsRouter);
 
 const practicesRouter = Router();
 
-practicesRouter.post('/personalize', async (req: Request, res: Response) => {
-  try {
-    const { userId, practiceId, practiceTitle, customContext } = req.body;
-    const response = await personalizePractice(userId, practiceId, practiceTitle, customContext);
-    res.json(response);
-  } catch (error) {
-    console.error('[Personalize] Error:', error);
-    res.status(500).json({
-      error: 'Failed to personalize practice',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+// POST /personalize endpoint disabled (Pinecone dependency via RAG)
+// practicesRouter.post('/personalize', ...);
 
+// GET /customizations endpoint retained (local database operation)
 practicesRouter.get('/customizations', async (req: Request, res: Response) => {
   try {
     const { userId, practiceId } = req.query;
@@ -270,41 +194,12 @@ app.use(`${API_BASE}/practices`, practicesRouter);
 
 const userRouter = Router();
 
-userRouter.post('/sync', async (req: Request, res: Response) => {
-  try {
-    const payload = req.body;
-    const response = await syncUserSession(payload);
-    res.json(response);
-  } catch (error) {
-    console.error('[Sync] Error:', error);
-    res.status(500).json({
-      error: 'Failed to sync session',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+// POST /sync and /sync-batch endpoints disabled (Pinecone dependency)
+// These endpoints index sessions in Pinecone and generate embeddings
+// userRouter.post('/sync', ...);
+// userRouter.post('/sync-batch', ...);
 
-userRouter.post('/sync-batch', async (req: Request, res: Response) => {
-  try {
-    const { userId, sessions } = req.body;
-    const responses = await batchSyncUserSessions(
-      sessions.map((s: any) => ({
-        userId,
-        sessionData: s,
-        userPreferences: {},
-        timestamp: new Date(),
-      })),
-    );
-    res.json(responses);
-  } catch (error) {
-    console.error('[Batch Sync] Error:', error);
-    res.status(500).json({
-      error: 'Failed to batch sync sessions',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
+// GET /status endpoint retained (local database operation)
 userRouter.get('/status', async (req: Request, res: Response) => {
   try {
     const { userId } = req.query;
@@ -322,22 +217,9 @@ userRouter.get('/status', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.delete('/delete-data', async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.body;
-    if (!userId) {
-      return res.status(400).json({ error: 'userId required' });
-    }
-    const response = await deleteUserData(userId);
-    res.json(response);
-  } catch (error) {
-    console.error('[Delete] Error:', error);
-    res.status(500).json({
-      error: 'Failed to delete user data',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+// DELETE /delete-data endpoint disabled (Pinecone dependency)
+// This endpoint needs to remove data from Pinecone index
+// userRouter.delete('/delete-data', ...);
 
 app.use(`${API_BASE}/user`, userRouter);
 
@@ -467,8 +349,8 @@ app.get(`${API_BASE}/health`, async (req: Request, res: Response) => {
     })();
 
     services.embeddings = await embeddingsHealth();
-    services.recommendations = await recommendationsHealth();
-    services.insights = await insightsHealth();
+    // services.recommendations = await recommendationsHealth(); // disabled
+    // services.insights = await insightsHealth(); // disabled
     services.practices = await practicesHealth();
     services.sync = await syncHealth();
     services.shadow = await shadowHealth();
@@ -503,10 +385,12 @@ app.get('/', (req: Request, res: Response) => {
     name: 'Aura OS RAG Backend API',
     version: '1.0.0',
     endpoints: {
-      recommendations: `${API_BASE}/recommendations/*`,
-      insights: `${API_BASE}/insights/*`,
-      practices: `${API_BASE}/practices/*`,
-      user: `${API_BASE}/user/*`,
+      // recommendations: `${API_BASE}/recommendations/*`, // DISABLED
+      // insights: `${API_BASE}/insights/*`, // DISABLED
+      practices: `${API_BASE}/practices/customizations, /practices/save-custom`,
+      user: `${API_BASE}/user/status`,
+      shadow: `${API_BASE}/shadow/memory-reconsolidation/*`,
+      mind: `${API_BASE}/mind/eight-zones/*`,
       health: `${API_BASE}/health`,
     },
   });
@@ -536,21 +420,25 @@ async function startServer() {
       console.log('\n✅ Server Running!');
       console.log(`📍 http://localhost:${PORT}`);
       console.log(`📊 Health: http://localhost:${PORT}${API_BASE}/health`);
-      console.log(`\n📚 Available Endpoints:`);
+      console.log(`\n📚 Available Endpoints (Local Operations Only):`);
+      console.log(`  • GET  ${API_BASE}/practices/customizations`);
+      console.log(`  • POST ${API_BASE}/practices/save-custom`);
+      console.log(`  • GET  ${API_BASE}/user/status`);
+      console.log(`  • POST ${API_BASE}/shadow/memory-reconsolidation/extract-beliefs`);
+      console.log(`  • POST ${API_BASE}/shadow/memory-reconsolidation/mine-contradictions`);
+      console.log(`  • POST ${API_BASE}/shadow/memory-reconsolidation/complete`);
+      console.log(`  • POST ${API_BASE}/mind/eight-zones/enhance-zone`);
+      console.log(`  • POST ${API_BASE}/mind/eight-zones/synthesize`);
+      console.log(`  • POST ${API_BASE}/mind/eight-zones/submit`);
+      console.log(`\n⚠️  DISABLED (Pinecone dependencies):`);
       console.log(`  • POST ${API_BASE}/recommendations/personalized`);
       console.log(`  • POST ${API_BASE}/recommendations/assessment`);
       console.log(`  • POST ${API_BASE}/insights/generate`);
       console.log(`  • POST ${API_BASE}/insights/patterns`);
       console.log(`  • POST ${API_BASE}/practices/personalize`);
-      console.log(`  • GET  ${API_BASE}/practices/customizations`);
-      console.log(`  • POST ${API_BASE}/practices/save-custom`);
       console.log(`  • POST ${API_BASE}/user/sync`);
       console.log(`  • POST ${API_BASE}/user/sync-batch`);
-      console.log(`  • GET  ${API_BASE}/user/status`);
       console.log(`  • DELETE ${API_BASE}/user/delete-data`);
-      console.log(`  • POST ${API_BASE}/shadow/memory-reconsolidation/extract-beliefs`);
-      console.log(`  • POST ${API_BASE}/shadow/memory-reconsolidation/mine-contradictions`);
-      console.log(`  • POST ${API_BASE}/shadow/memory-reconsolidation/complete`);
       console.log(`\n🌐 CORS enabled for: http://localhost:3000, http://localhost:5173`);
       console.log('\n💡 To test health: curl http://localhost:3001/api/health\n');
     });
