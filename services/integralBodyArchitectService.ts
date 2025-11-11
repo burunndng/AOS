@@ -18,6 +18,7 @@ interface GeneratePlanInput {
   yinPreferences: YinPreferences;
   historicalContext?: HistoricalComplianceSummary;
   personalizationSummary?: PersonalizationSummary;
+  onStreamChunk?: (chunk: string) => void;
 }
 
 interface LLMPlanGenerationResponse {
@@ -168,7 +169,7 @@ IMPORTANT: Return ONLY valid JSON matching the response structure. Do not includ
 
   let response;
   try {
-    const apiPromise = generateOpenRouterResponse(messages, undefined, {
+    const apiPromise = generateOpenRouterResponse(messages, input.onStreamChunk, {
       model: DEFAULT_MODEL,
       maxTokens: 4000,
       temperature: 0.7
