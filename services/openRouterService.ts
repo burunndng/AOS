@@ -15,6 +15,9 @@ const openRouter = new OpenAI({
 // Default model for IntegralBodyArchitect
 export const DEFAULT_MODEL = 'qwen/qwen3-235b-a22b-2507';
 
+// Fast Qwen model optimized for low latency
+export const QWEN_FAST_MODEL = 'qwen/qwen3-30b-a3b-instruct-2507';
+
 // Default DeepSeek model (kept for backward compatibility)
 export const DEEPSEEK_MODEL = 'deepseek/deepseek-v3.2-exp';
 
@@ -29,6 +32,10 @@ export interface OpenRouterOptions {
   temperature?: number;
   systemPrompt?: string;
   preset?: string;
+  provider?: {
+    quantizations?: string[];
+    sort?: string;
+  };
 }
 
 interface ChatResponse {
@@ -67,7 +74,8 @@ export async function generateOpenRouterResponse(
       model = DEEPSEEK_MODEL,
       maxTokens = 1000,
       temperature = 0.7,
-      preset
+      preset,
+      provider
     } = options;
 
     // Use streaming if callback provided
@@ -81,6 +89,7 @@ export async function generateOpenRouterResponse(
         temperature,
         stream: true,
         ...(preset ? { preset } : {}),
+        ...(provider ? { provider } : {}),
       });
 
       console.log('[OpenRouter] Stream created, reading chunks...');
@@ -106,6 +115,7 @@ export async function generateOpenRouterResponse(
         max_tokens: maxTokens,
         temperature,
         ...(preset ? { preset } : {}),
+        ...(provider ? { provider } : {}),
       });
 
       const text = response.choices[0]?.message?.content || '';

@@ -6,7 +6,7 @@ import {
   HistoricalComplianceSummary,
   PersonalizationSummary
 } from '../types.ts';
-import { generateOpenRouterResponse, buildMessagesWithSystem, OpenRouterMessage, DEEPSEEK_MODEL } from './openRouterService.ts';
+import { generateOpenRouterResponse, buildMessagesWithSystem, OpenRouterMessage, QWEN_FAST_MODEL } from './openRouterService.ts';
 
 interface GeneratePlanInput {
   goalStatement: string;
@@ -31,9 +31,13 @@ export async function generateIntegralWeeklyPlan(input: GeneratePlanInput): Prom
 
   try {
     const response = await generateOpenRouterResponse(messages, undefined, {
-      model: DEEPSEEK_MODEL,
+      model: QWEN_FAST_MODEL,
       maxTokens: 16000,
-      temperature: 0.7
+      temperature: 0.7,
+      provider: {
+        quantizations: ['fp8'],
+        sort: 'latency'
+      }
     });
 
     if (!response.success) {
