@@ -49,6 +49,38 @@ export const healingAudios: HealingAudio[] = [
     category: 'hypnosis',
     symbol: '🜌', // Alchemical integration/center symbol
   },
+  {
+    id: 'untangled-mind',
+    title: 'The Untangled Mind',
+    description: 'Create distance from anxious thoughts via cognitive defusion using ACT-based techniques to observe thoughts without being entangled by them.',
+    url: 'https://files.catbox.moe/oszgba.mp3',
+    category: 'nervous-system',
+    symbol: '🝪', // Alchemical separation/distillation symbol
+  },
+  {
+    id: 'vast-perspective',
+    title: 'The Vast Perspective (Awe Induction)',
+    description: 'An expansive journey to induce states of awe and transcendence, opening your perspective to the vastness of experience.',
+    url: 'https://files.catbox.moe/ym0w5v.mp3',
+    category: 'hypnosis',
+    symbol: '🝮', // Alchemical expansion/infinity symbol
+  },
+  {
+    id: 'effortless-drift',
+    title: 'The Effortless Drift (Sleep Insomnia)',
+    description: 'A gentle guided practice to release the struggle with sleep and allow yourself to drift naturally into restful slumber.',
+    url: 'https://files.catbox.moe/xalace.mp3',
+    category: 'hypnosis',
+    symbol: '🜍', // Alchemical dissolution/sleep symbol
+  },
+  {
+    id: 'skillful-wait',
+    title: 'The Skillful Wait (Urge Surfing)',
+    description: 'Master the art of urge surfing by learning to skillfully wait and ride the waves of intense sensations without acting on them.',
+    url: 'https://files.catbox.moe/y3aoyc.mp3',
+    category: 'nervous-system',
+    symbol: '🝖', // Alchemical patience/time symbol
+  },
 ];
 
 export const audioCategories = {
