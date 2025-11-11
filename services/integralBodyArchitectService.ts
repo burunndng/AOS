@@ -10,7 +10,7 @@ import {
   PersonalizationSummary
 } from '../types.ts';
 import { buildPersonalizationPromptInsertion } from './integralBodyPersonalization.ts';
-import { generateOpenRouterResponse, buildMessagesWithSystem, OpenRouterMessage, DEFAULT_MODEL } from './openRouterService.ts';
+import { generateOpenRouterResponse, buildMessagesWithSystem, OpenRouterMessage, DEEPSEEK_MODEL } from './openRouterService.ts';
 
 interface GeneratePlanInput {
   goalStatement: string;
@@ -164,13 +164,13 @@ IMPORTANT: Return ONLY valid JSON matching the response structure. Do not includ
   );
 
   const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('Plan generation timed out after 60 seconds. Please try again.')), 60000)
+    setTimeout(() => reject(new Error('Plan generation timed out after 120 seconds. Please try again.')), 120000)
   );
 
   let response;
   try {
     const apiPromise = generateOpenRouterResponse(messages, input.onStreamChunk, {
-      model: DEFAULT_MODEL,
+      model: DEEPSEEK_MODEL,
       maxTokens: 4000,
       temperature: 0.7
     });
