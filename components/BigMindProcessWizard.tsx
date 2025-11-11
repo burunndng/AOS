@@ -535,18 +535,18 @@ export default function BigMindProcessWizard({
                         ? 'bg-slate-600 text-slate-200 hover:bg-slate-500'
                         : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                     }`}
-                    title={error || `${provider === 'groq' ? 'Fast streaming responses' : 'Google AI'}`}
+                    title={error || (provider === 'groq' ? 'Fast streaming responses' : provider === 'openrouter' ? 'DeepSeek via OpenRouter' : 'Google Gemini')}
                   >
                     <span className="flex items-center gap-1">
                       {provider === 'groq' && <Zap size={12} />}
-                      {provider === 'groq' ? 'Groq' : 'Google'}
+                      {provider === 'groq' ? 'Groq' : provider === 'openrouter' ? 'DeepSeek' : 'Google'}
                       {!available && ' (Unavailable)'}
                     </span>
                   </button>
                 ))}
               </div>
               <span className="text-xs text-slate-400">
-                {selectedProvider === 'groq' ? '⚡ Fast streaming' : '🔍 Standard'}
+                {selectedProvider === 'groq' ? '⚡ Fast streaming' : selectedProvider === 'openrouter' ? '🚀 DeepSeek' : '🔍 Standard'}
               </span>
             </div>
           </div>

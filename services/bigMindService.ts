@@ -571,19 +571,19 @@ export function getAvailableProviders(): { provider: BigMindProvider; available:
 }
 
 /**
- * Get the best available provider (prefers Groq for speed, then Google, then OpenRouter)
+ * Get the best available provider (prefers OpenRouter/DeepSeek, then Groq, then Google)
  */
 export function getBestProvider(): BigMindProvider {
   const providers = getAvailableProviders();
   const available = providers.filter(p => p.available);
 
-  // Prefer Groq if available (faster), then Google, then OpenRouter
-  if (available.some(p => p.provider === 'groq')) {
+  // Prefer OpenRouter/DeepSeek if available, then Groq, then Google
+  if (available.some(p => p.provider === 'openrouter')) {
+    return 'openrouter';
+  } else if (available.some(p => p.provider === 'groq')) {
     return 'groq';
   } else if (available.some(p => p.provider === 'google')) {
     return 'google';
-  } else if (available.some(p => p.provider === 'openrouter')) {
-    return 'openrouter';
   }
 
   // Fallback to Google even if API key might be missing
