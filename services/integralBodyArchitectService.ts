@@ -161,7 +161,65 @@ Create a comprehensive, integrated 7-day plan that:
 Return a comprehensive 7-day plan with detailed synergy metadata and constraint analysis.
 Be specific, actionable, evidence-based, and explicit about scheduling reasoning.
 
-IMPORTANT: Return ONLY valid JSON matching the response structure. Do not include any markdown formatting or code block delimiters.`;
+CRITICAL: Return ONLY valid JSON matching this EXACT structure (no markdown, no code blocks):
+
+{
+  "weekSummary": "Brief overview of the week's focus and balance",
+  "constraintNotes": "How hard constraints were handled",
+  "fallbackOptions": ["Alternative scheduling option 1", "Alternative option 2"],
+  "schedulingConfidence": 85,
+  "dailyTargets": {
+    "proteinGrams": 105,
+    "sleepHours": 8,
+    "workoutDays": 3,
+    "yinPracticeMinutes": 70
+  },
+  "days": [
+    {
+      "dayName": "Monday",
+      "summary": "Day overview",
+      "yangYinBalance": "Balanced workout with evening practice",
+      "constraintResolution": "Scheduled within time window",
+      "workout": {
+        "name": "Full Body A",
+        "exercises": [{"name": "Squats", "sets": 3, "reps": "12", "notes": ""}],
+        "duration": 45,
+        "notes": ""
+      },
+      "yinPractices": [
+        {
+          "name": "Coherent Breathing",
+          "practiceType": "breathing",
+          "duration": 10,
+          "timeOfDay": "Evening",
+          "intention": "Reduce stress",
+          "instructions": ["Step 1", "Step 2"],
+          "synergyReason": "Calms post-workout activation",
+          "schedulingConfidence": 90
+        }
+      ],
+      "nutrition": {
+        "breakfast": {"description": "Oatmeal with nuts", "protein": 20},
+        "lunch": {"description": "Chicken salad", "protein": 30},
+        "dinner": {"description": "Fish with vegetables", "protein": 35},
+        "snacks": {"description": "Greek yogurt", "protein": 15},
+        "totalProtein": 100,
+        "totalCalories": 2000,
+        "notes": ""
+      },
+      "sleepHygiene": ["Dark room", "No caffeine after 2pm"],
+      "notes": ""
+    }
+  ],
+  "shoppingList": ["Item 1", "Item 2"],
+  "synergyScoring": {
+    "yangYinPairingScore": 85,
+    "restSpacingScore": 90,
+    "overallIntegrationScore": 87
+  }
+}
+
+IMPORTANT: days MUST be an array with 7 objects (Monday-Sunday), not an object with day keys.`;
 
   const messages: OpenRouterMessage[] = buildMessagesWithSystem(
     'You are The Integral Body Architect—an expert at synthesizing comprehensive, integrated weekly plans. Return ONLY valid JSON, no markdown or formatting.',
