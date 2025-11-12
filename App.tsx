@@ -1075,7 +1075,8 @@ export default function App() {
         </div>
       </main>
       <Suspense fallback={<div className="fixed bottom-6 right-6 z-50"><LoadingFallback text="Loading coach..." size="small" /></div>}>
-        <Coach 
+        <Coach
+            userId={userId}
             practiceStack={practiceStack}
             completedCount={Object.values(completedToday).filter(Boolean).length}
             completionRate={practiceStack.length > 0 ? (Object.values(completedToday).filter(Boolean).length / practiceStack.length) * 100 : 0}
