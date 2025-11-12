@@ -1,6 +1,7 @@
 /**
- * AI Practice Coach Backend API - Working Version
- * Uses only Gemini 2.5-flash (no Upstash Vector until that's fixed)
+ * AI Practice Coach Backend API
+ * Uses Gemini 2.5-flash for conversational coaching
+ * No dependencies on vector databases or RAG systems
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
