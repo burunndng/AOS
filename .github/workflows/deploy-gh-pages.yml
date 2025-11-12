@@ -47,6 +47,22 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Delete old artifacts
+        run: |
+          # Get all artifacts named 'github-pages'
+          ARTIFACTS=$(gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "github-pages") | .id')
+          # Delete each artifact except the most recent
+          COUNT=0
+          for ARTIFACT_ID in $ARTIFACTS; do
+            COUNT=$((COUNT + 1))
+            if [ $COUNT -gt 1 ]; then
+              echo "Deleting old artifact: $ARTIFACT_ID"
+              gh api -X DELETE repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID || true
+            fi
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
