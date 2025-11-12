@@ -85,6 +85,36 @@ export const healingAudios: HealingAudio[] = [
     category: 'nervous-system',
     symbol: '🝖', // Alchemical patience/time symbol
   },
+  {
+    id: 'emotional-update',
+    title: 'The Emotional Update (Memory Reconsolidation)',
+    description: 'A transformative journey to update emotional memories and rewrite the narrative of your past experiences.',
+    url: 'https://files.catbox.moe/xmh45t.mp3',
+    category: 'hypnosis',
+    symbol: '🝥', // Alchemical transformation/emotion symbol
+    goal: 'Update emotional memories and rewrite past narratives',
+    mechanism: '(N) Memory Reconsolidation',
+  },
+  {
+    id: 'if-then-path',
+    title: 'The If-Then Path (Cognitive Reframing)',
+    description: 'Rewire your thinking patterns through guided cognitive reframing to shift perspective and transform limiting beliefs.',
+    url: 'https://files.catbox.moe/eky8um.mp3',
+    category: 'hypnosis',
+    symbol: '🜅', // Alchemical mind/thought symbol
+    goal: 'Shift perspective and transform limiting beliefs',
+    mechanism: '(C) Cognitive Reframing',
+  },
+  {
+    id: 'inner-ally',
+    title: 'The Inner Ally (Self-Compassion for Stress)',
+    description: 'Cultivate self-compassion and activate your inner wisdom to navigate stress with kindness and resilience.',
+    url: 'https://files.catbox.moe/vcycla.mp3',
+    category: 'hypnosis',
+    symbol: '🜊', // Alchemical inner protection/compassion symbol
+    goal: 'Cultivate self-compassion and resilience during stress',
+    mechanism: '(C) Self-Compassion & Acceptance',
+  },
 ];
 
 export const audioCategories = {
