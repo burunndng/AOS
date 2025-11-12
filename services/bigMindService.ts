@@ -8,12 +8,18 @@ import { generateOpenRouterResponse, buildMessagesWithSystem, DEEPSEEK_MODEL } f
 // Initialize the Google AI client
 const googleAI = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-// Initialize Groq client (OpenAI-compatible)
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: 'https://api.groq.com/openai/v1',
-  dangerouslyAllowBrowser: true // Allow usage in browser for Vercel deployment
-});
+// Initialize Groq client lazily to prevent errors when GROQ_API_KEY is not set
+let groqClient: OpenAI | null = null;
+const getGroqClient = (): OpenAI => {
+  if (!groqClient) {
+    groqClient = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: 'https://api.groq.com/openai/v1',
+      dangerouslyAllowBrowser: true // Allow usage in browser for Vercel deployment
+    });
+  }
+  return groqClient;
+};
 
 // Provider types
 export type BigMindProvider = 'google' | 'groq' | 'openrouter';
@@ -260,7 +266,7 @@ async function generateGroqResponse(
 
     // Use streaming if callback provided
     if (onStreamChunk) {
-      const stream = await groq.chat.completions.create({
+      const stream = await getGroqClient().chat.completions.create({
         model: 'openai/gpt-oss-120b',
         messages,
         max_tokens: 1000,
@@ -279,7 +285,7 @@ async function generateGroqResponse(
       return { success: true, text: fullText };
     } else {
       // Fallback to non-streaming if no callback
-      const response = await groq.chat.completions.create({
+      const response = await getGroqClient().chat.completions.create({
         model: 'openai/gpt-oss-120b',
         messages,
         max_tokens: 1000,
@@ -416,7 +422,7 @@ Return ONLY valid JSON.`;
     
     if (provider === 'groq') {
       // Use Groq for summarization
-      const groqResponse = await groq.chat.completions.create({
+      const groqResponse = await getGroqClient().chat.completions.create({
         model: 'openai/gpt-oss-120b',
         messages: [
           {

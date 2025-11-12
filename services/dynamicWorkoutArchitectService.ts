@@ -1,10 +1,17 @@
 import OpenAI from 'openai';
 
-const openRouter = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-  dangerouslyAllowBrowser: true,
-});
+// Initialize OpenRouter client lazily to prevent errors when OPENROUTER_API_KEY is not set
+let openRouterClient: OpenAI | null = null;
+const getOpenRouterClient = (): OpenAI => {
+  if (!openRouterClient) {
+    openRouterClient = new OpenAI({
+      apiKey: process.env.OPENROUTER_API_KEY,
+      baseURL: 'https://openrouter.ai/api/v1',
+      dangerouslyAllowBrowser: true,
+    });
+  }
+  return openRouterClient;
+};
 
 export interface WorkoutExercise {
   name: string;
@@ -254,7 +261,7 @@ Be specific, actionable, and emphasize the mind-body connection throughout.
 IMPORTANT: Return your response as valid JSON only, with no additional text or markdown formatting. Use this schema:
 ${JSON.stringify(WORKOUT_RESPONSE_SCHEMA, null, 2)}`;
 
-  const apiPromise = openRouter.chat.completions.create({
+  const apiPromise = getOpenRouterClient().chat.completions.create({
     model: 'x-ai/grok-4-fast',
     messages: [
       {

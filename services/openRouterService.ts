@@ -1,16 +1,22 @@
 // services/openRouterService.ts
 import OpenAI from 'openai';
 
-// Initialize OpenRouter client (OpenAI-compatible)
-const openRouter = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
-  dangerouslyAllowBrowser: true, // Allow usage in browser for Vercel deployment
-  defaultHeaders: {
-    "HTTP-Referer": process.env.SITE_URL || "https://auraos.app",
-    "X-Title": "Aura OS - Integral Life Practice"
+// Initialize OpenRouter client lazily to prevent errors when OPENROUTER_API_KEY is not set
+let openRouterClient: OpenAI | null = null;
+const getOpenRouterClient = (): OpenAI => {
+  if (!openRouterClient) {
+    openRouterClient = new OpenAI({
+      apiKey: process.env.OPENROUTER_API_KEY,
+      baseURL: 'https://openrouter.ai/api/v1',
+      dangerouslyAllowBrowser: true, // Allow usage in browser for Vercel deployment
+      defaultHeaders: {
+        "HTTP-Referer": process.env.SITE_URL || "https://auraos.app",
+        "X-Title": "Aura OS - Integral Life Practice"
+      }
+    });
   }
-});
+  return openRouterClient;
+};
 
 // Default model for IntegralBodyArchitect
 export const DEFAULT_MODEL = 'qwen/qwen3-235b-a22b-2507';
@@ -82,7 +88,7 @@ export async function generateOpenRouterResponse(
     if (onStreamChunk) {
       console.log('[OpenRouter] Using streaming mode');
       console.log('[OpenRouter] Creating stream...');
-      const stream = await openRouter.chat.completions.create({
+      const stream = await getOpenRouterClient().chat.completions.create({
         model,
         messages,
         max_tokens: maxTokens,
@@ -109,7 +115,7 @@ export async function generateOpenRouterResponse(
       // Fallback to non-streaming
       console.log('[OpenRouter] Using non-streaming mode');
       console.log('[OpenRouter] Making API call...');
-      const response = await openRouter.chat.completions.create({
+      const response = await getOpenRouterClient().chat.completions.create({
         model,
         messages,
         max_tokens: maxTokens,
