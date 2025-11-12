@@ -230,7 +230,7 @@ export default function Coach({
               <Sparkles className="text-accent" size={32} />
             </div>
             <p className="text-slate-400 text-sm">Ask about your practices, motivation, or what to add next.</p>
-            <p className="text-slate-500 text-xs">Powered by Gemini 2.5-flash</p>
+            <p className="text-slate-500 text-xs">Powered by Gemini 2.5-flash + Upstash Vector</p>
           </div>
         )}
         {coachResponses.map((msg, idx) => (
