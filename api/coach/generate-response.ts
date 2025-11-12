@@ -4,7 +4,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { RAGChat, upstash } from '@upstash/rag-chat';
+import { RAGChat, google } from '@upstash/rag-chat';
 import { Index } from '@upstash/vector';
 import { Redis } from '@upstash/redis';
 import { getDatabase } from '../lib/db.ts';
@@ -150,10 +150,10 @@ Guidelines:
 - When suggesting practices from the knowledge base, be specific about WHY they're relevant
     `.trim();
 
-    // Initialize RAGChat with Upstash Vector
+    // Initialize RAGChat with Gemini and Upstash Vector
     const ragChat = new RAGChat({
-      model: upstash('meta-llama/Meta-Llama-3-8B-Instruct', {
-        apiKey: process.env.QSTASH_TOKEN,
+      model: google('gemini-2.0-flash-exp', {
+        apiKey: process.env.API_KEY!,
       }),
       vector: new Index({
         url: process.env.UPSTASH_VECTOR_REST_URL!,
