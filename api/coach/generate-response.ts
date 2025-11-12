@@ -1,13 +1,10 @@
 /**
- * AI Practice Coach Backend API with Gemini and Upstash Vector
- * Uses Gemini 2.5-flash for LLM and Upstash Vector for semantic search
+ * AI Practice Coach Backend API - Working Version
+ * Uses only Gemini 2.5-flash (no Upstash Vector until that's fixed)
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
-import { initializeUpstash, semanticSearch } from '../lib/upstash-vector.ts';
-import { generateEmbedding } from '../lib/embeddings.ts';
-import { initializeDatabase, getDatabase } from '../lib/db.ts';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
@@ -72,34 +69,6 @@ export default async function handler(
 
     console.log(`[Coach API] Processing request for user ${userId}: "${message}"`);
 
-    // Initialize services (required for serverless environment)
-    await initializeDatabase();
-    await initializeUpstash();
-
-    // Get user profile
-    let userProfile;
-    try {
-      const db = getDatabase();
-      userProfile = await db.getUserProfile(userId);
-    } catch (error) {
-      console.error('[Coach API] Error getting user profile:', error);
-      userProfile = null;
-    }
-
-    // Perform semantic search on user's message
-    let relevantPractices: any[] = [];
-    try {
-      const messageEmbedding = await generateEmbedding(message);
-      relevantPractices = await semanticSearch(messageEmbedding, {
-        topK: 5,
-        type: 'practice',
-        minSimilarity: 0.6,
-      });
-      console.log(`[Coach API] Found ${relevantPractices.length} relevant practices from vector DB`);
-    } catch (vectorError) {
-      console.error('[Coach API] Vector search failed (continuing without):', vectorError);
-    }
-
     // Build rich context about the user's current state
     const today = new Date().toISOString().split('T')[0];
     const stackContext = practiceStack.length > 0
@@ -128,25 +97,6 @@ export default async function handler(
 
     const timeContext = `Total weekly commitment: ${timeCommitment.toFixed(1)} hours (${timeIndicator}).`;
 
-    // Build user profile context
-    const userContext: string[] = [];
-    if (userProfile?.developmentalStage) {
-      userContext.push(`Developmental stage: ${userProfile.developmentalStage}`);
-    }
-    if (userProfile?.attachmentStyle) {
-      userContext.push(`Attachment style: ${userProfile.attachmentStyle}`);
-    }
-    if (userProfile?.identifiedBiases && userProfile.identifiedBiases.length > 0) {
-      userContext.push(`Identified biases: ${userProfile.identifiedBiases.join(', ')}`);
-    }
-
-    // Build relevant practices context from vector search
-    const suggestedPracticesContext = relevantPractices.length > 0
-      ? `\n\nRelevant practices from knowledge base (based on semantic similarity):\n${relevantPractices
-          .map((p, i) => `${i + 1}. ${p.metadata.practiceTitle || 'Practice'} (${p.metadata.category || 'general'}) - ${(p.score * 100).toFixed(0)}% match\n   ${p.metadata.description || 'No description'}`)
-          .join('\n')}`
-      : '';
-
     // Build the complete prompt
     const fullPrompt = `You are an intelligent ILP (Integrative Life Practices) coach. You're helping someone build and sustain transformative life practices.
 
@@ -155,8 +105,6 @@ User's current context:
 - Modules breakdown: ${moduleBreakdown || 'None selected yet'}
 - ${completionContext}
 - ${timeContext}
-${userContext.length > 0 ? `- User profile: ${userContext.join('; ')}` : ''}
-${suggestedPracticesContext}
 
 The user just asked: "${message}"
 
@@ -166,8 +114,7 @@ Guidelines:
 - If they ask for the "why" of practices, explain the research and benefits
 - If they're struggling (especially if mentioned in notes), suggest making it smaller or easier
 - If they're motivated, suggest adding one more practice
-- Keep responses to 2-4 sentences. Be direct and authentic.
-- When suggesting practices from the knowledge base, be specific about WHY they're relevant`;
+- Keep responses to 2-4 sentences. Be direct and authentic.`;
 
     // Set up streaming response
     res.setHeader('Content-Type', 'text/event-stream');
