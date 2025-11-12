@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 // FIX: Add file extension to import path.
-import { StarterStack } from '../types.ts';
-import { Sparkles, CheckCircle } from 'lucide-react';
+import { StarterStack, IntegratedInsight, AllPractice } from '../types.ts';
+import { Sparkles, CheckCircle, Lightbulb, ArrowRight } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
+import { getPendingInsights, getHighImpactPractices } from '../services/insightContext.ts';
 
 interface RecommendationsTabProps {
   starterStacks: Record<string, StarterStack>;
@@ -13,6 +14,9 @@ interface RecommendationsTabProps {
   isLoading: boolean;
   error: string | null;
   onGenerate: () => void;
+  integratedInsights: IntegratedInsight[];
+  allPractices: AllPractice[];
+  addToStack: (practice: AllPractice) => void;
 }
 
 export default function RecommendationsTab({
@@ -22,8 +26,13 @@ export default function RecommendationsTab({
   recommendations,
   isLoading,
   error,
-  onGenerate
+  onGenerate,
+  integratedInsights,
+  allPractices,
+  addToStack
 }: RecommendationsTabProps) {
+  const pendingInsights = getPendingInsights(integratedInsights);
+  const highImpactPractices = getHighImpactPractices(integratedInsights, allPractices, 2);
 
   return (
     <div className="space-y-8">
@@ -32,6 +41,120 @@ export default function RecommendationsTab({
         <p className="text-slate-400 mt-2">Get suggestions for your practice stack, from starter kits to personalized AI insights grounded in your history.</p>
       </header>
 
+      {/* Insight-Based Recommendations Section */}
+      {pendingInsights.length > 0 && (
+        <section className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border border-blue-700/50 rounded-lg p-6">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-100 mb-2 flex items-center gap-3">
+            <Lightbulb className="text-blue-400"/> Pattern-Based Recommendations
+          </h2>
+          <p className="text-slate-400 mb-6">Based on patterns detected in your recent sessions:</p>
+
+          <div className="space-y-6">
+            {pendingInsights.map((insight) => (
+              <div key={insight.id} className="bg-slate-800/60 border border-slate-700/80 rounded-lg p-5">
+                {/* Pattern Header */}
+                <div className="mb-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-slate-100">{insight.mindToolName}</h3>
+                    <span className="text-xs font-mono bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
+                      {insight.mindToolType}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-300 bg-slate-700/30 p-3 rounded border-l-2 border-blue-500">
+                    {insight.detectedPattern}
+                  </p>
+                </div>
+
+                {/* Recommended Practices */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Shadow Work (Reflection) */}
+                  {insight.suggestedShadowWork.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-400 mb-3 uppercase">Reflect (Shadow Work)</h4>
+                      <div className="space-y-2">
+                        {insight.suggestedShadowWork.map((sw) => {
+                          const practice = allPractices.find(p => p.id === sw.practiceId);
+                          return practice ? (
+                            <button
+                              key={sw.practiceId}
+                              onClick={() => addToStack(practice)}
+                              className="w-full text-left p-3 bg-slate-700/50 hover:bg-slate-700 rounded border border-slate-600/50 hover:border-blue-500/50 transition group"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <p className="font-medium text-slate-200 group-hover:text-blue-300">{sw.practiceName}</p>
+                                  <p className="text-xs text-slate-400 mt-1">{sw.rationale}</p>
+                                </div>
+                                <ArrowRight size={16} className="text-slate-500 group-hover:text-blue-400 mt-1 flex-shrink-0" />
+                              </div>
+                            </button>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Next Steps (Action) */}
+                  {insight.suggestedNextSteps.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-400 mb-3 uppercase">Act (Next Steps)</h4>
+                      <div className="space-y-2">
+                        {insight.suggestedNextSteps.map((ns) => {
+                          const practice = allPractices.find(p => p.id === ns.practiceId);
+                          return practice ? (
+                            <button
+                              key={ns.practiceId}
+                              onClick={() => addToStack(practice)}
+                              className="w-full text-left p-3 bg-slate-700/50 hover:bg-slate-700 rounded border border-slate-600/50 hover:border-green-500/50 transition group"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <p className="font-medium text-slate-200 group-hover:text-green-300">{ns.practiceName}</p>
+                                  <p className="text-xs text-slate-400 mt-1">{ns.rationale}</p>
+                                </div>
+                                <ArrowRight size={16} className="text-slate-500 group-hover:text-green-400 mt-1 flex-shrink-0" />
+                              </div>
+                            </button>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* High-Impact Practices */}
+      {highImpactPractices.length > 0 && (
+        <section className="bg-slate-800/50 border border-slate-700/80 rounded-lg p-6">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-100 mb-4 flex items-center gap-3">
+            <Sparkles className="text-accent"/> High-Impact Practices
+          </h2>
+          <p className="text-slate-400 mb-6">These practices address multiple patterns from your sessions:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {highImpactPractices.map((practice) => (
+              <button
+                key={practice.id}
+                onClick={() => addToStack(practice)}
+                className="text-left p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg border border-slate-600/50 hover:border-accent/50 transition group"
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h4 className="font-semibold text-slate-100 group-hover:text-accent">{practice.name}</h4>
+                  <span className="text-xs font-mono bg-accent/20 text-accent px-2 py-1 rounded whitespace-nowrap">
+                    {practice.patternCount} patterns
+                  </span>
+                </div>
+                <p className="text-sm text-slate-400 line-clamp-2">{practice.description}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <SectionDivider />
 
       {/* Classic AI Recommendations Section */}
       <section className="bg-slate-800/50 border border-slate-700/80 rounded-lg p-6">
