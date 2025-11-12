@@ -5,9 +5,9 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
-import { semanticSearch } from '../lib/upstash-vector.ts';
-import { generateEmbedding } from '../lib/embeddings.ts';
-import { getDatabase } from '../lib/db.ts';
+import { semanticSearch } from '../lib/upstash-vector.js';
+import { generateEmbedding } from '../lib/embeddings.js';
+import { getDatabase } from '../lib/db.js';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 

@@ -4,8 +4,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
-import { getIndexStats } from '../lib/upstash-vector.ts';
-import { generateEmbedding } from '../lib/embeddings.ts';
+import { getIndexStats } from '../lib/upstash-vector.js';
+import { generateEmbedding } from '../lib/embeddings.js';
 
 export default async function handler(
   req: VercelRequest,
