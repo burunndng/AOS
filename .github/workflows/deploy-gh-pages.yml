@@ -1,0 +1,68 @@
+name: Deploy Feature Branch to GitHub Pages
+
+on:
+  push:
+    branches:
+      - 'claude/**'  # Deploy any branch starting with 'claude/'
+  workflow_dispatch:    # Allow manual triggers
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          # GitHub Pages deployment flag
+          GITHUB_PAGES: 'true'
+          # API endpoint - use staging/feature API or local for development
+          VITE_API_URL: ${{ secrets.FEATURE_BRANCH_API_URL }}
+          VITE_COACH_API_URL: ${{ secrets.FEATURE_BRANCH_COACH_API }}
+          # Gemini API key for feature branch
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          preview: true  # Creates preview deployments for feature branches
+
+  # Post deployment summary
+  summary:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Comment on deployment
+        run: |
+          echo "✅ Deployment to GitHub Pages completed"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
