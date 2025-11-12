@@ -96,6 +96,7 @@ import { practices as corePractices, starterStacks, modules } from './constants.
 // Services
 import * as geminiService from './services/geminiService.ts';
 import * as ragService from './services/ragService.ts';
+import { generateInsightFromSession } from './services/insightGenerator.ts';
 import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
@@ -391,10 +392,21 @@ export default function App() {
     setDraftBias(null);
     setActiveWizard(null);
     const report = `# Bias Detective: ${session.decisionText}\n- Diagnosis: ${session.diagnosis}\n- Takeaway: ${session.oneThingToRemember}`;
-    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
-      'Bias Detective', session.id, report, Object.values(corePractices.shadow)
-    );
-    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+    const summary = `Identified bias in decision: ${session.decisionText}`;
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'Bias Detective',
+        sessionId: session.id,
+        sessionName: 'Bias Detective Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Bias Detective] Failed to generate insight:', err);
+    }
   };
 
   const handleSaveBiasFinderSession = async (session: BiasFinderSession) => {
@@ -403,10 +415,21 @@ export default function App() {
     setActiveWizard(null);
     const biasesSummary = session.hypotheses.filter(h => h.confidence).map(h => `${h.biasName} (${h.confidence}%)`).join(', ');
     const report = `# Bias Finder: ${session.targetDecision}\n- Biases Identified: ${biasesSummary}\n- Recommendations: ${session.diagnosticReport?.recommendations.join('; ') || 'N/A'}`;
-    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
-      'Bias Finder', session.id, report, Object.values(corePractices.shadow)
-    );
-    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+    const summary = `Found ${session.hypotheses.filter(h => h.confidence).length} biases in decision`;
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'Bias Finder',
+        sessionId: session.id,
+        sessionName: 'Bias Finder Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Bias Finder] Failed to generate insight:', err);
+    }
   };
 
   const handleSaveSOSession = async (session: SubjectObjectSession) => {
@@ -414,10 +437,21 @@ export default function App() {
     setDraftSO(null);
     setActiveWizard(null);
     const report = `# S-O Explorer: ${session.pattern}\n- Subject to: ${session.subjectToStatement}\n- Insight: ${session.integrationShift}`;
-    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
-      'Subject-Object Explorer', session.id, report, Object.values(corePractices.shadow)
-    );
-    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+    const summary = `Pattern identified: ${session.pattern}`;
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'Subject-Object Explorer',
+        sessionId: session.id,
+        sessionName: 'Subject-Object Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Subject-Object Explorer] Failed to generate insight:', err);
+    }
   };
 
   const handleSavePSSession = async (session: PerspectiveShifterSession) => {
@@ -425,10 +459,21 @@ export default function App() {
     setDraftPS(null);
     setActiveWizard(null);
     const report = `# P-S Shifter: ${session.stuckSituation}\n- Synthesis: ${session.synthesis}\n- Action Plan: ${session.realityCheckRefinement}`;
-    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
-      'Perspective-Shifter', session.id, report, Object.values(corePractices.shadow)
-    );
-    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+    const summary = `Shifted perspective on: ${session.stuckSituation}`;
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'Perspective-Shifter',
+        sessionId: session.id,
+        sessionName: 'Perspective-Shifter Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Perspective-Shifter] Failed to generate insight:', err);
+    }
   };
   
   const handleSavePMSession = async (map: PolarityMap) => {
@@ -436,10 +481,21 @@ export default function App() {
     setDraftPM(null);
     setActiveWizard(null);
     const report = `# Polarity Map: ${map.dilemma}\n- Pole A: ${map.poleA_name}\n- Pole B: ${map.poleB_name}`;
-    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
-      'Polarity Mapper', map.id, report, Object.values(corePractices.shadow)
-    );
-    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+    const summary = `Mapped dilemma: ${map.dilemma}`;
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'Polarity Mapper',
+        sessionId: map.id,
+        sessionName: 'Polarity Mapper Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Polarity Mapper] Failed to generate insight:', err);
+    }
   };
 
   const handleSaveKeganSession = async (session: KeganAssessmentSession) => {
@@ -447,10 +503,21 @@ export default function App() {
     setDraftKegan(null);
     setActiveWizard(null);
     const report = `# Kegan Assessment\n- Stage: ${session.overallInterpretation?.centerOfGravity || 'Pending'}\n- Key Insights: ${JSON.stringify(session.responses).substring(0, 200)}`;
-    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
-      'Kegan Assessment', session.id, report, Object.values(corePractices.shadow)
-    );
-    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+    const summary = `Development stage assessed: ${session.overallInterpretation?.centerOfGravity || 'Assessment completed'}`;
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'Kegan Assessment',
+        sessionId: session.id,
+        sessionName: 'Kegan Assessment Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Kegan Assessment] Failed to generate insight:', err);
+    }
   };
 
   const handleSaveAttachmentAssessment = (session: AttachmentAssessmentSession) => {
@@ -462,10 +529,21 @@ export default function App() {
     setDraftRelational(null);
     setActiveWizard(null);
     const report = `# Relational Pattern\n- Context: ${session.conversation.slice(-3).map(m => m.text).join(' ')}`;
-    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
-      'Relational Pattern', session.id, report, Object.values(corePractices.shadow)
-    );
-    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+    const summary = `Relational pattern explored through dialogue`;
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'Relational Pattern',
+        sessionId: session.id,
+        sessionName: 'Relational Pattern Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Relational Pattern] Failed to generate insight:', err);
+    }
   };
 
   const handleSaveJhanaSession = (session: JhanaSession) => {
@@ -678,15 +756,22 @@ export default function App() {
       : 0;
 
     const report = `# Memory Reconsolidation: ${selectedBelief?.belief || 'N/A'}\n- Intensity Shift: ${shiftPercentage}%\n- Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceName).join(', ')}`;
+    const summary = `Reconsolidated belief shift: ${shiftPercentage}%`;
 
-    const insight = await geminiService.detectPatternsAndSuggestShadowWork(
-      'Memory Reconsolidation',
-      session.id,
-      report,
-      Object.values(corePractices.shadow),
-    );
-
-    if (insight) setIntegratedInsights(prev => [...prev, insight]);
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'Memory Reconsolidation',
+        sessionId: session.id,
+        sessionName: 'Memory Reconsolidation Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Memory Reconsolidation] Failed to generate insight:', err);
+    }
 
     alert('Memory Reconsolidation session saved! Your shift has been added to history.');
   };
