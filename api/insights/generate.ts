@@ -6,7 +6,7 @@
 
 import { generateInsightPrompt } from '../rag/generate-prompt.ts';
 import { initializeDatabase, getDatabase } from '../lib/db.ts';
-import { initializePinecone } from '../lib/pinecone.ts';
+import { initializeUpstash } from '../lib/upstash-vector.ts';
 import {
   generateWizardLinkedRecommendations,
   buildIntegratedInsightWithPractices,
@@ -26,7 +26,7 @@ export async function generateInsights(
   try {
     // Initialize services (required for serverless environment)
     await initializeDatabase();
-    await initializePinecone();
+    await initializeUpstash();
 
     // Store the session
     const db = getDatabase();

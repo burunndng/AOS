@@ -1,10 +1,10 @@
 /**
  * User Data Sync API Endpoint
- * Synchronizes user sessions with backend and indexes them in Pinecone
+ * Synchronizes user sessions with backend and indexes them in Upstash Vector
  */
 
 import { generateEmbeddingWithMetadata } from '../lib/embeddings.ts';
-import { upsertVectors } from '../lib/pinecone.ts';
+import { upsertVectors } from '../lib/upstash-vector.ts';
 import { getDatabase, initializeDatabase } from '../lib/db.ts';
 import type { SyncPayload, SyncResponse, PineconeVector, PineconeVectorMetadata, UserSessionDocument } from '../lib/types.ts';
 
