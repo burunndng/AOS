@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, Send, X, ChevronsDown } from 'lucide-react';
+import { MessageCircle, Send, X, ChevronsDown, Sparkles } from 'lucide-react';
 import { CoachMessage, Practice, ModuleKey, ModuleInfo, AllPractice } from '../types.ts';
 import { getCoachResponse } from '../services/geminiService.ts';
 import { practices } from '../constants.ts';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
 
 interface CoachProps {
+  userId: string;
   practiceStack: AllPractice[];
   completedCount: number;
   completionRate: number;
@@ -18,7 +19,26 @@ interface CoachProps {
   dailyNotes: Record<string, string>;
 }
 
+interface SuggestedPractice {
+  id: string;
+  name: string;
+  reason: string;
+  similarity: number;
+}
+
+interface CoachAPIResponse {
+  response: string;
+  suggestedPractices?: SuggestedPractice[];
+  relevantInsights?: string[];
+  userContext?: {
+    developmentalStage?: string;
+    attachmentStyle?: string;
+    identifiedBiases?: string[];
+  };
+}
+
 export default function Coach({
+  userId,
   practiceStack,
   completedCount,
   completionRate,
@@ -33,6 +53,8 @@ export default function Coach({
   const [chatMessage, setChatMessage] = useState('');
   const [coachResponses, setCoachResponses] = useState<CoachMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestedPractices, setSuggestedPractices] = useState<SuggestedPractice[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,57 +68,75 @@ export default function Coach({
 
     const userMsg: CoachMessage = { role: 'user', text: chatMessage };
     setCoachResponses(prev => [...prev, userMsg]);
+    const currentMessage = chatMessage;
     setChatMessage('');
     setIsLoading(true);
+    setShowSuggestions(false);
 
     try {
       const today = new Date().toISOString().split('T')[0];
-      const stackContext = practiceStack.length > 0
-        ? `Current practice stack:\n${practiceStack.map(p => {
-            const generalNote = practiceNotes[p.id] ? ` (General note: "${practiceNotes[p.id]}")` : '';
-            const dailyNoteKey = `${p.id}-${today}`;
-            const todayNote = dailyNotes[dailyNoteKey] ? ` (Today's note: "${dailyNotes[dailyNoteKey]}")` : '';
-            return `- ${p.name}${generalNote}${todayNote}`;
-          }).join('\n')}`
-        : 'User has not selected any practices yet.';
 
-      const moduleBreakdown = Object.entries(modules).map(([key, mod]) => {
+      // Calculate module breakdown
+      const moduleBreakdown = Object.entries(modules).reduce((acc, [key, mod]) => {
         const count = practiceStack.filter(p => {
           if ('isCustom' in p && p.isCustom) {
             return p.module === key;
           }
-          const practiceModule = (Object.keys(practices) as ModuleKey[]).find(mKey => practices[mKey].some(pr => pr.id === p.id));
+          const practiceModule = (Object.keys(practices) as ModuleKey[]).find(mKey =>
+            practices[mKey].some(pr => pr.id === p.id)
+          );
           return practiceModule === key;
         }).length;
-        return count > 0 ? `${mod.name}: ${count}` : null;
-      }).filter(Boolean).join(', ');
+        if (count > 0) {
+          acc[key] = { name: mod.name, count };
+        }
+        return acc;
+      }, {} as Record<string, { name: string; count: number }>);
 
-      const completionContext = practiceStack.length > 0
-        ? `Completion status today: ${completedCount}/${practiceStack.length} practices marked complete (${completionRate}%).`
-        : '';
+      // Call the enhanced backend API with Upstash Vector integration
+      const response = await fetch('/api/coach/generate-response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          message: currentMessage,
+          practiceStack: practiceStack.map(p => ({
+            id: p.id,
+            name: p.name,
+            module: 'isCustom' in p && p.isCustom ? p.module : undefined,
+          })),
+          completedCount,
+          completionRate,
+          timeCommitment,
+          timeIndicator,
+          modules: moduleBreakdown,
+          practiceNotes,
+          dailyNotes,
+        }),
+      });
 
-      const timeContext = `Total weekly commitment: ${timeCommitment.toFixed(1)} hours (${timeIndicator}).`;
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
 
-      const prompt = `You are an intelligent ILP (Integrative Life Practices) coach. You're helping someone build and sustain transformative life practices.
-User's current context:
-- ${stackContext}
-- Modules breakdown: ${moduleBreakdown || 'None selected yet'}
-- ${completionContext}
-- ${timeContext}
-The user just asked: "${chatMessage}"
-Guidelines:
-- Be conversational, warm, and grounded in their actual selections. Pay close attention to any general and daily user notes on their practices, as they are critical context.
-- If they ask for the "why" of practices, explain the research and benefits.
-- If they're struggling (especially if mentioned in notes), suggest making it smaller or easier.
-- If they're motivated, suggest adding one more practice.
-- Keep responses to 2-3 sentences max. Be direct and authentic.`;
+      const data: CoachAPIResponse = await response.json();
 
-      const coachResponseText = await getCoachResponse(prompt);
-      setCoachResponses(prev => [...prev, { role: 'coach', text: coachResponseText }]);
+      setCoachResponses(prev => [...prev, { role: 'coach', text: data.response }]);
+
+      // Store suggested practices if available
+      if (data.suggestedPractices && data.suggestedPractices.length > 0) {
+        setSuggestedPractices(data.suggestedPractices);
+        setShowSuggestions(true);
+      }
     } catch (error) {
       console.error('Coach error:', error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-      setCoachResponses(prev => [...prev, { role: 'coach', text: `Sorry, I'm having trouble connecting. ${errorMessage}` }]);
+      setCoachResponses(prev => [...prev, {
+        role: 'coach',
+        text: `Sorry, I'm having trouble connecting. ${errorMessage}`
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -128,7 +168,13 @@ Guidelines:
 
       <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {coachResponses.length === 0 && (
-          <p className="text-slate-400 text-sm text-center mt-4">Ask about your practices, motivation, or what to add next.</p>
+          <div className="text-center mt-8 space-y-2">
+            <div className="flex justify-center">
+              <Sparkles className="text-accent" size={32} />
+            </div>
+            <p className="text-slate-400 text-sm">Ask about your practices, motivation, or what to add next.</p>
+            <p className="text-slate-500 text-xs">Enhanced with semantic search powered by Upstash Vector</p>
+          </div>
         )}
         {coachResponses.map((msg, idx) => (
           <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -137,6 +183,25 @@ Guidelines:
             </p>
           </div>
         ))}
+        {showSuggestions && suggestedPractices.length > 0 && (
+          <div className="bg-slate-800/50 border border-accent/30 rounded-lg p-3 space-y-2">
+            <p className="text-xs text-accent font-semibold flex items-center gap-1">
+              <Sparkles size={12} />
+              Relevant Practices (from vector search)
+            </p>
+            <div className="space-y-2">
+              {suggestedPractices.slice(0, 3).map((practice, idx) => (
+                <div key={idx} className="bg-slate-700/50 rounded p-2 text-xs">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-slate-200 font-medium">{practice.name}</span>
+                    <span className="text-accent text-[10px]">{(practice.similarity * 100).toFixed(0)}% match</span>
+                  </div>
+                  <p className="text-slate-400 text-[11px]">{practice.reason}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {isLoading && (
           <div className="flex justify-start">
              <div className="bg-slate-700 text-slate-200 rounded-lg p-2 px-3 rounded-bl-none">
