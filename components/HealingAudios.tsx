@@ -59,7 +59,7 @@ export default function HealingAudios() {
             </div>
 
             {/* Audio Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-fr">
+            <div className="grid grid-cols-1 gap-4">
               {audios.map((audio) => (
                 <AlchemicalAudioPlayer
                   key={audio.id}
