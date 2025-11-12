@@ -86,13 +86,13 @@ export default function AlchemicalAudioPlayer({
   return (
     <div className="group relative h-full">
       {/* Main container - Dark occult aesthetic */}
-      <div className="relative h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-amber-900/40 rounded-lg p-6 backdrop-blur-sm hover:border-amber-900/70 transition-all duration-500 shadow-2xl flex flex-col">
+      <div className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-amber-900/40 rounded-lg p-4 backdrop-blur-sm hover:border-amber-900/70 transition-all duration-500 shadow-2xl flex flex-col">
         {/* Occult divider line at top */}
         <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-amber-900/50 to-transparent" />
 
         {/* Header section */}
-        <div className="mb-6 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-amber-100 font-serif tracking-wider mb-1">
+        <div className="mb-4 flex-shrink-0">
+          <h3 className="text-base font-semibold text-amber-100 font-serif tracking-wider mb-1">
             {title}
           </h3>
           <p className="text-xs text-slate-400 font-mono tracking-widest uppercase mb-2">
@@ -111,14 +111,14 @@ export default function AlchemicalAudioPlayer({
         </div>
 
         {/* Player Controls Section */}
-        <div className="space-y-5 mt-auto flex-shrink-0">
+        <div className="space-y-3 mt-auto flex-shrink-0">
           {/* Play Button and Controls */}
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-4">
             {/* Main Play/Pause Button - Occult style */}
             <button
               onClick={togglePlayback}
               disabled={isLoading}
-              className="relative flex items-center justify-center w-14 h-14 transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group/btn"
+              className="relative flex items-center justify-center w-12 h-12 transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group/btn flex-shrink-0"
               title={isPlaying ? 'Pause' : 'Play'}
             >
               {/* Outer occult ring with minimal glow */}
@@ -126,15 +126,15 @@ export default function AlchemicalAudioPlayer({
               <div className="absolute inset-1 rounded-full border border-amber-900/20" />
 
               {/* Inner button */}
-              <div className="relative w-12 h-12 rounded-full bg-gradient-to-b from-amber-950 to-slate-950 flex items-center justify-center border border-amber-900/50 group-hover/btn:border-amber-700 transition-all shadow-inner">
+              <div className="relative w-10 h-10 rounded-full bg-gradient-to-b from-amber-950 to-slate-950 flex items-center justify-center border border-amber-900/50 group-hover/btn:border-amber-700 transition-all shadow-inner">
                 {isLoading ? (
                   <div className="animate-spin text-amber-700">
-                    <RotateCcw size={20} />
+                    <RotateCcw size={16} />
                   </div>
                 ) : isPlaying ? (
-                  <Pause size={18} className="text-amber-700 fill-amber-700" />
+                  <Pause size={14} className="text-amber-700 fill-amber-700" />
                 ) : (
-                  <Play size={18} className="text-amber-700 fill-amber-700 ml-0.5" />
+                  <Play size={14} className="text-amber-700 fill-amber-700 ml-0.5" />
                 )}
               </div>
             </button>
@@ -142,10 +142,10 @@ export default function AlchemicalAudioPlayer({
             {/* Reset Button */}
             <button
               onClick={resetPlayback}
-              className="p-2.5 text-slate-400 hover:text-amber-700 transition-colors duration-200 border border-slate-700/50 hover:border-amber-900/50 rounded hover:bg-amber-950/30"
+              className="p-2 text-slate-400 hover:text-amber-700 transition-colors duration-200 border border-slate-700/50 hover:border-amber-900/50 rounded hover:bg-amber-950/30 flex-shrink-0"
               title="Reset"
             >
-              <RotateCcw size={16} />
+              <RotateCcw size={14} />
             </button>
 
             {/* Time Display */}
