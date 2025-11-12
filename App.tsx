@@ -709,10 +709,21 @@ export default function App() {
 
   const handleExport = () => {
     const data = {
+        // Core practice data
         practiceStack, practiceNotes, dailyNotes, completionHistory,
-        history321, historyIFS, historyBias, historySO, historyPS, historyPM, historyKegan, historyRelational, historyAttachment, historyBigMind,
-        partsLibrary, integratedInsights, aqalReport, somaticPracticeHistory, journeyProgress,
-        integralBodyPlans, integralBodyPlanHistory, planProgressByDay, memoryReconHistory
+
+        // Session histories - all reflection and development tools
+        history321, historyIFS, historyBias, historyBiasFinder, historySO, historyPS, historyPM,
+        historyKegan, historyRelational, historyAttachment, historyBigMind, historyJhana,
+
+        // Additional tracking data
+        partsLibrary, somaticPracticeHistory, memoryReconHistory, eightZonesHistory,
+
+        // Insights and reports
+        integratedInsights, aqalReport, journeyProgress,
+
+        // Integral body work
+        integralBodyPlans, workoutPrograms, integralBodyPlanHistory, planProgressByDay
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -735,13 +746,17 @@ export default function App() {
                 try {
                     const data = JSON.parse(event.target?.result as string);
                     if (window.confirm('This will overwrite all current data. Are you sure?')) {
+                        // Core practice data
                         setPracticeStack(data.practiceStack || []);
                         setPracticeNotes(data.practiceNotes || {});
                         setDailyNotes(data.dailyNotes || {});
                         setCompletionHistory(data.completionHistory || {});
+
+                        // Session histories - all reflection and development tools
                         setHistory321(data.history321 || []);
                         setHistoryIFS(data.historyIFS || []);
                         setHistoryBias(data.historyBias || []);
+                        setHistoryBiasFinder(data.historyBiasFinder || []);
                         setHistorySO(data.historySO || []);
                         setHistoryPS(data.historyPS || []);
                         setHistoryPM(data.historyPM || []);
@@ -749,15 +764,25 @@ export default function App() {
                         setHistoryRelational(data.historyRelational || []);
                         setHistoryAttachment(data.historyAttachment || []);
                         setHistoryBigMind(data.historyBigMind || []);
-                        setMemoryReconHistory(data.memoryReconHistory || []);
+                        setHistoryJhana(data.historyJhana || []);
+
+                        // Additional tracking data
                         setPartsLibrary(data.partsLibrary || []);
+                        setSomaticPracticeHistory(data.somaticPracticeHistory || []);
+                        setMemoryReconHistory(data.memoryReconHistory || []);
+                        setEightZonesHistory(data.eightZonesHistory || []);
+
+                        // Insights and reports
                         setIntegratedInsights(data.integratedInsights || []);
                         setAqalReport(data.aqalReport || null);
-                        setSomaticPracticeHistory(data.somaticPracticeHistory || []);
                         setJourneyProgress(data.journeyProgress || { visitedRegions: [], completedCards: [], earnedBadges: [] });
+
+                        // Integral body work
                         setIntegralBodyPlans(data.integralBodyPlans || []);
+                        setWorkoutPrograms(data.workoutPrograms || []);
                         setIntegralBodyPlanHistory(data.integralBodyPlanHistory || []);
                         setPlanProgressByDay(data.planProgressByDay || {});
+
                         alert('Data imported successfully!');
                     }
                 } catch (err) {

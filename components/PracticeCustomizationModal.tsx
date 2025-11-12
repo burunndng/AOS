@@ -4,9 +4,7 @@ import React, { useState } from 'react';
 // FIX: Correct import paths for types and services.
 import { Practice } from '../types.ts';
 import { getPersonalizedHowTo } from '../services/geminiService.ts';
-import * as ragService from '../services/ragService.ts';
-import { X, Sparkles, AlertCircle, CheckCircle } from 'lucide-react';
-import type { GenerationResponse } from '../api/lib/types.ts';
+import { X, Sparkles, AlertCircle } from 'lucide-react';
 
 interface PracticeCustomizationModalProps {
   practice: Practice;
@@ -19,40 +17,8 @@ export default function PracticeCustomizationModal({ practice, onSave, onClose, 
   const [answer, setAnswer] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [useRag, setUseRag] = useState(true);
-  const [ragResponse, setRagResponse] = useState<GenerationResponse | null>(null);
 
-  const handleGenerateRag = async () => {
-    if (!answer.trim()) {
-      setError('Please provide an answer to personalize your practice.');
-      return;
-    }
-    setError('');
-    setIsLoading(true);
-    try {
-      const response = await ragService.personalizePractice(
-        userId,
-        practice.id,
-        practice.name,
-        { challenge: answer }
-      );
-      setRagResponse(response);
-
-      // Extract steps from personalized response
-      const personalizedSteps = response.metadata?.personalizedSteps?.map(
-        (step: any) => `${step.order}. ${step.instruction}${step.adaptation ? ` (${step.adaptation})` : ''}`
-      ) || [];
-
-      onSave(practice.id, personalizedSteps);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'An unknown error occurred.';
-      setError(`Failed to personalize with RAG: ${message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateClassic = async () => {
+  const handleGenerate = async () => {
     if (!answer.trim()) {
       setError('Please provide an answer to personalize your practice.');
       return;
@@ -69,8 +35,6 @@ export default function PracticeCustomizationModal({ practice, onSave, onClose, 
       setIsLoading(false);
     }
   };
-
-  const handleGenerate = useRag ? handleGenerateRag : handleGenerateClassic;
 
   return (
     <div 
@@ -95,25 +59,6 @@ export default function PracticeCustomizationModal({ practice, onSave, onClose, 
         </div>
         
         <div className="mt-6 space-y-4">
-          {/* RAG Toggle */}
-          <div className="flex items-center gap-2 bg-slate-700/30 p-3 rounded border border-slate-600/50">
-            <input
-              type="checkbox"
-              id="use-rag"
-              checked={useRag}
-              onChange={(e) => {
-                setUseRag(e.target.checked);
-                setError('');
-              }}
-              disabled={isLoading}
-              className="w-4 h-4 cursor-pointer"
-            />
-            <label htmlFor="use-rag" className="text-sm text-slate-300 cursor-pointer flex-1">
-              <span className="font-semibold">Use Context-Aware RAG</span>
-              <p className="text-xs text-slate-400">Personalizes based on your history and preferences</p>
-            </label>
-          </div>
-
           <div>
             <label htmlFor="customization-q" className="block text-sm font-medium text-slate-300 mb-2">
               {practice.customizationQuestion}
@@ -145,40 +90,16 @@ export default function PracticeCustomizationModal({ practice, onSave, onClose, 
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-                  {useRag ? 'Personalizing with RAG...' : 'Generating Plan...'}
+                  Generating Plan...
                 </>
               ) : (
                 <>
                   <Sparkles size={16} />
-                  {useRag ? 'Personalize with RAG' : 'Classic Personalization'}
+                  Personalize Practice
                 </>
               )}
             </button>
           </div>
-
-          {/* RAG Response Display */}
-          {ragResponse && !isLoading && (
-            <div className="mt-4 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3 text-blue-300">
-                <CheckCircle size={18} />
-                <h3 className="font-semibold">RAG Personalization Applied</h3>
-              </div>
-              <p className="text-sm text-slate-300 mb-3">{ragResponse.content}</p>
-              {ragResponse.metadata?.personalizedSteps && (
-                <div>
-                  <p className="text-xs font-semibold text-slate-400 mb-2">Adaptations:</p>
-                  <ul className="text-xs text-slate-400 space-y-1">
-                    {ragResponse.metadata.personalizedSteps.map((step: any, idx: number) => (
-                      <li key={idx} className="flex gap-2">
-                        <span className="text-blue-400">✓</span>
-                        <span>{step.adaptation || step.instruction}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>
