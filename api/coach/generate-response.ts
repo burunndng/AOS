@@ -1,13 +1,15 @@
 /**
- * AI Practice Coach Backend API with Upstash RAG Chat
- * Uses @upstash/rag-chat for intelligent, context-aware coaching with built-in vector search
+ * AI Practice Coach Backend API with Gemini and Upstash Vector
+ * Uses Gemini 2.5-flash for LLM and Upstash Vector for semantic search
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { RAGChat, google } from '@upstash/rag-chat';
-import { Index } from '@upstash/vector';
-import { Redis } from '@upstash/redis';
+import { GoogleGenAI } from '@google/genai';
+import { semanticSearch } from '../lib/upstash-vector.ts';
+import { generateEmbedding } from '../lib/embeddings.ts';
 import { getDatabase } from '../lib/db.ts';
+
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 interface CoachRequest {
   userId: string;
@@ -76,13 +78,6 @@ export default async function handler(
     }
 
     console.log(`[Coach API] Processing request for user ${userId}: "${message}"`);
-    console.log(`[Coach API] Environment check:`, {
-      hasApiKey: !!process.env.API_KEY,
-      hasVectorUrl: !!process.env.UPSTASH_VECTOR_REST_URL,
-      hasVectorToken: !!process.env.UPSTASH_VECTOR_REST_TOKEN,
-      hasRedisUrl: !!process.env.UPSTASH_REDIS_REST_URL,
-      hasRedisToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
 
     // Get user profile for additional context
     let userProfile;
@@ -92,6 +87,20 @@ export default async function handler(
     } catch (error) {
       console.error('[Coach API] Error getting user profile:', error);
       userProfile = null;
+    }
+
+    // Perform semantic search on user's message
+    let relevantPractices: any[] = [];
+    try {
+      const messageEmbedding = await generateEmbedding(message);
+      relevantPractices = await semanticSearch(messageEmbedding, {
+        topK: 5,
+        type: 'practice',
+        minSimilarity: 0.6,
+      });
+      console.log(`[Coach API] Found ${relevantPractices.length} relevant practices from vector DB`);
+    } catch (vectorError) {
+      console.error('[Coach API] Vector search failed (continuing without):', vectorError);
     }
 
     // Build rich context about the user's current state
@@ -136,9 +145,19 @@ export default async function handler(
       userContext.push(`Identified biases: ${userProfile.identifiedBiases.join(', ')}`);
     }
 
-    // Build the complete context message
-    const contextMessage = `
-You are an intelligent ILP (Integrative Life Practices) coach. You're helping someone build and sustain transformative life practices.
+    // Build relevant practices context from vector search
+    const suggestedPracticesContext =
+      relevantPractices.length > 0
+        ? `\n\nRelevant practices from knowledge base (based on semantic similarity to your question):\n${relevantPractices
+            .map(
+              (p, i) =>
+                `${i + 1}. ${p.metadata.practiceTitle || 'Practice'} (${p.metadata.category || 'general'}) - ${(p.score * 100).toFixed(0)}% match\n   ${p.metadata.description || 'No description'}`,
+            )
+            .join('\n')}`
+        : '';
+
+    // Build the complete prompt
+    const fullPrompt = `You are an intelligent ILP (Integrative Life Practices) coach. You're helping someone build and sustain transformative life practices.
 
 User's current context:
 - ${stackContext}
@@ -146,6 +165,9 @@ User's current context:
 - ${completionContext}
 - ${timeContext}
 ${userContext.length > 0 ? `- User profile: ${userContext.join('; ')}` : ''}
+${suggestedPracticesContext}
+
+The user just asked: "${message}"
 
 Guidelines:
 - Be conversational, warm, and grounded in their actual selections
@@ -154,98 +176,44 @@ Guidelines:
 - If they're struggling (especially if mentioned in notes), suggest making it smaller or easier
 - If they're motivated, suggest adding one more practice
 - Keep responses to 2-4 sentences. Be direct and authentic.
-- When suggesting practices from the knowledge base, be specific about WHY they're relevant
-    `.trim();
-
-    // Initialize RAGChat with Gemini and Upstash Vector
-    console.log('[Coach API] Initializing RAGChat...');
-    let ragChat;
-    try {
-      ragChat = new RAGChat({
-        model: google('gemini-2.0-flash-exp', {
-          apiKey: process.env.API_KEY!,
-        }),
-        vector: new Index({
-          url: process.env.UPSTASH_VECTOR_REST_URL!,
-          token: process.env.UPSTASH_VECTOR_REST_TOKEN!,
-        }),
-        redis: process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-          ? new Redis({
-              url: process.env.UPSTASH_REDIS_REST_URL,
-              token: process.env.UPSTASH_REDIS_REST_TOKEN,
-            })
-          : undefined,
-      });
-      console.log('[Coach API] RAGChat initialized successfully');
-    } catch (initError) {
-      console.error('[Coach API] Failed to initialize RAGChat:', initError);
-      throw new Error(`RAGChat initialization failed: ${initError instanceof Error ? initError.message : 'Unknown error'}`);
-    }
-
-    // Build the full prompt with context
-    const fullPrompt = `${contextMessage}\n\nUser question: ${message}`;
-
-    // Use RAG Chat with streaming and context
-    console.log('[Coach API] Calling ragChat.chat...');
-    let response;
-    try {
-      response = await ragChat.chat(fullPrompt, {
-        sessionId: userId,
-        streaming: true,
-        historyLength: 10,
-        topK: 5,
-        similarityThreshold: 0.6,
-        onContextFetched: (context) => {
-          console.log(`[Coach API] Retrieved ${context.length} context items from vector DB`);
-          return context;
-        },
-      });
-      console.log('[Coach API] ragChat.chat completed successfully');
-    } catch (chatError) {
-      console.error('[Coach API] Failed to call ragChat.chat:', chatError);
-      throw new Error(`RAG Chat failed: ${chatError instanceof Error ? chatError.message : 'Unknown error'}`);
-    }
+- When suggesting practices from the knowledge base, be specific about WHY they're relevant`;
 
     // Set up streaming response
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    let fullResponse = '';
+    console.log('[Coach API] Calling Gemini 2.5-flash with streaming...');
 
-    // Stream the response
-    if (response.output && typeof response.output !== 'string') {
-      const reader = response.output.getReader();
-      const decoder = new TextDecoder();
+    try {
+      // Generate streaming response with Gemini
+      const response = await ai.models.generateContentStream({
+        model: 'gemini-2.5-flash',
+        contents: fullPrompt,
+      });
 
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      let fullResponse = '';
 
-          const chunk = decoder.decode(value, { stream: true });
-          fullResponse += chunk;
-
+      // Stream the response
+      for await (const chunk of response.stream) {
+        const chunkText = chunk.text();
+        if (chunkText) {
+          fullResponse += chunkText;
           // Send Server-Sent Event
-          res.write(`data: ${JSON.stringify({ chunk, done: false })}\n\n`);
+          res.write(`data: ${JSON.stringify({ chunk: chunkText, done: false })}\n\n`);
         }
-
-        // Send final event
-        res.write(`data: ${JSON.stringify({ chunk: '', done: true, fullResponse })}\n\n`);
-        res.end();
-      } catch (error) {
-        console.error('[Coach API] Streaming error:', error);
-        res.write(`data: ${JSON.stringify({ error: 'Streaming failed', done: true })}\n\n`);
-        res.end();
       }
-    } else {
-      // Fallback for non-streaming response
-      const responseText = typeof response.output === 'string' ? response.output : '';
-      res.write(`data: ${JSON.stringify({ chunk: responseText, done: true, fullResponse: responseText })}\n\n`);
+
+      // Send final event
+      res.write(`data: ${JSON.stringify({ chunk: '', done: true, fullResponse })}\n\n`);
+      res.end();
+
+      console.log(`[Coach API] Successfully generated response for user ${userId}`);
+    } catch (streamError) {
+      console.error('[Coach API] Streaming error:', streamError);
+      res.write(`data: ${JSON.stringify({ error: 'Streaming failed', done: true })}\n\n`);
       res.end();
     }
-
-    console.log(`[Coach API] Successfully generated response for user ${userId}`);
   } catch (error) {
     console.error('[Coach API] Error:', error);
 
