@@ -1,0 +1,292 @@
+/**
+ * Unified Insight Generator Service
+ * Handles insight generation for all wizards uniformly
+ *
+ * This service:
+ * 1. Takes any wizard session and converts to standardized format
+ * 2. Uses Gemini to detect patterns
+ * 3. Suggests both shadow work (reflection) and next steps (action)
+ * 4. Tracks outcomes to show pattern improvement over time
+ */
+
+import { v4 as uuidv4 } from 'uuid';
+import type { IntegratedInsight } from '../types.ts';
+import { generateText } from './geminiService.ts';
+
+interface InsightGenerationInput {
+  wizardType:
+    | '3-2-1 Reflection'
+    | 'IFS Session'
+    | 'Bias Detective'
+    | 'Bias Finder'
+    | 'Subject-Object Explorer'
+    | 'Perspective-Shifter'
+    | 'Polarity Mapper'
+    | 'Kegan Assessment'
+    | 'Relational Pattern'
+    | 'Role Alignment'
+    | 'Big Mind Process'
+    | 'Memory Reconsolidation'
+    | 'Eight Zones'
+    | 'Somatic Practice'
+    | 'Jhana Guide'
+    | 'Attachment Assessment'
+    | 'Integral Body Plan'
+    | 'Workout Program';
+  sessionId: string;
+  sessionName: string;
+  sessionReport: string;
+  sessionSummary: string;
+  userId: string;
+  availablePractices: Array<{ id: string; name: string; category?: string }>;
+}
+
+/**
+ * Generate a comprehensive insight from any wizard session
+ * This ensures consistent insight generation across all wizards
+ */
+export async function generateInsightFromSession(
+  input: InsightGenerationInput
+): Promise<IntegratedInsight> {
+  const {
+    wizardType,
+    sessionId,
+    sessionName,
+    sessionReport,
+    sessionSummary,
+    availablePractices,
+  } = input;
+
+  try {
+    console.log(`[InsightGenerator] Generating insight for ${wizardType}: ${sessionId}`);
+
+    // Prepare context for Gemini
+    const practiceList = availablePractices.map((p) => `- ${p.name} (${p.category || 'General'})`).join('\n');
+
+    const prompt = `You are an expert at analyzing personal development sessions and suggesting transformative practices.
+
+Wizard Session: ${wizardType}
+Session Name: ${sessionName}
+
+Session Report:
+${sessionReport}
+
+Available Practices:
+${practiceList}
+
+Please analyze this session and provide:
+
+1. DETECTED PATTERN (1-2 sentences): What core pattern or insight emerged from this session?
+
+2. SHADOW WORK RECOMMENDATIONS (reflection/inquiry practices to understand the pattern deeper):
+   - List 2-3 shadow work practices that would help explore this pattern
+   - For each: [Practice Name] | Rationale: [why it helps]
+
+3. NEXT STEPS (action practices to work with this pattern):
+   - List 2-3 action practices that would help move forward
+   - For each: [Practice Name] | Rationale: [why it helps]
+
+Format your response EXACTLY as:
+PATTERN: [detected pattern]
+---
+SHADOW WORK:
+- [Practice Name] | Rationale: [rationale]
+- [Practice Name] | Rationale: [rationale]
+---
+NEXT STEPS:
+- [Practice Name] | Rationale: [rationale]
+- [Practice Name] | Rationale: [rationale]`;
+
+    const response = await generateText(prompt);
+
+    // Parse response
+    const { pattern, shadowWork, nextSteps } = parseInsightResponse(response, availablePractices);
+
+    // Create insight
+    const insight: IntegratedInsight = {
+      id: uuidv4(),
+      mindToolType: wizardType,
+      mindToolSessionId: sessionId,
+      mindToolName: sessionName,
+      mindToolReport: sessionReport,
+      mindToolShortSummary: sessionSummary,
+      detectedPattern: pattern,
+      suggestedShadowWork: shadowWork,
+      suggestedNextSteps: nextSteps,
+      dateCreated: new Date().toISOString(),
+      status: 'pending',
+    };
+
+    console.log(`[InsightGenerator] Successfully generated insight with ${shadowWork.length} shadow work and ${nextSteps.length} next steps`);
+
+    return insight;
+  } catch (error) {
+    console.error('[InsightGenerator] Error generating insight:', error);
+    throw error;
+  }
+}
+
+/**
+ * Parse Gemini response into structured insight components
+ */
+function parseInsightResponse(
+  response: string,
+  availablePractices: Array<{ id: string; name: string }>
+): {
+  pattern: string;
+  shadowWork: Array<{ practiceId: string; practiceName: string; rationale: string }>;
+  nextSteps: Array<{ practiceId: string; practiceName: string; rationale: string }>;
+} {
+  const sections = response.split('---');
+
+  let pattern = 'No pattern detected';
+  let shadowWork: Array<{ practiceId: string; practiceName: string; rationale: string }> = [];
+  let nextSteps: Array<{ practiceId: string; practiceName: string; rationale: string }> = [];
+
+  // Extract pattern
+  if (sections[0]) {
+    const patternMatch = sections[0].match(/PATTERN:\s*(.+?)(?:\n|$)/i);
+    if (patternMatch) {
+      pattern = patternMatch[1].trim();
+    }
+  }
+
+  // Extract shadow work
+  if (sections[1]) {
+    shadowWork = parsePracticeRecommendations(sections[1], availablePractices);
+  }
+
+  // Extract next steps
+  if (sections[2]) {
+    nextSteps = parsePracticeRecommendations(sections[2], availablePractices);
+  }
+
+  return { pattern, shadowWork, nextSteps };
+}
+
+/**
+ * Parse practice recommendations from text
+ */
+function parsePracticeRecommendations(
+  text: string,
+  availablePractices: Array<{ id: string; name: string }>
+): Array<{ practiceId: string; practiceName: string; rationale: string }> {
+  const recommendations: Array<{ practiceId: string; practiceName: string; rationale: string }> = [];
+
+  // Split by lines that start with - or •
+  const lines = text.split('\n').filter((line) => /^[\s]*[-•]/.test(line));
+
+  for (const line of lines) {
+    const match = line.match(/^[\s]*[-•]\s*(.+?)\s*\|\s*Rationale:\s*(.+)$/i);
+    if (match) {
+      const practiceName = match[1].trim();
+      const rationale = match[2].trim();
+
+      // Find matching practice by name
+      const practice = availablePractices.find((p) =>
+        p.name.toLowerCase().includes(practiceName.toLowerCase()) ||
+        practiceName.toLowerCase().includes(p.name.toLowerCase())
+      );
+
+      if (practice) {
+        recommendations.push({
+          practiceId: practice.id,
+          practiceName: practice.name,
+          rationale,
+        });
+      }
+    }
+  }
+
+  return recommendations;
+}
+
+/**
+ * Calculate pattern improvement based on practice frequency and outcomes
+ */
+export function calculatePatternImprovement(
+  sessionFrequency: number,
+  practiceFrequency: number,
+  practitionerNotes?: string
+): 'improved' | 'stable' | 'worsened' | 'unknown' {
+  // Heuristic: if practice frequency is increasing and session shows progress
+  // This could be enhanced with ML later
+  if (practiceFrequency > sessionFrequency * 1.5) {
+    if (practitionerNotes?.toLowerCase().includes('better') ||
+        practitionerNotes?.toLowerCase().includes('improved') ||
+        practitionerNotes?.toLowerCase().includes('progress')) {
+      return 'improved';
+    }
+    return 'stable';
+  }
+
+  if (practitionerNotes?.toLowerCase().includes('harder') ||
+      practitionerNotes?.toLowerCase().includes('struggle') ||
+      practitionerNotes?.toLowerCase().includes('worse')) {
+    return 'worsened';
+  }
+
+  return 'unknown';
+}
+
+/**
+ * Get practice recommendations specific to a pattern
+ * Useful for other features to suggest practices based on detected patterns
+ */
+export function getPracticeRecommendationsForPattern(
+  insight: IntegratedInsight
+): Array<{ id: string; name: string; type: 'shadow' | 'next'; rationale: string }> {
+  const recommendations: Array<{ id: string; name: string; type: 'shadow' | 'next'; rationale: string }> = [];
+
+  // Add shadow work
+  for (const sw of insight.suggestedShadowWork) {
+    recommendations.push({
+      id: sw.practiceId,
+      name: sw.practiceName,
+      type: 'shadow',
+      rationale: sw.rationale,
+    });
+  }
+
+  // Add next steps
+  for (const ns of insight.suggestedNextSteps) {
+    recommendations.push({
+      id: ns.practiceId,
+      name: ns.practiceName,
+      type: 'next',
+      rationale: ns.rationale,
+    });
+  }
+
+  return recommendations;
+}
+
+/**
+ * Track when a recommended practice is completed
+ * This enables outcome tracking and pattern improvement detection
+ */
+export function recordPracticeCompletion(
+  insight: IntegratedInsight,
+  practiceId: string,
+  completionDate: string
+): IntegratedInsight {
+  if (!insight.relatedPracticeSessions) {
+    insight.relatedPracticeSessions = [];
+  }
+
+  let session = insight.relatedPracticeSessions.find((s) => s.practiceId === practiceId);
+
+  if (!session) {
+    session = {
+      practiceId,
+      completionDates: [],
+      frequency: 0,
+    };
+    insight.relatedPracticeSessions.push(session);
+  }
+
+  session.completionDates.push(completionDate);
+  session.frequency = session.completionDates.length;
+
+  return insight;
+}
