@@ -254,7 +254,27 @@ export interface PolarityMapDraft extends Partial<PolarityMap> {
 
 export interface IntegratedInsight {
   id: string;
-  mindToolType: 'Bias Detective' | 'Subject-Object Explorer' | 'Perspective-Shifter' | 'Polarity Mapper' | 'Kegan Assessment' | 'Relational Pattern' | 'Role Alignment' | 'Somatic Practice' | 'Jhana Guide' | 'Meditation Finder' | 'Consciousness Graph' | 'Big Mind Process';
+  mindToolType:
+    | '3-2-1 Reflection'
+    | 'IFS Session'
+    | 'Bias Detective'
+    | 'Bias Finder'
+    | 'Subject-Object Explorer'
+    | 'Perspective-Shifter'
+    | 'Polarity Mapper'
+    | 'Kegan Assessment'
+    | 'Relational Pattern'
+    | 'Role Alignment'
+    | 'Big Mind Process'
+    | 'Memory Reconsolidation'
+    | 'Eight Zones'
+    | 'Somatic Practice'
+    | 'Jhana Guide'
+    | 'Meditation Finder'
+    | 'Consciousness Graph'
+    | 'Attachment Assessment'
+    | 'Integral Body Plan'
+    | 'Workout Program';
   mindToolSessionId: string;
   mindToolName: string;
   mindToolReport: string;
@@ -265,7 +285,7 @@ export interface IntegratedInsight {
     practiceName: string;
     rationale: string;
   }[];
-  suggestedNextSteps?: {
+  suggestedNextSteps: {
     practiceId: string;
     practiceName: string;
     rationale: string;
@@ -277,6 +297,20 @@ export interface IntegratedInsight {
     shadowSessionId: string;
     dateCompleted: string;
   }[];
+
+  // Outcome tracking
+  relatedPracticeSessions?: {
+    practiceId: string;
+    completionDates: string[];
+    frequency: number;
+  }[];
+  practiceOutcome?: {
+    practiceId: string;
+    practiceFrequency: number;
+    patternImprovement: 'improved' | 'stable' | 'worsened' | 'unknown';
+    notes?: string;
+  }[];
+  patternEvolutionNotes?: string;
 }
 
 export interface SomaticScriptSegment {
