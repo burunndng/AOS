@@ -4,9 +4,9 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateEmbedding } from '../lib/embeddings.js';
-import { semanticSearch } from '../lib/upstash-vector.js';
-import { getDatabase } from '../lib/db.js';
+import { generateEmbedding } from '../lib/embeddings.ts';
+import { semanticSearch } from '../lib/upstash-vector.ts';
+import { getDatabase } from '../lib/db.ts';
 import { GoogleGenAI } from '@google/genai';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
@@ -71,6 +71,12 @@ export default async function handler(
   }
 
   try {
+    console.log('[Coach API] Received request:', {
+      method: req.method,
+      hasBody: !!req.body,
+      bodyKeys: req.body ? Object.keys(req.body) : [],
+    });
+
     const coachRequest = req.body as CoachRequest;
     const {
       userId,
@@ -86,6 +92,7 @@ export default async function handler(
     } = coachRequest;
 
     if (!userId || !message) {
+      console.error('[Coach API] Missing required fields:', { userId: !!userId, message: !!message });
       res.status(400).json({ error: 'Missing required fields: userId, message' });
       return;
     }

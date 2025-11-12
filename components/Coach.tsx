@@ -118,7 +118,9 @@ export default function Coach({
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error', message: response.statusText }));
+        console.error('[Coach] API error:', errorData);
+        throw new Error(errorData.message || errorData.error || `API error: ${response.statusText}`);
       }
 
       const data: CoachAPIResponse = await response.json();
