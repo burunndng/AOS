@@ -76,6 +76,13 @@ export default async function handler(
     }
 
     console.log(`[Coach API] Processing request for user ${userId}: "${message}"`);
+    console.log(`[Coach API] Environment check:`, {
+      hasApiKey: !!process.env.API_KEY,
+      hasVectorUrl: !!process.env.UPSTASH_VECTOR_REST_URL,
+      hasVectorToken: !!process.env.UPSTASH_VECTOR_REST_TOKEN,
+      hasRedisUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+      hasRedisToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
 
     // Get user profile for additional context
     let userProfile;
@@ -151,38 +158,53 @@ Guidelines:
     `.trim();
 
     // Initialize RAGChat with Gemini and Upstash Vector
-    const ragChat = new RAGChat({
-      model: google('gemini-2.0-flash-exp', {
-        apiKey: process.env.API_KEY!,
-      }),
-      vector: new Index({
-        url: process.env.UPSTASH_VECTOR_REST_URL!,
-        token: process.env.UPSTASH_VECTOR_REST_TOKEN!,
-      }),
-      redis: process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-        ? new Redis({
-            url: process.env.UPSTASH_REDIS_REST_URL,
-            token: process.env.UPSTASH_REDIS_REST_TOKEN,
-          })
-        : undefined,
-    });
+    console.log('[Coach API] Initializing RAGChat...');
+    let ragChat;
+    try {
+      ragChat = new RAGChat({
+        model: google('gemini-2.0-flash-exp', {
+          apiKey: process.env.API_KEY!,
+        }),
+        vector: new Index({
+          url: process.env.UPSTASH_VECTOR_REST_URL!,
+          token: process.env.UPSTASH_VECTOR_REST_TOKEN!,
+        }),
+        redis: process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+          ? new Redis({
+              url: process.env.UPSTASH_REDIS_REST_URL,
+              token: process.env.UPSTASH_REDIS_REST_TOKEN,
+            })
+          : undefined,
+      });
+      console.log('[Coach API] RAGChat initialized successfully');
+    } catch (initError) {
+      console.error('[Coach API] Failed to initialize RAGChat:', initError);
+      throw new Error(`RAGChat initialization failed: ${initError instanceof Error ? initError.message : 'Unknown error'}`);
+    }
+
+    // Build the full prompt with context
+    const fullPrompt = `${contextMessage}\n\nUser question: ${message}`;
 
     // Use RAG Chat with streaming and context
-    const response = await ragChat.chat(message, {
-      sessionId: userId,
-      streaming: true,
-      historyLength: 10,
-      topK: 5,
-      similarityThreshold: 0.6,
-      metadata: {
-        context: contextMessage,
-        timestamp: new Date().toISOString(),
-      },
-      onContextFetched: (context) => {
-        console.log(`[Coach API] Retrieved ${context.length} context items from vector DB`);
-        return context;
-      },
-    });
+    console.log('[Coach API] Calling ragChat.chat...');
+    let response;
+    try {
+      response = await ragChat.chat(fullPrompt, {
+        sessionId: userId,
+        streaming: true,
+        historyLength: 10,
+        topK: 5,
+        similarityThreshold: 0.6,
+        onContextFetched: (context) => {
+          console.log(`[Coach API] Retrieved ${context.length} context items from vector DB`);
+          return context;
+        },
+      });
+      console.log('[Coach API] ragChat.chat completed successfully');
+    } catch (chatError) {
+      console.error('[Coach API] Failed to call ragChat.chat:', chatError);
+      throw new Error(`RAG Chat failed: ${chatError instanceof Error ? chatError.message : 'Unknown error'}`);
+    }
 
     // Set up streaming response
     res.setHeader('Content-Type', 'text/event-stream');
