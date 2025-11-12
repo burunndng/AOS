@@ -4,9 +4,9 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateEmbedding } from '../lib/embeddings.ts';
-import { semanticSearch } from '../lib/upstash-vector.ts';
-import { getDatabase } from '../lib/db.ts';
+import { generateEmbedding } from '../lib/embeddings.js';
+import { semanticSearch } from '../lib/upstash-vector.js';
+import { getDatabase } from '../lib/db.js';
 import { GoogleGenAI } from '@google/genai';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
@@ -93,25 +93,48 @@ export default async function handler(
     console.log(`[Coach API] Processing request for user ${userId}: "${message}"`);
 
     // 1. Get user profile and history
-    const db = getDatabase();
-    const userProfile = await db.getUserProfile(userId);
+    let userProfile;
+    try {
+      const db = getDatabase();
+      userProfile = await db.getUserProfile(userId);
+    } catch (error) {
+      console.error('[Coach API] Error getting user profile:', error);
+      userProfile = null;
+    }
 
-    // 2. Generate embedding for the user's message to find relevant context
-    const messageEmbedding = await generateEmbedding(message);
+    // 2. Generate embedding and perform semantic search (optional - gracefully degrade if fails)
+    let relevantPractices: any[] = [];
+    let relevantFrameworks: any[] = [];
 
-    // 3. Semantic search for relevant practices using Upstash Vector
-    const relevantPractices = await semanticSearch(messageEmbedding, {
-      topK: 5,
-      type: 'practice',
-      minSimilarity: 0.6,
-    });
+    try {
+      const messageEmbedding = await generateEmbedding(message);
 
-    // 4. Semantic search for relevant frameworks/insights
-    const relevantFrameworks = await semanticSearch(messageEmbedding, {
-      topK: 3,
-      type: 'framework',
-      minSimilarity: 0.65,
-    });
+      // 3. Semantic search for relevant practices using Upstash Vector
+      try {
+        relevantPractices = await semanticSearch(messageEmbedding, {
+          topK: 5,
+          type: 'practice',
+          minSimilarity: 0.6,
+        });
+        console.log(`[Coach API] Found ${relevantPractices.length} relevant practices`);
+      } catch (error) {
+        console.error('[Coach API] Error in practice semantic search:', error);
+      }
+
+      // 4. Semantic search for relevant frameworks/insights
+      try {
+        relevantFrameworks = await semanticSearch(messageEmbedding, {
+          topK: 3,
+          type: 'framework',
+          minSimilarity: 0.65,
+        });
+        console.log(`[Coach API] Found ${relevantFrameworks.length} relevant frameworks`);
+      } catch (error) {
+        console.error('[Coach API] Error in framework semantic search:', error);
+      }
+    } catch (error) {
+      console.error('[Coach API] Error generating embedding:', error);
+    }
 
     // 5. Build enhanced context
     const today = new Date().toISOString().split('T')[0];
