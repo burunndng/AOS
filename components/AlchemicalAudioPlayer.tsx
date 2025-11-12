@@ -84,14 +84,14 @@ export default function AlchemicalAudioPlayer({
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="group relative">
+    <div className="group relative h-full">
       {/* Main container - Dark occult aesthetic */}
-      <div className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-amber-900/40 rounded-lg p-6 backdrop-blur-sm hover:border-amber-900/70 transition-all duration-500 shadow-2xl">
+      <div className="relative h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-amber-900/40 rounded-lg p-6 backdrop-blur-sm hover:border-amber-900/70 transition-all duration-500 shadow-2xl flex flex-col">
         {/* Occult divider line at top */}
         <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-amber-900/50 to-transparent" />
 
         {/* Header section */}
-        <div className="mb-6">
+        <div className="mb-6 flex-shrink-0">
           <h3 className="text-lg font-semibold text-amber-100 font-serif tracking-wider mb-1">
             {title}
           </h3>
@@ -111,7 +111,7 @@ export default function AlchemicalAudioPlayer({
         </div>
 
         {/* Player Controls Section */}
-        <div className="space-y-5">
+        <div className="space-y-5 mt-auto flex-shrink-0">
           {/* Play Button and Controls */}
           <div className="flex items-center gap-5">
             {/* Main Play/Pause Button - Occult style */}
