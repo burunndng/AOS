@@ -520,8 +520,28 @@ export default function App() {
     }
   };
 
-  const handleSaveAttachmentAssessment = (session: AttachmentAssessmentSession) => {
+  const handleSaveAttachmentAssessment = async (session: AttachmentAssessmentSession) => {
     setHistoryAttachment(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftRelational(null);
+    setActiveWizard(null);
+
+    const report = `# Attachment Assessment\n- Style: ${session.style}\n- Anxiety Score: ${session.scores.anxiety}\n- Avoidance Score: ${session.scores.avoidance}\n- Assessment Notes: ${session.notes || session.description}`;
+    const summary = `Attachment style assessed: ${session.style} (anxiety: ${session.scores.anxiety}, avoidance: ${session.scores.avoidance})`;
+
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'Attachment Assessment',
+        sessionId: session.id,
+        sessionName: 'Attachment Assessment Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Attachment Assessment] Failed to generate insight:', err);
+    }
   };
 
   const handleSaveRelationalSession = async (session: RelationalPatternSession) => {
@@ -551,16 +571,36 @@ export default function App() {
     setActiveWizard(null);
   };
 
-  const handleSave321Session = (session: ThreeTwoOneSession) => {
+  const handleSave321Session = async (session: ThreeTwoOneSession) => {
     setHistory321(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraft321(null);
     setActiveWizard(null);
+
+    const report = `# 3-2-1 Reflection: ${session.trigger}\n- Trigger: ${session.triggerDescription}\n- Dialogue: ${session.dialogue}\n- Embodiment: ${session.embodiment}\n- Integration: ${session.integration}`;
+    const summary = `Reflected on trigger: ${session.trigger}${session.aiSummary ? ` - ${session.aiSummary}` : ''}`;
+
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: '3-2-1 Reflection',
+        sessionId: session.id,
+        sessionName: '3-2-1 Reflection Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[3-2-1 Reflection] Failed to generate insight:', err);
+    }
   };
   
-  const handleSaveIFSSession = (session: IFSSession) => {
+  const handleSaveIFSSession = async (session: IFSSession) => {
     setHistoryIFS(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftIFS(null);
     setActiveWizard(null);
+
+    // Update parts library
     if (session.partId && session.partName) {
       const newPart: IFSPart = {
         id: session.partId, name: session.partName, role: session.partRole || 'Unknown',
@@ -572,6 +612,26 @@ export default function App() {
         if (existing) return prev.map(p => p.id === newPart.id ? newPart : p);
         return [...prev, newPart];
       });
+    }
+
+    // Generate insight from IFS session
+    const transcriptSummary = session.transcript.slice(-5).map(t => t.text).join(' ');
+    const report = `# IFS Session: ${session.partName}\n- Part: ${session.partName}${session.partRole ? ` (${session.partRole})` : ''}\n- Phase: ${session.currentPhase}\n- Dialogue: ${transcriptSummary}\n- Integration: ${session.integrationNote || 'Pending'}`;
+    const summary = `Worked with part "${session.partName}" at phase: ${session.currentPhase}${session.summary ? ` - ${session.summary}` : ''}`;
+
+    try {
+      const insight = await generateInsightFromSession({
+        wizardType: 'IFS Session',
+        sessionId: session.id,
+        sessionName: 'IFS Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat()
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[IFS Session] Failed to generate insight:', err);
     }
   };
   
