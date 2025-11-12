@@ -9,7 +9,7 @@ import express, { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { initializeDatabase, getDatabase } from './lib/db.ts';
-import { initializePinecone, getIndexStats, healthCheck as pineconeHealth } from './lib/pinecone.ts';
+import { initializeUpstash, getIndexStats, healthCheck as upstashHealth } from './lib/upstash-vector.ts';
 import { initializeEmbeddingClient, healthCheck as embeddingsHealth } from './lib/embeddings.ts';
 
 // Import endpoint handlers
@@ -81,7 +81,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Initialize services middleware (runs once on first request)
 let servicesInitialized = false;
-let pineconeInitialized = false;
+let upstashInitialized = false;
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   if (!servicesInitialized) {
     try {
@@ -91,17 +91,17 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
       servicesInitialized = true;
       console.log('[Server] ✓ Core services initialized');
 
-      // Initialize Pinecone asynchronously without blocking
-      if (!pineconeInitialized) {
-        initializePinecone()
+      // Initialize Upstash Vector asynchronously without blocking
+      if (!upstashInitialized) {
+        initializeUpstash()
           .then(() => {
-            pineconeInitialized = true;
-            console.log('[Server] ✓ Pinecone initialized');
+            upstashInitialized = true;
+            console.log('[Server] ✓ Upstash Vector initialized');
           })
           .catch((error) => {
-            console.error('[Server] Failed to initialize Pinecone:', error);
-            console.log('[Server] Using mock Pinecone for development');
-            pineconeInitialized = true;
+            console.error('[Server] Failed to initialize Upstash Vector:', error);
+            console.log('[Server] Using mock Upstash Vector for development');
+            upstashInitialized = true;
           });
       }
     } catch (error) {
@@ -507,7 +507,7 @@ app.get(`${API_BASE}/health`, async (req: Request, res: Response) => {
     })();
 
     services.embeddings = await embeddingsHealth();
-    services.pinecone = await pineconeHealth();
+    services.upstash = await upstashHealth();
     services.recommendations = await recommendationsHealth();
     services.insights = await insightsHealth();
     services.practices = await practicesHealth();
@@ -579,8 +579,8 @@ async function startServer() {
     await initializeDatabase();
     console.log('  ✓ Database initialized');
 
-    await initializePinecone();
-    console.log('  ✓ Pinecone initialized');
+    await initializeUpstash();
+    console.log('  ✓ Upstash Vector initialized');
 
     initializeEmbeddingClient();
     console.log('  ✓ Embeddings initialized');
@@ -600,7 +600,7 @@ async function startServer() {
       console.log(`  • POST ${API_BASE}/mind/eight-zones/enhance-zone`);
       console.log(`  • POST ${API_BASE}/mind/eight-zones/synthesize`);
       console.log(`  • POST ${API_BASE}/mind/eight-zones/submit`);
-      console.log(`\n⚠️  DISABLED (Pinecone dependencies):`);
+      console.log(`\n⚠️  DISABLED (Upstash Vector dependencies):`);
       console.log(`  • POST ${API_BASE}/recommendations/personalized`);
       console.log(`  • POST ${API_BASE}/recommendations/assessment`);
       console.log(`  • POST ${API_BASE}/insights/generate`);

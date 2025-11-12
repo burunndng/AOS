@@ -3,7 +3,7 @@
  * Connects wizard outputs to recommended practices for integrated learning
  */
 
-import { semanticSearch } from '../lib/pinecone.ts';
+import { semanticSearch } from '../lib/upstash-vector.ts';
 import { generateEmbedding } from '../lib/embeddings.ts';
 import type { QueryResult } from '../lib/types.ts';
 

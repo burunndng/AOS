@@ -5,7 +5,7 @@
 
 import { generateRecommendationPrompt } from '../rag/generate-prompt.ts';
 import { initializeDatabase } from '../lib/db.ts';
-import { initializePinecone } from '../lib/pinecone.ts';
+import { initializeUpstash } from '../lib/upstash-vector.ts';
 import type { GenerationRequest, RecommendationResponse, PersonalizedRecommendation } from '../lib/types.ts';
 
 /**
@@ -22,7 +22,7 @@ export async function generatePersonalizedRecommendations(
   try {
     // Initialize services (required for serverless environment)
     await initializeDatabase();
-    await initializePinecone();
+    await initializeUpstash();
 
     // Generate RAG prompt with context
     const ragPrompt = await generateRecommendationPrompt(request);
