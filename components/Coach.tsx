@@ -73,6 +73,10 @@ export default function Coach({
     setIsLoading(true);
     setShowSuggestions(false);
 
+    // Add empty coach message that will be streamed into
+    const coachMessageIndex = coachResponses.length + 1;
+    setCoachResponses(prev => [...prev, { role: 'coach', text: '' }]);
+
     try {
       const today = new Date().toISOString().split('T')[0];
 
@@ -93,7 +97,7 @@ export default function Coach({
         return acc;
       }, {} as Record<string, { name: string; count: number }>);
 
-      // Call the enhanced backend API with Upstash Vector integration
+      // Call the enhanced backend API with streaming
       const response = await fetch('/api/coach/generate-response', {
         method: 'POST',
         headers: {
@@ -123,22 +127,73 @@ export default function Coach({
         throw new Error(errorData.message || errorData.error || `API error: ${response.statusText}`);
       }
 
-      const data: CoachAPIResponse = await response.json();
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
 
-      setCoachResponses(prev => [...prev, { role: 'coach', text: data.response }]);
+      if (reader) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-      // Store suggested practices if available
-      if (data.suggestedPractices && data.suggestedPractices.length > 0) {
-        setSuggestedPractices(data.suggestedPractices);
-        setShowSuggestions(true);
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+
+                  if (data.error) {
+                    throw new Error(data.error);
+                  }
+
+                  if (data.chunk) {
+                    fullText += data.chunk;
+                    // Update the coach message in real-time
+                    setCoachResponses(prev => {
+                      const updated = [...prev];
+                      updated[coachMessageIndex] = { role: 'coach', text: fullText };
+                      return updated;
+                    });
+                  }
+
+                  if (data.done) {
+                    // Use fullResponse if available, otherwise use accumulated fullText
+                    const finalText = data.fullResponse || fullText;
+                    setCoachResponses(prev => {
+                      const updated = [...prev];
+                      updated[coachMessageIndex] = { role: 'coach', text: finalText };
+                      return updated;
+                    });
+                    break;
+                  }
+                } catch (parseError) {
+                  // Ignore JSON parse errors for incomplete chunks
+                  console.debug('[Coach] Parse error (likely incomplete chunk):', parseError);
+                }
+              }
+            }
+          }
+        } catch (streamError) {
+          console.error('[Coach] Streaming error:', streamError);
+          throw streamError;
+        }
       }
     } catch (error) {
       console.error('Coach error:', error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-      setCoachResponses(prev => [...prev, {
-        role: 'coach',
-        text: `Sorry, I'm having trouble connecting. ${errorMessage}`
-      }]);
+      // Replace the empty coach message with error
+      setCoachResponses(prev => {
+        const updated = [...prev];
+        updated[coachMessageIndex] = {
+          role: 'coach',
+          text: `Sorry, I'm having trouble connecting. ${errorMessage}`
+        };
+        return updated;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -175,7 +230,7 @@ export default function Coach({
               <Sparkles className="text-accent" size={32} />
             </div>
             <p className="text-slate-400 text-sm">Ask about your practices, motivation, or what to add next.</p>
-            <p className="text-slate-500 text-xs">Enhanced with semantic search powered by Upstash Vector</p>
+            <p className="text-slate-500 text-xs">Powered by Upstash RAG Chat with streaming responses</p>
           </div>
         )}
         {coachResponses.map((msg, idx) => (

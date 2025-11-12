@@ -1,15 +1,13 @@
 /**
- * AI Practice Coach Backend API with Upstash Vector Integration
- * Enhances coach responses with semantic search, user history, and personalized context
+ * AI Practice Coach Backend API with Upstash RAG Chat
+ * Uses @upstash/rag-chat for intelligent, context-aware coaching with built-in vector search
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { generateEmbedding } from '../lib/embeddings.ts';
-import { semanticSearch } from '../lib/upstash-vector.ts';
+import { RAGChat, upstash } from '@upstash/rag-chat';
+import { Index } from '@upstash/vector';
+import { Redis } from '@upstash/redis';
 import { getDatabase } from '../lib/db.ts';
-import { GoogleGenAI } from '@google/genai';
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 interface CoachRequest {
   userId: string;
@@ -26,22 +24,6 @@ interface CoachRequest {
   modules: Record<string, { name: string; count: number }>;
   practiceNotes: Record<string, string>;
   dailyNotes: Record<string, string>;
-}
-
-interface CoachResponse {
-  response: string;
-  suggestedPractices?: Array<{
-    id: string;
-    name: string;
-    reason: string;
-    similarity: number;
-  }>;
-  relevantInsights?: string[];
-  userContext?: {
-    developmentalStage?: string;
-    attachmentStyle?: string;
-    identifiedBiases?: string[];
-  };
 }
 
 export default async function handler(
@@ -71,11 +53,7 @@ export default async function handler(
   }
 
   try {
-    console.log('[Coach API] Received request:', {
-      method: req.method,
-      hasBody: !!req.body,
-      bodyKeys: req.body ? Object.keys(req.body) : [],
-    });
+    console.log('[Coach API] Received request');
 
     const coachRequest = req.body as CoachRequest;
     const {
@@ -92,14 +70,14 @@ export default async function handler(
     } = coachRequest;
 
     if (!userId || !message) {
-      console.error('[Coach API] Missing required fields:', { userId: !!userId, message: !!message });
+      console.error('[Coach API] Missing required fields');
       res.status(400).json({ error: 'Missing required fields: userId, message' });
       return;
     }
 
     console.log(`[Coach API] Processing request for user ${userId}: "${message}"`);
 
-    // 1. Get user profile and history
+    // Get user profile for additional context
     let userProfile;
     try {
       const db = getDatabase();
@@ -109,41 +87,7 @@ export default async function handler(
       userProfile = null;
     }
 
-    // 2. Generate embedding and perform semantic search (optional - gracefully degrade if fails)
-    let relevantPractices: any[] = [];
-    let relevantFrameworks: any[] = [];
-
-    try {
-      const messageEmbedding = await generateEmbedding(message);
-
-      // 3. Semantic search for relevant practices using Upstash Vector
-      try {
-        relevantPractices = await semanticSearch(messageEmbedding, {
-          topK: 5,
-          type: 'practice',
-          minSimilarity: 0.6,
-        });
-        console.log(`[Coach API] Found ${relevantPractices.length} relevant practices`);
-      } catch (error) {
-        console.error('[Coach API] Error in practice semantic search:', error);
-      }
-
-      // 4. Semantic search for relevant frameworks/insights
-      try {
-        relevantFrameworks = await semanticSearch(messageEmbedding, {
-          topK: 3,
-          type: 'framework',
-          minSimilarity: 0.65,
-        });
-        console.log(`[Coach API] Found ${relevantFrameworks.length} relevant frameworks`);
-      } catch (error) {
-        console.error('[Coach API] Error in framework semantic search:', error);
-      }
-    } catch (error) {
-      console.error('[Coach API] Error generating embedding:', error);
-    }
-
-    // 5. Build enhanced context
+    // Build rich context about the user's current state
     const today = new Date().toISOString().split('T')[0];
     const stackContext =
       practiceStack.length > 0
@@ -173,46 +117,21 @@ export default async function handler(
 
     const timeContext = `Total weekly commitment: ${timeCommitment.toFixed(1)} hours (${timeIndicator}).`;
 
-    // 6. Build user context from profile
+    // Build user profile context
     const userContext: string[] = [];
     if (userProfile?.developmentalStage) {
-      userContext.push(
-        `Developmental stage: ${userProfile.developmentalStage}`,
-      );
+      userContext.push(`Developmental stage: ${userProfile.developmentalStage}`);
     }
     if (userProfile?.attachmentStyle) {
       userContext.push(`Attachment style: ${userProfile.attachmentStyle}`);
     }
     if (userProfile?.identifiedBiases && userProfile.identifiedBiases.length > 0) {
-      userContext.push(
-        `Identified biases: ${userProfile.identifiedBiases.join(', ')}`,
-      );
+      userContext.push(`Identified biases: ${userProfile.identifiedBiases.join(', ')}`);
     }
 
-    // 7. Build relevant practices context from vector search
-    const suggestedPracticesContext =
-      relevantPractices.length > 0
-        ? `\nRelevant practices from knowledge base (based on semantic similarity to your question):\n${relevantPractices
-            .map(
-              (p, i) =>
-                `${i + 1}. ${p.metadata.practiceTitle || 'Practice'} (${p.metadata.category || 'general'}) - Similarity: ${(p.score * 100).toFixed(1)}%\n   Description: ${p.metadata.description || 'No description'}`,
-            )
-            .join('\n')}`
-        : '';
-
-    // 8. Build frameworks context from vector search
-    const frameworksContext =
-      relevantFrameworks.length > 0
-        ? `\nRelevant frameworks/insights:\n${relevantFrameworks
-            .map(
-              (f, i) =>
-                `${i + 1}. ${f.metadata.frameworkType || 'Framework'} - ${f.metadata.description || 'No description'}`,
-            )
-            .join('\n')}`
-        : '';
-
-    // 9. Generate AI response with enhanced prompt
-    const enhancedPrompt = `You are an intelligent ILP (Integrative Life Practices) coach with access to a comprehensive knowledge base. You're helping someone build and sustain transformative life practices.
+    // Build the complete context message
+    const contextMessage = `
+You are an intelligent ILP (Integrative Life Practices) coach. You're helping someone build and sustain transformative life practices.
 
 User's current context:
 - ${stackContext}
@@ -220,69 +139,104 @@ User's current context:
 - ${completionContext}
 - ${timeContext}
 ${userContext.length > 0 ? `- User profile: ${userContext.join('; ')}` : ''}
-${suggestedPracticesContext}
-${frameworksContext}
-
-The user just asked: "${message}"
 
 Guidelines:
-- Be conversational, warm, and grounded in their actual selections. Pay close attention to any general and daily user notes on their practices, as they are critical context.
-- If they ask for the "why" of practices, explain the research and benefits.
-- If they're struggling (especially if mentioned in notes), suggest making it smaller or easier.
-- If they're motivated, suggest adding one more practice.
-- **If relevant practices were found in the knowledge base above, you can reference them specifically and explain why they might be helpful.**
-- **Consider their developmental stage, attachment style, and identified biases when making suggestions.**
+- Be conversational, warm, and grounded in their actual selections
+- Pay close attention to any general and daily user notes on their practices, as they are critical context
+- If they ask for the "why" of practices, explain the research and benefits
+- If they're struggling (especially if mentioned in notes), suggest making it smaller or easier
+- If they're motivated, suggest adding one more practice
 - Keep responses to 2-4 sentences. Be direct and authentic.
-- If you suggest a specific practice from the knowledge base, be specific about WHY it's relevant to their question or situation.`;
+- When suggesting practices from the knowledge base, be specific about WHY they're relevant
+    `.trim();
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: enhancedPrompt,
+    // Initialize RAGChat with Upstash Vector
+    const ragChat = new RAGChat({
+      model: upstash('meta-llama/Meta-Llama-3-8B-Instruct', {
+        apiKey: process.env.QSTASH_TOKEN,
+      }),
+      vector: new Index({
+        url: process.env.UPSTASH_VECTOR_REST_URL!,
+        token: process.env.UPSTASH_VECTOR_REST_TOKEN!,
+      }),
+      redis: process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+        ? new Redis({
+            url: process.env.UPSTASH_REDIS_REST_URL,
+            token: process.env.UPSTASH_REDIS_REST_TOKEN,
+          })
+        : undefined,
     });
 
-    const coachResponseText = response.text;
-
-    // 10. Format suggested practices for frontend
-    const suggestedPractices = relevantPractices.map((p) => ({
-      id: p.id,
-      name: p.metadata.practiceTitle || 'Practice',
-      reason: p.metadata.description || 'Recommended based on your question',
-      similarity: p.score,
-    }));
-
-    // 11. Format relevant insights
-    const relevantInsights: string[] = [];
-    if (userProfile?.developmentalStage) {
-      relevantInsights.push(
-        `Your ${userProfile.developmentalStage} stage suggests practices that support your growth edge.`,
-      );
-    }
-    if (userProfile?.identifiedBiases && userProfile.identifiedBiases.length > 0) {
-      relevantInsights.push(
-        `Consider how these recommendations address your identified biases: ${userProfile.identifiedBiases.join(', ')}.`,
-      );
-    }
-
-    const coachResponse: CoachResponse = {
-      response: coachResponseText,
-      suggestedPractices: suggestedPractices.length > 0 ? suggestedPractices : undefined,
-      relevantInsights: relevantInsights.length > 0 ? relevantInsights : undefined,
-      userContext: {
-        developmentalStage: userProfile?.developmentalStage,
-        attachmentStyle: userProfile?.attachmentStyle,
-        identifiedBiases: userProfile?.identifiedBiases,
+    // Use RAG Chat with streaming and context
+    const response = await ragChat.chat(message, {
+      sessionId: userId,
+      streaming: true,
+      historyLength: 10,
+      topK: 5,
+      similarityThreshold: 0.6,
+      metadata: {
+        context: contextMessage,
+        timestamp: new Date().toISOString(),
       },
-    };
+      onContextFetched: (context) => {
+        console.log(`[Coach API] Retrieved ${context.length} context items from vector DB`);
+        return context;
+      },
+    });
+
+    // Set up streaming response
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    let fullResponse = '';
+
+    // Stream the response
+    if (response.output && typeof response.output !== 'string') {
+      const reader = response.output.getReader();
+      const decoder = new TextDecoder();
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          fullResponse += chunk;
+
+          // Send Server-Sent Event
+          res.write(`data: ${JSON.stringify({ chunk, done: false })}\n\n`);
+        }
+
+        // Send final event
+        res.write(`data: ${JSON.stringify({ chunk: '', done: true, fullResponse })}\n\n`);
+        res.end();
+      } catch (error) {
+        console.error('[Coach API] Streaming error:', error);
+        res.write(`data: ${JSON.stringify({ error: 'Streaming failed', done: true })}\n\n`);
+        res.end();
+      }
+    } else {
+      // Fallback for non-streaming response
+      const responseText = typeof response.output === 'string' ? response.output : '';
+      res.write(`data: ${JSON.stringify({ chunk: responseText, done: true, fullResponse: responseText })}\n\n`);
+      res.end();
+    }
 
     console.log(`[Coach API] Successfully generated response for user ${userId}`);
-    console.log(`[Coach API] Found ${suggestedPractices.length} relevant practices via Upstash Vector`);
-
-    res.status(200).json(coachResponse);
   } catch (error) {
     console.error('[Coach API] Error:', error);
-    res.status(500).json({
-      error: 'Failed to generate coach response',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+
+    // If headers not sent, send JSON error
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: 'Failed to generate coach response',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } else {
+      // If streaming started, send error event
+      res.write(`data: ${JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error', done: true })}\n\n`);
+      res.end();
+    }
   }
 }
