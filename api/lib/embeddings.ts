@@ -1,6 +1,6 @@
 /**
  * Embeddings Generation Module
- * Handles generation of 1536-dimensional embeddings using Google's embedding model
+ * Handles generation of 1024-dimensional embeddings (BGE_LARGE_EN_V1_5)
  */
 
 import type { EmbeddingResult } from './types.ts';
@@ -18,7 +18,7 @@ interface EmbeddingClient {
  * Generates deterministic embeddings based on text hash
  */
 class MockEmbeddingClient implements EmbeddingClient {
-  private readonly dimensions = 1536;
+  private readonly dimensions = 1024; // Match Upstash Vector BGE_LARGE_EN_V1_5
 
   /**
    * Generate a deterministic embedding from text
@@ -202,7 +202,7 @@ export async function generateEmbeddingsBatch(
 export async function healthCheck(): Promise<{ status: 'ok' | 'error'; message: string }> {
   try {
     const testEmbedding = await generateEmbedding('test');
-    if (testEmbedding.length === 1536) {
+    if (testEmbedding.length === 1024) {
       return { status: 'ok', message: 'Embedding service is healthy' };
     }
     return { status: 'error', message: 'Embedding dimension mismatch' };
