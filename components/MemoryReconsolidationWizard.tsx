@@ -285,15 +285,14 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
         };
         
         const response = await mineContradictions(payload);
-        
-        // Generate juxtaposition cycles from contradictions (3 cycles per contradiction)
-        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, idx) => {
-          // Ensure anchors exists and is an array before slicing
-          const anchors = Array.isArray(insight.anchors) ? insight.anchors : [];
-          return anchors.slice(0, 3).map((anchor, anchorIdx) => ({
-            id: `cycle-${idx}-${anchorIdx}`,
+
+        // Generate exactly 3 juxtaposition cycles per contradiction (not dependent on anchors count)
+        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, insightIdx) => {
+          // Create 3 cycles per contradiction insight, regardless of anchors
+          return Array.from({ length: 3 }, (_, cycleIdx) => ({
+            id: `cycle-${insightIdx}-${cycleIdx}`,
             beliefId: insight.beliefId,
-            cycleNumber: idx * 3 + anchorIdx + 1,
+            cycleNumber: insightIdx * 3 + cycleIdx + 1,
             steps: response.juxtapositionCyclePrompts.map((prompt, stepNum) => ({
               stepNumber: stepNum + 1,
               prompt,
@@ -305,7 +304,7 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
             notes: '',
           }));
         });
-        
+
         updateSession({ contradictionInsights: response.contradictions, juxtapositionCycles: cycles });
         nextStep = 'JUXTAPOSITION';
       } else if (session.currentStep === 'INTEGRATION') {
