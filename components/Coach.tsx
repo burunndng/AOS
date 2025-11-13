@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X, ChevronsDown, Sparkles } from 'lucide-react';
 import { CoachMessage, Practice, ModuleKey, ModuleInfo, AllPractice } from '../types.ts';
-import { getCoachResponse } from '../services/geminiService.ts';
 import { practices } from '../constants.ts';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
 
@@ -230,7 +229,7 @@ export default function Coach({
               <Sparkles className="text-accent" size={32} />
             </div>
             <p className="text-slate-400 text-sm">Ask about your practices, motivation, or what to add next.</p>
-            <p className="text-slate-500 text-xs">Powered by Gemini 2.5-flash</p>
+            <p className="text-slate-500 text-xs">Powered by Claude 3.5 Sonnet via OpenRouter</p>
           </div>
         )}
         {coachResponses.map((msg, idx) => (

@@ -1,13 +1,10 @@
 /**
  * AI Practice Coach Backend API
- * Uses Gemini 2.5-flash for conversational coaching
+ * Uses OpenRouter API for conversational coaching
  * No dependencies on vector databases or RAG systems
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 interface CoachRequest {
   userId: string;
@@ -122,31 +119,95 @@ Guidelines:
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    console.log('[Coach API] Calling Gemini 2.5-flash with streaming...');
+    console.log('[Coach API] Calling OpenRouter API with streaming...');
 
     try {
-      // Generate streaming response with Gemini
-      const response = await ai.models.generateContentStream({
-        model: 'gemini-2.5-flash',
-        contents: fullPrompt,
-      });
-
-      let fullResponse = '';
-
-      // Stream the response
-      for await (const chunk of response.stream) {
-        const chunkText = chunk.text();
-        if (chunkText) {
-          fullResponse += chunkText;
-          // Send Server-Sent Event
-          res.write(`data: ${JSON.stringify({ chunk: chunkText, done: false })}\n\n`);
-        }
+      const apiKey = process.env.OPENROUTER_API_KEY;
+      if (!apiKey) {
+        throw new Error('OPENROUTER_API_KEY environment variable is not set');
       }
 
-      // Send final event
-      res.write(`data: ${JSON.stringify({ chunk: '', done: true, fullResponse })}\n\n`);
-      res.end();
+      // Call OpenRouter API with streaming
+      const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://ilp.coach',
+          'X-Title': 'ILP Coach',
+        },
+        body: JSON.stringify({
+          model: 'anthropic/claude-3.5-sonnet-20241022',
+          messages: [
+            {
+              role: 'user',
+              content: fullPrompt,
+            },
+          ],
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 1024,
+        }),
+      });
 
+      if (!openrouterResponse.ok) {
+        const errorData = await openrouterResponse.json();
+        throw new Error(`OpenRouter API error: ${errorData.error?.message || openrouterResponse.statusText}`);
+      }
+
+      if (!openrouterResponse.body) {
+        throw new Error('No response body from OpenRouter API');
+      }
+
+      const reader = openrouterResponse.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+      let buffer = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+
+              if (data === '[DONE]') {
+                // End of stream
+                res.write(`data: ${JSON.stringify({ chunk: '', done: true, fullResponse })}\n\n`);
+                continue;
+              }
+
+              try {
+                const json = JSON.parse(data);
+                const chunkText = json.choices?.[0]?.delta?.content || '';
+
+                if (chunkText) {
+                  fullResponse += chunkText;
+                  // Send Server-Sent Event
+                  res.write(`data: ${JSON.stringify({ chunk: chunkText, done: false })}\n\n`);
+                }
+              } catch (parseError) {
+                console.debug('[Coach API] Parse error for line:', data, parseError);
+              }
+            }
+          }
+        }
+
+        // Ensure final event is sent
+        if (!fullResponse) {
+          res.write(`data: ${JSON.stringify({ chunk: '', done: true, fullResponse: 'I apologize, I was unable to generate a response. Please try again.' })}\n\n`);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      res.end();
       console.log(`[Coach API] Successfully generated response for user ${userId}`);
     } catch (streamError) {
       console.error('[Coach API] Streaming error:', streamError);

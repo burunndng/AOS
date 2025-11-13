@@ -8,9 +8,17 @@
     "api/server.ts": {
       "memory": 1024,
       "maxDuration": 60
+    },
+    "api/coach/generate-response.ts": {
+      "memory": 1024,
+      "maxDuration": 30
     }
   },
   "rewrites": [
+    {
+      "source": "/api/coach/generate-response",
+      "destination": "/api/coach/generate-response"
+    },
     {
       "source": "/api/(.*)",
       "destination": "/api/server.ts"
