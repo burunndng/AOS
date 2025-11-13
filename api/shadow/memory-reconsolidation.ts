@@ -5,7 +5,7 @@
  */
 
 import { GoogleGenAI, Type } from '@google/genai';
-import type { ImplicitBelief, ContradictionInsight, SessionCompletionSummary } from './types.ts';
+import type { ImplicitBelief, ContradictionInsight, SessionCompletionSummary } from './types';
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY,

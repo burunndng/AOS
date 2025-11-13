@@ -3,9 +3,9 @@
  * Connects wizard outputs to recommended practices for integrated learning
  */
 
-import { semanticSearch } from '../lib/upstash-vector.ts';
-import { generateEmbedding } from '../lib/embeddings.ts';
-import type { QueryResult } from '../lib/types.ts';
+import { semanticSearch } from '../lib/upstash-vector';
+import { generateEmbedding } from '../lib/embeddings';
+import type { QueryResult } from '../lib/types';
 
 /**
  * Map wizard types to their natural practice domains

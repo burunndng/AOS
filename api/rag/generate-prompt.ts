@@ -4,10 +4,10 @@
  * Implements semantic search to find relevant practices and frameworks
  */
 
-import { semanticSearch } from '../lib/upstash-vector.ts';
-import { generateEmbedding } from '../lib/embeddings.ts';
-import { getDatabase } from '../lib/db.ts';
-import type { GenerationRequest, RAGContext, UserHistory, QueryResult } from '../lib/types.ts';
+import { semanticSearch } from '../lib/upstash-vector';
+import { generateEmbedding } from '../lib/embeddings';
+import { getDatabase } from '../lib/db';
+import type { GenerationRequest, RAGContext, UserHistory, QueryResult } from '../lib/types';
 
 export interface RAGPromptResponse {
   prompt: string;

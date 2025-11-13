@@ -8,7 +8,7 @@
 import express, { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import { initializeDatabase, getDatabase } from './lib/db.ts';
+import { initializeDatabase, getDatabase } from './lib/db';
 
 // Import endpoint handlers
 // Note: RAG endpoints (recommendations, insights) have been disabled as they depend on
@@ -18,25 +18,25 @@ import {
   getSuggestedCustomizations,
   saveCustomizedPractice,
   healthCheck as practicesHealth,
-} from './practices/personalize.ts';
+} from './practices/personalize';
 
 import {
   getUserSyncStatus,
   healthCheck as syncHealth,
-} from './user/sync.ts';
+} from './user/sync';
 
 import {
   extractBeliefsFromMemory,
   mineContradictions,
   completeSession,
   healthCheck as shadowHealth,
-} from './shadow/memory-reconsolidation.ts';
+} from './shadow/memory-reconsolidation';
 
 import {
   enhanceZoneAnalysis,
   synthesizeZones,
   submitSessionCompletion,
-} from './mind/eight-zones.ts';
+} from './mind/eight-zones';
 
 // ============================================
 // SERVER SETUP

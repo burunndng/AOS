@@ -4,14 +4,14 @@
  * Includes wizard-to-practice linking for integrated learning
  */
 
-import { generateInsightPrompt } from '../rag/generate-prompt.ts';
-import { initializeDatabase, getDatabase } from '../lib/db.ts';
-import { initializeUpstash } from '../lib/upstash-vector.ts';
+import { generateInsightPrompt } from '../rag/generate-prompt';
+import { initializeDatabase, getDatabase } from '../lib/db';
+import { initializeUpstash } from '../lib/upstash-vector';
 import {
   generateWizardLinkedRecommendations,
   buildIntegratedInsightWithPractices,
-} from './wizard-linking.ts';
-import type { GenerationRequest, GenerationResponse, UserSession } from '../lib/types.ts';
+} from './wizard-linking';
+import type { GenerationRequest, GenerationResponse, UserSession } from '../lib/types';
 
 /**
  * Generate insights from a user session
