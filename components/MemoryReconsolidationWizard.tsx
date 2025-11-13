@@ -1087,8 +1087,8 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
         );
 
       case 'COMPLETE':
-        const selectedBelief = session.implicitBeliefs[0];
-        const finalShift = session.completionSummary?.intensityShift 
+        const completionBelief = session.implicitBeliefs[0];
+        const finalShift = session.completionSummary?.intensityShift
           ? Math.round((session.completionSummary.intensityShift / session.baselineIntensity) * -100)
           : 0;
 
@@ -1105,7 +1105,7 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
             <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-cyan-500/30 rounded-xl p-6 space-y-4">
               <div>
                 <div className="text-sm text-slate-400 mb-1">Memory/Belief Addressed</div>
-                <div className="text-lg font-medium text-slate-100">{selectedBelief?.belief}</div>
+                <div className="text-lg font-medium text-slate-100">{completionBelief?.belief}</div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
