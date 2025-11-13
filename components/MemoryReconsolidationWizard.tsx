@@ -140,6 +140,13 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
     };
   }, []);
 
+  // Initialize postIntensity when entering GROUNDING step
+  useEffect(() => {
+    if (session.currentStep === 'GROUNDING' && postIntensity === null) {
+      setPostIntensity(session.baselineIntensity);
+    }
+  }, [session.currentStep, session.baselineIntensity, postIntensity]);
+
   const handleSaveDraftAndClose = () => {
     setDraft({ ...session, sessionNotes: beliefContext });
     onClose();
