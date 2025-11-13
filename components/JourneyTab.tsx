@@ -2,12 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { journeyRegions, journeyBadges } from '../data/journeyContent.ts';
 import { JourneyProgress } from '../types.ts';
 import LearningCard from './LearningCard.tsx';
-import { ChevronLeft, ChevronRight, MapPin, Trophy } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Trophy, Compass, Activity, Eye, Sun, Moon, Hexagon } from 'lucide-react';
 
 interface JourneyTabProps {
   journeyProgress: JourneyProgress;
   updateJourneyProgress: (progress: JourneyProgress) => void;
 }
+
+// Map region IDs to alchemical/mystical icons
+const getRegionIcon = (regionId: string, size = 24) => {
+  const iconProps = { size, strokeWidth: 1.5 };
+  switch (regionId) {
+    case 'core':
+      return <Compass {...iconProps} className="text-slate-300" />;
+    case 'body':
+      return <Activity {...iconProps} className="text-teal-400" />;
+    case 'mind':
+      return <Eye {...iconProps} className="text-blue-400" />;
+    case 'spirit':
+      return <Sun {...iconProps} className="text-amber-400" />;
+    case 'shadow':
+      return <Moon {...iconProps} className="text-purple-400" />;
+    case 'integration':
+      return <Hexagon {...iconProps} className="text-accent" />;
+    default:
+      return <Compass {...iconProps} className="text-slate-300" />;
+  }
+};
 
 export default function JourneyTab({ journeyProgress, updateJourneyProgress }: JourneyTabProps) {
   const [selectedRegion, setSelectedRegion] = useState<string>(
@@ -88,7 +109,7 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
         }} />
         <div className="relative">
           <h1 className="text-5xl font-black bg-gradient-to-r from-accent via-purple-400 to-accent bg-clip-text text-transparent mb-2 drop-shadow-lg">
-            ✨ The Integral Journey
+            The Integral Journey
           </h1>
           <p className="text-slate-400 text-lg">
             Explore the six regions of integral practice and unlock your wholeness
@@ -159,7 +180,9 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
               }} />
 
               <div className="relative z-10">
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{region.emoji}</div>
+                <div className="mb-3 group-hover:scale-110 transition-transform flex items-center justify-center">
+                  {getRegionIcon(region.id, 40)}
+                </div>
                 <div className="text-sm font-bold text-slate-200 mb-2 line-clamp-2">{region.name}</div>
                 <div className="w-full h-1.5 bg-neutral-700/50 rounded-full overflow-hidden border border-accent/20">
                   <div
@@ -189,7 +212,9 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
             boxShadow: '0 8px 32px rgba(217, 170, 239, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.05)',
           }}>
             <div className="flex items-start gap-6 mb-6">
-              <div className="text-6xl">{currentRegion.emoji}</div>
+              <div className="flex items-center justify-center p-4 bg-slate-800/50 rounded-2xl border border-accent/20">
+                {getRegionIcon(currentRegion.id, 48)}
+              </div>
               <div className="flex-1">
                 <h2 className="text-4xl font-bold bg-gradient-to-r from-accent via-purple-400 to-accent bg-clip-text text-transparent mb-2">{currentRegion.name}</h2>
                 <p className="text-slate-300 text-lg leading-relaxed">{currentRegion.description}</p>
