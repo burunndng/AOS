@@ -4,7 +4,15 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+
+    // Determine base path for GitHub Pages
+    // When deployed to GitHub Pages from feature branch, use /AOS/
+    // (adjust if your repo name or deploy strategy differs)
+    const isGithubPages = process.env.GITHUB_PAGES === 'true';
+    const base = isGithubPages ? '/AOS/' : '/';
+
     return {
+      base,
       server: {
         port: 3000,
         host: '0.0.0.0',
