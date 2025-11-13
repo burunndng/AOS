@@ -1174,13 +1174,14 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
             userId={userId}
           />
         );
-      case 'memory-recon':
+      case 'memory-reconsolidation':
         return (
           <MemoryReconsolidationWizard
             onClose={() => setActiveWizard(null)}
             onSave={handleSaveMemoryReconsolidationSession}
             session={draftMemoryRecon}
             setDraft={setDraftMemoryRecon}
+            userId={userId}
           />
         );
       case 'integral-body-architect':
