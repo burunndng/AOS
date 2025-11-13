@@ -137,7 +137,7 @@ Guidelines:
           'X-Title': 'ILP Coach',
         },
         body: JSON.stringify({
-          model: 'anthropic/claude-3.5-sonnet-20241022',
+          model: 'deepseek/deepseek-v3.2-exp',
           messages: [
             {
               role: 'user',
