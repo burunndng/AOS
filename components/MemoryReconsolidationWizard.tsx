@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MemoryReconsolidationSession,
   MemoryReconsolidationStep,
@@ -12,7 +12,7 @@ import {
   SessionCompletionSummary,
   IntegrationChoiceType
 } from '../types.ts';
-import { X, ArrowRight, Play, Pause, Download, Copy, Search, CheckCircle } from 'lucide-react';
+import { X, ArrowRight, Download, Copy, Search, CheckCircle } from 'lucide-react';
 import { 
   extractImplicitBeliefs, 
   mineContradictions,
@@ -103,11 +103,9 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
   
   // Juxtaposition state
   const [currentCycleIndex, setCurrentCycleIndex] = useState(0);
-  const [currentCycleStep, setCurrentCycleStep] = useState<'old-truth' | 'pause' | 'new-truth' | 'complete'>('old-truth');
+  const [currentCycleStep, setCurrentCycleStep] = useState<'old-truth' | 'new-truth' | 'complete'>('old-truth');
   const [cycleIntensities, setCycleIntensities] = useState<Record<number, IntensityReading>>({});
-  const [isPaused, setIsPaused] = useState(false);
   const [cycleNotes, setCycleNotes] = useState<Record<number, string>>({});
-  const animationTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Post check-in state
   const [postIntensity, setPostIntensity] = useState<number | null>(null);
@@ -133,11 +131,6 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
 
   useEffect(() => {
     setPrefersReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    return () => {
-      if (animationTimerRef.current) {
-        clearTimeout(animationTimerRef.current);
-      }
-    };
   }, []);
 
   const handleSaveDraftAndClose = () => {
@@ -204,32 +197,12 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
     }
   };
 
-  const startJuxtapositionCycle = (cycleNum: number) => {
-    if (prefersReducedMotion || isPaused) return;
-    
-    setCurrentCycleStep('old-truth');
-    animationTimerRef.current = setTimeout(() => {
-      setCurrentCycleStep('pause');
-      animationTimerRef.current = setTimeout(() => {
-        setCurrentCycleStep('new-truth');
-        animationTimerRef.current = setTimeout(() => {
-          setCurrentCycleStep('complete');
-        }, 8000);
-      }, 3000);
-    }, 8000);
-  };
-
-  const pauseJuxtaposition = () => {
-    setIsPaused(true);
-    if (animationTimerRef.current) {
-      clearTimeout(animationTimerRef.current);
-      animationTimerRef.current = null;
+  const advanceJuxtapositionStep = () => {
+    if (currentCycleStep === 'old-truth') {
+      setCurrentCycleStep('new-truth');
+    } else if (currentCycleStep === 'new-truth') {
+      setCurrentCycleStep('complete');
     }
-  };
-
-  const resumeJuxtaposition = () => {
-    setIsPaused(false);
-    startJuxtapositionCycle(currentCycleIndex);
   };
 
   const handleNext = async () => {
@@ -654,53 +627,54 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
 
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
               <p className="text-amber-100 text-sm">
-                💡 Stay present with whatever arises—confusion, discomfort, or relief. All of it is part of the process.
+                💡 Take your time with each step. Move forward when you're ready.
               </p>
             </div>
-            
-            {prefersReducedMotion ? (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-                <p className="text-amber-200 text-sm">
-                  Animations disabled due to your reduced motion preference. Cycle content is displayed statically below.
-                </p>
-              </div>
-            ) : (
-              <div className="flex gap-4">
-                <button
-                  onClick={() => isPaused ? resumeJuxtaposition() : pauseJuxtaposition()}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 transition"
-                >
-                  {isPaused ? <Play size={18} /> : <Pause size={18} />}
-                  {isPaused ? 'Resume' : 'Pause'}
-                </button>
-              </div>
-            )}
 
             {currentCycle && (
               <div className="space-y-6 mt-6">
-                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-1000 ${
-                  (prefersReducedMotion || currentCycleStep === 'old-truth' || currentCycleStep === 'pause') 
-                    ? 'border-red-500/50 opacity-100' 
-                    : 'border-red-500/20 opacity-40'
+                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-500 ${
+                  currentCycleStep === 'old-truth'
+                    ? 'border-red-500/50 opacity-100 ring-2 ring-red-500/30'
+                    : 'border-red-500/30 opacity-70'
                 }`}>
                   <div className="text-sm font-semibold text-red-300 mb-2">OLD TRUTH</div>
                   <div className="text-lg text-slate-100">{belief?.belief}</div>
+                  {currentCycleStep === 'old-truth' && (
+                    <p className="text-slate-400 text-sm mt-3 italic">
+                      Hold this belief in your awareness. Feel where it lives in your body.
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex justify-center">
                   <div className="w-0.5 h-16 bg-gradient-to-b from-red-500/50 via-cyan-500/50 to-emerald-500/50"></div>
                 </div>
 
-                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-1000 ${
-                  (prefersReducedMotion || currentCycleStep === 'new-truth' || currentCycleStep === 'complete') 
-                    ? 'border-emerald-500/50 opacity-100' 
-                    : 'border-emerald-500/20 opacity-40'
+                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-500 ${
+                  currentCycleStep === 'new-truth' || currentCycleStep === 'complete'
+                    ? 'border-emerald-500/50 opacity-100 ring-2 ring-emerald-500/30'
+                    : 'border-emerald-500/30 opacity-70'
                 }`}>
                   <div className="text-sm font-semibold text-emerald-300 mb-2">NEW TRUTH</div>
                   <div className="text-lg text-slate-100">
                     {insight?.newTruths[0] || 'Generating...'}
                   </div>
+                  {currentCycleStep === 'new-truth' && (
+                    <p className="text-slate-400 text-sm mt-3 italic">
+                      Now hold both truths together. Notice what arises.
+                    </p>
+                  )}
                 </div>
+
+                {(currentCycleStep === 'old-truth' || currentCycleStep === 'new-truth') && (
+                  <button
+                    onClick={advanceJuxtapositionStep}
+                    className="btn-luminous px-6 py-3 rounded-lg font-semibold w-full"
+                  >
+                    {currentCycleStep === 'old-truth' ? 'Continue to New Truth' : 'Reflect on This Experience'}
+                  </button>
+                )}
 
                 {currentCycleStep === 'complete' && (
                   <div className="space-y-4 animate-fade-in-up">
@@ -738,7 +712,6 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                         onClick={() => {
                           setCurrentCycleIndex(prev => prev + 1);
                           setCurrentCycleStep('old-truth');
-                          if (!prefersReducedMotion) startJuxtapositionCycle(currentCycleIndex + 1);
                         }}
                         className="btn-luminous px-6 py-2 rounded-lg font-semibold w-full"
                       >
@@ -755,18 +728,6 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                   </div>
                 )}
               </div>
-            )}
-
-            {!prefersReducedMotion && currentCycleStep !== 'complete' && currentCycle && (
-              <button
-                onClick={() => {
-                  if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
-                  startJuxtapositionCycle(currentCycleIndex);
-                }}
-                className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 transition w-full"
-              >
-                Restart Cycle
-              </button>
             )}
           </div>
         );
