@@ -229,7 +229,7 @@ export default function Coach({
               <Sparkles className="text-accent" size={32} />
             </div>
             <p className="text-slate-400 text-sm">Ask about your practices, motivation, or what to add next.</p>
-            <p className="text-slate-500 text-xs">Powered by Claude 3.5 Sonnet via OpenRouter</p>
+            <p className="text-slate-500 text-xs">Powered by DeepSeek v3.2 via OpenRouter</p>
           </div>
         )}
         {coachResponses.map((msg, idx) => (
