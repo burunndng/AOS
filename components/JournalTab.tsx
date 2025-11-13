@@ -9,19 +9,95 @@ import {
   BrainCircuit,
   Lightbulb,
   CheckCircle,
-  Clock
+  Clock,
+  Sparkles
 } from 'lucide-react';
 import { IntegratedInsight } from '../types.ts';
 
 interface JournalTabProps {
   integratedInsights: IntegratedInsight[];
+  setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
 }
 
-export default function JournalTab({ integratedInsights }: JournalTabProps) {
+export default function JournalTab({ integratedInsights, setActiveWizard }: JournalTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'addressed'>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [expandedInsights, setExpandedInsights] = useState<Set<string>>(new Set());
+
+  const handleStartPractice = (insightId: string, practiceId: string) => {
+    let wizardName: string | null = null;
+
+    // Map practiceId to wizard name
+    switch (practiceId) {
+        // Shadow Tools
+        case 'three-two-one':
+            wizardName = '321';
+            break;
+        case 'parts-dialogue':
+            wizardName = 'ifs';
+            break;
+        case 'relational-pattern':
+            wizardName = 'relational';
+            break;
+        case 'big-mind':
+            wizardName = 'bigmind';
+            break;
+        case 'memory-reconsolidation':
+            wizardName = 'memory-reconsolidation';
+            break;
+        // Mind Tools
+        case 'bias-detective':
+            wizardName = 'bias';
+            break;
+        case 'subject-object':
+            wizardName = 'so';
+            break;
+        case 'perspective-shifter':
+            wizardName = 'ps';
+            break;
+        case 'polarity-mapper':
+            wizardName = 'pm';
+            break;
+        case 'kegan-assessment':
+            wizardName = 'kegan';
+            break;
+        case 'role-alignment':
+            wizardName = 'role-alignment';
+            break;
+        // Body Tools
+        case 'somatic-generator':
+            wizardName = 'somatic';
+            break;
+        case 'attachment-assessment':
+            wizardName = 'attachment';
+            break;
+        case 'integral-body-architect':
+            wizardName = 'integral-body';
+            break;
+        case 'workout-architect':
+            wizardName = 'workout';
+            break;
+        // Spirit Tools
+        case 'jhana-tracker':
+            wizardName = 'jhana';
+            break;
+        case 'meditation-finder':
+            wizardName = 'meditation';
+            break;
+        case 'consciousness-graph':
+            wizardName = 'consciousness-graph';
+            break;
+        case 'eight-zones':
+            wizardName = 'eight-zones';
+            break;
+        default:
+            alert(`Practice "${practiceId}" is not yet linked to a wizard. Please check the tool tabs.`);
+            return;
+    }
+
+    setActiveWizard(wizardName, insightId); // Pass linkedInsightId
+  };
 
   // Get unique wizard types for filter
   const wizardTypes = useMemo(() => {
@@ -292,9 +368,21 @@ export default function JournalTab({ integratedInsights }: JournalTabProps) {
                               </p>
                               <div className="space-y-2">
                                 {insight.suggestedShadowWork.map((sw, idx) => (
-                                  <div key={idx} className="bg-slate-700/40 rounded-lg p-3 border border-slate-600/30">
-                                    <p className="text-sm font-medium text-slate-200">{sw.practiceName}</p>
-                                    <p className="text-xs text-slate-400 mt-1">{sw.rationale}</p>
+                                  <div key={idx} className="bg-slate-700/40 rounded-lg p-3 border border-slate-600/30 flex justify-between items-center">
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium text-slate-200">{sw.practiceName}</p>
+                                      <p className="text-xs text-slate-400 mt-1">{sw.rationale}</p>
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStartPractice(insight.id, sw.practiceId);
+                                      }}
+                                      className="ml-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1 shadow-md hover:shadow-lg transform hover:scale-105"
+                                      style={{boxShadow: '0 4px 12px rgba(217, 119, 6, 0.3)'}}
+                                    >
+                                      <Sparkles size={14} /> Start
+                                    </button>
                                   </div>
                                 ))}
                               </div>
@@ -309,9 +397,21 @@ export default function JournalTab({ integratedInsights }: JournalTabProps) {
                               </p>
                               <div className="space-y-2">
                                 {insight.suggestedNextSteps.map((step, idx) => (
-                                  <div key={idx} className="bg-slate-700/40 rounded-lg p-3 border border-slate-600/30">
-                                    <p className="text-sm font-medium text-slate-200">{step.practiceName}</p>
-                                    <p className="text-xs text-slate-400 mt-1">{step.rationale}</p>
+                                  <div key={idx} className="bg-slate-700/40 rounded-lg p-3 border border-slate-600/30 flex justify-between items-center">
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium text-slate-200">{step.practiceName}</p>
+                                      <p className="text-xs text-slate-400 mt-1">{step.rationale}</p>
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStartPractice(insight.id, step.practiceId);
+                                      }}
+                                      className="ml-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1 shadow-md hover:shadow-lg transform hover:scale-105"
+                                      style={{boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'}}
+                                    >
+                                      <Sparkles size={14} /> Start
+                                    </button>
                                   </div>
                                 ))}
                               </div>
