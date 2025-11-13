@@ -768,15 +768,26 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
             )}
 
             {!prefersReducedMotion && currentCycleStep !== 'complete' && currentCycle && (
-              <button
-                onClick={() => {
-                  if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
-                  startJuxtapositionCycle(currentCycleIndex);
-                }}
-                className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 transition w-full"
-              >
-                Restart Cycle
-              </button>
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
+                    setCurrentCycleStep('complete');
+                  }}
+                  className="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-white font-semibold transition w-full shadow-lg shadow-cyan-500/20"
+                >
+                  I'm Ready to Continue →
+                </button>
+                <button
+                  onClick={() => {
+                    if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
+                    startJuxtapositionCycle(currentCycleIndex);
+                  }}
+                  className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 transition w-full"
+                >
+                  Restart Cycle
+                </button>
+              </div>
             )}
           </div>
         );
