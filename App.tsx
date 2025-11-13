@@ -33,6 +33,7 @@ const PracticeCustomizationModal = lazy(() => import('./components/PracticeCusto
 const CustomPracticeModal = lazy(() => import('./components/CustomPracticeModal.tsx'));
 const GuidedPracticeGenerator = lazy(() => import('./components/GuidedPracticeGenerator.tsx'));
 const ThreadLinkingModal = lazy(() => import('./components/ThreadLinkingModal.tsx').then(module => ({ default: module.ThreadLinkingModal })));
+const SuggestionModal = lazy(() => import('./components/SuggestionModal.tsx').then(module => ({ default: module.SuggestionModal })));
 
 // Lazy-loaded Wizard Components
 const ThreeTwoOneWizard = lazy(() => import('./components/ThreeTwoOneWizard.tsx'));
@@ -105,6 +106,7 @@ import { useThreads } from './hooks/useThreads.ts';
 import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
+import { createAiSummary } from './utils/createAiSummary.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -231,6 +233,12 @@ export default function App() {
     sessionSummary: string;
     sessionDate: string;
   } | null>(null);
+
+  // AI Suggestion Modal state
+  const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [suggestionAnalysis, setSuggestionAnalysis] = useState<any>(null);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
 
   // Integrated Insights
   const [integratedInsights, setIntegratedInsights] = useLocalStorage<IntegratedInsight[]>('integratedInsights', []);
@@ -971,6 +979,79 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
     setThreadLinkingData(null);
   };
 
+  const handleGetAiSuggestion = async () => {
+    if (!threadLinkingData) return;
+
+    // Open the suggestion modal and start loading
+    setSuggestionModalOpen(true);
+    setSuggestionLoading(true);
+    setSuggestionError(null);
+    setSuggestionAnalysis(null);
+
+    try {
+      // Get the session data
+      let sessionData;
+      switch (threadLinkingData.wizardType) {
+        case 'memory-recon':
+          sessionData = memoryReconHistory.find(s => s.id === threadLinkingData.sessionId);
+          break;
+        case 'ifs':
+          sessionData = historyIFS.find(s => s.id === threadLinkingData.sessionId);
+          break;
+        case '3-2-1':
+          sessionData = history321.find(s => s.id === threadLinkingData.sessionId);
+          break;
+        case 'eight-zones':
+          sessionData = eightZonesHistory.find(s => s.id === threadLinkingData.sessionId);
+          break;
+        default:
+          throw new Error('Unknown wizard type');
+      }
+
+      if (!sessionData) {
+        throw new Error('Session data not found');
+      }
+
+      // Create AI summary
+      const sessionSummary = createAiSummary(sessionData, threadLinkingData.wizardType);
+
+      // Call the API
+      const response = await fetch('/api/suggest-next-step', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionSummary,
+          wizardType: threadLinkingData.wizardType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate suggestions');
+      }
+
+      setSuggestionAnalysis(data.analysis);
+    } catch (error) {
+      console.error('[AI Suggestion] Error:', error);
+      setSuggestionError(error instanceof Error ? error.message : 'Unknown error occurred');
+    } finally {
+      setSuggestionLoading(false);
+    }
+  };
+
+  const handleSelectWizard = (wizardType: string, specificFocus: string) => {
+    // Close both modals
+    setSuggestionModalOpen(false);
+    setThreadLinkingData(null);
+
+    // TODO: In the future, we could pre-populate the wizard with the specificFocus
+    // For now, just open the wizard
+    setActiveWizard(wizardType);
+  };
+
   const markInsightAsAddressed = (insightId: string, shadowToolType: string, shadowSessionId: string) => {
     setIntegratedInsights(prev => prev.map(insight => {
         if (insight.id === insightId) {
@@ -1431,9 +1512,23 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
             onLinkExisting={handleLinkToExistingThread}
             onCreateNew={handleCreateNewThread}
             onSkip={handleSkipThreadLinking}
+            onGetAiSuggestion={handleGetAiSuggestion}
           />
         </Suspense>
       )}
+
+      {/* AI Suggestion Modal */}
+      <Suspense fallback={<ModalLoadingFallback />}>
+        <SuggestionModal
+          isOpen={suggestionModalOpen}
+          isLoading={suggestionLoading}
+          analysis={suggestionAnalysis}
+          error={suggestionError}
+          onClose={() => setSuggestionModalOpen(false)}
+          onSelectWizard={handleSelectWizard}
+        />
+      </Suspense>
+
       <FlabbergasterPortal
         isOpen={isFlabbergasterPortalOpen}
         onClose={() => setIsFlabbergasterPortalOpen(false)}
