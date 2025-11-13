@@ -10,22 +10,52 @@ import {
   Lightbulb,
   CheckCircle,
   Clock,
-  Sparkles
+  Sparkles,
+  List,
+  GitBranch
 } from 'lucide-react';
-import { IntegratedInsight, ActiveTab } from '../types.ts';
+import {
+  IntegratedInsight,
+  ActiveTab,
+  Thread,
+  MemoryReconsolidationSession,
+  IFSSession,
+  ThreeTwoOneSession,
+  EightZonesSession
+} from '../types.ts';
 
 interface JournalTabProps {
   integratedInsights: IntegratedInsight[];
   setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
   setActiveTab: (tab: ActiveTab) => void;
   setHighlightPracticeId: (practiceId: string | null) => void;
+  // Session histories
+  memoryReconHistory?: MemoryReconsolidationSession[];
+  ifsHistory?: IFSSession[];
+  threeTwoOneHistory?: ThreeTwoOneSession[];
+  eightZonesHistory?: EightZonesSession[];
+  // Threads
+  threads?: Thread[];
 }
 
-export default function JournalTab({ integratedInsights, setActiveWizard, setActiveTab, setHighlightPracticeId }: JournalTabProps) {
+export default function JournalTab({
+  integratedInsights,
+  setActiveWizard,
+  setActiveTab,
+  setHighlightPracticeId,
+  memoryReconHistory = [],
+  ifsHistory = [],
+  threeTwoOneHistory = [],
+  eightZonesHistory = [],
+  threads = []
+}: JournalTabProps) {
+  const [viewMode, setViewMode] = useState<'insights' | 'sessions'>('insights');
+  const [sessionView, setSessionView] = useState<'date' | 'journey'>('date');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'addressed'>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [expandedInsights, setExpandedInsights] = useState<Set<string>>(new Set());
+  const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
 
   const handleStartPractice = (insightId: string, practiceId: string) => {
     let wizardName: string | null = null;
@@ -160,6 +190,67 @@ export default function JournalTab({ integratedInsights, setActiveWizard, setAct
     return groups;
   }, [filteredInsights]);
 
+  // Combine all sessions into a single array with metadata
+  const allSessions = useMemo(() => {
+    const sessions: Array<{
+      id: string;
+      date: string;
+      type: 'memory-recon' | 'ifs' | '3-2-1' | 'eight-zones';
+      title: string;
+      threadId?: string;
+      data: any;
+    }> = [];
+
+    memoryReconHistory.forEach(s => {
+      sessions.push({
+        id: s.id,
+        date: s.date,
+        type: 'memory-recon',
+        title: s.implicitBeliefs[0]?.belief || 'Memory Reconsolidation',
+        threadId: s.threadId,
+        data: s
+      });
+    });
+
+    ifsHistory.forEach(s => {
+      sessions.push({
+        id: s.id,
+        date: s.date,
+        type: 'ifs',
+        title: `IFS: ${s.partName}`,
+        threadId: s.threadId,
+        data: s
+      });
+    });
+
+    threeTwoOneHistory.forEach(s => {
+      sessions.push({
+        id: s.id,
+        date: s.date,
+        type: '3-2-1',
+        title: `3-2-1: ${s.trigger}`,
+        threadId: s.threadId,
+        data: s
+      });
+    });
+
+    eightZonesHistory.forEach(s => {
+      sessions.push({
+        id: s.id,
+        date: s.date,
+        type: 'eight-zones',
+        title: `Eight Zones: ${s.focalQuestion}`,
+        threadId: s.threadId,
+        data: s
+      });
+    });
+
+    // Sort by date (newest first)
+    sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return sessions;
+  }, [memoryReconHistory, ifsHistory, threeTwoOneHistory, eightZonesHistory]);
+
   const toggleExpanded = (insightId: string) => {
     const newExpanded = new Set(expandedInsights);
     if (newExpanded.has(insightId)) {
@@ -168,6 +259,28 @@ export default function JournalTab({ integratedInsights, setActiveWizard, setAct
       newExpanded.add(insightId);
     }
     setExpandedInsights(newExpanded);
+  };
+
+  const toggleThread = (threadId: string) => {
+    const newExpanded = new Set(expandedThreads);
+    if (newExpanded.has(threadId)) {
+      newExpanded.delete(threadId);
+    } else {
+      newExpanded.add(threadId);
+    }
+    setExpandedThreads(newExpanded);
+  };
+
+  const formatRelativeDate = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'today';
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
   };
 
   const getToolCategory = (toolType: string): { name: string; color: string } => {
@@ -187,13 +300,79 @@ export default function JournalTab({ integratedInsights, setActiveWizard, setAct
     <div className="p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <BookOpen size={32} className="text-accent" />
-          <h1 className="text-4xl font-bold font-mono text-slate-100">Insight Journal</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <BookOpen size={32} className="text-accent" />
+              <h1 className="text-4xl font-bold font-mono text-slate-100">Journal</h1>
+            </div>
+            <p className="text-slate-400">
+              {viewMode === 'insights'
+                ? 'AI-generated insights from your practice sessions'
+                : 'Complete history of your therapeutic sessions'}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('insights')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                viewMode === 'insights'
+                  ? 'bg-cyan-500 text-slate-900'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Lightbulb size={18} />
+                Insights
+              </div>
+            </button>
+            <button
+              onClick={() => setViewMode('sessions')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                viewMode === 'sessions'
+                  ? 'bg-cyan-500 text-slate-900'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Calendar size={18} />
+                Sessions
+              </div>
+            </button>
+          </div>
         </div>
-        <p className="text-slate-400">
-          A comprehensive record of all patterns detected and insights generated from your practice sessions
-        </p>
+
+        {/* Session View Toggle (only show when in sessions mode) */}
+        {viewMode === 'sessions' && (
+          <div className="flex gap-2 bg-slate-800/50 p-1 rounded-lg w-fit">
+            <button
+              onClick={() => setSessionView('date')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                sessionView === 'date'
+                  ? 'bg-slate-700 text-slate-100'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <List size={16} />
+                By Date
+              </div>
+            </button>
+            <button
+              onClick={() => setSessionView('journey')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                sessionView === 'journey'
+                  ? 'bg-slate-700 text-slate-100'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <GitBranch size={16} />
+                By Journey
+              </div>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
