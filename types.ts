@@ -65,6 +65,7 @@ export type ActiveTab =
   | 'body-tools'
   | 'spirit-tools'
   | 'library'
+  | 'journal'
   | 'quiz'
   | 'journey';
 
