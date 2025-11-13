@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Thread, ThreadTheme } from '../types';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 
 interface ThreadLinkingModalProps {
   sessionSummary: string; // Brief description of the session
@@ -8,6 +8,7 @@ interface ThreadLinkingModalProps {
   onLinkExisting: (threadId: string) => void;
   onCreateNew: (title: string, theme: ThreadTheme) => void;
   onSkip: () => void;
+  onGetAiSuggestion: () => void;
 }
 
 export function ThreadLinkingModal({
@@ -15,7 +16,8 @@ export function ThreadLinkingModal({
   suggestedThreads,
   onLinkExisting,
   onCreateNew,
-  onSkip
+  onSkip,
+  onGetAiSuggestion
 }: ThreadLinkingModalProps) {
   const [mode, setMode] = useState<'suggest' | 'create'>('suggest');
   const [newJourneyTitle, setNewJourneyTitle] = useState('');
@@ -107,6 +109,13 @@ export function ThreadLinkingModal({
                   className="btn-luminous px-6 py-3 rounded-lg font-semibold"
                 >
                   Start a New Journey
+                </button>
+                <button
+                  onClick={onGetAiSuggestion}
+                  className="px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-purple-600/80 to-blue-600/80 hover:from-purple-600 hover:to-blue-600 text-white transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-purple-500/20"
+                >
+                  <Sparkles size={18} />
+                  Get AI-Powered Next Steps
                 </button>
                 <button
                   onClick={onSkip}
