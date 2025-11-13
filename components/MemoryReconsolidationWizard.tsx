@@ -30,7 +30,7 @@ interface MemoryReconsolidationWizardProps {
 }
 
 const STEPS: MemoryReconsolidationStep[] = [
-  'ONBOARDING', 'BELIEF_IDENTIFICATION', 'CONTRADICTION_MINING', 'JUXTAPOSITION', 'GROUNDING', 'INTEGRATION', 'COMPLETE'
+  'ONBOARDING', 'BELIEF_IDENTIFICATION', 'FIND_YOUR_EVIDENCE', 'JUXTAPOSITION', 'GROUNDING', 'INTEGRATION', 'COMPLETE'
 ];
 
 const createBaseSession = (): MemoryReconsolidationSession => ({
@@ -100,7 +100,10 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
   // Belief identification state
   const [beliefContext, setBeliefContext] = useState('');
   const [selectedBeliefId, setSelectedBeliefId] = useState<string | null>(null);
-  
+
+  // Evidence collection state
+  const [evidence, setEvidence] = useState<string[]>(['', '', '']); // 3 evidence examples
+
   // Juxtaposition state
   const [currentCycleIndex, setCurrentCycleIndex] = useState(0);
   const [currentCycleStep, setCurrentCycleStep] = useState<'old-truth' | 'pause' | 'new-truth' | 'complete'>('old-truth');
@@ -191,8 +194,9 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
         return true;
       case 'BELIEF_IDENTIFICATION':
         return beliefContext.trim().length > 50 && session.implicitBeliefs.length > 0;
-      case 'CONTRADICTION_MINING':
-        return session.contradictionInsights.length > 0;
+      case 'FIND_YOUR_EVIDENCE':
+        // At least one evidence item must be filled in
+        return evidence.some(e => e.trim().length > 0);
       case 'JUXTAPOSITION':
         return currentCycleIndex >= Math.min(3, session.juxtapositionCycles.length);
       case 'GROUNDING':
@@ -277,35 +281,46 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
       if (session.currentStep === 'BELIEF_IDENTIFICATION') {
         // Beliefs should already be extracted via handleExtractBeliefs
         // Just move to next step
-        nextStep = 'CONTRADICTION_MINING';
-      } else if (session.currentStep === 'CONTRADICTION_MINING') {
-        const payload: MineContradictionsPayload = {
-          beliefs: session.implicitBeliefs.map(b => ({ id: b.id, belief: b.belief })),
-          beliefIds: session.implicitBeliefs.map(b => b.id)
-        };
-        
-        const response = await mineContradictions(payload);
+        nextStep = 'FIND_YOUR_EVIDENCE';
+      } else if (session.currentStep === 'FIND_YOUR_EVIDENCE') {
+        // Generate cycles from user-provided evidence
+        const selectedBelief = session.implicitBeliefs.find(b => b.id === selectedBeliefId);
+        if (!selectedBelief) {
+          setError('No belief selected. Please go back.');
+          return;
+        }
 
-        // Generate exactly 3 juxtaposition cycles per contradiction (not dependent on anchors count)
-        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, insightIdx) => {
-          // Create 3 cycles per contradiction insight, regardless of anchors
-          return Array.from({ length: 3 }, (_, cycleIdx) => ({
-            id: `cycle-${insightIdx}-${cycleIdx}`,
-            beliefId: insight.beliefId,
-            cycleNumber: insightIdx * 3 + cycleIdx + 1,
-            steps: response.juxtapositionCyclePrompts.map((prompt, stepNum) => ({
-              stepNumber: stepNum + 1,
-              prompt,
-              timestamp: new Date().toISOString()
-            })),
+        // Create exactly 3 cycles, one for each evidence example
+        const cycles: JuxtapositionCycle[] = evidence
+          .filter(e => e.trim().length > 0) // Only include non-empty evidence
+          .slice(0, 3) // Maximum 3 cycles
+          .map((evidenceText, cycleIdx) => ({
+            id: `cycle-user-${cycleIdx}`,
+            beliefId: selectedBelief.id,
+            cycleNumber: cycleIdx + 1,
+            steps: [
+              {
+                stepNumber: 1,
+                prompt: `Hold your belief and this evidence together in awareness`,
+                timestamp: new Date().toISOString(),
+                userResponse: evidenceText, // Store the actual evidence text
+              }
+            ],
             intensity: {
               baselineIntensity: session.baselineIntensity,
             },
             notes: '',
+            userEvidence: evidenceText, // Also store on cycle for easy access
           }));
-        });
 
-        updateSession({ contradictionInsights: response.contradictions, juxtapositionCycles: cycles });
+        // If less than 3 evidence items, that's okay - they can proceed with fewer cycles
+        if (cycles.length === 0) {
+          setError('Please provide at least one piece of evidence before proceeding.');
+          return;
+        }
+
+        updateSession({ juxtapositionCycles: cycles });
+        setCurrentCycleIndex(0); // Reset to first cycle
         nextStep = 'JUXTAPOSITION';
       } else if (session.currentStep === 'INTEGRATION') {
         // Build integration selections
@@ -619,83 +634,68 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
           </div>
         );
 
-      case 'CONTRADICTION_MINING':
+      case 'FIND_YOUR_EVIDENCE':
+        const selectedBelief = session.implicitBeliefs.find(b => b.id === selectedBeliefId);
         return (
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold font-mono text-slate-100">Contradiction Mining</h3>
-            
+            <div>
+              <h3 className="text-2xl font-bold font-mono text-slate-100">Find Your Evidence</h3>
+              <p className="text-slate-400 text-sm mt-1">Recall specific moments from your life that contradict this belief</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-cyan-500/30 rounded-lg p-6">
+              <div className="text-sm text-slate-400 mb-2">Your Belief:</div>
+              <div className="text-lg font-medium text-slate-100">{selectedBelief?.belief || 'No belief selected'}</div>
+            </div>
+
             <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
               <p className="text-cyan-100 font-medium mb-2">What You're Doing:</p>
               <p className="text-slate-300 text-sm leading-relaxed">
-                Memory reconsolidation requires a specific condition: your brain must experience contradictory evidence 
-                that disconfirms the old belief <em>while the belief is active</em>. We'll mine your life experience 
-                for moments that contradict what you just identified—these become the anchors for new neural patterns.
+                Memory reconsolidation works by holding your old belief and your real lived experience together in awareness.
+                Think of concrete moments from your life that contradict this belief. These don't need to be dramatic—small,
+                specific examples often work best because your nervous system recognizes them as true.
               </p>
             </div>
-            
+
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
               <p className="text-amber-100 text-sm">
-                💡 These contradictions don't have to be dramatic—small, real moments are often more powerful than grand narratives.
+                💡 Be specific: Instead of "I've changed before", try "I quit smoking after 20 years" or "I set a boundary with my mother".
               </p>
             </div>
-            {isLoading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-slate-400">Mining contradictions...</p>
-              </div>
-            ) : session.contradictionInsights.length > 0 ? (
-              <div className="space-y-4">
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
-                  <p className="text-emerald-100 text-sm">
-                    These are the real-life experiences that contradict your old belief. We'll automatically carry forward 
-                    the rich contradictions for juxtaposition. If you refine your belief narrative, we'll loop you back here 
-                    so everything stays coherent.
-                  </p>
+
+            <div className="space-y-4">
+              {evidence.map((item, idx) => (
+                <div key={idx}>
+                  <label className="block">
+                    <span className="text-slate-300 text-sm font-medium mb-2 block">
+                      Evidence Example {idx + 1}
+                      {item.trim().length === 0 ? (
+                        <span className="text-slate-500 text-xs ml-2">(optional)</span>
+                      ) : (
+                        <span className="text-emerald-400 text-xs ml-2">✓</span>
+                      )}
+                    </span>
+                    <textarea
+                      value={item}
+                      onChange={e => {
+                        const newEvidence = [...evidence];
+                        newEvidence[idx] = e.target.value;
+                        setEvidence(newEvidence);
+                      }}
+                      placeholder={`A specific moment or experience that proves "${selectedBelief?.belief}" is not always true...`}
+                      rows={3}
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    />
+                  </label>
                 </div>
-                {session.contradictionInsights.map((insight, idx) => {
-                  const belief = session.implicitBeliefs.find(b => b.id === insight.beliefId);
-                  return (
-                    <div key={insight.beliefId} className="bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-cyan-500/30 rounded-lg p-6 space-y-4">
-                      <div className="font-semibold text-slate-100">Belief: {belief?.belief}</div>
-                      <div>
-                        <div className="text-sm font-medium text-cyan-300 mb-2">Contradictory Evidence:</div>
-                        <ul className="space-y-2">
-                          {(insight.anchors || []).map((anchor, aIdx) => (
-                            <li key={aIdx} className="text-slate-300 flex items-start gap-2">
-                              <span className="text-cyan-400">•</span>
-                              <span>{anchor}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-emerald-300 mb-2">New Truths:</div>
-                        <ul className="space-y-2">
-                          {(insight.newTruths || []).map((truth, tIdx) => (
-                            <li key={tIdx} className="text-slate-300 flex items-start gap-2">
-                              <span className="text-emerald-400">•</span>
-                              <span>{truth}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div className="bg-slate-800/40 border border-slate-700/60 rounded-lg p-4 text-sm text-slate-300">
-                  <span className="text-cyan-300 font-medium">What's next: </span>
-                  We'll move into juxtaposition to let your nervous system hold both realities at once.
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={handleNext}
-                disabled={session.implicitBeliefs.length === 0}
-                className="btn-luminous px-6 py-3 rounded-lg font-semibold"
-              >
-                Surface Contradictions
-              </button>
-            )}
+              ))}
+            </div>
+
+            <div className="bg-slate-800/40 border border-slate-700/60 rounded-lg p-4 text-sm text-slate-300">
+              <span className="text-cyan-300 font-medium">What's next: </span>
+              We'll hold your belief and each piece of evidence in awareness during the juxtaposition cycles. You'll rate
+              how the intensity shifts as your nervous system processes the contradiction.
+            </div>
           </div>
         );
 
@@ -761,13 +761,13 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
                 </div>
 
                 <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-1000 ${
-                  (prefersReducedMotion || currentCycleStep === 'new-truth' || currentCycleStep === 'complete') 
-                    ? 'border-emerald-500/50 opacity-100' 
+                  (prefersReducedMotion || currentCycleStep === 'new-truth' || currentCycleStep === 'complete')
+                    ? 'border-emerald-500/50 opacity-100'
                     : 'border-emerald-500/20 opacity-40'
                 }`}>
-                  <div className="text-sm font-semibold text-emerald-300 mb-2">NEW TRUTH</div>
+                  <div className="text-sm font-semibold text-emerald-300 mb-2">YOUR EVIDENCE</div>
                   <div className="text-lg text-slate-100">
-                    {insight?.newTruths?.[0] || 'Generating...'}
+                    {(currentCycle as any)?.userEvidence || 'Evidence not found'}
                   </div>
                 </div>
 

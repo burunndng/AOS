@@ -1037,7 +1037,7 @@ export interface WorkoutProgram {
 }
 
 // Memory Reconsolidation Types
-export type MemoryReconsolidationStep = 'ONBOARDING' | 'BELIEF_IDENTIFICATION' | 'CONTRADICTION_MINING' | 'JUXTAPOSITION' | 'GROUNDING' | 'INTEGRATION' | 'COMPLETE';
+export type MemoryReconsolidationStep = 'ONBOARDING' | 'BELIEF_IDENTIFICATION' | 'FIND_YOUR_EVIDENCE' | 'JUXTAPOSITION' | 'GROUNDING' | 'INTEGRATION' | 'COMPLETE';
 
 export type BeliefCategory = 'identity' | 'capability' | 'worthiness' | 'safety' | 'belonging' | 'possibility' | 'other';
 
@@ -1097,6 +1097,7 @@ export interface JuxtapositionCycle {
   intensity: IntensityReading; // Intensity before/after cycle
   completedAt?: string;
   notes?: string;
+  userEvidence?: string; // User-provided evidence that contradicts their belief
 }
 
 /** Grounding/regulation resource selected for nervous system support. */
