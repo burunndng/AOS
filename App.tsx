@@ -1114,7 +1114,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'journal': return <JournalTab integratedInsights={integratedInsights} setActiveWizard={setActiveWizardAndLink} setActiveTab={setActiveTab} setHighlightPracticeId={setHighlightPracticeId} memoryReconHistory={memoryReconHistory} ifsHistory={historyIFS} threeTwoOneHistory={history321} eightZonesHistory={eightZonesHistory} threads={threads} />;
       case 'quiz': return <ILPGraphQuiz />;
       case 'journey': return <JourneyTab journeyProgress={journeyProgress} updateJourneyProgress={setJourneyProgress} />;
-      default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} />;
+      default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} threads={threads} />;
     }
   };
 
