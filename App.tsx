@@ -623,6 +623,14 @@ export default function App() {
     } catch (err) {
       console.error('[3-2-1 Reflection] Failed to generate insight:', err);
     }
+
+    // Show thread linking modal
+    setThreadLinkingData({
+      sessionId: session.id,
+      wizardType: '3-2-1',
+      sessionSummary: `Shadow work: ${session.trigger}`,
+      sessionDate: session.date
+    });
   };
   
   const handleSaveIFSSession = async (session: IFSSession) => {
@@ -663,6 +671,14 @@ export default function App() {
     } catch (err) {
       console.error('[IFS Session] Failed to generate insight:', err);
     }
+
+    // Show thread linking modal
+    setThreadLinkingData({
+      sessionId: session.id,
+      wizardType: 'ifs',
+      sessionSummary: `IFS work with ${session.partName}`,
+      sessionDate: session.date
+    });
   };
   
   const handleSaveSomaticPractice = (session: SomaticPracticeSession) => {
@@ -838,6 +854,14 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
         console.error('Failed to generate insight for Eight Zones session:', error);
       }
     }
+
+    // Show thread linking modal
+    setThreadLinkingData({
+      sessionId: session.id,
+      wizardType: 'eight-zones',
+      sessionSummary: session.focalQuestion,
+      sessionDate: session.date
+    });
   };
 
   const handleLaunchYangPractice = (payload: any) => {

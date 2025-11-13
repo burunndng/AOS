@@ -159,18 +159,39 @@ export function useThreads() {
       if (!session) return;
 
       // Extract intensity based on wizard type
-      if (sessionRef.wizardType === 'memory-recon') {
-        const memSession = session as MemoryReconsolidationSession;
-        if (memSession.baselineIntensity) {
-          intensities.push(memSession.baselineIntensity);
+      switch (sessionRef.wizardType) {
+        case 'memory-recon': {
+          const memSession = session as MemoryReconsolidationSession;
+          // Add baseline intensity
+          if (memSession.baselineIntensity) {
+            intensities.push(memSession.baselineIntensity);
+          }
+          // Add post-intensity if available
+          if (memSession.completionSummary?.intensityShift !== undefined) {
+            const afterIntensity =
+              memSession.baselineIntensity + memSession.completionSummary.intensityShift;
+            intensities.push(afterIntensity);
+          }
+          break;
         }
-        if (memSession.completionSummary?.intensityShift !== undefined) {
-          const afterIntensity =
-            memSession.baselineIntensity + memSession.completionSummary.intensityShift;
-          intensities.push(afterIntensity);
+        case 'ifs': {
+          // IFS doesn't have numeric intensity, but we could infer from phase progression
+          // For now, skip or add placeholder logic
+          break;
         }
+        case '3-2-1': {
+          // 3-2-1 doesn't have numeric intensity tracking currently
+          // Could be added in future
+          break;
+        }
+        case 'eight-zones': {
+          // Eight Zones doesn't have intensity, but tracks other metrics
+          // Could potentially extract from synthesis quality or blind spot count
+          break;
+        }
+        default:
+          break;
       }
-      // Can add intensity extraction for other wizard types as needed
     });
 
     return {
