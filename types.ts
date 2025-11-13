@@ -1131,6 +1131,7 @@ export interface SessionCompletionSummary {
   nextStepRecommendations?: string[];
   notes?: string;
   completedAt?: string;
+  cycleDetails?: string; // JSON stringified array of per-cycle intensity shifts and notes
 }
 
 /** Main Memory Reconsolidation session data. */

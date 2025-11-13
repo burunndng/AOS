@@ -156,6 +156,34 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
     setSession(prev => ({ ...prev, ...updates }));
   };
 
+  const saveCycleData = (cycleIndex: number) => {
+    // Save current cycle's intensity and notes to session
+    const updatedCycles = session.juxtapositionCycles.map((cycle, idx) => {
+      if (idx === cycleIndex) {
+        const postIntensity = cycleIntensities[cycleIndex]?.postIntensity || session.baselineIntensity;
+        const baselineIntensity = cycle.intensity.baselineIntensity || session.baselineIntensity;
+        const shiftPercentage = ((postIntensity - baselineIntensity) / baselineIntensity) * 100;
+
+        return {
+          ...cycle,
+          intensity: {
+            baselineIntensity,
+            postIntensity,
+            shiftPercentage
+          },
+          notes: cycleNotes[cycleIndex] || ''
+        };
+      }
+      return cycle;
+    });
+
+    const updatedSession = { ...session, juxtapositionCycles: updatedCycles };
+    setSession(updatedSession);
+
+    // Auto-save to draft
+    setDraft(updatedSession);
+  };
+
   const canProceedToNext = () => {
     if (isLoading) return false;
     switch (session.currentStep) {
@@ -166,11 +194,11 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
       case 'CONTRADICTION_MINING':
         return session.contradictionInsights.length > 0;
       case 'JUXTAPOSITION':
-        return currentCycleIndex >= Math.min(5, session.juxtapositionCycles.length);
+        return currentCycleIndex >= Math.min(3, session.juxtapositionCycles.length);
       case 'GROUNDING':
         return postIntensity !== null && emotionalNotes.trim().length > 0;
       case 'INTEGRATION':
-        return integrationChoice !== null && 
+        return integrationChoice !== null &&
                ((integrationChoice === 'curated' && selectedPractices.length > 0) ||
                 (integrationChoice === 'self-guided' && customPlan.trim().length > 20)) &&
                schedulingCommitment.trim().length > 0 &&
@@ -258,14 +286,14 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
         
         const response = await mineContradictions(payload);
         
-        // Generate juxtaposition cycles from contradictions
+        // Generate juxtaposition cycles from contradictions (3 cycles per contradiction)
         const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, idx) => {
           // Ensure anchors exists and is an array before slicing
           const anchors = Array.isArray(insight.anchors) ? insight.anchors : [];
-          return anchors.slice(0, 5).map((anchor, anchorIdx) => ({
+          return anchors.slice(0, 3).map((anchor, anchorIdx) => ({
             id: `cycle-${idx}-${anchorIdx}`,
             beliefId: insight.beliefId,
-            cycleNumber: idx * 5 + anchorIdx + 1,
+            cycleNumber: idx * 3 + anchorIdx + 1,
             steps: response.juxtapositionCyclePrompts.map((prompt, stepNum) => ({
               stepNumber: stepNum + 1,
               prompt,
@@ -274,6 +302,7 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
             intensity: {
               baselineIntensity: session.baselineIntensity,
             },
+            notes: '',
           }));
         });
         
@@ -298,12 +327,22 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
               rationale: customPlan,
             }];
 
+        // Build per-cycle summary
+        const cycleDetails = session.juxtapositionCycles.map((cycle, idx) => ({
+          cycleNumber: idx + 1,
+          baselineIntensity: cycle.intensity.baselineIntensity || session.baselineIntensity,
+          postIntensity: cycle.intensity.postIntensity,
+          shiftPercentage: cycle.intensity.shiftPercentage,
+          notes: cycle.notes
+        })).filter(c => c.postIntensity !== undefined);
+
         const completionSummary: SessionCompletionSummary = {
           intensityShift: (postIntensity || session.baselineIntensity) - session.baselineIntensity,
           integrationChoice: mapUiChoiceToIntegrationType(integrationChoice!),
           selectedPractices: selections,
           userInsights: `${emotionalNotes}\n\nSomatic: ${somaticNotes}\n\nCognitive: ${cognitiveShifts}`,
           notes: schedulingCommitment,
+          cycleDetails: JSON.stringify(cycleDetails),
         };
 
         updateSession({ 
@@ -343,9 +382,28 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
 
   const handleDownload = () => {
     const selectedBelief = session.implicitBeliefs[0];
-    const shiftPercentage = session.completionSummary?.intensityShift 
+    const shiftPercentage = session.completionSummary?.intensityShift
       ? Math.round((session.completionSummary.intensityShift / session.baselineIntensity) * 100)
       : 0;
+
+    // Parse cycle details if available
+    let cycleDetailsSection = '';
+    if (session.completionSummary?.cycleDetails) {
+      try {
+        const cycleDetails = JSON.parse(session.completionSummary.cycleDetails);
+        cycleDetailsSection = `## Per-Cycle Intensity Tracking
+${cycleDetails.map((c: any) => `
+### Cycle ${c.cycleNumber}
+- Baseline: ${c.baselineIntensity}/10
+- Post-Cycle: ${c.postIntensity}/10
+- Shift: ${c.shiftPercentage?.toFixed(1) || 'N/A'}%
+- Observations: ${c.notes || 'N/A'}
+`).join('\n')}
+`;
+      } catch (e) {
+        console.error('Failed to parse cycle details:', e);
+      }
+    }
 
     const reportContent = `# Memory Reconsolidation Session Report
 Date: ${new Date(session.date).toLocaleDateString()}
@@ -360,10 +418,12 @@ Body Location: ${selectedBelief?.bodyLocation || 'N/A'}
 ## Contradictions Explored
 ${session.contradictionInsights.map((c, i) => `${i + 1}. ${(c.anchors || []).join(', ')}`).join('\n')}
 
-## Intensity Shift
+## Overall Intensity Shift
 Baseline: ${session.baselineIntensity}/10
 Post-Session: ${postIntensity}/10
 Change: ${shiftPercentage}%
+
+${cycleDetailsSection}
 
 ## Integration Plan
 ${(session.completionSummary?.selectedPractices || []).map(p => `- ${p.practiceName}: ${p.rationale}`).join('\n') || 'N/A'}
@@ -642,7 +702,7 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
 
       case 'JUXTAPOSITION':
         const currentCycle = session.juxtapositionCycles[currentCycleIndex];
-        const totalCycles = Math.min(5, session.juxtapositionCycles.length);
+        const totalCycles = Math.min(3, session.juxtapositionCycles.length);
         const belief = session.implicitBeliefs.find(b => b.id === currentCycle?.beliefId);
         const insight = session.contradictionInsights.find(c => c.beliefId === currentCycle?.beliefId);
 
@@ -746,6 +806,7 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
                     {currentCycleIndex < totalCycles - 1 ? (
                       <button
                         onClick={() => {
+                          saveCycleData(currentCycleIndex);
                           setCurrentCycleIndex(prev => prev + 1);
                           setCurrentCycleStep('old-truth');
                           if (!prefersReducedMotion) startJuxtapositionCycle(currentCycleIndex + 1);
@@ -756,7 +817,10 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
                       </button>
                     ) : (
                       <button
-                        onClick={() => updateSession({ currentStep: 'GROUNDING' })}
+                        onClick={() => {
+                          saveCycleData(currentCycleIndex);
+                          updateSession({ currentStep: 'GROUNDING' });
+                        }}
                         className="btn-luminous px-6 py-2 rounded-lg font-semibold w-full"
                       >
                         Complete Juxtaposition
@@ -1055,6 +1119,34 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
                   <div className="text-2xl font-bold text-cyan-300">{currentCycleIndex + 1}</div>
                 </div>
               </div>
+
+              {session.completionSummary?.cycleDetails && (() => {
+                try {
+                  const cycleDetails = JSON.parse(session.completionSummary.cycleDetails);
+                  return cycleDetails.length > 0 ? (
+                    <div>
+                      <div className="text-sm text-slate-400 mb-3">Per-Cycle Breakdown</div>
+                      <div className="space-y-2">
+                        {cycleDetails.map((cycle: any, idx: number) => (
+                          <div key={idx} className="bg-slate-900/50 rounded-lg p-3 text-sm">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-cyan-300 font-medium">Cycle {cycle.cycleNumber}</span>
+                              <span className="text-emerald-300 font-medium">
+                                {cycle.postIntensity}/10 ({cycle.shiftPercentage?.toFixed(1) || 0}%)
+                              </span>
+                            </div>
+                            {cycle.notes && (
+                              <div className="text-slate-300 text-xs italic">"{cycle.notes}"</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                } catch (e) {
+                  return null;
+                }
+              })()}
 
               <div>
                 <div className="text-sm text-slate-400 mb-2">Integration Practices</div>
