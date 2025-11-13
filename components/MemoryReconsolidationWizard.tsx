@@ -159,7 +159,8 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
       case 'CONTRADICTION_MINING':
         return session.contradictionInsights.length > 0;
       case 'JUXTAPOSITION':
-        return currentCycleIndex >= Math.min(5, session.juxtapositionCycles.length);
+        return session.juxtapositionCycles.length > 0 &&
+               currentCycleIndex >= Math.min(3, session.juxtapositionCycles.length);
       case 'GROUNDING':
         return postIntensity !== null && emotionalNotes.trim().length > 0;
       case 'INTEGRATION':
@@ -252,11 +253,11 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
         const response = await mineContradictions(payload);
         
         // Generate juxtaposition cycles from contradictions
-        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, idx) => 
-          insight.anchors.slice(0, 5).map((anchor, anchorIdx) => ({
+        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, idx) =>
+          insight.anchors.slice(0, 3).map((anchor, anchorIdx) => ({
             id: `cycle-${idx}-${anchorIdx}`,
             beliefId: insight.beliefId,
-            cycleNumber: idx * 5 + anchorIdx + 1,
+            cycleNumber: idx * 3 + anchorIdx + 1,
             steps: response.juxtapositionCyclePrompts.map((prompt, stepNum) => ({
               stepNumber: stepNum + 1,
               prompt,
@@ -527,9 +528,7 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
                   <div key={belief.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-2">
                     <div className="font-medium text-slate-100">{belief.belief}</div>
                     <div className="grid grid-cols-2 gap-2 text-sm text-slate-400">
-                      <div>Category: <span className="text-cyan-300">{belief.category}</span></div>
                       <div>Intensity: <span className="text-amber-300">{belief.emotionalCharge}/10</span></div>
-                      <div>Affect: <span className="text-slate-300">{belief.affectTone}</span></div>
                       {belief.bodyLocation && <div>Body: <span className="text-slate-300">{belief.bodyLocation}</span></div>}
                     </div>
                   </div>
@@ -633,7 +632,7 @@ Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceN
 
       case 'JUXTAPOSITION':
         const currentCycle = session.juxtapositionCycles[currentCycleIndex];
-        const totalCycles = Math.min(5, session.juxtapositionCycles.length);
+        const totalCycles = Math.min(3, session.juxtapositionCycles.length);
         const belief = session.implicitBeliefs.find(b => b.id === currentCycle?.beliefId);
         const insight = session.contradictionInsights.find(c => c.beliefId === currentCycle?.beliefId);
 

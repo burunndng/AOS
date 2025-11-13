@@ -781,12 +781,6 @@ export default function App() {
     }
   };
 
-  const handleSaveMemoryReconsolidationSession = (session: MemoryReconsolidationSession) => {
-    setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setDraftMemoryRecon(null);
-    setActiveWizard(null);
-  };
-
   const handleSaveEightZonesSession = async (session: EightZonesSession) => {
     setEightZonesHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftEightZones(null);
@@ -1178,7 +1172,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
         return (
           <MemoryReconsolidationWizard
             onClose={() => setActiveWizard(null)}
-            onSave={handleSaveMemoryReconsolidationSession}
+            onSave={handleSaveMemoryReconSession}
             session={draftMemoryRecon}
             setDraft={setDraftMemoryRecon}
             userId={userId}
