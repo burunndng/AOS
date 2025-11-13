@@ -186,17 +186,23 @@ export default function EightZonesWizard({
           currentStep: nextStep,
         });
       } else if (session.currentStep === 'SYNTHESIS') {
-        // Generate synthesis from all zones
-        const synthesis = await generateSynthesis(userId, session.focalQuestion, session.zoneAnalyses);
-        setSynthesisData(synthesis);
-        updateSession({
-          blindSpots: synthesis.blindSpots,
-          novelInsights: synthesis.novelInsights,
-          recommendations: synthesis.recommendations,
-          synthesisReport: synthesis.synthesisReport,
-          zoneConnections: synthesis.connections,
-          currentStep: 'COMPLETE',
-        });
+        // Generate synthesis from all zones (but don't auto-advance to COMPLETE)
+        if (!synthesisData) {
+          const synthesis = await generateSynthesis(userId, session.focalQuestion, session.zoneAnalyses);
+          setSynthesisData(synthesis);
+          updateSession({
+            blindSpots: synthesis.blindSpots,
+            novelInsights: synthesis.novelInsights,
+            recommendations: synthesis.recommendations,
+            synthesisReport: synthesis.synthesisReport,
+            zoneConnections: synthesis.connections,
+          });
+        } else {
+          // User has read the synthesis, now move to COMPLETE
+          updateSession({
+            currentStep: 'COMPLETE',
+          });
+        }
       }
     } catch (err) {
       console.error('[8Zones] Error:', err);
@@ -363,9 +369,11 @@ export default function EightZonesWizard({
         return (
           <div className="space-y-6">
             <h3 className="text-2xl font-bold font-mono text-slate-100">Integral Synthesis</h3>
-            <p className="text-slate-300">
-              Generating a comprehensive, integrated analysis that shows how all 8 zones interconnect...
-            </p>
+            {!synthesisData && !isLoading && (
+              <p className="text-slate-300">
+                Generate a comprehensive, integrated analysis that shows how all 8 zones interconnect...
+              </p>
+            )}
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -373,6 +381,12 @@ export default function EightZonesWizard({
               </div>
             ) : synthesisData ? (
               <div className="space-y-6">
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
+                  <p className="text-emerald-200 text-sm">
+                    ✓ Your integral synthesis has been generated. Review the insights below before continuing.
+                  </p>
+                </div>
+
                 <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 space-y-2">
                   <p className="font-semibold text-red-300 mb-2">Blind Spots (Missing Perspectives):</p>
                   <ul className="space-y-1">

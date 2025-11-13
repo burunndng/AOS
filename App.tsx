@@ -779,10 +779,42 @@ export default function App() {
     setActiveWizard(null);
   };
 
-  const handleSaveEightZonesSession = (session: EightZonesSession) => {
+  const handleSaveEightZonesSession = async (session: EightZonesSession) => {
     setEightZonesHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftEightZones(null);
     setActiveWizard(null);
+
+    // Generate integrated insight for Journal
+    if (session.synthesisReport) {
+      const sessionReport = `# Eight Zones Analysis: ${session.focalQuestion}
+
+${session.synthesisReport}
+
+## Blind Spots
+${session.blindSpots?.map(spot => `- ${spot}`).join('\n') || 'None identified'}
+
+## Novel Insights
+${session.novelInsights?.map(insight => `- ${insight}`).join('\n') || 'None identified'}
+
+## Recommendations
+${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified'}`;
+
+      try {
+        const insight = await generateInsightFromSession({
+          wizardType: 'Eight Zones',
+          sessionId: session.id,
+          sessionName: session.focalQuestion,
+          sessionReport: sessionReport,
+          sessionSummary: session.synthesisReport.substring(0, 200) + '...',
+          userId: userId,
+          availablePractices: Object.values(corePractices).flat(),
+        });
+
+        setIntegratedInsights(prev => [...prev, insight]);
+      } catch (error) {
+        console.error('Failed to generate insight for Eight Zones session:', error);
+      }
+    }
   };
 
   const handleLaunchYangPractice = (payload: any) => {
