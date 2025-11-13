@@ -13,11 +13,33 @@ interface BrowseTabProps {
   // FIX: Add onExplainClick and onPersonalizeClick to the component's props to resolve the TypeScript error in App.tsx.
   onExplainClick: (practice: Practice) => void;
   onPersonalizeClick: (practice: Practice) => void;
+  highlightPracticeId?: string;
 }
 
-export default function BrowseTab({ practiceStack, addToStack, onExplainClick, onPersonalizeClick }: BrowseTabProps) {
+export default function BrowseTab({ practiceStack, addToStack, onExplainClick, onPersonalizeClick, highlightPracticeId }: BrowseTabProps) {
   const [selectedPractice, setSelectedPractice] = useState<Practice | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Auto-open practice if highlightPracticeId is provided
+  React.useEffect(() => {
+    if (highlightPracticeId) {
+      // Find the practice across all modules
+      for (const modulePractices of Object.values(practices)) {
+        const practice = modulePractices.find(p => p.id === highlightPracticeId);
+        if (practice) {
+          setSelectedPractice(practice);
+          // Scroll to it
+          setTimeout(() => {
+            const element = document.getElementById(`practice-${highlightPracticeId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 100);
+          break;
+        }
+      }
+    }
+  }, [highlightPracticeId]);
 
   const stackIds = new Set(practiceStack.map(p => p.id));
 
@@ -63,8 +85,13 @@ export default function BrowseTab({ practiceStack, addToStack, onExplainClick, o
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {modulePractices.map(practice => {
                 const isInStack = stackIds.has(practice.id);
+                const isHighlighted = practice.id === highlightPracticeId;
                 return (
-                  <div key={practice.id} className={`card-luminous-hover bg-slate-800/50 border border-slate-800 border-l-4 ${modules[moduleKey].borderColor} rounded-r-lg p-4 flex flex-col justify-between cursor-pointer`} onClick={() => setSelectedPractice(practice)}>
+                  <div
+                    key={practice.id}
+                    id={`practice-${practice.id}`}
+                    className={`card-luminous-hover bg-slate-800/50 border border-slate-800 border-l-4 ${modules[moduleKey].borderColor} rounded-r-lg p-4 flex flex-col justify-between cursor-pointer ${isHighlighted ? 'ring-2 ring-accent shadow-glow-lg' : ''}`}
+                    onClick={() => setSelectedPractice(practice)}>
                     <div>
                       <h3 className="font-bold font-mono text-slate-200">{practice.name}</h3>
                       <p className="text-sm text-slate-400 mt-1">{practice.description}</p>

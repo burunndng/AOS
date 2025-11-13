@@ -12,14 +12,16 @@ import {
   Clock,
   Sparkles
 } from 'lucide-react';
-import { IntegratedInsight } from '../types.ts';
+import { IntegratedInsight, ActiveTab } from '../types.ts';
 
 interface JournalTabProps {
   integratedInsights: IntegratedInsight[];
   setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
+  setActiveTab: (tab: ActiveTab) => void;
+  setHighlightPracticeId: (practiceId: string | null) => void;
 }
 
-export default function JournalTab({ integratedInsights, setActiveWizard }: JournalTabProps) {
+export default function JournalTab({ integratedInsights, setActiveWizard, setActiveTab, setHighlightPracticeId }: JournalTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'addressed'>('all');
   const [filterType, setFilterType] = useState<string>('all');
@@ -28,7 +30,7 @@ export default function JournalTab({ integratedInsights, setActiveWizard }: Jour
   const handleStartPractice = (insightId: string, practiceId: string) => {
     let wizardName: string | null = null;
 
-    // Map practiceId to wizard name
+    // Map practiceId to wizard name (if available)
     switch (practiceId) {
         // Shadow Tools
         case 'three-two-one':
@@ -92,11 +94,14 @@ export default function JournalTab({ integratedInsights, setActiveWizard }: Jour
             wizardName = 'eight-zones';
             break;
         default:
-            alert(`Practice "${practiceId}" is not yet linked to a wizard. Please check the tool tabs.`);
+            // Practice doesn't have a wizard - open Browse tab with this practice highlighted
+            setHighlightPracticeId(practiceId);
+            setActiveTab('browse');
             return;
     }
 
-    setActiveWizard(wizardName, insightId); // Pass linkedInsightId
+    // If we found a wizard, launch it with insight context
+    setActiveWizard(wizardName, insightId);
   };
 
   // Get unique wizard types for filter
