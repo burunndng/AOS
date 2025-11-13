@@ -12,12 +12,20 @@
     "api/coach/generate-response.ts": {
       "memory": 1024,
       "maxDuration": 30
+    },
+    "api/suggest-next-step.ts": {
+      "memory": 1024,
+      "maxDuration": 30
     }
   },
   "rewrites": [
     {
       "source": "/api/coach/generate-response",
       "destination": "/api/coach/generate-response"
+    },
+    {
+      "source": "/api/suggest-next-step",
+      "destination": "/api/suggest-next-step"
     },
     {
       "source": "/api/(.*)",
