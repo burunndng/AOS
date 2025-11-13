@@ -22,6 +22,7 @@ const ShadowToolsTab = lazy(() => import('./components/ShadowToolsTab.tsx'));
 const BodyToolsTab = lazy(() => import('./components/BodyToolsTab.tsx'));
 const SpiritToolsTab = lazy(() => import('./components/SpiritToolsTab.tsx'));
 const LibraryTab = lazy(() => import('./components/LibraryTab.tsx'));
+const JournalTab = lazy(() => import('./components/JournalTab.tsx'));
 const JourneyTab = lazy(() => import('./components/JourneyTab.tsx'));
 const ILPGraphQuiz = lazy(() => import('./components/ILPGraphQuiz.tsx').then(module => ({ default: module.ILPGraphQuiz })));
 
@@ -976,6 +977,7 @@ export default function App() {
       />;
       case 'spirit-tools': return <SpiritToolsTab setActiveWizard={setActiveWizardAndLink} historyBigMind={historyBigMind} />;
       case 'library': return <LibraryTab />;
+      case 'journal': return <JournalTab integratedInsights={integratedInsights} />;
       case 'quiz': return <ILPGraphQuiz />;
       case 'journey': return <JourneyTab journeyProgress={journeyProgress} updateJourneyProgress={setJourneyProgress} />;
       default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} integratedInsights={integratedInsights} markInsightAsAddressed={markInsightAsAddressed} setActiveWizard={setActiveWizardAndLink} />;
