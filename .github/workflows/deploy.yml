@@ -35,6 +35,7 @@ jobs:
         run: npm run build
         env:
           VITE_BASE_PATH: /AOS/
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Copy .nojekyll to dist
         run: cp .nojekyll dist/.nojekyll
