@@ -272,8 +272,8 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
               timestamp: new Date().toISOString()
             })),
             intensity: {
-              baselineIntensity: session.baselineIntensity,
-            },
+              baselineIntensity: session.baselineIntensity
+            }
           }));
         });
         
