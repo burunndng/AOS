@@ -11,6 +11,7 @@
  */
 
 import type { IntegratedInsight, AllPractice } from '../types.ts';
+import { enrichInsightWithAIGuidance } from './geminiRecommendationService.ts';
 
 /**
  * Find insights relevant to a specific practice
@@ -318,4 +319,48 @@ export function getHighImpactPractices(
 
   // Sort by pattern count (highest first)
   return highImpact.sort((a, b) => b.patternCount - a.patternCount);
+}
+
+/**
+ * Enrich an insight with AI-powered practice guidance
+ * Provides sequencing, timing, and integration tips using Gemini
+ *
+ * This is Option B: Enhanced recommendations with AI guidance
+ */
+export async function enrichInsightWithGuidance(
+  insight: IntegratedInsight,
+  wizardType: string,
+  sessionData: Record<string, any>
+): Promise<{
+  insight: IntegratedInsight;
+  guidance: string;
+  practiceSequence: string[];
+  confidence: number;
+}> {
+  try {
+    const { guidance, practiceSequence, confidence } = await enrichInsightWithAIGuidance(
+      insight.detectedPattern,
+      wizardType,
+      sessionData
+    );
+
+    return {
+      insight,
+      guidance,
+      practiceSequence,
+      confidence
+    };
+  } catch (error) {
+    console.error('[InsightContext] Error enriching insight with guidance:', error);
+    // Fallback: return insight without enhanced guidance
+    return {
+      insight,
+      guidance: `Based on your detected pattern "${insight.detectedPattern}", we recommend exploring the shadow work and next step practices linked to this insight.`,
+      practiceSequence: [
+        ...insight.suggestedShadowWork.map(s => s.practiceName),
+        ...insight.suggestedNextSteps.map(n => n.practiceName)
+      ],
+      confidence: 0.80
+    };
+  }
 }
