@@ -7,7 +7,7 @@ import type {
   PracticeDocument,
   FrameworkDocument,
   UserSessionDocument,
-} from './types.ts';
+} from './types';
 
 // Mock MongoDB implementation for development
 // In production, replace with actual MongoDB/Mongoose connection
