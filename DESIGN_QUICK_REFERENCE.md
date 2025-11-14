@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # AURA OS DESIGN SYSTEM - QUICK REFERENCE GUIDE
 
 ## COLOR PALETTE AT A GLANCE
@@ -179,31 +183,35 @@ For different states/categories:
 
 ## GLASS EFFECT FORMULA
 
+{% raw %}
 ```tsx
 style={{
   backdropFilter: 'blur(8px-12px)',
   background: 'rgba(23, 23, 23, 0.4-0.6)',
   border: '1px solid rgba(64, 64, 64, 0.2-0.5)',
-  boxShadow: '0 4px 24px rgba(0, 0, 0, 0.6), 
+  boxShadow: '0 4px 24px rgba(0, 0, 0, 0.6),
               inset 0 1px 2px rgba(255, 255, 255, 0.05-0.1)'
 }}
 ```
+{% endraw %}
 
 ## GLOW/HOVER EFFECT PATTERN
 
+{% raw %}
 ```tsx
 <div className="group relative overflow-hidden">
   {/* Main content */}
-  
+
   {/* Glow overlay on hover */}
-  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 
+  <div className="absolute inset-0 opacity-0 group-hover:opacity-100
                   transition-opacity duration-500"
        style={{
-         background: 'radial-gradient(circle at top right, 
+         background: 'radial-gradient(circle at top right,
                       rgba(217, 119, 6, 0.08) 0%, transparent 60%)'
        }} />
 </div>
 ```
+{% endraw %}
 
 ## QUICK GRADIENT REFERENCES
 

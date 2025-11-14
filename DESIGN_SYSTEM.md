@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # Aura OS Design System - Comprehensive Analysis
 
 ## Overview
@@ -305,6 +309,7 @@ className="bg-neutral-900/50 backdrop-blur-sm
 ```
 
 ### Accent Card (Colored borders)
+{% raw %}
 ```tsx
 // Example: Amber accent
 className="bg-gradient-to-br from-slate-800/70 to-slate-900/50 
@@ -324,13 +329,16 @@ style={{
                       rgba(217, 119, 6, 0.08) 0%, transparent 60%)'}}
 </div>
 ```
+{% endraw %}
 
 ### Nested/Inner Cards
+{% raw %}
 ```tsx
 className="bg-slate-900/60 border border-slate-700/60 
            rounded-md p-3 shadow-sm"
 style={{backdropFilter: 'blur(6px)'}}
 ```
+{% endraw %}
 
 ### Card Padding & Spacing
 - Large cards: `p-6` to `p-8` (24-32px)
@@ -407,12 +415,14 @@ transition-all duration-700
 ```
 
 ### Animation Delays (Staggered entrance)
+{% raw %}
 ```tsx
 animate-fade-in
 animate-fade-in-up  style={{ animationDelay: '200ms' }}
 animate-fade-in-up  style={{ animationDelay: '400ms' }}
 animate-fade-in-up  style={{ animationDelay: '600ms' }}
 ```
+{% endraw %}
 
 ---
 
@@ -499,6 +509,7 @@ className="text-xs px-2 py-1 rounded-full border font-semibold"
 ```
 
 ### Progress Bars
+{% raw %}
 ```tsx
 // Background
 className="h-2 bg-slate-700/60 rounded-full overflow-hidden"
@@ -510,6 +521,7 @@ className="h-full bg-gradient-to-r from-accent/80 to-accent rounded-full"
 style={{ width: `${progressPercent}%` }}
 transition-all duration-500 ease-out
 ```
+{% endraw %}
 
 ### Scrollbar Styling
 ```css
@@ -575,12 +587,14 @@ Heavy use of opacity for depth:
 ## 14. VISUAL POLISH DETAILS
 
 ### Backdrop Filters
+{% raw %}
 ```tsx
 backdrop-blur-sm                       // blur(4px)
 backdrop-blur-8                        // blur(8px)
 backdrop-blur-12                       // blur(12px)
 style={{backdropFilter: 'blur(4px)'}}
 ```
+{% endraw %}
 
 ### Glow Effects
 ```tsx
@@ -596,12 +610,14 @@ radial-gradient(circle at top right,
 ```
 
 ### Color Tint Overlays
+{% raw %}
 ```tsx
 // On hover, elements get a colored tint
 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 
                 transition-opacity duration-500" 
      style={{background: 'radial-gradient(...)'}} />
 ```
+{% endraw %}
 
 ---
 

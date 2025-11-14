@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting...</title>
+    <script>
+        // Redirect to the main index.html with the original path preserved as a query parameter
+        // This allows the SPA router to handle the route correctly
+        var path = window.location.pathname;
+        var search = window.location.search;
+        // Remove /AOS from the path for comparison
+        if (path.startsWith('/AOS/')) {
+            path = path.slice(4); // Remove /AOS
+        }
+        // Redirect to index.html with the path as a hash
+        window.location.replace('/AOS/index.html#' + path.slice(1) + search);
+    </script>
+</head>
+<body>
+    <p>If you are not redirected, please go to <a href="/AOS/">the main page</a></p>
+</body>
+</html>

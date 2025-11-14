@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # Insight Practice Map - Style Guide & Implementation Examples
 
 This guide shows exactly how to style the Insight Practice Map to match the Aura OS design system.
@@ -6,6 +10,7 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
 
 ## HEADER SECTION
 
+{% raw %}
 ```tsx
 <div className="relative flex flex-col items-center justify-center h-full text-center overflow-hidden">
   {/* Background Icon (like Merkaba in dashboard) */}
@@ -26,11 +31,13 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
   </div>
 </div>
 ```
+{% endraw %}
 
 ---
 
 ## MAIN CONTENT SECTION
 
+{% raw %}
 ```tsx
 <section className="mt-16 w-full max-w-4xl mx-auto text-left animate-fade-in-up" 
          style={{ animationDelay: '600ms' }}>
@@ -144,6 +151,7 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
   </div>
 </section>
 ```
+{% endraw %}
 
 ---
 
@@ -162,6 +170,7 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
 
 ## PROGRESS/TIMELINE INDICATOR
 
+{% raw %}
 ```tsx
 {/* Progress Bar */}
 <div className="sticky top-0 bg-gradient-to-b from-slate-950 via-slate-950 to-transparent pt-2 pb-6 mb-6">
@@ -181,11 +190,13 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
   </p>
 </div>
 ```
+{% endraw %}
 
 ---
 
 ## COMPLETED/ADDRESSED STATE CARDS
 
+{% raw %}
 ```tsx
 {/* For completed items, use green borders */}
 <div className="card-glass relative bg-gradient-to-br from-slate-800/70 to-slate-900/50 
@@ -217,6 +228,7 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
   </div>
 </div>
 ```
+{% endraw %}
 
 ---
 
@@ -248,6 +260,7 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
 
 ## CHAT/CONVERSATION SECTION
 
+{% raw %}
 ```tsx
 {/* Chat Container */}
 <div className="flex flex-col gap-4 max-h-96 overflow-y-auto pr-2">
@@ -288,6 +301,7 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
   </button>
 </div>
 ```
+{% endraw %}
 
 ---
 
@@ -348,6 +362,7 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
 
 ## ANIMATION ENTRANCE PATTERN
 
+{% raw %}
 ```tsx
 // Section with staggered entrance
 <section className="w-full max-w-4xl mx-auto text-left animate-fade-in-up" 
@@ -372,6 +387,7 @@ This guide shows exactly how to style the Insight Practice Map to match the Aura
   </div>
 </section>
 ```
+{% endraw %}
 
 ---
 
