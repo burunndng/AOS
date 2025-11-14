@@ -11,12 +11,25 @@ import { AttachmentStyle, getRecommendedPracticesBySystem } from '../data/attach
 
 // Initialize the Google AI client
 // FIX: Initialize GoogleGenAI with apiKey from environment variables as per guidelines.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+// Make initialization lazy to handle missing API keys gracefully
+let ai: GoogleGenAI | null = null;
+
+function getAIClient(): GoogleGenAI {
+  if (!ai) {
+    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === 'undefined') {
+      throw new Error('Gemini API key not configured. Please set GEMINI_API_KEY environment variable.');
+    }
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+}
 
 // Helper function to generate text
 export async function generateText(prompt: string): Promise<string> {
   // FIX: Use the correct API call `ai.models.generateContent` for text generation.
-  const response = await ai.models.generateContent({
+  const client = getAIClient();
+  const response = await client.models.generateContent({
     model: 'gemini-2.5-flash-lite',
     contents: prompt,
   });
