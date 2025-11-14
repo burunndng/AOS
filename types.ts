@@ -48,6 +48,31 @@ export interface StarterStack {
   why: string;
 }
 
+/**
+ * Enhanced AI Recommendation (Option B)
+ * Structured recommendation with sequencing, guidance, and confidence
+ */
+export interface EnhancedRecommendation {
+  id: string;
+  practice: AllPractice;
+  rationale: string;
+  sequenceWeek: number;
+  sequenceGuidance: string;
+  expectedBenefits: string;
+  integrationTips: string;
+  timeCommitment: string;
+  confidence: number; // 0.0 - 1.0
+}
+
+export interface EnhancedRecommendationSet {
+  recommendations: EnhancedRecommendation[];
+  overallGuidance: string;
+  practiceSequence: string[];
+  estimatedTimeToNoticeBenefit: string;
+  confidence: number;
+  generatedAt: Date;
+}
+
 export interface StarterStacksData {
   [key: string]: StarterStack;
 }

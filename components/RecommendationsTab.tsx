@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 // FIX: Add file extension to import path.
-import { StarterStack, IntegratedInsight, AllPractice } from '../types.ts';
-import { Sparkles, CheckCircle, Lightbulb, ArrowRight } from 'lucide-react';
+import { StarterStack, IntegratedInsight, AllPractice, EnhancedRecommendationSet } from '../types.ts';
+import { Sparkles, CheckCircle, Lightbulb, ArrowRight, Zap, Clock, Target } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 import { getPendingInsights, getHighImpactPractices } from '../services/insightContext.ts';
 
@@ -11,9 +11,11 @@ interface RecommendationsTabProps {
   applyStarterStack: (practiceIds: string[]) => void;
   userId: string;
   recommendations: string[];
+  enhancedRecommendations?: EnhancedRecommendationSet; // NEW: Option B Gemini recommendations
   isLoading: boolean;
   error: string | null;
   onGenerate: () => void;
+  onGenerateEnhanced?: () => void; // NEW: Trigger enhanced recommendations generation
   integratedInsights: IntegratedInsight[];
   allPractices: AllPractice[];
   addToStack: (practice: AllPractice) => void;
@@ -24,9 +26,11 @@ export default function RecommendationsTab({
   applyStarterStack,
   userId,
   recommendations,
+  enhancedRecommendations,
   isLoading,
   error,
   onGenerate,
+  onGenerateEnhanced,
   integratedInsights,
   allPractices,
   addToStack
@@ -148,6 +152,133 @@ export default function RecommendationsTab({
                   </span>
                 </div>
                 <p className="text-sm text-slate-400 line-clamp-2">{practice.description}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <SectionDivider />
+
+      {/* Enhanced AI Recommendations Generator Section - NEW */}
+      {(!enhancedRecommendations || enhancedRecommendations.recommendations.length === 0) && (
+        <section className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 border border-amber-700/50 rounded-lg p-6">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-100 mb-2 flex items-center gap-3">
+            <Zap className="text-amber-400"/> AI-Powered Practice Sequencing
+          </h2>
+          <p className="text-slate-400 mb-4">Get intelligently sequenced practice recommendations with integration guidance and expected timelines.</p>
+          <button
+            onClick={onGenerateEnhanced}
+            disabled={isLoading}
+            className="btn-luminous font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Generating Sequenced Recommendations...
+              </>
+            ) : (
+              <>
+                <Zap size={16} /> Generate Sequenced Plan
+              </>
+            )}
+          </button>
+
+          {error && <p className="text-red-400 text-sm mt-4">{error}</p>}
+        </section>
+      )}
+
+      <SectionDivider />
+
+      {/* Enhanced AI Recommendations Display Section (Option B) - NEW */}
+      {enhancedRecommendations && enhancedRecommendations.recommendations.length > 0 && (
+        <section className="bg-gradient-to-br from-amber-900/20 to-orange-900/20 border border-amber-700/50 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-100 flex items-center gap-3">
+              <Zap className="text-amber-400"/> AI-Powered Practice Sequencing
+            </h2>
+            <span className="text-xs font-mono bg-amber-500/20 text-amber-300 px-3 py-1 rounded">
+              {Math.round(enhancedRecommendations.confidence * 100)}% Confidence
+            </span>
+          </div>
+          <p className="text-slate-400 mb-6">Personalized practice recommendations based on Gemini AI analysis:</p>
+
+          {/* Overall Guidance */}
+          <div className="bg-slate-800/60 border border-slate-700/80 rounded-lg p-4 mb-6 border-l-4 border-l-amber-500">
+            <p className="text-slate-200 text-sm leading-relaxed">{enhancedRecommendations.overallGuidance}</p>
+            <div className="mt-3 flex gap-4 text-xs text-slate-400">
+              <div className="flex items-center gap-1">
+                <Clock size={14} className="text-amber-400"/>
+                <span>First benefits: {enhancedRecommendations.estimatedTimeToNoticeBenefit}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Practice Recommendations */}
+          <div className="space-y-3">
+            {enhancedRecommendations.recommendations.map((rec) => (
+              <button
+                key={rec.id}
+                onClick={() => addToStack(rec.practice)}
+                className="w-full text-left bg-slate-800/60 hover:bg-slate-800 border border-slate-700/80 hover:border-amber-500/50 rounded-lg p-4 transition group"
+              >
+                {/* Header with sequence and confidence */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-baseline gap-2">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold">
+                      {rec.sequenceWeek}
+                    </span>
+                    <h4 className="text-lg font-semibold text-slate-100 group-hover:text-amber-300">{rec.practice.name}</h4>
+                  </div>
+                  <span className="text-xs font-mono bg-slate-700/80 text-slate-300 px-2 py-1 rounded">
+                    {rec.practice.difficulty}
+                  </span>
+                </div>
+
+                {/* Rationale */}
+                <p className="text-sm text-slate-300 mb-3 pl-8">{rec.rationale}</p>
+
+                {/* Grid of details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 pl-8">
+                  {/* Time */}
+                  <div className="flex items-start gap-2 text-xs">
+                    <Clock size={14} className="text-amber-400 mt-0.5 flex-shrink-0"/>
+                    <div>
+                      <p className="text-slate-400">Time Commitment</p>
+                      <p className="text-slate-200 font-mono">{rec.timeCommitment}</p>
+                    </div>
+                  </div>
+
+                  {/* Sequence */}
+                  <div className="flex items-start gap-2 text-xs">
+                    <Target size={14} className="text-amber-400 mt-0.5 flex-shrink-0"/>
+                    <div>
+                      <p className="text-slate-400">When to Start</p>
+                      <p className="text-slate-200 font-mono">{rec.sequenceGuidance}</p>
+                    </div>
+                  </div>
+
+                  {/* Benefits */}
+                  <div className="flex items-start gap-2 text-xs">
+                    <Sparkles size={14} className="text-amber-400 mt-0.5 flex-shrink-0"/>
+                    <div>
+                      <p className="text-slate-400">Expected Benefits</p>
+                      <p className="text-slate-200">{rec.expectedBenefits}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Integration Tips */}
+                <div className="bg-slate-700/30 rounded p-3 pl-8 mb-3">
+                  <p className="text-xs text-slate-400 font-semibold mb-1">Integration Tips:</p>
+                  <p className="text-xs text-slate-300">{rec.integrationTips}</p>
+                </div>
+
+                {/* Add Button */}
+                <div className="flex items-center justify-between pl-8">
+                  <span className="text-xs text-slate-500">Click to add to your stack</span>
+                  <ArrowRight size={16} className="text-slate-400 group-hover:text-amber-400 transition"/>
+                </div>
               </button>
             ))}
           </div>
