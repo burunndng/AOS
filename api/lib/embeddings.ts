@@ -3,7 +3,7 @@
  * Handles generation of 1024-dimensional embeddings (BGE_LARGE_EN_V1_5)
  */
 
-import type { EmbeddingResult } from './types.js';
+import type { EmbeddingResult } from './types';
 
 // Using a mock implementation for embeddings
 // In production, use: @google/generative-ai's embedContent method
