@@ -89,7 +89,8 @@ import {
   MemoryReconsolidationSession,
   MemoryReconsolidationDraft,
   EightZonesSession,
-  EightZonesDraft
+  EightZonesDraft,
+  EnhancedRecommendationSet
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -101,6 +102,7 @@ import { generateInsightFromSession } from './services/insightGenerator.ts';
 import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
+import { generateEnhancedRecommendationsForApp } from './services/enhancedRecommendationHelper.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -205,6 +207,7 @@ export default function App() {
   
   // AI-generated data
   const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [enhancedRecommendations, setEnhancedRecommendations] = useState<EnhancedRecommendationSet | null>(null);
   const [aqalReport, setAqalReport] = useLocalStorage<AqalReportData | null>('aqalReport', null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -337,6 +340,26 @@ export default function App() {
       setRecommendations(recs);
     } catch (e) {
       setAiError(e instanceof Error ? e.message : "Failed to get recommendations.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleGenerateEnhancedRecommendations = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const enhanced = await generateEnhancedRecommendationsForApp(
+        practiceStack,
+        integratedInsights,
+        Object.values(corePractices).flat(),
+        practiceNotes,
+        completedToday
+      );
+      setEnhancedRecommendations(enhanced);
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "Failed to generate enhanced recommendations.");
+      console.error('[Enhanced Recommendations] Error:', e);
     } finally {
       setAiLoading(false);
     }
@@ -995,7 +1018,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'browse': return <BrowseTab practiceStack={practiceStack} addToStack={addToStack} onExplainClick={handleExplainPractice} onPersonalizeClick={setCustomizationModalPractice} highlightPracticeId={highlightPracticeId} />;
       case 'tracker': return <TrackerTab practiceStack={practiceStack} completedPractices={completedToday} togglePracticeCompletion={togglePracticeCompletion} dailyNotes={dailyNotes} updateDailyNote={updateDailyNote} findModuleKey={findModuleKey} />;
       case 'streaks': return <StreaksTab practiceStack={practiceStack} completionHistory={completionHistory} findModuleKey={findModuleKey} />;
-      case 'recommendations': return <RecommendationsTab userId={userId} starterStacks={starterStacks} applyStarterStack={applyStarterStack} recommendations={recommendations} isLoading={aiLoading} error={aiError} onGenerate={generateRecommendations} integratedInsights={integratedInsights} allPractices={Object.values(corePractices).flat()} addToStack={addToStack} />;
+      case 'recommendations': return <RecommendationsTab userId={userId} starterStacks={starterStacks} applyStarterStack={applyStarterStack} recommendations={recommendations} isLoading={aiLoading} error={aiError} onGenerate={generateRecommendations} integratedInsights={integratedInsights} allPractices={Object.values(corePractices).flat()} addToStack={addToStack} enhancedRecommendations={enhancedRecommendations} onGenerateEnhanced={handleGenerateEnhancedRecommendations} />;
       case 'aqal': return <AqalTab report={aqalReport} isLoading={aiLoading} error={aiError} onGenerate={generateAqalReport} />;
       case 'mind-tools': return <MindToolsTab
         setActiveWizard={setActiveWizardAndLink}
