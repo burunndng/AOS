@@ -14,6 +14,14 @@ export default defineConfig(({ mode }) => {
     const groqApiKey = process.env.GROQ_API_KEY || env.GROQ_API_KEY;
     const openrouterApiKey = process.env.OPENROUTER_API_KEY || env.OPENROUTER_API_KEY;
 
+    // Debug: Log what we're getting (don't log actual keys, just whether they exist)
+    if (process.env.CI) {
+      console.log('[Vite Config] Build environment detected (CI)');
+      console.log('[Vite Config] GEMINI_API_KEY from process.env:', !!process.env.GEMINI_API_KEY);
+      console.log('[Vite Config] GEMINI_API_KEY from .env:', !!env.GEMINI_API_KEY);
+      console.log('[Vite Config] Final geminiApiKey value:', !!geminiApiKey);
+    }
+
     return {
       base,
       server: {
@@ -22,11 +30,11 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(geminiApiKey),
-        'process.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
-        'process.env.GROK_API_KEY': JSON.stringify(grokApiKey),
-        'process.env.GROQ_API_KEY': JSON.stringify(groqApiKey),
-        'process.env.OPENROUTER_API_KEY': JSON.stringify(openrouterApiKey)
+        'process.env.API_KEY': JSON.stringify(geminiApiKey || ''),
+        'process.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey || ''),
+        'process.env.GROK_API_KEY': JSON.stringify(grokApiKey || ''),
+        'process.env.GROQ_API_KEY': JSON.stringify(groqApiKey || ''),
+        'process.env.OPENROUTER_API_KEY': JSON.stringify(openrouterApiKey || '')
       },
       resolve: {
         alias: {
