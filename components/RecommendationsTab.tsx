@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 // FIX: Add file extension to import path.
-import { StarterStack, IntegratedInsight, AllPractice, EnhancedRecommendationSet } from '../types.ts';
-import { Sparkles, CheckCircle, Lightbulb, ArrowRight, Zap, Clock, Target } from 'lucide-react';
+import { StarterStack, IntegratedInsight, AllPractice, EnhancedRecommendationSet, IntelligentGuidance } from '../types.ts';
+import { Sparkles, CheckCircle, Lightbulb, ArrowRight, Zap, Clock, Target, Brain, AlertTriangle, TrendingUp, RefreshCw } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 import { getPendingInsights, getHighImpactPractices } from '../services/insightContext.ts';
 
@@ -16,6 +16,11 @@ interface RecommendationsTabProps {
   error: string | null;
   onGenerate: () => void;
   onGenerateEnhanced?: () => void; // NEW: Trigger enhanced recommendations generation
+  intelligentGuidance?: IntelligentGuidance; // NEW: Intelligent Guidance from Grok
+  isGuidanceLoading?: boolean;
+  guidanceError?: string | null;
+  onGenerateGuidance?: () => void;
+  onClearGuidanceCache?: () => void;
   integratedInsights: IntegratedInsight[];
   allPractices: AllPractice[];
   addToStack: (practice: AllPractice) => void;
@@ -31,6 +36,11 @@ export default function RecommendationsTab({
   error,
   onGenerate,
   onGenerateEnhanced,
+  intelligentGuidance,
+  isGuidanceLoading,
+  guidanceError,
+  onGenerateGuidance,
+  onClearGuidanceCache,
   integratedInsights,
   allPractices,
   addToStack
@@ -42,8 +52,183 @@ export default function RecommendationsTab({
     <div className="space-y-8">
       <header>
         <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter">Recommendations</h1>
-        <p className="text-slate-400 mt-2">Get suggestions for your practice stack, from starter kits to personalized AI insights grounded in your history.</p>
+        <p className="text-slate-400 mt-2">Get AI-powered guidance that synthesizes all your wizard sessions, practices, and insights into coherent next steps.</p>
       </header>
+
+      {/* Intelligent Guidance Section - Primary Feature */}
+      <section className="bg-gradient-to-br from-purple-900/30 to-blue-900/30 border border-purple-500/50 rounded-lg p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-100 mb-2 flex items-center gap-3">
+              <Brain className="text-purple-400"/> AI Intelligence Hub
+            </h2>
+            <p className="text-slate-300 text-sm">Comprehensive guidance synthesizing all your developmental work</p>
+          </div>
+          {intelligentGuidance && onClearGuidanceCache && (
+            <button
+              onClick={onClearGuidanceCache}
+              className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
+              title="Clear cache and regenerate fresh guidance"
+            >
+              <RefreshCw size={14} /> Refresh
+            </button>
+          )}
+        </div>
+
+        {!intelligentGuidance && onGenerateGuidance && (
+          <div>
+            <p className="text-slate-400 mb-4">
+              Get intelligent routing to your next wizard, practice recommendations tailored to your current edge,
+              and coherent synthesis of your entire developmental journey.
+            </p>
+            <button
+              onClick={onGenerateGuidance}
+              disabled={isGuidanceLoading}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            >
+              {isGuidanceLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Analyzing your developmental journey...
+                </>
+              ) : (
+                <>
+                  <Brain size={20} /> Generate AI Guidance
+                </>
+              )}
+            </button>
+            {guidanceError && <p className="text-red-400 text-sm mt-4">{guidanceError}</p>}
+          </div>
+        )}
+
+        {intelligentGuidance && (
+          <div className="space-y-6">
+            {/* Synthesis */}
+            <div className="bg-slate-800/60 border border-purple-500/30 rounded-lg p-5">
+              <h3 className="text-lg font-semibold text-purple-300 mb-3 flex items-center gap-2">
+                <TrendingUp size={18} /> Where You Are
+              </h3>
+              <p className="text-slate-200 leading-relaxed">{intelligentGuidance.synthesis}</p>
+            </div>
+
+            {/* Primary Focus */}
+            <div className="bg-slate-800/60 border border-blue-500/30 rounded-lg p-5">
+              <h3 className="text-lg font-semibold text-blue-300 mb-3 flex items-center gap-2">
+                <Target size={18} /> Primary Focus
+              </h3>
+              <p className="text-slate-200 leading-relaxed">{intelligentGuidance.primaryFocus}</p>
+            </div>
+
+            {/* Recommendations */}
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-slate-100">Recommended Next Steps</h3>
+
+              {/* Next Wizard */}
+              {intelligentGuidance.recommendations.nextWizard && (
+                <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 border border-purple-500/50 rounded-lg p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h4 className="text-lg font-semibold text-purple-200">{intelligentGuidance.recommendations.nextWizard.name}</h4>
+                      <span className="text-xs font-mono bg-purple-500/20 text-purple-300 px-2 py-1 rounded mt-1 inline-block">
+                        {intelligentGuidance.recommendations.nextWizard.priority} priority
+                      </span>
+                    </div>
+                    <Sparkles className="text-purple-400" size={24} />
+                  </div>
+                  <p className="text-slate-300 mb-2"><strong>Why:</strong> {intelligentGuidance.recommendations.nextWizard.reason}</p>
+                  <p className="text-slate-300"><strong>Focus on:</strong> {intelligentGuidance.recommendations.nextWizard.focus}</p>
+                </div>
+              )}
+
+              {/* Practice Changes */}
+              {intelligentGuidance.recommendations.practiceChanges?.add && intelligentGuidance.recommendations.practiceChanges.add.length > 0 && (
+                <div>
+                  <h4 className="text-md font-semibold text-slate-200 mb-3">Practices to Add</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {intelligentGuidance.recommendations.practiceChanges.add.map((rec, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => rec.practice && addToStack(rec.practice)}
+                        className="text-left p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg border border-slate-600/50 hover:border-purple-500/50 transition group"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h5 className="font-semibold text-slate-100 group-hover:text-purple-300">
+                            {rec.practice?.name || 'Practice'}
+                          </h5>
+                          <span className={`text-xs font-mono px-2 py-1 rounded ${
+                            rec.priority === 'high' ? 'bg-red-500/20 text-red-300' :
+                            rec.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
+                            'bg-blue-500/20 text-blue-300'
+                          }`}>
+                            {rec.priority}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-400">{rec.reason}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Insight Work */}
+              {intelligentGuidance.recommendations.insightWork && (
+                <div className="bg-slate-800/60 border border-amber-500/30 rounded-lg p-5">
+                  <h4 className="text-md font-semibold text-amber-300 mb-2">Pattern to Work With</h4>
+                  <p className="text-slate-200 mb-2"><strong>{intelligentGuidance.recommendations.insightWork.pattern}</strong></p>
+                  <p className="text-slate-300 text-sm">{intelligentGuidance.recommendations.insightWork.approachSuggestion}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Reasoning */}
+            <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-5">
+              <h3 className="text-lg font-semibold text-slate-200 mb-4">How It All Connects</h3>
+              <div className="space-y-3 text-sm">
+                {intelligentGuidance.reasoning.whatINoticed.length > 0 && (
+                  <div>
+                    <p className="text-slate-400 font-medium mb-1">What I Noticed:</p>
+                    <ul className="list-disc list-inside text-slate-300 space-y-1">
+                      {intelligentGuidance.reasoning.whatINoticed.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {intelligentGuidance.reasoning.howItConnects.length > 0 && (
+                  <div>
+                    <p className="text-slate-400 font-medium mb-1">Connections:</p>
+                    <ul className="list-disc list-inside text-slate-300 space-y-1">
+                      {intelligentGuidance.reasoning.howItConnects.map((item, idx) => (
+                        <li key={idx}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Cautions */}
+            {intelligentGuidance.cautions && intelligentGuidance.cautions.length > 0 && (
+              <div className="bg-amber-900/20 border border-amber-700/50 rounded-lg p-4">
+                <h3 className="text-md font-semibold text-amber-300 mb-2 flex items-center gap-2">
+                  <AlertTriangle size={18} /> Cautions
+                </h3>
+                <ul className="list-disc list-inside text-amber-200/90 text-sm space-y-1">
+                  {intelligentGuidance.cautions.map((caution, idx) => (
+                    <li key={idx}>{caution}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <p className="text-xs text-slate-500 text-center">
+              Generated {new Date(intelligentGuidance.generatedAt).toLocaleString()} • Cached for 24 hours
+            </p>
+          </div>
+        )}
+      </section>
+
+      <SectionDivider />
 
       {/* Insight-Based Recommendations Section */}
       {pendingInsights.length > 0 && (
