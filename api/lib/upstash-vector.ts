@@ -4,8 +4,8 @@
  * Supports both real Upstash (production) and mock (development)
  */
 
-import { cosineSimilarity } from './embeddings.ts';
-import type { PineconeVector, QueryResult, PineconeVectorMetadata } from './types.ts';
+import { cosineSimilarity } from './embeddings.js';
+import type { PineconeVector, QueryResult, PineconeVectorMetadata } from './types.js';
 
 interface UpstashIndexClient {
   upsert(vectors: PineconeVector[]): Promise<number>;
