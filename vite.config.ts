@@ -8,6 +8,12 @@ export default defineConfig(({ mode }) => {
     // Default to '/' for local dev and Vercel, use '/AOS/' for GitHub Pages
     const base = process.env.VITE_BASE_PATH || '/';
 
+    // Get API keys from environment variables (passed by GitHub Actions) or .env files
+    const geminiApiKey = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY;
+    const grokApiKey = process.env.GROK_API_KEY || env.GROK_API_KEY;
+    const groqApiKey = process.env.GROQ_API_KEY || env.GROQ_API_KEY;
+    const openrouterApiKey = process.env.OPENROUTER_API_KEY || env.OPENROUTER_API_KEY;
+
     return {
       base,
       server: {
@@ -16,11 +22,11 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GROK_API_KEY': JSON.stringify(env.GROK_API_KEY),
-        'process.env.GROQ_API_KEY': JSON.stringify(env.GROQ_API_KEY),
-        'process.env.OPENROUTER_API_KEY': JSON.stringify(env.OPENROUTER_API_KEY)
+        'process.env.API_KEY': JSON.stringify(geminiApiKey),
+        'process.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
+        'process.env.GROK_API_KEY': JSON.stringify(grokApiKey),
+        'process.env.GROQ_API_KEY': JSON.stringify(groqApiKey),
+        'process.env.OPENROUTER_API_KEY': JSON.stringify(openrouterApiKey)
       },
       resolve: {
         alias: {
