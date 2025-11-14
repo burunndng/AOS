@@ -43,13 +43,18 @@ async function generateGuidance(context: IntelligenceContext): Promise<Intellige
   const userPrompt = buildUserPrompt(context);
 
   try {
+    // Build messages array with system prompt
+    const messages = buildMessagesWithSystem(systemPrompt, [
+      { role: 'user', content: userPrompt }
+    ]);
+
     const response = await generateOpenRouterResponse(
-      userPrompt,
+      messages,
+      undefined, // no streaming
       {
         model: 'x-ai/grok-4-fast',
         maxTokens: 2000,
         temperature: 0.7,
-        systemPrompt,
       }
     );
 
