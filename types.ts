@@ -1286,3 +1286,94 @@ export interface EightZonesDraft extends Partial<EightZonesSession> {
   userId: string;
 }
 
+// ============================================================================
+// Intelligence Hub Types - Unified AI Guidance System
+// ============================================================================
+
+export interface CompletionRecord {
+  practiceId: string;
+  date: string;
+  completed: boolean;
+}
+
+export interface WizardSessionSummary {
+  type: string;
+  date: string;
+  keyInsights: string[];
+  sessionData?: any;
+}
+
+export interface IntelligenceContext {
+  // Current state
+  currentPracticeStack: AllPractice[];
+  practiceNotes: Record<string, string>;
+  completionHistory: CompletionRecord[];
+
+  // Wizard sessions
+  wizardSessions: WizardSessionSummary[];
+
+  // Insights
+  integratedInsights: IntegratedInsight[];
+  pendingPatterns: string[];
+
+  // User profile
+  developmentalStage?: KeganStage;
+  attachmentStyle?: string;
+  primaryChallenges: string[];
+}
+
+export interface PracticeRecommendation {
+  practice: AllPractice;
+  reason: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface PracticeAdjustment {
+  practiceId: string;
+  practiceName: string;
+  suggestion: string;
+}
+
+export interface WizardRecommendation {
+  type: string;
+  name: string;
+  reason: string;
+  focus: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface IntelligentGuidance {
+  synthesis: string; // Coherent narrative of where user is
+  primaryFocus: string; // What matters most right now
+
+  recommendations: {
+    nextWizard?: WizardRecommendation;
+
+    practiceChanges?: {
+      add?: PracticeRecommendation[];
+      remove?: string[];
+      modify?: PracticeAdjustment[];
+    };
+
+    insightWork?: {
+      pattern: string;
+      approachSuggestion: string;
+    };
+  };
+
+  reasoning: {
+    whatINoticed: string[];
+    whyThisMatters: string[];
+    howItConnects: string[];
+  };
+
+  cautions: string[];
+  generatedAt: string;
+}
+
+export interface CachedGuidance {
+  guidance: IntelligentGuidance;
+  cachedAt: number; // timestamp
+  contextHash: string; // hash of context to detect changes
+}
+

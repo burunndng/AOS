@@ -90,7 +90,8 @@ import {
   MemoryReconsolidationDraft,
   EightZonesSession,
   EightZonesDraft,
-  EnhancedRecommendationSet
+  EnhancedRecommendationSet,
+  IntelligentGuidance
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -103,6 +104,8 @@ import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
 import { generateEnhancedRecommendationsForApp } from './services/enhancedRecommendationHelper.ts';
+import { getIntelligentGuidance, clearGuidanceCache } from './services/intelligenceHub.ts';
+import { aggregateUserContext } from './utils/contextAggregator.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -208,6 +211,9 @@ export default function App() {
   // AI-generated data
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [enhancedRecommendations, setEnhancedRecommendations] = useState<EnhancedRecommendationSet | null>(null);
+  const [intelligentGuidance, setIntelligentGuidance] = useState<IntelligentGuidance | null>(null);
+  const [isGuidanceLoading, setIsGuidanceLoading] = useState(false);
+  const [guidanceError, setGuidanceError] = useState<string | null>(null);
   const [aqalReport, setAqalReport] = useLocalStorage<AqalReportData | null>('aqalReport', null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -363,6 +369,32 @@ export default function App() {
     } finally {
       setAiLoading(false);
     }
+  };
+
+  const handleGenerateIntelligentGuidance = async () => {
+    setIsGuidanceLoading(true);
+    setGuidanceError(null);
+    try {
+      const context = aggregateUserContext(
+        practiceStack,
+        practiceNotes,
+        integratedInsights,
+        completedToday
+      );
+      const guidance = await getIntelligentGuidance(context);
+      setIntelligentGuidance(guidance);
+    } catch (e) {
+      setGuidanceError(e instanceof Error ? e.message : "Failed to generate intelligent guidance.");
+      console.error('[Intelligent Guidance] Error:', e);
+    } finally {
+      setIsGuidanceLoading(false);
+    }
+  };
+
+  const handleClearGuidanceCache = () => {
+    clearGuidanceCache();
+    setIntelligentGuidance(null);
+    handleGenerateIntelligentGuidance();
   };
 
   const generateAqalReport = async () => {
@@ -1018,7 +1050,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'browse': return <BrowseTab practiceStack={practiceStack} addToStack={addToStack} onExplainClick={handleExplainPractice} onPersonalizeClick={setCustomizationModalPractice} highlightPracticeId={highlightPracticeId} />;
       case 'tracker': return <TrackerTab practiceStack={practiceStack} completedPractices={completedToday} togglePracticeCompletion={togglePracticeCompletion} dailyNotes={dailyNotes} updateDailyNote={updateDailyNote} findModuleKey={findModuleKey} />;
       case 'streaks': return <StreaksTab practiceStack={practiceStack} completionHistory={completionHistory} findModuleKey={findModuleKey} />;
-      case 'recommendations': return <RecommendationsTab userId={userId} starterStacks={starterStacks} applyStarterStack={applyStarterStack} recommendations={recommendations} isLoading={aiLoading} error={aiError} onGenerate={generateRecommendations} integratedInsights={integratedInsights} allPractices={Object.values(corePractices).flat()} addToStack={addToStack} enhancedRecommendations={enhancedRecommendations} onGenerateEnhanced={handleGenerateEnhancedRecommendations} />;
+      case 'recommendations': return <RecommendationsTab userId={userId} starterStacks={starterStacks} applyStarterStack={applyStarterStack} recommendations={recommendations} isLoading={aiLoading} error={aiError} onGenerate={generateRecommendations} integratedInsights={integratedInsights} allPractices={Object.values(corePractices).flat()} addToStack={addToStack} enhancedRecommendations={enhancedRecommendations} onGenerateEnhanced={handleGenerateEnhancedRecommendations} intelligentGuidance={intelligentGuidance} isGuidanceLoading={isGuidanceLoading} guidanceError={guidanceError} onGenerateGuidance={handleGenerateIntelligentGuidance} onClearGuidanceCache={handleClearGuidanceCache} />;
       case 'aqal': return <AqalTab report={aqalReport} isLoading={aiLoading} error={aiError} onGenerate={generateAqalReport} />;
       case 'mind-tools': return <MindToolsTab
         setActiveWizard={setActiveWizardAndLink}
