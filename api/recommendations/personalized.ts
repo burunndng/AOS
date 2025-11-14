@@ -3,10 +3,10 @@
  * Generates context-aware practice recommendations for users
  */
 
-import { generateRecommendationPrompt } from '../rag/generate-prompt.ts';
-import { initializeDatabase } from '../lib/db.ts';
-import { initializeUpstash } from '../lib/upstash-vector.ts';
-import type { GenerationRequest, RecommendationResponse, PersonalizedRecommendation } from '../lib/types.ts';
+import { generateRecommendationPrompt } from '../rag/generate-prompt';
+import { initializeDatabase } from '../lib/db';
+import { initializeUpstash } from '../lib/upstash-vector';
+import type { GenerationRequest, RecommendationResponse, PersonalizedRecommendation } from '../lib/types';
 
 /**
  * Generate personalized recommendations for a user

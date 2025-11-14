@@ -146,3 +146,66 @@ export function buildMessagesWithSystem(
     ...conversationMessages
   ];
 }
+
+// ============================================================================
+// Cross-Wizard Intelligence Types
+// ============================================================================
+
+/**
+ * Represents a recommendation for the next therapeutic wizard to use
+ */
+export interface WizardRecommendation {
+  /** The recommended wizard to use next */
+  wizard: 'memory-recon' | 'ifs' | '3-2-1' | 'eight-zones';
+
+  /** Confidence score (0-1) for this recommendation */
+  confidence: number;
+
+  /** Brief explanation of why this wizard is recommended */
+  reason: string;
+
+  /** Specific focus area or question to explore in the recommended wizard */
+  specificFocus: string;
+}
+
+/**
+ * Complete analysis result with recommendations and synthesis
+ */
+export interface AnalysisResult {
+  /** List of recommended wizards, ordered by confidence */
+  recommendations: WizardRecommendation[];
+
+  /** Overall synthesis of the session and suggested therapeutic direction */
+  synthesis: string;
+
+  /** Optional caution or important consideration for the user */
+  caution?: string;
+}
+
+/**
+ * Request payload for suggesting next step
+ */
+export interface SuggestNextStepRequest {
+  /** Summary of the completed session */
+  sessionSummary: string;
+
+  /** Type of wizard that was just completed */
+  wizardType: 'memory-recon' | 'ifs' | '3-2-1' | 'eight-zones';
+
+  /** Optional: Previous sessions in the thread for context */
+  threadContext?: string[];
+}
+
+/**
+ * Response from suggest-next-step API
+ */
+export interface SuggestNextStepResponse {
+  /** Analysis result with recommendations */
+  analysis: AnalysisResult;
+
+  /** Whether the request was successful */
+  success: boolean;
+
+  /** Error message if request failed */
+  error?: string;
+}

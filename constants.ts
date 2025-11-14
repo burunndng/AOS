@@ -670,32 +670,79 @@ export const GROUNDING_OPTIONS: GroundingOption[] = [
   {
     id: 'breathwork',
     name: 'Breathwork',
+    modality: 'breath',
     description: 'Use physiological sighs or coherent breathing to calm your nervous system',
-    icon: 'Wind'
+    duration: 180,
+    instructions: [
+      'Find a comfortable seated position',
+      'Inhale deeply through your nose for 4 counts',
+      'Hold for 4 counts',
+      'Exhale slowly through your mouth for 6 counts',
+      'Repeat for 3-5 minutes'
+    ],
+    cueType: 'breath',
+    supportedAffects: ['fear', 'anger', 'confusion', 'mixed']
   },
   {
     id: 'orienting',
     name: 'Orienting',
+    modality: 'environmental',
     description: 'Look around the room slowly, notice 5 things you can see, hear, and touch',
-    icon: 'Eye'
+    duration: 120,
+    instructions: [
+      'Slowly look around your environment',
+      'Notice 5 things you can see',
+      'Notice 5 things you can hear',
+      'Notice 5 things you can physically touch',
+      'Take your time with each sense'
+    ],
+    cueType: 'grounding',
+    supportedAffects: ['fear', 'confusion', 'mixed']
   },
   {
     id: 'movement',
     name: 'Gentle Movement',
+    modality: 'somatic',
     description: 'Stand up, stretch, or take a short walk to ground back in your body',
-    icon: 'Activity'
+    duration: 300,
+    instructions: [
+      'Stand up slowly',
+      'Stretch your arms overhead',
+      'Roll your shoulders back and down',
+      'Shake out your hands and feet',
+      'Take a few steps or walk around your space'
+    ],
+    cueType: 'movement',
+    supportedAffects: ['anger', 'fear', 'sadness', 'mixed']
   },
   {
     id: 'pause',
     name: 'Take a Pause',
+    modality: 'resourcing',
     description: 'Save your progress and return when you feel ready',
-    icon: 'Pause'
+    duration: 0,
+    instructions: [
+      'Your work is saved automatically',
+      'Take all the time you need',
+      'Return when you feel resourced and ready'
+    ],
+    cueType: 'resourcing',
+    supportedAffects: ['shame', 'fear', 'anger', 'sadness', 'grief', 'confusion', 'mixed']
   },
   {
     id: 'support',
     name: 'Contact Support',
+    modality: 'relational',
     description: 'Reach out to a therapist or trusted friend if you need support',
-    icon: 'Phone'
+    duration: 0,
+    instructions: [
+      'Identify a trusted person in your support network',
+      'Reach out via your preferred method',
+      'Share what feels comfortable to share',
+      'Ask for what you need'
+    ],
+    cueType: 'resourcing',
+    supportedAffects: ['shame', 'fear', 'sadness', 'grief', 'confusion', 'mixed']
   }
 ];
 

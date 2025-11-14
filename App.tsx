@@ -32,6 +32,8 @@ const PracticeExplanationModal = lazy(() => import('./components/PracticeExplana
 const PracticeCustomizationModal = lazy(() => import('./components/PracticeCustomizationModal.tsx'));
 const CustomPracticeModal = lazy(() => import('./components/CustomPracticeModal.tsx'));
 const GuidedPracticeGenerator = lazy(() => import('./components/GuidedPracticeGenerator.tsx'));
+const ThreadLinkingModal = lazy(() => import('./components/ThreadLinkingModal.tsx').then(module => ({ default: module.ThreadLinkingModal })));
+const SuggestionModal = lazy(() => import('./components/SuggestionModal.tsx').then(module => ({ default: module.SuggestionModal })));
 
 // Lazy-loaded Wizard Components
 const ThreeTwoOneWizard = lazy(() => import('./components/ThreeTwoOneWizard.tsx'));
@@ -98,9 +100,13 @@ import { practices as corePractices, starterStacks, modules } from './constants.
 import * as geminiService from './services/geminiService.ts';
 import * as ragService from './services/ragService.ts';
 import { generateInsightFromSession } from './services/insightGenerator.ts';
+
+// Hooks
+import { useThreads } from './hooks/useThreads.ts';
 import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
+import { createAiSummary } from './utils/createAiSummary.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -219,9 +225,32 @@ export default function App() {
   const [isGuidedPracticeGeneratorOpen, setIsGuidedPracticeGeneratorOpen] = useState(false);
   const [bodyArchitectHandoff, setBodyArchitectHandoff] = useState<{ type: 'yin' | 'yang'; payload: any } | null>(null);
   const [workoutHandoffSource, setWorkoutHandoffSource] = useState<'integral-body' | 'standalone' | null>(null);
-  
+
+  // Thread Linking Modal state
+  const [threadLinkingData, setThreadLinkingData] = useState<{
+    sessionId: string;
+    wizardType: 'memory-recon' | 'ifs' | '3-2-1' | 'eight-zones' | 'other';
+    sessionSummary: string;
+    sessionDate: string;
+  } | null>(null);
+
+  // AI Suggestion Modal state
+  const [suggestionModalOpen, setSuggestionModalOpen] = useState(false);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [suggestionAnalysis, setSuggestionAnalysis] = useState<any>(null);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
+
   // Integrated Insights
   const [integratedInsights, setIntegratedInsights] = useLocalStorage<IntegratedInsight[]>('integratedInsights', []);
+
+  // Threads/Journeys (Session Continuity)
+  const {
+    threads,
+    createThread,
+    linkSessionToThread,
+    updateThreadMetrics,
+    suggestThreads
+  } = useThreads();
 
   // Journey Progress
   const [journeyProgress, setJourneyProgress] = useLocalStorage<JourneyProgress>('journeyProgress', {
@@ -602,6 +631,14 @@ export default function App() {
     } catch (err) {
       console.error('[3-2-1 Reflection] Failed to generate insight:', err);
     }
+
+    // Show thread linking modal
+    setThreadLinkingData({
+      sessionId: session.id,
+      wizardType: '3-2-1',
+      sessionSummary: `Shadow work: ${session.trigger}`,
+      sessionDate: session.date
+    });
   };
   
   const handleSaveIFSSession = async (session: IFSSession) => {
@@ -642,6 +679,14 @@ export default function App() {
     } catch (err) {
       console.error('[IFS Session] Failed to generate insight:', err);
     }
+
+    // Show thread linking modal
+    setThreadLinkingData({
+      sessionId: session.id,
+      wizardType: 'ifs',
+      sessionSummary: `IFS work with ${session.partName}`,
+      sessionDate: session.date
+    });
   };
   
   const handleSaveSomaticPractice = (session: SomaticPracticeSession) => {
@@ -781,12 +826,6 @@ export default function App() {
     }
   };
 
-  const handleSaveMemoryReconsolidationSession = (session: MemoryReconsolidationSession) => {
-    setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setDraftMemoryRecon(null);
-    setActiveWizard(null);
-  };
-
   const handleSaveEightZonesSession = async (session: EightZonesSession) => {
     setEightZonesHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftEightZones(null);
@@ -823,6 +862,14 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
         console.error('Failed to generate insight for Eight Zones session:', error);
       }
     }
+
+    // Show thread linking modal
+    setThreadLinkingData({
+      sessionId: session.id,
+      wizardType: 'eight-zones',
+      sessionSummary: session.focalQuestion,
+      sessionDate: session.date
+    });
   };
 
   const handleLaunchYangPractice = (payload: any) => {
@@ -874,7 +921,135 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       console.error('[Memory Reconsolidation] Failed to generate insight:', err);
     }
 
-    alert('Memory Reconsolidation session saved! Your shift has been added to history.');
+    // Show thread linking modal
+    setThreadLinkingData({
+      sessionId: session.id,
+      wizardType: 'memory-recon',
+      sessionSummary: selectedBelief?.belief || 'Memory Reconsolidation Session',
+      sessionDate: session.date
+    });
+  };
+
+  // Thread Linking Handlers
+  const handleLinkToExistingThread = (threadId: string) => {
+    if (!threadLinkingData) return;
+
+    linkSessionToThread(threadId, {
+      sessionId: threadLinkingData.sessionId,
+      wizardType: threadLinkingData.wizardType,
+      date: threadLinkingData.sessionDate
+    });
+
+    // Update thread metrics
+    const histories = {
+      memoryReconHistory,
+      ifsHistory: historyIFS,
+      threeTwoOneHistory: history321,
+      eightZonesHistory
+    };
+    updateThreadMetrics(threadId, histories);
+
+    setThreadLinkingData(null);
+    alert('Session linked to journey!');
+  };
+
+  const handleCreateNewThread = (title: string, theme: any) => {
+    if (!threadLinkingData) return;
+
+    const newThread = createThread(title, theme, {
+      sessionId: threadLinkingData.sessionId,
+      wizardType: threadLinkingData.wizardType,
+      date: threadLinkingData.sessionDate
+    });
+
+    // Update thread metrics
+    const histories = {
+      memoryReconHistory,
+      ifsHistory: historyIFS,
+      threeTwoOneHistory: history321,
+      eightZonesHistory
+    };
+    updateThreadMetrics(newThread.id, histories);
+
+    setThreadLinkingData(null);
+    alert(`New journey "${title}" created!`);
+  };
+
+  const handleSkipThreadLinking = () => {
+    setThreadLinkingData(null);
+  };
+
+  const handleGetAiSuggestion = async () => {
+    if (!threadLinkingData) return;
+
+    // Open the suggestion modal and start loading
+    setSuggestionModalOpen(true);
+    setSuggestionLoading(true);
+    setSuggestionError(null);
+    setSuggestionAnalysis(null);
+
+    try {
+      // Get the session data
+      let sessionData;
+      switch (threadLinkingData.wizardType) {
+        case 'memory-recon':
+          sessionData = memoryReconHistory.find(s => s.id === threadLinkingData.sessionId);
+          break;
+        case 'ifs':
+          sessionData = historyIFS.find(s => s.id === threadLinkingData.sessionId);
+          break;
+        case '3-2-1':
+          sessionData = history321.find(s => s.id === threadLinkingData.sessionId);
+          break;
+        case 'eight-zones':
+          sessionData = eightZonesHistory.find(s => s.id === threadLinkingData.sessionId);
+          break;
+        default:
+          throw new Error('Unknown wizard type');
+      }
+
+      if (!sessionData) {
+        throw new Error('Session data not found');
+      }
+
+      // Create AI summary
+      const sessionSummary = createAiSummary(sessionData, threadLinkingData.wizardType);
+
+      // Call the API
+      const response = await fetch('/api/suggest-next-step', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionSummary,
+          wizardType: threadLinkingData.wizardType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to generate suggestions');
+      }
+
+      setSuggestionAnalysis(data.analysis);
+    } catch (error) {
+      console.error('[AI Suggestion] Error:', error);
+      setSuggestionError(error instanceof Error ? error.message : 'Unknown error occurred');
+    } finally {
+      setSuggestionLoading(false);
+    }
+  };
+
+  const handleSelectWizard = (wizardType: string, specificFocus: string) => {
+    // Close both modals
+    setSuggestionModalOpen(false);
+    setThreadLinkingData(null);
+
+    // TODO: In the future, we could pre-populate the wizard with the specificFocus
+    // For now, just open the wizard
+    setActiveWizard(wizardType);
   };
 
   const markInsightAsAddressed = (insightId: string, shadowToolType: string, shadowSessionId: string) => {
@@ -1017,10 +1192,10 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       />;
       case 'spirit-tools': return <SpiritToolsTab setActiveWizard={setActiveWizardAndLink} historyBigMind={historyBigMind} />;
       case 'library': return <LibraryTab />;
-      case 'journal': return <JournalTab integratedInsights={integratedInsights} setActiveWizard={setActiveWizardAndLink} setActiveTab={setActiveTab} setHighlightPracticeId={setHighlightPracticeId} />;
+      case 'journal': return <JournalTab integratedInsights={integratedInsights} setActiveWizard={setActiveWizardAndLink} setActiveTab={setActiveTab} setHighlightPracticeId={setHighlightPracticeId} memoryReconHistory={memoryReconHistory} ifsHistory={historyIFS} threeTwoOneHistory={history321} eightZonesHistory={eightZonesHistory} threads={threads} />;
       case 'quiz': return <ILPGraphQuiz />;
       case 'journey': return <JourneyTab journeyProgress={journeyProgress} updateJourneyProgress={setJourneyProgress} />;
-      default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} />;
+      default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} threads={threads} />;
     }
   };
 
@@ -1178,7 +1353,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
         return (
           <MemoryReconsolidationWizard
             onClose={() => setActiveWizard(null)}
-            onSave={handleSaveMemoryReconsolidationSession}
+            onSave={handleSaveMemoryReconSession}
             session={draftMemoryRecon}
             setDraft={setDraftMemoryRecon}
             userId={userId}
@@ -1329,6 +1504,31 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       <Suspense fallback={<WizardLoadingFallback />}>
         {renderActiveWizard()}
       </Suspense>
+      {threadLinkingData && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <ThreadLinkingModal
+            sessionSummary={threadLinkingData.sessionSummary}
+            suggestedThreads={suggestThreads(threadLinkingData.sessionSummary)}
+            onLinkExisting={handleLinkToExistingThread}
+            onCreateNew={handleCreateNewThread}
+            onSkip={handleSkipThreadLinking}
+            onGetAiSuggestion={handleGetAiSuggestion}
+          />
+        </Suspense>
+      )}
+
+      {/* AI Suggestion Modal */}
+      <Suspense fallback={<ModalLoadingFallback />}>
+        <SuggestionModal
+          isOpen={suggestionModalOpen}
+          isLoading={suggestionLoading}
+          analysis={suggestionAnalysis}
+          error={suggestionError}
+          onClose={() => setSuggestionModalOpen(false)}
+          onSelectWizard={handleSelectWizard}
+        />
+      </Suspense>
+
       <FlabbergasterPortal
         isOpen={isFlabbergasterPortalOpen}
         onClose={() => setIsFlabbergasterPortalOpen(false)}

@@ -114,6 +114,7 @@ export interface ThreeTwoOneSession {
   integration: string;
   aiSummary?: string;
   linkedInsightId?: string;
+  threadId?: string; // Link to therapeutic journey/thread
 }
 
 export type WizardPhase = 'IDENTIFY' | 'EXPLORE' | 'DEEPEN' | 'UNBURDEN' | 'INTEGRATE' | 'CLOSING';
@@ -147,6 +148,7 @@ export interface IFSSession {
   summary?: string;
   aiIndications?: string[];
   linkedInsightId?: string;
+  threadId?: string; // Link to therapeutic journey/thread
 }
 
 export interface AqalReportData {
@@ -1149,6 +1151,7 @@ export interface MemoryReconsolidationSession {
   sessionNotes?: string;
   completedAt?: string;
   linkedInsightId?: string; // Link to IntegratedInsight for tracking patterns
+  threadId?: string; // Link to therapeutic journey/thread
 }
 
 /** Draft/in-progress Memory Reconsolidation session (extends Session with partial fields). */
@@ -1156,49 +1159,6 @@ export interface MemoryReconsolidationDraft extends Partial<MemoryReconsolidatio
   currentStep: MemoryReconsolidationStep;
   id: string;
   date: string;
-}
-
-export type MemoryReconsolidationStep = 'ONBOARDING' | 'MEMORY_SELECTION' | 'BELIEF_EXTRACTION' | 'CONTRADICTION_MINING';
-
-export interface MemoryReconsolidationSession {
-  id: string;
-  date: string;
-  currentStep: MemoryReconsolidationStep;
-  
-  // ONBOARDING
-  intention?: string;
-  safetyAcknowledged?: boolean;
-  baselineIntensity?: number;
-  
-  // MEMORY_SELECTION
-  memoryTitle?: string;
-  memoryEra?: string;
-  keyEmotions?: string;
-  bodySensations?: string;
-  protectorStrategies?: string;
-  sensoryAnchors?: string;
-  memoryNarrative?: string;
-  
-  // BELIEF_EXTRACTION
-  extractedBeliefs?: ImplicitBelief[];
-  selectedBeliefIds?: string[];
-  beliefExtractionError?: string;
-  
-  // CONTRADICTION_MINING
-  contradictionSeeds?: string[];
-  contradictionInsights?: ContradictionInsight[];
-  juxtapositionPrompts?: string[];
-  integrationGuidance?: string;
-  contradictionMiningError?: string;
-  
-  completedAt?: string;
-}
-
-export interface GroundingOption {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
 }
 
 // 8 Zones of Knowing Types
@@ -1254,6 +1214,7 @@ export interface EightZonesSession {
   // Session metadata
   completedAt?: string;
   draftSavedAt?: string;
+  threadId?: string; // Link to therapeutic journey/thread
 }
 
 export interface EightZonesDraft extends Partial<EightZonesSession> {
@@ -1261,3 +1222,55 @@ export interface EightZonesDraft extends Partial<EightZonesSession> {
   userId: string;
 }
 
+// Journey/Thread Types (Session Continuity)
+export type ThreadTheme =
+  | 'worthiness'
+  | 'safety'
+  | 'belonging'
+  | 'control'
+  | 'shame'
+  | 'abandonment'
+  | 'perfectionism'
+  | 'self-compassion'
+  | 'other';
+
+export type ThreadStatus = 'active' | 'dormant' | 'integrated';
+
+export interface ThreadSessionRef {
+  sessionId: string;
+  wizardType: 'memory-recon' | 'ifs' | '3-2-1' | 'eight-zones' | 'integral-body' | 'other';
+  date: string;
+}
+
+export interface ThreadMetrics {
+  sessionsCount: number;
+  intensityTrend: number[]; // Array of intensity values over time
+  lastIntensity?: number;
+}
+
+export interface ThreadPrompt {
+  type: 'follow-up' | 'reinforce' | 'integrate' | 'check-in';
+  message: string;
+  dueDate?: string;
+}
+
+export interface Thread {
+  id: string;
+  title: string; // User-given name or AI-generated
+  theme: ThreadTheme;
+  createdAt: string;
+  lastActiveAt: string;
+  status: ThreadStatus;
+
+  // Linked sessions (just references, not full data)
+  sessions: ThreadSessionRef[];
+
+  // Cached metrics
+  metrics: ThreadMetrics;
+
+  // Optional AI-generated synthesis
+  synthesis?: string;
+
+  // Re-engagement prompt
+  nextPrompt?: ThreadPrompt;
+}

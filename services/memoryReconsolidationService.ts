@@ -139,7 +139,7 @@ export async function mineContradictions(
 ): Promise<MineContradictionsResponse> {
   // Use client-side Gemini generation instead of API call
   const selectedBeliefs = payload.beliefs.filter(b => payload.beliefIds.includes(b.id));
-  const beliefsText = selectedBeliefs.map((b, idx) => `${idx + 1}. "${b.belief}"`).join('\n');
+  const beliefsText = selectedBeliefs.map((b, idx) => `${idx + 1}. Belief ID: ${b.id}, Belief: "${b.belief}"`).join('\n');
 
   const prompt = `You are a therapeutic assistant helping with Memory Reconsolidation Therapy. Find contradictions to limiting beliefs.
 
@@ -149,40 +149,48 @@ ${beliefsText}
 ${payload.contradictionSeeds && payload.contradictionSeeds.length > 0 ? `User's Contradiction Ideas:\n${payload.contradictionSeeds.join('\n')}\n` : ''}
 ${payload.userSuppliedResources && payload.userSuppliedResources.length > 0 ? `User's Resources/Evidence:\n${payload.userSuppliedResources.join('\n')}\n` : ''}
 
-Find 2-3 powerful contradictions for each belief. These should be:
-- Specific counter-experiences or evidence
-- Emotionally resonant and vivid
-- From the person's actual life experience (or hypothetical if needed)
-- Challenge the belief at an emotional level, not just rational
-
-Also provide:
-- Juxtaposition prompts: Questions to guide the person through holding both the belief and contradiction simultaneously
-- Integration guidance: How to work with the dissonance
+For each belief, provide:
+- Anchors: 2-3 specific counter-experiences or evidence that contradict the belief
+- New Truths: 2-3 alternative, empowering perspectives
+- Regulation Cues: 2-3 grounding statements or somatic resources
+- Juxtaposition Prompts: 2-3 prompts for holding belief + contradiction simultaneously
 
 Return a JSON object in this exact format:
 {
   "contradictions": [
     {
-      "id": "contra-1",
-      "targetBeliefId": "belief-1",
-      "contradictionStatement": "Clear statement of the contradicting evidence or experience",
-      "emotionalResonance": 8,
-      "source": "Specific memory, experience, or insight",
-      "integrationPrompt": "A question or prompt to help integrate this contradiction"
+      "beliefId": "belief-1",
+      "anchors": [
+        "Specific counter-experience 1",
+        "Specific counter-experience 2"
+      ],
+      "newTruths": [
+        "Alternative empowering perspective 1",
+        "Alternative empowering perspective 2"
+      ],
+      "regulationCues": [
+        "Grounding statement or breath cue 1",
+        "Somatic resource 2"
+      ],
+      "juxtapositionPrompts": [
+        "Hold both old belief and new truth - prompt 1",
+        "Notice what arises - prompt 2"
+      ],
+      "dateIdentified": "${new Date().toISOString()}"
     }
   ],
   "juxtapositionCyclePrompts": [
-    "Guided prompt 1 for juxtaposition practice",
-    "Guided prompt 2 for juxtaposition practice"
+    "Guided prompt 1 for overall juxtaposition practice",
+    "Guided prompt 2 for overall juxtaposition practice"
   ],
-  "integrationGuidance": "Overall guidance for integrating these contradictions into a new understanding"
+  "integrationGuidance": "Overall guidance for integrating these contradictions"
 }
 
 Guidelines:
-- Each contradiction should directly challenge a specific belief
-- emotionalResonance is 1-10 (how emotionally powerful the contradiction is)
-- Make contradictions vivid and specific, not abstract
-- Integration prompts should be open-ended questions
+- Anchors should be vivid, specific moments from the person's life
+- New truths should feel emotionally resonant and empowering
+- Regulation cues help the person stay grounded during juxtaposition
+- Make everything concrete and embodied, not abstract
 
 Return ONLY valid JSON, no additional text.`;
 
@@ -193,14 +201,14 @@ Return ONLY valid JSON, no additional text.`;
     const cleanJson = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const parsed = JSON.parse(cleanJson);
 
-    // Ensure contradictions have proper structure
-    const contradictions: ContradictionInsight[] = parsed.contradictions.map((c: any, idx: number) => ({
-      id: c.id || `contra-${idx + 1}`,
-      targetBeliefId: c.targetBeliefId || selectedBeliefs[0]?.id || 'belief-1',
-      contradictionStatement: c.contradictionStatement || '',
-      emotionalResonance: c.emotionalResonance || 5,
-      source: c.source || 'Generated insight',
-      integrationPrompt: c.integrationPrompt || 'How does this contradiction change your understanding?'
+    // Ensure contradictions have proper structure matching ContradictionInsight interface
+    const contradictions: ContradictionInsight[] = parsed.contradictions.map((c: any) => ({
+      beliefId: c.beliefId || selectedBeliefs[0]?.id || 'belief-1',
+      anchors: c.anchors || ['Consider times when this belief was not true'],
+      newTruths: c.newTruths || ['There may be another way to see this situation'],
+      regulationCues: c.regulationCues || ['Take a deep breath', 'Notice your feet on the ground'],
+      juxtapositionPrompts: c.juxtapositionPrompts || ['Hold both the old belief and the new truth together'],
+      dateIdentified: c.dateIdentified || new Date().toISOString()
     }));
 
     return {
@@ -210,15 +218,15 @@ Return ONLY valid JSON, no additional text.`;
     };
   } catch (error) {
     console.error('Failed to parse contradictions JSON:', error);
-    // Return fallback structure
+    // Return fallback structure matching ContradictionInsight interface
     return {
-      contradictions: selectedBeliefs.map((b, idx) => ({
-        id: `contra-${idx + 1}`,
-        targetBeliefId: b.id,
-        contradictionStatement: 'Consider times when this belief was not true. What evidence contradicts it?',
-        emotionalResonance: 5,
-        source: 'Self-reflection prompt',
-        integrationPrompt: 'What would it mean if this belief were not completely true?'
+      contradictions: selectedBeliefs.map((b) => ({
+        beliefId: b.id,
+        anchors: ['Consider times when this belief was not completely true', 'Remember moments that contradict this pattern'],
+        newTruths: ['There may be another way to see this', 'This belief is not the whole truth'],
+        regulationCues: ['Take three deep breaths', 'Feel your feet on the ground', 'Notice sensations in your body'],
+        juxtapositionPrompts: ['Hold both the old belief and new truth together', 'Notice what arises when you experience both'],
+        dateIdentified: new Date().toISOString()
       })),
       juxtapositionCyclePrompts: ['Hold both the belief and its contradiction simultaneously', 'Notice what arises when you experience both truths together'],
       integrationGuidance: 'Allow yourself to feel the dissonance. This is where transformation happens.'
