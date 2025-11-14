@@ -5,15 +5,35 @@ import { BigMindSession, BigMindMessage, BigMindVoice, BigMindInsightSummary, In
 import { practices as corePractices } from '../constants.ts';
 import { generateOpenRouterResponse, buildMessagesWithSystem, DEEPSEEK_MODEL } from './openRouterService';
 
-// Initialize the Google AI client
-const googleAI = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+// Lazy initialization to avoid crashes when API keys are not set
+let googleAI: GoogleGenAI | null = null;
+let groq: OpenAI | null = null;
 
-// Initialize Groq client (OpenAI-compatible)
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: 'https://api.groq.com/openai/v1',
-  dangerouslyAllowBrowser: true // Allow usage in browser for Vercel deployment
-});
+function getGoogleAIClient(): GoogleGenAI {
+  if (!googleAI) {
+    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is not set. Please configure your API key.');
+    }
+    googleAI = new GoogleGenAI({ apiKey });
+  }
+  return googleAI;
+}
+
+function getGroqClient(): OpenAI {
+  if (!groq) {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      throw new Error('GROQ_API_KEY is not set. Please configure your API key.');
+    }
+    groq = new OpenAI({
+      apiKey,
+      baseURL: 'https://api.groq.com/openai/v1',
+      dangerouslyAllowBrowser: true // Allow usage in browser for Vercel deployment
+    });
+  }
+  return groq;
+}
 
 // Provider types
 export type BigMindProvider = 'google' | 'groq' | 'openrouter';
@@ -206,7 +226,7 @@ async function generateGoogleResponse(
   try {
     // Use streaming if callback provided
     if (onStreamChunk) {
-      const stream = await googleAI.models.generateContentStream({
+      const stream = await getGoogleAIClient().models.generateContentStream({
         model: 'gemini-2.5-flash-lite',
         systemInstruction: BIG_MIND_SYSTEM_PROMPT,
         contents: userPrompt,
@@ -221,7 +241,7 @@ async function generateGoogleResponse(
       return { success: true, text: fullText };
     } else {
       // Fallback to non-streaming if no callback
-      const response = await googleAI.models.generateContent({
+      const response = await getGoogleAIClient().models.generateContent({
         model: 'gemini-2.5-flash-lite',
         systemInstruction: BIG_MIND_SYSTEM_PROMPT,
         contents: userPrompt,
@@ -260,7 +280,7 @@ async function generateGroqResponse(
 
     // Use streaming if callback provided
     if (onStreamChunk) {
-      const stream = await groq.chat.completions.create({
+      const stream = await getGroqClient().chat.completions.create({
         model: 'openai/gpt-oss-120b',
         messages,
         max_tokens: 1000,
@@ -279,7 +299,7 @@ async function generateGroqResponse(
       return { success: true, text: fullText };
     } else {
       // Fallback to non-streaming if no callback
-      const response = await groq.chat.completions.create({
+      const response = await getGroqClient().chat.completions.create({
         model: 'openai/gpt-oss-120b',
         messages,
         max_tokens: 1000,
@@ -416,7 +436,7 @@ Return ONLY valid JSON.`;
     
     if (provider === 'groq') {
       // Use Groq for summarization
-      const groqResponse = await groq.chat.completions.create({
+      const groqResponse = await getGroqClient().chat.completions.create({
         model: 'openai/gpt-oss-120b',
         messages: [
           {
@@ -434,7 +454,7 @@ Return ONLY valid JSON.`;
       responseText = groqResponse.choices[0]?.message?.content || '{}';
     } else {
       // Use Google for summarization
-      const googleResponse = await googleAI.models.generateContent({
+      const googleResponse = await getGoogleAIClient().models.generateContent({
         model: 'gemini-2.5-flash-lite',
         contents: summarizationPrompt,
         config: {
