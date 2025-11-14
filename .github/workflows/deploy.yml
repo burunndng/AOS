@@ -31,8 +31,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build with Vite
+      - name: Build with Vite for GitHub Pages
         run: npm run build
+        env:
+          VITE_BASE_PATH: /AOS/
 
       - name: Copy .nojekyll to dist
         run: cp .nojekyll dist/.nojekyll
