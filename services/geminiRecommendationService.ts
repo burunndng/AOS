@@ -286,7 +286,16 @@ Generate recommendations in this JSON format:
 
   try {
     const response = await generateText(prompt);
-    const parsed = JSON.parse(response);
+
+    // Strip markdown code blocks if present (Gemini sometimes wraps JSON in ```json ... ```)
+    let jsonString = response.trim();
+    if (jsonString.startsWith('```json')) {
+      jsonString = jsonString.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    } else if (jsonString.startsWith('```')) {
+      jsonString = jsonString.replace(/^```\n?/, '').replace(/\n?```$/, '');
+    }
+
+    const parsed = JSON.parse(jsonString);
 
     // Map practices to their full data
     const allPracticesList = Object.values(allPractices).flat() as Practice[];
