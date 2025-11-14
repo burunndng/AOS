@@ -1274,3 +1274,99 @@ export interface Thread {
   // Re-engagement prompt
   nextPrompt?: ThreadPrompt;
 }
+
+// ============================================
+// Intelligence Hub Types
+// ============================================
+
+export interface CompletionRecord {
+  practiceId: string;
+  date: string;
+  completed: boolean;
+  note?: string;
+}
+
+export interface WizardSessionSummary {
+  id: string;
+  type: string;
+  name: string;
+  completedAt: string;
+  summary: string;
+}
+
+export interface IntelligenceContext {
+  currentPracticeStack: AllPractice[];
+  practiceNotes: Record<string, string>;
+  completionHistory: CompletionRecord[];
+  wizardSessions: WizardSessionSummary[];
+  integratedInsights: IntegratedInsight[];
+  pendingPatterns?: string[];
+  developmentalStage?: KeganStage;
+  attachmentStyle?: string;
+  primaryChallenges: string[];
+}
+
+export interface WizardRecommendation {
+  type: string;
+  name: string;
+  reason: string;
+  focus: string;
+  priority: 'high' | 'medium' | 'low';
+  confidence?: number; // 0-1 scale
+  evidence?: string[]; // [Session-ID], [Insight-ID]
+  timing?: string; // e.g., "this_week", "next_week"
+}
+
+export interface PracticeRecommendation {
+  practice: AllPractice;
+  reason: string;
+  priority: 'high' | 'medium' | 'low';
+  startTiming?: string; // e.g., "Week 2, after 1 Polarity session"
+  timeCommitment?: string; // e.g., "10 min/day for 7 days"
+  integration?: string; // How to integrate with existing practices
+}
+
+export interface PracticeAdjustment {
+  practiceId: string;
+  practiceName: string;
+  suggestion: string;
+}
+
+export interface StackBalance {
+  body: string;
+  mind: string;
+  spirit: string;
+  shadow: string;
+}
+
+export interface IntelligentGuidance {
+  synthesis: string;
+  primaryFocus: string;
+  recommendations: {
+    nextWizard?: WizardRecommendation;
+    practiceChanges?: {
+      add?: PracticeRecommendation[];
+      remove?: string[];
+      modify?: PracticeAdjustment[];
+    };
+    insightWork?: {
+      pattern: string;
+      approachSuggestion: string;
+    };
+    stackBalance?: StackBalance;
+  };
+  reasoning: {
+    whatINoticed: string[];
+    whyThisMatters: string[];
+    howItConnects: string[];
+  };
+  cautions: string[];
+  generatedAt: string;
+  rawMarkdown?: string; // Full markdown response for UI rendering
+}
+
+export interface CachedGuidance {
+  guidance: IntelligentGuidance;
+  cachedAt: number;
+  contextHash: string;
+}
