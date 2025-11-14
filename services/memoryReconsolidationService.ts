@@ -70,8 +70,13 @@ Return a JSON object in this exact format:
     {
       "id": "belief-1",
       "belief": "The implicit belief statement",
-      "evidence": "Quote or reference from the memory that supports this",
-      "emotionalCharge": 7
+      "emotionalCharge": 7,
+      "category": "identity|capability|worthiness|safety|belonging|possibility|other",
+      "affectTone": "shame|fear|anger|sadness|grief|confusion|mixed|neutral",
+      "depth": "surface|moderate|deep",
+      "bodyLocation": "chest|stomach|throat|head|etc (optional)",
+      "originStory": "When/how this belief formed (optional)",
+      "limitingPatterns": ["behavior 1", "behavior 2"] (optional)
     }
   ],
   "summary": "A brief 2-3 sentence summary of the core beliefs identified"
@@ -80,8 +85,9 @@ Return a JSON object in this exact format:
 Guidelines:
 - Each belief should be a clear, concise statement
 - emotionalCharge is 1-10 (how strongly this belief is felt)
-- Evidence should quote directly from the memory when possible
+- category, affectTone, and depth are REQUIRED
 - Focus on beliefs that create suffering or limitation
+- bodyLocation, originStory, and limitingPatterns are optional but helpful
 
 Return ONLY valid JSON, no additional text.`;
 
@@ -92,12 +98,17 @@ Return ONLY valid JSON, no additional text.`;
     const cleanJson = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const parsed = JSON.parse(cleanJson);
 
-    // Ensure beliefs have proper structure
+    // Ensure beliefs have proper structure with all required fields
     const beliefs: ImplicitBelief[] = parsed.beliefs.map((b: any, idx: number) => ({
       id: b.id || `belief-${idx + 1}`,
       belief: b.belief || '',
-      evidence: b.evidence || '',
-      emotionalCharge: b.emotionalCharge || 5
+      emotionalCharge: b.emotionalCharge || payload.baselineIntensity || 5,
+      category: b.category || 'other',
+      affectTone: b.affectTone || 'mixed',
+      depth: b.depth || 'moderate',
+      bodyLocation: b.bodyLocation,
+      originStory: b.originStory || b.evidence, // fallback to evidence if provided
+      limitingPatterns: b.limitingPatterns
     }));
 
     return {
@@ -106,13 +117,17 @@ Return ONLY valid JSON, no additional text.`;
     };
   } catch (error) {
     console.error('Failed to parse beliefs JSON:', error);
-    // Return fallback structure
+    console.error('Response text:', responseText);
+    // Return fallback structure with all required ImplicitBelief fields
     return {
       beliefs: [{
         id: 'belief-1',
         belief: 'Unable to extract beliefs automatically. Please review the memory manually.',
-        evidence: payload.memoryNarrative.substring(0, 100) + '...',
-        emotionalCharge: 5
+        emotionalCharge: payload.baselineIntensity || 5,
+        category: 'other' as const,
+        affectTone: 'mixed' as const,
+        depth: 'moderate' as const,
+        originStory: payload.memoryNarrative.substring(0, 200) + (payload.memoryNarrative.length > 200 ? '...' : '')
       }],
       summary: 'Automatic belief extraction encountered an error. Please review manually.'
     };
