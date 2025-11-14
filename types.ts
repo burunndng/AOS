@@ -1326,6 +1326,9 @@ export interface PracticeRecommendation {
   practice: AllPractice;
   reason: string;
   priority: 'high' | 'medium' | 'low';
+  startTiming?: string; // e.g., "Week 2, after 1 Polarity session"
+  timeCommitment?: string; // e.g., "10 min/day for 7 days"
+  integration?: string; // How to integrate with existing practices
 }
 
 export interface PracticeAdjustment {
@@ -1334,12 +1337,22 @@ export interface PracticeAdjustment {
   suggestion: string;
 }
 
+export interface StackBalance {
+  body: string;
+  mind: string;
+  spirit: string;
+  shadow: string;
+}
+
 export interface WizardRecommendation {
   type: string;
   name: string;
   reason: string;
   focus: string;
   priority: 'high' | 'medium' | 'low';
+  confidence?: number; // 0-1 scale
+  evidence?: string[]; // [Session-ID], [Insight-ID]
+  timing?: string; // e.g., "this_week", "next_week"
 }
 
 export interface IntelligentGuidance {
@@ -1359,6 +1372,8 @@ export interface IntelligentGuidance {
       pattern: string;
       approachSuggestion: string;
     };
+
+    stackBalance?: StackBalance;
   };
 
   reasoning: {
@@ -1369,6 +1384,7 @@ export interface IntelligentGuidance {
 
   cautions: string[];
   generatedAt: string;
+  rawMarkdown?: string; // Full markdown response for UI rendering
 }
 
 export interface CachedGuidance {
