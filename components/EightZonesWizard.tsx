@@ -302,6 +302,7 @@ export default function EightZonesWizard({
     };
     onSave(finalSession);
     setDraft(null);
+    onClose(); // Explicitly close the wizard
   };
 
   const renderConnectionDialogue = () => {
