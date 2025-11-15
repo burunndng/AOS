@@ -106,7 +106,7 @@ import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } fro
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
 import { generateEnhancedRecommendationsForApp } from './services/enhancedRecommendationHelper.ts';
 import { getIntelligentGuidance, clearGuidanceCache } from './services/intelligenceHub.ts';
-import { aggregateUserContext } from './utils/contextAggregator.ts';
+import { aggregateUserContext, buildUserProfile } from './utils/contextAggregator.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -880,6 +880,29 @@ export default function App() {
     return personalizationSummary;
   }, [integralBodyPlanHistory]);
 
+  // Compute user profile for adaptive personalization (Phase 4)
+  const userProfile = useMemo(() => {
+    // Build completion history from completedToday
+    const completionHistory = Object.entries(completedToday).map(([practiceId, completed]) => ({
+      practiceId,
+      date: new Date().toISOString().split('T')[0],
+      completed,
+    }));
+
+    // Extract wizard sessions for context
+    const wizardSessions = [];
+    if (historyKegan.length > 0) wizardSessions.push({ type: 'keganAssessment', sessionData: historyKegan[0] });
+    if (historyAttachment.length > 0) wizardSessions.push({ type: 'attachmentAssessment', sessionData: historyAttachment[0] });
+
+    return buildUserProfile(
+      completionHistory,
+      integratedInsights,
+      integralBodyPlanHistory,
+      practiceStack,
+      wizardSessions
+    );
+  }, [completedToday, integratedInsights, integralBodyPlanHistory, practiceStack, historyKegan, historyAttachment]);
+
   // Auto-generate personalization when the Integral Body Architect wizard is opened
   useEffect(() => {
     if (activeWizard === 'integral-body-architect' && integralBodyPlanHistory.length > 0) {
@@ -1446,6 +1469,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
             getStreak={getStreak}
             practiceNotes={practiceNotes}
             dailyNotes={dailyNotes}
+            userProfile={userProfile}
         />
       </Suspense>
       {infoModalPractice && (

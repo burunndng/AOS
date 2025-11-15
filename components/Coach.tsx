@@ -16,6 +16,13 @@ interface CoachProps {
   getStreak: (practiceId: string) => number;
   practiceNotes: Record<string, string>;
   dailyNotes: Record<string, string>;
+  userProfile?: {
+    experienceLevel: 'beginner' | 'intermediate' | 'advanced';
+    preferredIntensity: 'low' | 'moderate' | 'high' | 'variable';
+    recurringPatterns?: string[];
+    commonBlockers?: string[];
+    practiceComplianceRate?: number;
+  };
 }
 
 interface SuggestedPractice {
@@ -47,6 +54,7 @@ export default function Coach({
   getStreak,
   practiceNotes,
   dailyNotes,
+  userProfile,
 }: CoachProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
@@ -117,6 +125,7 @@ export default function Coach({
           modules: moduleBreakdown,
           practiceNotes,
           dailyNotes,
+          userProfile,
         }),
       });
 
