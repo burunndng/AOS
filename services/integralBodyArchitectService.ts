@@ -250,6 +250,12 @@ ${yangConstraints.nutritionDetails?.dietaryRestrictions?.length
 ${yangConstraints.nutritionDetails?.cookingSkill
   ? `- Cooking Skill: ${yangConstraints.nutritionDetails.cookingSkill}`
   : ''}
+${yangConstraints.nutritionDetails?.targetCalories
+  ? `- User-Specified Calorie Target: ${yangConstraints.nutritionDetails.targetCalories} kcal/day (OVERRIDE: Use this instead of TDEE calculation)`
+  : ''}
+${yangConstraints.nutritionDetails?.proteinGramsPerKg
+  ? `- User-Specified Protein Target: ${yangConstraints.nutritionDetails.proteinGramsPerKg}g/kg (OVERRIDE: Use this instead of goal-based default)`
+  : ''}
 
 ## YIN PRACTICES
 
@@ -291,11 +297,24 @@ ${yangConstraints.injuryRestrictions?.some(inj => inj.severity === 'severe')
       ? '   - MILD INJURY: Exercise with caution, avoid painful ranges, include mobility work'
       : '   - No injuries reported, full movement library available'}
 
-5. **Calorie & Macro Precision:**
+5. **Nutrition Planning:**
    - Use calculated TDEE (${metrics.tdee} kcal) as baseline
    - Daily target: ${metrics.recommendedCalories} kcal (${yangConstraints.primaryGoal || 'maintenance'})
    - Distribute protein (${metrics.proteinGrams}g) across ${yangConstraints.nutritionDetails?.mealsPerDay || 3} meals (~${Math.round(metrics.proteinGrams / (yangConstraints.nutritionDetails?.mealsPerDay || 3))}g per meal)
    - Prioritize nutrient timing: protein within 2 hours post-workout
+${yangConstraints.nutritionDetails?.dietaryRestrictions?.length
+  ? `   - STRICT ADHERENCE REQUIRED: All meals must comply with: ${yangConstraints.nutritionDetails.dietaryRestrictions.join(', ')}`
+  : ''}
+${yangConstraints.nutritionDetails?.cookingSkill === 'minimal'
+  ? '   - Cooking Skill: MINIMAL - Use simple recipes, pre-cooked proteins, microwaveable options, minimal prep time (<10 min)'
+  : yangConstraints.nutritionDetails?.cookingSkill === 'basic'
+    ? '   - Cooking Skill: BASIC - Simple recipes with 5-7 ingredients, 15-20 min prep, clear instructions'
+    : yangConstraints.nutritionDetails?.cookingSkill === 'intermediate'
+      ? '   - Cooking Skill: INTERMEDIATE - Can handle varied techniques, 20-30 min prep, balanced complexity'
+      : yangConstraints.nutritionDetails?.cookingSkill === 'advanced'
+        ? '   - Cooking Skill: ADVANCED - Complex recipes welcome, diverse cuisines, batch cooking, meal prep strategies'
+        : '   - Cooking Skill: BASIC (default) - Simple, approachable recipes'}
+   - If user wants nutrition-only plan: Focus entirely on detailed meal planning, shopping lists, macro tracking, and meal prep strategies. Workouts can be minimal or skipped.
 
 ## RESPONSE FORMAT
 

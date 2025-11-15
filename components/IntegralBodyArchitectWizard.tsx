@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2, AlertCircle, Plus, Trash2, Clock, FileText, User, Target } from 'lucide-react';
+import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2, AlertCircle, Plus, Trash2, Clock, FileText, User, Target, Utensils } from 'lucide-react';
 import {
   IntegralBodyPlan,
   YangConstraints,
@@ -113,6 +113,13 @@ export default function IntegralBodyArchitectWizard({
   const [equipment, setEquipment] = useState<string[]>(['bodyweight']);
   const [unavailableDays, setUnavailableDays] = useState<string[]>([]);
 
+  // Nutrition Details
+  const [targetCalories, setTargetCalories] = useState('');
+  const [proteinGramsPerKg, setProteinGramsPerKg] = useState('');
+  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
+  const [mealsPerDay, setMealsPerDay] = useState('3');
+  const [cookingSkill, setCookingSkill] = useState<'minimal' | 'basic' | 'intermediate' | 'advanced'>('basic');
+
   // Existing fields
   const [nutritionFocus, setNutritionFocus] = useState('');
   const [additionalConstraints, setAdditionalConstraints] = useState('');
@@ -140,6 +147,10 @@ export default function IntegralBodyArchitectWizard({
 
   const togglePreferredWorkoutTime = (time: 'morning' | 'afternoon' | 'evening') => {
     setPreferredWorkoutTimes(prev => (prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]));
+  };
+
+  const toggleDietaryRestriction = (restriction: string) => {
+    setDietaryRestrictions(prev => (prev.includes(restriction) ? prev.filter(r => r !== restriction) : [...prev, restriction]));
   };
 
   const handleGenerate = async () => {
@@ -177,6 +188,15 @@ export default function IntegralBodyArchitectWizard({
         sleepHours: sleepHours ? parseFloat(sleepHours) : undefined,
         equipment,
         unavailableDays,
+
+        // Nutrition Details
+        nutritionDetails: {
+          targetCalories: targetCalories ? parseInt(targetCalories) : undefined,
+          proteinGramsPerKg: proteinGramsPerKg ? parseFloat(proteinGramsPerKg) : undefined,
+          dietaryRestrictions: dietaryRestrictions.length > 0 ? dietaryRestrictions : undefined,
+          mealsPerDay: mealsPerDay ? parseInt(mealsPerDay) : undefined,
+          cookingSkill,
+        },
 
         // Advanced Constraints
         availableTimeWindows: availableTimeWindows.length > 0 ? availableTimeWindows : undefined,
@@ -283,6 +303,17 @@ export default function IntegralBodyArchitectWizard({
           onToggleEquipment={toggleEquipment}
           unavailableDays={unavailableDays}
           onToggleDay={toggleUnavailableDay}
+          // Nutrition Details
+          targetCalories={targetCalories}
+          onTargetCaloriesChange={setTargetCalories}
+          proteinGramsPerKg={proteinGramsPerKg}
+          onProteinGramsPerKgChange={setProteinGramsPerKg}
+          dietaryRestrictions={dietaryRestrictions}
+          onToggleDietaryRestriction={toggleDietaryRestriction}
+          mealsPerDay={mealsPerDay}
+          onMealsPerDayChange={setMealsPerDay}
+          cookingSkill={cookingSkill}
+          onCookingSkillChange={setCookingSkill}
           // Existing fields
           nutritionFocus={nutritionFocus}
           onNutritionFocusChange={setNutritionFocus}
@@ -497,6 +528,18 @@ interface BlueprintStepProps {
   unavailableDays: string[];
   onToggleDay: (value: string) => void;
 
+  // Nutrition Details
+  targetCalories: string;
+  onTargetCaloriesChange: (value: string) => void;
+  proteinGramsPerKg: string;
+  onProteinGramsPerKgChange: (value: string) => void;
+  dietaryRestrictions: string[];
+  onToggleDietaryRestriction: (value: string) => void;
+  mealsPerDay: string;
+  onMealsPerDayChange: (value: string) => void;
+  cookingSkill: 'minimal' | 'basic' | 'intermediate' | 'advanced';
+  onCookingSkillChange: (value: 'minimal' | 'basic' | 'intermediate' | 'advanced') => void;
+
   // Existing fields
   nutritionFocus: string;
   onNutritionFocusChange: (value: string) => void;
@@ -550,6 +593,17 @@ function BlueprintStep(props: BlueprintStepProps) {
     onToggleEquipment,
     unavailableDays,
     onToggleDay,
+    // Nutrition Details
+    targetCalories,
+    onTargetCaloriesChange,
+    proteinGramsPerKg,
+    onProteinGramsPerKgChange,
+    dietaryRestrictions,
+    onToggleDietaryRestriction,
+    mealsPerDay,
+    onMealsPerDayChange,
+    cookingSkill,
+    onCookingSkillChange,
     // Existing fields
     nutritionFocus,
     onNutritionFocusChange,
@@ -576,6 +630,7 @@ function BlueprintStep(props: BlueprintStepProps) {
     goals: true,
     essentialProfile: true,
     trainingGoals: true,
+    nutritionPreferences: true,
     yangConstraints: true,
     yinStates: true,
     recoveryLifestyle: true,
@@ -801,6 +856,128 @@ function BlueprintStep(props: BlueprintStepProps) {
               ))}
             </div>
             <p className="text-xs text-slate-500 mt-2">AI will schedule workouts during these times</p>
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      {/* Nutrition Preferences Section */}
+      <CollapsibleSection
+        title="Nutrition Preferences"
+        icon={<Utensils size={18} className="text-green-400" />}
+        isExpanded={expandedSections.nutritionPreferences}
+        onToggle={() => toggleSection('nutritionPreferences')}
+      >
+        <div className="space-y-4">
+          <div className="bg-green-900/10 border border-green-700/30 rounded-md p-3 text-sm text-green-200">
+            <p className="font-semibold mb-1">💡 Nutrition-Only Plans Supported</p>
+            <p className="text-xs text-green-300/80">You can use this wizard purely for meal planning! Just fill in the biometrics and nutrition fields, and skip the workout sections if desired.</p>
+          </div>
+
+          {/* Calorie and Protein Targets */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Target Calories (kcal/day)
+              </label>
+              <input
+                type="number"
+                value={targetCalories}
+                onChange={e => onTargetCaloriesChange(e.target.value)}
+                placeholder="Auto-calculated if empty"
+                min="800"
+                max="5000"
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              />
+              <p className="text-xs text-slate-500 mt-1">Leave empty to auto-calculate from TDEE</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Protein Target (g/kg bodyweight)
+              </label>
+              <input
+                type="number"
+                value={proteinGramsPerKg}
+                onChange={e => onProteinGramsPerKgChange(e.target.value)}
+                placeholder="Auto: 1.6-2.2g/kg"
+                min="0.8"
+                max="3.5"
+                step="0.1"
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              />
+              <p className="text-xs text-slate-500 mt-1">Leave empty for goal-based default</p>
+            </div>
+          </div>
+
+          {/* Dietary Restrictions */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+              Dietary Restrictions & Preferences
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+              {['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Keto', 'Paleo', 'Halal', 'Kosher', 'Low-Carb'].map(restriction => (
+                <button
+                  key={restriction}
+                  onClick={() => onToggleDietaryRestriction(restriction)}
+                  className={`p-2 rounded-md text-xs font-medium transition ${
+                    dietaryRestrictions.includes(restriction)
+                      ? 'bg-green-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                >
+                  {restriction}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="Other restrictions (e.g., 'nut allergy, no shellfish')"
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                  onToggleDietaryRestriction(e.currentTarget.value.trim());
+                  e.currentTarget.value = '';
+                }
+              }}
+            />
+            <p className="text-xs text-slate-500 mt-1">Press Enter to add custom restrictions</p>
+          </div>
+
+          {/* Meals and Cooking */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Meals Per Day
+              </label>
+              <select
+                value={mealsPerDay}
+                onChange={e => onMealsPerDayChange(e.target.value)}
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              >
+                <option value="2">2 meals (OMAD/Intermittent Fasting)</option>
+                <option value="3">3 meals (Standard)</option>
+                <option value="4">4 meals (with snack)</option>
+                <option value="5">5-6 meals (Bodybuilding split)</option>
+              </select>
+              <p className="text-xs text-slate-500 mt-1">Influences meal planning and timing</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Cooking Skill Level
+              </label>
+              <select
+                value={cookingSkill}
+                onChange={e => onCookingSkillChange(e.target.value as any)}
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              >
+                <option value="minimal">Minimal (microwave, simple prep)</option>
+                <option value="basic">Basic (can follow recipes)</option>
+                <option value="intermediate">Intermediate (comfortable cooking)</option>
+                <option value="advanced">Advanced (enjoy complex recipes)</option>
+              </select>
+              <p className="text-xs text-slate-500 mt-1">Determines recipe complexity</p>
+            </div>
           </div>
         </div>
       </CollapsibleSection>
