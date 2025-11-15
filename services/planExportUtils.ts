@@ -88,11 +88,21 @@ export const formatIntegralBodyPlanAsText = (plan: IntegralBodyPlan): string => 
     if (day.nutrition) {
       lines.push('>>> NUTRITION <<<');
       const nutrition = day.nutrition;
-      if (nutrition.breakfast) lines.push(`Breakfast: ${nutrition.breakfast}`);
-      if (nutrition.lunch) lines.push(`Lunch: ${nutrition.lunch}`);
-      if (nutrition.dinner) lines.push(`Dinner: ${nutrition.dinner}`);
-      if (nutrition.snacks) lines.push(`Snacks: ${nutrition.snacks}`);
+      if (nutrition.breakfast) {
+        lines.push(`Breakfast: ${nutrition.breakfast.description} (${nutrition.breakfast.protein}g protein)`);
+      }
+      if (nutrition.lunch) {
+        lines.push(`Lunch: ${nutrition.lunch.description} (${nutrition.lunch.protein}g protein)`);
+      }
+      if (nutrition.dinner) {
+        lines.push(`Dinner: ${nutrition.dinner.description} (${nutrition.dinner.protein}g protein)`);
+      }
+      if (nutrition.snacks) {
+        lines.push(`Snacks: ${nutrition.snacks.description} (${nutrition.snacks.protein}g protein)`);
+      }
       if (nutrition.totalProtein) lines.push(`Total Protein: ${nutrition.totalProtein}g`);
+      if (nutrition.totalCalories) lines.push(`Total Calories: ${nutrition.totalCalories} kcal`);
+      if (nutrition.notes) lines.push(`Notes: ${nutrition.notes}`);
       lines.push('');
     }
 
