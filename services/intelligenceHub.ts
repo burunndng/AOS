@@ -133,9 +133,11 @@ Embed this exact JSON structure in a code block under "## Recommended Next Steps
         "practiceName": "Shadow Journaling",
         "reason": "Bridges 3-2-1 (in stack) and IFS work",
         "priority": "medium",
-        "startTiming": "Week 2, after 1 Polarity session",
+        "sequenceWeek": 2,
+        "sequenceGuidance": "Week 2, after 1 Polarity session",
         "timeCommitment": "10 min/day for 7 days",
-        "integration": "Journal on polarity from wizard; review during IFS practice"
+        "expectedBenefits": "Deepens reflection on polarity insights and strengthens integration with existing IFS practice",
+        "integrationTips": "Journal on polarity from wizard; review during IFS practice"
       }
     ],
     "remove": [],
@@ -200,6 +202,17 @@ Route to **Insight Practice Map** if: Advanced meditation practitioner tracking 
 - Support wizard insights (if they discovered X pattern, what practice helps integrate it?)
 - Consider readiness (don't overload, don't under-challenge)
 - Suggest removing practices if stack is overwhelming or misaligned
+
+## SEQUENCING & INTEGRATION REQUIREMENTS
+
+For each recommended practice, include ALL of these fields:
+- **sequenceWeek**: Integer (1-8) indicating which week to start
+- **sequenceGuidance**: Human-readable timing (e.g., "Week 2, after 1 Polarity session")
+- **timeCommitment**: Specific time requirement (e.g., "10 min/day for 7 days")
+- **expectedBenefits**: Clear benefits users will experience
+- **integrationTips**: How to weave this into existing practices
+
+Example flow: "Start Shadow Journaling in Week 2 (after Polarity wizard completes). Spend 10 min/day journaling on the polarity insights you discovered. Review these entries during your regular IFS practice to deepen integration."
 
 ---
 
@@ -333,6 +346,10 @@ function parseGuidanceResponse(text: string): Omit<IntelligentGuidance, 'generat
           startTiming: rec.startTiming,
           timeCommitment: rec.timeCommitment,
           integration: rec.integration,
+          sequenceWeek: rec.sequenceWeek,
+          sequenceGuidance: rec.sequenceGuidance,
+          expectedBenefits: rec.expectedBenefits,
+          integrationTips: rec.integrationTips,
         };
       });
     }
