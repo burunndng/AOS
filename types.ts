@@ -94,6 +94,17 @@ export type ActiveTab =
   | 'quiz'
   | 'journey';
 
+/**
+ * Navigation stack entry for tracking user navigation history (Phase 3)
+ * Enables back button functionality and context preservation across tabs and wizards
+ */
+export interface NavigationEntry {
+  tab: ActiveTab;
+  activeWizard?: string | null;
+  linkedInsightId?: string | null;
+  timestamp: number;
+}
+
 export interface JourneyCard {
   id: string;
   title: string;
