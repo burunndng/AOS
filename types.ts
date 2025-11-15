@@ -1341,6 +1341,12 @@ export interface EightZonesSession {
   // Analyses for each zone
   zoneAnalyses: Record<number, ZoneAnalysis>; // Key: zone number 1-8, Value: analysis data
 
+  // AI-facilitated connection dialogues (new!)
+  connectionReflections?: {
+    zones: string; // e.g., "Zones 1-2"
+    dialogue: DialogueEntry[]; // Re-use the { role: 'user' | 'bot', text: string } type
+  }[];
+
   // Connections discovered between zones
   zoneConnections?: ZoneConnection[];
 

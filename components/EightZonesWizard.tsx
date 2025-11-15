@@ -4,9 +4,10 @@ import {
   EightZonesDraft,
   EightZonesStep,
   ZoneAnalysis,
+  DialogueEntry,
 } from '../types.ts';
-import { X, ArrowLeft, ArrowRight, Zap, Lightbulb } from 'lucide-react';
-import { enhanceZoneAnalysis, generateSynthesis, submitSessionCompletion } from '../services/eightZonesService.ts';
+import { X, ArrowLeft, ArrowRight, Zap, Lightbulb, MessageCircle, Loader } from 'lucide-react';
+import { enhanceZoneAnalysis, generateSynthesis, submitSessionCompletion, generateConnectionDialogue } from '../services/eightZonesService.ts';
 import { EIGHT_ZONES } from '../constants.ts';
 
 interface EightZonesWizardProps {
@@ -83,6 +84,15 @@ export default function EightZonesWizard({
   const [showEnhancements, setShowEnhancements] = useState<Record<number, boolean>>({});
   const [synthesisData, setSynthesisData] = useState<any>(null);
 
+  // Connection dialogue state
+  const [isInConnectionDialogue, setIsInConnectionDialogue] = useState(false);
+  const [activeConnectionZones, setActiveConnectionZones] = useState<[number, number] | null>(null);
+  const [connectionDialogue, setConnectionDialogue] = useState<DialogueEntry[]>([]);
+  const [isLoadingConnection, setIsLoadingConnection] = useState(false);
+  const [connectionReflections, setConnectionReflections] = useState<Array<{ zones: string; dialogue: DialogueEntry[] }>>(
+    draft?.connectionReflections || []
+  );
+
   useEffect(() => {
     if (draft) setSession(hydrateSession(draft));
   }, [draft]);
@@ -107,6 +117,44 @@ export default function EightZonesWizard({
 
   const updateSession = (updates: Partial<EightZonesSession>) => {
     setSession((prev) => ({ ...prev, ...updates }));
+  };
+
+  const handleConnectionDialogueSubmit = async (userMessage: string) => {
+    if (!activeConnectionZones) return;
+
+    const [zoneA, zoneB] = activeConnectionZones;
+    const updatedDialogue = [...connectionDialogue, { role: 'user' as const, text: userMessage }];
+    setConnectionDialogue(updatedDialogue);
+
+    setIsLoadingConnection(true);
+    try {
+      const aiResponse = await generateConnectionDialogue(
+        session.focalQuestion,
+        session.zoneAnalyses[zoneA],
+        session.zoneAnalyses[zoneB],
+        updatedDialogue
+      );
+      setConnectionDialogue(prev => [...prev, { role: 'bot', text: aiResponse }]);
+    } catch (e) {
+      console.error("Error generating connection dialogue:", e);
+    } finally {
+      setIsLoadingConnection(false);
+    }
+  };
+
+  const handleContinueFromConnectionDialogue = () => {
+    if (!activeConnectionZones) return;
+
+    const [zoneA, zoneB] = activeConnectionZones;
+    const zonesLabel = `Zones ${zoneA}-${zoneB}`;
+
+    // Save the connection reflection
+    setConnectionReflections(prev => [...prev, { zones: zonesLabel, dialogue: connectionDialogue }]);
+
+    // Reset connection dialogue state
+    setIsInConnectionDialogue(false);
+    setActiveConnectionZones(null);
+    setConnectionDialogue([]);
   };
 
   const canProceedToNext = () => {
@@ -183,12 +231,39 @@ export default function EightZonesWizard({
 
         updateSession({
           zoneAnalyses: newZoneAnalyses,
-          currentStep: nextStep,
         });
+
+        // Trigger connection dialogue after zones 2, 4, 6, and 8
+        if ([2, 4, 6, 8].includes(zoneNum)) {
+          const prevZone = zoneNum - 1;
+          setActiveConnectionZones([prevZone, zoneNum]);
+          setIsInConnectionDialogue(true);
+
+          // Generate initial AI question to start the dialogue
+          setIsLoadingConnection(true);
+          try {
+            const initialQuestion = await generateConnectionDialogue(
+              session.focalQuestion,
+              newZoneAnalyses[prevZone],
+              newZoneAnalyses[zoneNum],
+              []
+            );
+            setConnectionDialogue([{ role: 'bot', text: initialQuestion }]);
+          } catch (e) {
+            console.error("Error generating initial connection question:", e);
+          } finally {
+            setIsLoadingConnection(false);
+          }
+        } else {
+          // No connection dialogue, proceed to next zone
+          updateSession({
+            currentStep: nextStep,
+          });
+        }
       } else if (session.currentStep === 'SYNTHESIS') {
         // Generate synthesis from all zones (but don't auto-advance to COMPLETE)
         if (!synthesisData) {
-          const synthesis = await generateSynthesis(userId, session.focalQuestion, session.zoneAnalyses);
+          const synthesis = await generateSynthesis(userId, session.focalQuestion, session.zoneAnalyses, connectionReflections);
           setSynthesisData(synthesis);
           updateSession({
             blindSpots: synthesis.blindSpots,
@@ -196,6 +271,7 @@ export default function EightZonesWizard({
             recommendations: synthesis.recommendations,
             synthesisReport: synthesis.synthesisReport,
             zoneConnections: synthesis.connections,
+            connectionReflections: connectionReflections,
           });
         } else {
           // User has read the synthesis, now move to COMPLETE
@@ -228,7 +304,84 @@ export default function EightZonesWizard({
     setDraft(null);
   };
 
+  const renderConnectionDialogue = () => {
+    if (!activeConnectionZones) return null;
+    const [zoneA, zoneB] = activeConnectionZones;
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
+          <h3 className="text-lg font-semibold font-mono text-slate-100 flex items-center gap-2 mb-3">
+            <MessageCircle className="text-blue-400" size={20} />
+            Discovering Connections: Zones {zoneA} & {zoneB}
+          </h3>
+          <p className="text-slate-300 text-sm">
+            You've completed two zones. Let's explore how they relate to each other.
+            This dialogue helps you see the connections between different perspectives on your focal question.
+          </p>
+        </div>
+
+        <div className="space-y-3 max-h-96 overflow-y-auto bg-slate-900/20 rounded-lg p-4">
+          {connectionDialogue.map((entry, idx) => (
+            <div key={idx} className={`flex gap-3 ${entry.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-md rounded-lg p-3 ${
+                entry.role === 'user'
+                  ? 'bg-cyan-900/50 border border-cyan-700 text-cyan-100'
+                  : 'bg-blue-900/50 border border-blue-700 text-blue-100'
+              }`}>
+                <p className="text-xs font-semibold mb-1">{entry.role === 'user' ? 'You' : 'Facilitator'}</p>
+                <p className="text-sm">{entry.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-slate-800/30 border border-slate-700 rounded-lg p-3">
+          <input
+            type="text"
+            placeholder="Share your thoughts on how these zones connect..."
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && (e.target as HTMLInputElement).value && !isLoadingConnection) {
+                const text = (e.target as HTMLInputElement).value;
+                handleConnectionDialogueSubmit(text);
+                (e.target as HTMLInputElement).value = '';
+              }
+            }}
+            disabled={isLoadingConnection}
+            className="w-full bg-slate-900/50 border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 disabled:opacity-50"
+          />
+          {isLoadingConnection && (
+            <p className="text-xs text-blue-400 mt-2 flex items-center gap-2">
+              <Loader size={12} className="animate-spin" /> Listening...
+            </p>
+          )}
+          {!isLoadingConnection && <p className="text-xs text-slate-500 mt-2">Press Enter to share your reflection</p>}
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              handleContinueFromConnectionDialogue();
+              const currentIndex = STEPS.indexOf(session.currentStep);
+              const nextStep = STEPS[currentIndex + 1];
+              updateSession({ currentStep: nextStep });
+            }}
+            disabled={connectionDialogue.length < 2}
+            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Continue to Next Zone →
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const renderStep = () => {
+    // If we're in a connection dialogue phase, show that UI instead
+    if (isInConnectionDialogue) {
+      return renderConnectionDialogue();
+    }
+
     switch (session.currentStep) {
       case 'ONBOARDING':
         return (
