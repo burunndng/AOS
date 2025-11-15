@@ -747,7 +747,33 @@ export default function App() {
     setDraft321(null);
     navigateBack();
 
-    const report = `# 3-2-1 Reflection: ${session.trigger}\n- Trigger: ${session.triggerDescription}\n- Dialogue: ${session.dialogue}\n- Embodiment: ${session.embodiment}\n- Integration: ${session.integration}`;
+    // Build rich report from new structured data model
+    const report = `# 3-2-1 Reflection: ${session.trigger}
+
+## Face It (3rd Person View)
+${session.faceItAnalysis ? `
+- **Objective Description:** ${session.faceItAnalysis.objectiveDescription || 'N/A'}
+- **Specific Actions:** ${session.faceItAnalysis.specificActions?.join(', ') || 'N/A'}
+- **Triggered Emotions:** ${session.faceItAnalysis.triggeredEmotions?.join(', ') || 'N/A'}
+` : '- No Face It analysis recorded'}
+
+## Talk To It (2nd Person Dialogue)
+${session.dialogueTranscript && session.dialogueTranscript.length > 0 ? session.dialogueTranscript.map(d => `- **${d.role === 'user' ? 'You' : 'The Quality'}:** ${d.text}`).join('\n') : '- No dialogue recorded'}
+
+## Be It (1st Person Embodiment)
+${session.embodimentAnalysis ? `
+- **Embodiment Statement:** "${session.embodimentAnalysis.embodimentStatement || 'N/A'}"
+- **Somatic Location:** ${session.embodimentAnalysis.somaticLocation || 'N/A'}
+- **Core Message/Gift:** ${session.embodimentAnalysis.coreMessage || 'N/A'}
+` : '- No embodiment analysis recorded'}
+
+## Integration Plan
+${session.integrationPlan ? `
+- **Re-owning Statement:** ${session.integrationPlan.reowningStatement || 'N/A'}
+- **Actionable Step:** ${session.integrationPlan.actionableStep || 'N/A'}
+${session.integrationPlan.relatedPracticeId ? `- **Related Practice:** ${session.integrationPlan.relatedPracticeId}` : ''}
+` : '- No integration plan recorded'}`;
+
     const summary = `Reflected on trigger: ${session.trigger}${session.aiSummary ? ` - ${session.aiSummary}` : ''}`;
 
     try {
