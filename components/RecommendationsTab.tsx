@@ -38,6 +38,14 @@ export default function RecommendationsTab({
   addToStack,
   personalizationSummary
 }: RecommendationsTabProps) {
+  /**
+   * Strip citation markers from AI-generated text (e.g., [Insight-01])
+   * These are included by the AI for evidence tracking but shouldn't be shown to users
+   */
+  const stripCitations = (text: string): string => {
+    return text.replace(/\s*\[.*?\]/g, '');
+  };
+
   const pendingInsights = getPendingInsights(integratedInsights);
   const highImpactPractices = getHighImpactPractices(integratedInsights, allPractices, 2);
 
@@ -101,7 +109,7 @@ export default function RecommendationsTab({
               <h3 className="text-lg font-semibold text-purple-300 mb-3 flex items-center gap-2">
                 <TrendingUp size={18} /> Where You Are
               </h3>
-              <p className="text-slate-200 leading-relaxed">{intelligentGuidance.synthesis}</p>
+              <p className="text-slate-200 leading-relaxed">{stripCitations(intelligentGuidance.synthesis)}</p>
             </div>
 
             {/* Primary Focus */}
@@ -109,7 +117,7 @@ export default function RecommendationsTab({
               <h3 className="text-lg font-semibold text-blue-300 mb-3 flex items-center gap-2">
                 <Target size={18} /> Primary Focus
               </h3>
-              <p className="text-slate-200 leading-relaxed">{intelligentGuidance.primaryFocus}</p>
+              <p className="text-slate-200 leading-relaxed">{stripCitations(intelligentGuidance.primaryFocus)}</p>
             </div>
 
             {/* Recommendations */}
