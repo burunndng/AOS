@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2, AlertCircle, Plus, Trash2, Clock, FileText } from 'lucide-react';
+import { X, ArrowRight, Heart, Dumbbell, Wind, CheckCircle, Download, Play, ChevronDown, ChevronUp, Share2, AlertCircle, Plus, Trash2, Clock, FileText, User, Target } from 'lucide-react';
 import {
   IntegralBodyPlan,
   YangConstraints,
@@ -94,10 +94,26 @@ export default function IntegralBodyArchitectWizard({
   const [error, setError] = useState('');
 
   const [goalStatement, setGoalStatement] = useState('');
+
+  // PHASE 1: Core Biometrics
+  const [age, setAge] = useState('');
+  const [sex, setSex] = useState<'male' | 'female' | 'other'>('male');
+  const [height, setHeight] = useState('');
   const [bodyweight, setBodyweight] = useState('');
+  const [activityLevel, setActivityLevel] = useState<'sedentary' | 'lightly-active' | 'moderately-active' | 'very-active' | 'athlete'>('lightly-active');
+
+  // PHASE 1: Training Background
+  const [strengthTrainingExperience, setStrengthTrainingExperience] = useState<'never' | 'beginner' | 'intermediate' | 'advanced'>('beginner');
+  const [primaryGoal, setPrimaryGoal] = useState<'lose-fat' | 'gain-muscle' | 'recomp' | 'maintain' | 'performance' | 'general-health'>('general-health');
+
+  // PHASE 1: Session Constraints
+  const [maxWorkoutDuration, setMaxWorkoutDuration] = useState('60');
+  const [preferredWorkoutTimes, setPreferredWorkoutTimes] = useState<('morning' | 'afternoon' | 'evening')[]>([]);
   const [sleepHours, setSleepHours] = useState('8');
   const [equipment, setEquipment] = useState<string[]>(['bodyweight']);
   const [unavailableDays, setUnavailableDays] = useState<string[]>([]);
+
+  // Existing fields
   const [nutritionFocus, setNutritionFocus] = useState('');
   const [additionalConstraints, setAdditionalConstraints] = useState('');
 
@@ -106,7 +122,7 @@ export default function IntegralBodyArchitectWizard({
   const [yinIntentions, setYinIntentions] = useState('');
   const [yinNotes, setYinNotes] = useState('');
 
-  // New fields from Ticket 1
+  // Advanced fields
   const [stressLevel, setStressLevel] = useState<number>(5);
   const [injuryRestrictions, setInjuryRestrictions] = useState<InjuryRestriction[]>([]);
   const [availableTimeWindows, setAvailableTimeWindows] = useState<TimeWindow[]>([]);
@@ -122,9 +138,19 @@ export default function IntegralBodyArchitectWizard({
     setUnavailableDays(prev => (prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]));
   };
 
+  const togglePreferredWorkoutTime = (time: 'morning' | 'afternoon' | 'evening') => {
+    setPreferredWorkoutTimes(prev => (prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]));
+  };
+
   const handleGenerate = async () => {
     if (!goalStatement.trim()) {
       setError('Please define your goal for the week.');
+      return;
+    }
+
+    // Validation for required fields
+    if (!age || !height || !bodyweight) {
+      setError('Please fill in all required biometric fields (Age, Height, Weight).');
       return;
     }
 
@@ -134,10 +160,25 @@ export default function IntegralBodyArchitectWizard({
 
     try {
       const yangConstraints: YangConstraints = {
+        // PHASE 1: Core Biometrics
+        age: age ? parseInt(age) : undefined,
+        sex,
+        height: height ? parseFloat(height) : undefined,
         bodyweight: bodyweight ? parseFloat(bodyweight) : undefined,
+        activityLevel,
+
+        // PHASE 1: Training Background
+        strengthTrainingExperience,
+        primaryGoal,
+
+        // PHASE 1: Session Constraints
+        maxWorkoutDuration: maxWorkoutDuration ? parseInt(maxWorkoutDuration) : undefined,
+        preferredWorkoutTimes: preferredWorkoutTimes.length > 0 ? preferredWorkoutTimes : undefined,
         sleepHours: sleepHours ? parseFloat(sleepHours) : undefined,
         equipment,
         unavailableDays,
+
+        // Advanced Constraints
         availableTimeWindows: availableTimeWindows.length > 0 ? availableTimeWindows : undefined,
         injuryRestrictions: injuryRestrictions.length > 0 ? injuryRestrictions : undefined,
         nutritionFocus: nutritionFocus || undefined,
@@ -215,14 +256,34 @@ export default function IntegralBodyArchitectWizard({
         return <BlueprintStep
           goalStatement={goalStatement}
           onGoalChange={setGoalStatement}
+          // PHASE 1: Core Biometrics
+          age={age}
+          onAgeChange={setAge}
+          sex={sex}
+          onSexChange={setSex}
+          height={height}
+          onHeightChange={setHeight}
           bodyweight={bodyweight}
           onBodyweightChange={setBodyweight}
+          activityLevel={activityLevel}
+          onActivityLevelChange={setActivityLevel}
+          // PHASE 1: Training Background
+          strengthTrainingExperience={strengthTrainingExperience}
+          onStrengthTrainingExperienceChange={setStrengthTrainingExperience}
+          primaryGoal={primaryGoal}
+          onPrimaryGoalChange={setPrimaryGoal}
+          // PHASE 1: Session Constraints
+          maxWorkoutDuration={maxWorkoutDuration}
+          onMaxWorkoutDurationChange={setMaxWorkoutDuration}
+          preferredWorkoutTimes={preferredWorkoutTimes}
+          onTogglePreferredWorkoutTime={togglePreferredWorkoutTime}
           sleepHours={sleepHours}
           onSleepHoursChange={setSleepHours}
           equipment={equipment}
           onToggleEquipment={toggleEquipment}
           unavailableDays={unavailableDays}
           onToggleDay={toggleUnavailableDay}
+          // Existing fields
           nutritionFocus={nutritionFocus}
           onNutritionFocusChange={setNutritionFocus}
           additionalConstraints={additionalConstraints}
@@ -405,14 +466,38 @@ export default function IntegralBodyArchitectWizard({
 interface BlueprintStepProps {
   goalStatement: string;
   onGoalChange: (value: string) => void;
+
+  // PHASE 1: Core Biometrics
+  age: string;
+  onAgeChange: (value: string) => void;
+  sex: 'male' | 'female' | 'other';
+  onSexChange: (value: 'male' | 'female' | 'other') => void;
+  height: string;
+  onHeightChange: (value: string) => void;
   bodyweight: string;
   onBodyweightChange: (value: string) => void;
+  activityLevel: 'sedentary' | 'lightly-active' | 'moderately-active' | 'very-active' | 'athlete';
+  onActivityLevelChange: (value: 'sedentary' | 'lightly-active' | 'moderately-active' | 'very-active' | 'athlete') => void;
+
+  // PHASE 1: Training Background
+  strengthTrainingExperience: 'never' | 'beginner' | 'intermediate' | 'advanced';
+  onStrengthTrainingExperienceChange: (value: 'never' | 'beginner' | 'intermediate' | 'advanced') => void;
+  primaryGoal: 'lose-fat' | 'gain-muscle' | 'recomp' | 'maintain' | 'performance' | 'general-health';
+  onPrimaryGoalChange: (value: 'lose-fat' | 'gain-muscle' | 'recomp' | 'maintain' | 'performance' | 'general-health') => void;
+
+  // PHASE 1: Session Constraints
+  maxWorkoutDuration: string;
+  onMaxWorkoutDurationChange: (value: string) => void;
+  preferredWorkoutTimes: ('morning' | 'afternoon' | 'evening')[];
+  onTogglePreferredWorkoutTime: (value: 'morning' | 'afternoon' | 'evening') => void;
   sleepHours: string;
   onSleepHoursChange: (value: string) => void;
   equipment: string[];
   onToggleEquipment: (value: string) => void;
   unavailableDays: string[];
   onToggleDay: (value: string) => void;
+
+  // Existing fields
   nutritionFocus: string;
   onNutritionFocusChange: (value: string) => void;
   additionalConstraints: string;
@@ -438,14 +523,34 @@ function BlueprintStep(props: BlueprintStepProps) {
   const {
     goalStatement,
     onGoalChange,
+    // PHASE 1: Core Biometrics
+    age,
+    onAgeChange,
+    sex,
+    onSexChange,
+    height,
+    onHeightChange,
     bodyweight,
     onBodyweightChange,
+    activityLevel,
+    onActivityLevelChange,
+    // PHASE 1: Training Background
+    strengthTrainingExperience,
+    onStrengthTrainingExperienceChange,
+    primaryGoal,
+    onPrimaryGoalChange,
+    // PHASE 1: Session Constraints
+    maxWorkoutDuration,
+    onMaxWorkoutDurationChange,
+    preferredWorkoutTimes,
+    onTogglePreferredWorkoutTime,
     sleepHours,
     onSleepHoursChange,
     equipment,
     onToggleEquipment,
     unavailableDays,
     onToggleDay,
+    // Existing fields
     nutritionFocus,
     onNutritionFocusChange,
     additionalConstraints,
@@ -469,6 +574,8 @@ function BlueprintStep(props: BlueprintStepProps) {
 
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     goals: true,
+    essentialProfile: true,
+    trainingGoals: true,
     yangConstraints: true,
     yinStates: true,
     recoveryLifestyle: true,
@@ -508,6 +615,192 @@ function BlueprintStep(props: BlueprintStepProps) {
               className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
             />
             <p className="text-xs text-slate-500 mt-1">💡 Be specific about what success looks like for you this week</p>
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      {/* Essential Profile Section */}
+      <CollapsibleSection
+        title="Essential Profile"
+        icon={<User size={18} className="text-cyan-400" />}
+        isExpanded={expandedSections.essentialProfile}
+        onToggle={() => toggleSection('essentialProfile')}
+      >
+        <div className="space-y-4">
+          {/* Demographics Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Age (years) <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="number"
+                value={age}
+                onChange={e => onAgeChange(e.target.value)}
+                placeholder="28"
+                min="13"
+                max="100"
+                required
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Sex <span className="text-red-400">*</span>
+              </label>
+              <select
+                value={sex}
+                onChange={e => onSexChange(e.target.value as 'male' | 'female' | 'other')}
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other/Prefer not to say</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Height (cm) <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="number"
+                value={height}
+                onChange={e => onHeightChange(e.target.value)}
+                placeholder="175"
+                min="120"
+                max="250"
+                required
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              />
+            </div>
+          </div>
+
+          {/* Body & Activity Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Bodyweight (kg) <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="number"
+                value={bodyweight}
+                onChange={e => onBodyweightChange(e.target.value)}
+                placeholder="70"
+                min="30"
+                max="250"
+                step="0.1"
+                required
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Activity Level <span className="text-red-400">*</span>
+              </label>
+              <select
+                value={activityLevel}
+                onChange={e => onActivityLevelChange(e.target.value as any)}
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              >
+                <option value="sedentary">Sedentary (desk job, little exercise)</option>
+                <option value="lightly-active">Lightly Active (exercise 1-3 days/week)</option>
+                <option value="moderately-active">Moderately Active (exercise 3-5 days/week)</option>
+                <option value="very-active">Very Active (exercise 6-7 days/week)</option>
+                <option value="athlete">Athlete (2x/day training)</option>
+              </select>
+              <p className="text-xs text-slate-500 mt-1">Your baseline activity outside of planned workouts</p>
+            </div>
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      {/* Training Goals & Experience Section */}
+      <CollapsibleSection
+        title="Training Goals & Experience"
+        icon={<Target size={18} className="text-purple-400" />}
+        isExpanded={expandedSections.trainingGoals}
+        onToggle={() => toggleSection('trainingGoals')}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+              Primary Goal <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={primaryGoal}
+              onChange={e => onPrimaryGoalChange(e.target.value as any)}
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+            >
+              <option value="lose-fat">Lose Fat</option>
+              <option value="gain-muscle">Gain Muscle</option>
+              <option value="recomp">Body Recomposition (lose fat + gain muscle)</option>
+              <option value="maintain">Maintain Current Composition</option>
+              <option value="performance">Performance (strength/endurance)</option>
+              <option value="general-health">General Health & Wellness</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">This determines your calorie/macro targets and training split</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Strength Training Experience <span className="text-red-400">*</span>
+              </label>
+              <select
+                value={strengthTrainingExperience}
+                onChange={e => onStrengthTrainingExperienceChange(e.target.value as any)}
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              >
+                <option value="never">Never trained with weights</option>
+                <option value="beginner">&lt;6 months</option>
+                <option value="intermediate">6 months - 2 years</option>
+                <option value="advanced">2+ years</option>
+              </select>
+              <p className="text-xs text-slate-500 mt-1">Determines exercise complexity and volume</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Max Workout Duration
+              </label>
+              <select
+                value={maxWorkoutDuration}
+                onChange={e => onMaxWorkoutDurationChange(e.target.value)}
+                className="w-full bg-slate-900/50 border border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent text-slate-100 text-sm"
+              >
+                <option value="30">30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
+                <option value="90">90 minutes</option>
+              </select>
+              <p className="text-xs text-slate-500 mt-1">Realistic time you have per session</p>
+            </div>
+          </div>
+
+          {/* Preferred Workout Times */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+              Preferred Workout Times (Optional)
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['morning', 'afternoon', 'evening'] as const).map(time => (
+                <button
+                  key={time}
+                  onClick={() => onTogglePreferredWorkoutTime(time)}
+                  className={`p-2.5 rounded-md text-xs font-medium transition capitalize ${
+                    preferredWorkoutTimes.includes(time)
+                      ? 'bg-accent text-slate-900'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                >
+                  {time}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 mt-2">AI will schedule workouts during these times</p>
           </div>
         </div>
       </CollapsibleSection>
