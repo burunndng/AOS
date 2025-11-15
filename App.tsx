@@ -151,45 +151,16 @@ export default function App() {
   const [activeTab, setActiveTab] = useLocalStorage<ActiveTab>('activeTab', 'dashboard');
   const [highlightPracticeId, setHighlightPracticeId] = useState<string | null>(null);
 
+  // User profile for adaptive personalization
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+
   // Clear highlight when changing tabs
   useEffect(() => {
     if (activeTab !== 'browse') {
       setHighlightPracticeId(null);
     }
   }, [activeTab]);
-
-  // Build user profile from activity data for adaptive personalization
-  useEffect(() => {
-    const buildProfile = async () => {
-      try {
-        setIsProfileLoading(true);
-        // Build completion history from completionHistory object
-        const completionRecords = Object.entries(completionHistory).flatMap(([date, practiceIds]) =>
-          practiceIds.map(practiceId => ({
-            practiceId,
-            date,
-            completed: true,
-          }))
-        );
-
-        const profile = await buildUserProfile(
-          completionRecords,
-          integratedInsights,
-          integralBodyPlanHistory,
-          practiceStack,
-          [], // wizardSessions - could be extracted from localStorage if needed
-          dailyNotes
-        );
-        setUserProfile(profile);
-      } catch (error) {
-        console.error('[App] Error building user profile:', error);
-      } finally {
-        setIsProfileLoading(false);
-      }
-    };
-
-    buildProfile();
-  }, [practiceStack, integratedInsights, integralBodyPlanHistory, dailyNotes, completionHistory]);
 
   // RAG System & User Context
   const [userId] = useLocalStorage<string>('userId', (() => {
@@ -252,9 +223,7 @@ export default function App() {
   const [aqalReport, setAqalReport] = useLocalStorage<AqalReportData | null>('aqalReport', null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isProfileLoading, setIsProfileLoading] = useState(false);
-  
+
   // Modals state
   const [activeWizard, setActiveWizard] = useLocalStorage<string | null>('activeWizard', null);
   const [linkedInsightId, setLinkedInsightId] = useState<string | undefined>(undefined);
@@ -953,27 +922,45 @@ ${session.integrationPlan.relatedPracticeId ? `- **Related Practice:** ${session
   }, [integralBodyPlanHistory]);
 
   // Compute user profile for adaptive personalization (Phase 4)
-  const userProfile = useMemo(() => {
-    // Build completion history from completedToday
-    const completionHistory = Object.entries(completedToday).map(([practiceId, completed]) => ({
-      practiceId,
-      date: new Date().toISOString().split('T')[0],
-      completed,
-    }));
+  // This uses async buildUserProfile for sentiment analysis integration
+  useEffect(() => {
+    const buildProfile = async () => {
+      try {
+        setIsProfileLoading(true);
+        // Build completion history from completionHistory
+        // NOTE: Don't depend on completedToday - it's recalculated on each render
+        const today = new Date().toISOString().split('T')[0];
+        const completionRecords = Object.entries(completionHistory)
+          .filter(([_, dates]) => dates.includes(today))
+          .map(([practiceId, _]) => ({
+            practiceId,
+            date: today,
+            completed: true,
+          }));
 
-    // Extract wizard sessions for context
-    const wizardSessions = [];
-    if (historyKegan.length > 0) wizardSessions.push({ type: 'keganAssessment', sessionData: historyKegan[0] });
-    if (historyAttachment.length > 0) wizardSessions.push({ type: 'attachmentAssessment', sessionData: historyAttachment[0] });
+        // Extract wizard sessions for context
+        const wizardSessions = [];
+        if (historyKegan.length > 0) wizardSessions.push({ type: 'keganAssessment', sessionData: historyKegan[0] });
+        if (historyAttachment.length > 0) wizardSessions.push({ type: 'attachmentAssessment', sessionData: historyAttachment[0] });
 
-    return buildUserProfile(
-      completionHistory,
-      integratedInsights,
-      integralBodyPlanHistory,
-      practiceStack,
-      wizardSessions
-    );
-  }, [completedToday, integratedInsights, integralBodyPlanHistory, practiceStack, historyKegan, historyAttachment]);
+        const profile = await buildUserProfile(
+          completionRecords,
+          integratedInsights,
+          integralBodyPlanHistory,
+          practiceStack,
+          wizardSessions,
+          dailyNotes
+        );
+        setUserProfile(profile);
+      } catch (error) {
+        console.error('[App] Error building user profile:', error);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    buildProfile();
+  }, [completionHistory, integratedInsights, integralBodyPlanHistory, practiceStack, historyKegan, historyAttachment, dailyNotes]);
 
   // Auto-generate personalization when the Integral Body Architect wizard is opened
   useEffect(() => {

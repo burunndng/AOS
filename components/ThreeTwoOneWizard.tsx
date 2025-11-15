@@ -70,13 +70,14 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
   };
 
   const handleDialogueSubmit = async (userMessage: string) => {
-    // Add user message to transcript
-    setDialogueTranscript(prev => [...prev, { role: 'user', text: userMessage }]);
+    // Build updated transcript immediately (don't wait for state update)
+    const updatedTranscript = [...dialogueTranscript, { role: 'user' as const, text: userMessage }];
+    setDialogueTranscript(updatedTranscript);
 
-    // Get Socratic response from AI
+    // Get Socratic response from AI using the updated transcript
     setIsLoadingProbe(true);
     try {
-      const aiResponse = await generateSocraticProbe(dialogueTranscript, session.trigger || '');
+      const aiResponse = await generateSocraticProbe(updatedTranscript, session.trigger || '');
       setDialogueTranscript(prev => [...prev, { role: 'bot', text: aiResponse }]);
     } catch (e) {
       console.error("Error generating Socratic probe:", e);
@@ -442,6 +443,8 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
                 <label className="block text-sm font-semibold text-slate-300 mb-2">Which practice from your stack might support this integration? (Optional)</label>
                 <input
                   type="text"
+                  value={integrationPlan.relatedPracticeId || ''}
+                  onChange={(e) => setIntegrationPlan(prev => ({ ...prev, relatedPracticeId: e.target.value }))}
                   placeholder="e.g., Reflective journaling, IFS practice, or meditation"
                   className="w-full bg-slate-900/50 border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
                 />
