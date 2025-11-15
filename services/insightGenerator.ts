@@ -28,6 +28,7 @@ interface InsightGenerationInput {
     | 'Big Mind Process'
     | 'Memory Reconsolidation'
     | 'Eight Zones'
+    | 'Adaptive Cycle Mapper'
     | 'Somatic Practice'
     | 'Jhana Guide'
     | 'Attachment Assessment'

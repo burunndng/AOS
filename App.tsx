@@ -49,6 +49,7 @@ const MeditationWizard = lazy(() => import('./components/MeditationWizard.tsx'))
 const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.tsx'));
 const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
 const EightZonesWizard = lazy(() => import('./components/EightZonesWizard.tsx'));
+const AdaptiveCycleWizard = lazy(() => import('./components/AdaptiveCycleWizard.tsx'));
 const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizard.tsx'));
 const IntegralBodyArchitectWizard = lazy(() => import('./components/IntegralBodyArchitectWizard.tsx'));
 const DynamicWorkoutArchitectWizard = lazy(() => import('./components/DynamicWorkoutArchitectWizard.tsx'));
@@ -90,6 +91,7 @@ import {
   MemoryReconsolidationDraft,
   EightZonesSession,
   EightZonesDraft,
+  AdaptiveCycleSession,
   EnhancedRecommendationSet,
   IntelligentGuidance
 } from './types.ts';
@@ -196,6 +198,7 @@ export default function App() {
   const [historyJhana, setHistoryJhana] = useLocalStorage<JhanaSession[]>('historyJhana', []);
   const [memoryReconHistory, setMemoryReconHistory] = useLocalStorage<MemoryReconsolidationSession[]>('memoryReconHistory', []);
   const [eightZonesHistory, setEightZonesHistory] = useLocalStorage<EightZonesSession[]>('eightZonesHistory', []);
+  const [adaptiveCycleHistory, setAdaptiveCycleHistory] = useLocalStorage<AdaptiveCycleSession[]>('adaptiveCycleHistory', []);
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
@@ -880,6 +883,80 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
     }
   };
 
+  const handleSaveAdaptiveCycleSession = async (session: AdaptiveCycleSession) => {
+    setAdaptiveCycleHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setActiveWizard(null);
+
+    // Build rich report showing the full four-quadrant landscape
+    const selfAssessmentSection = session.userHint
+      ? `\n## Self-Assessment Scores (1-10 scale)
+- **Potential for growth/change:** ${session.userHint.potential}/10
+- **Connectedness/rigidity of structure:** ${session.userHint.connectedness}/10
+- **Resilience/capacity to absorb disruption:** ${session.userHint.resilience}/10\n`
+      : '';
+
+    const sessionReport = `# Adaptive Cycle Landscape: ${session.systemToAnalyze}
+${selfAssessmentSection}
+## Four-Quadrant Map
+
+### ${session.cycleMap.r.title}
+${session.cycleMap.r.points.map(p => `- ${p}`).join('\n')}
+
+### ${session.cycleMap.K.title}
+${session.cycleMap.K.points.map(p => `- ${p}`).join('\n')}
+
+### ${session.cycleMap.Ω.title}
+${session.cycleMap.Ω.points.map(p => `- ${p}`).join('\n')}
+
+### ${session.cycleMap.α.title}
+${session.cycleMap.α.points.map(p => `- ${p}`).join('\n')}
+
+## Systems Thinking Context
+The Adaptive Cycle is a framework from resilience theory that describes how all complex systems move through cycles of growth, stability, release, and renewal. This landscape map shows how all four phases are present in "${session.systemToAnalyze}", providing a holistic view of the current dynamics and possibilities.`;
+
+    // Generate integrated insight for Journal
+    try {
+      // Determine the most energized quadrant for the pattern
+      const getHighlightedQuadrant = (): string => {
+        if (!session.userHint) return 'all phases of the Adaptive Cycle';
+
+        const { potential, connectedness } = session.userHint;
+        const isPotentialHigh = potential > 5.5;
+        const isConnectednessHigh = connectedness > 5.5;
+
+        if (isPotentialHigh && !isConnectednessHigh) return 'Growth/Exploitation (r) phase';
+        if (isPotentialHigh && isConnectednessHigh) return 'Conservation (K) phase';
+        if (!isPotentialHigh && isConnectednessHigh) return 'Release/Collapse (Ω) phase';
+        return 'Reorganization (α) phase';
+      };
+
+      const detectedPattern = `Mapped ${session.systemToAnalyze} across the Adaptive Cycle, with emphasis on ${getHighlightedQuadrant()}`;
+
+      // Create a concise summary for the insight
+      const allPoints = [
+        ...session.cycleMap.r.points.slice(0, 1),
+        ...session.cycleMap.K.points.slice(0, 1),
+        ...session.cycleMap.Ω.points.slice(0, 1),
+        ...session.cycleMap.α.points.slice(0, 1),
+      ].join(' | ');
+
+      const insight = await generateInsightFromSession({
+        wizardType: 'Adaptive Cycle Mapper',
+        sessionId: session.id,
+        sessionName: session.systemToAnalyze,
+        sessionReport: sessionReport,
+        sessionSummary: allPoints.substring(0, 200),
+        userId: userId,
+        availablePractices: Object.values(corePractices).flat(),
+      });
+
+      setIntegratedInsights(prev => [...prev, insight]);
+      console.log('[Adaptive Cycle] Insight successfully saved:', insight.id);
+    } catch (error) {
+      console.error('Failed to generate insight for Adaptive Cycle session:', error);
+    }
+  };
+
   const handleLaunchYangPractice = (payload: any) => {
     // Store the handoff payload and switch to Dynamic Workout Architect
     setBodyArchitectHandoff({ type: 'yang', payload });
@@ -1091,6 +1168,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
             onSave={handleSave321Session}
             session={draft321}
             insightContext={insightContext}
+            allInsights={integratedInsights}
             markInsightAsAddressed={markInsightAsAddressed}
           />
         );
@@ -1103,7 +1181,9 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
             draft={draftIFS}
             partsLibrary={partsLibrary}
             insightContext={insightContext}
+            allInsights={integratedInsights}
             markInsightAsAddressed={markInsightAsAddressed}
+            userId={userId}
           />
         );
       case 'bias':
@@ -1210,6 +1290,13 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
             session={draftEightZones}
             setDraft={setDraftEightZones}
             userId={userId}
+          />
+        );
+      case 'adaptive-cycle':
+        return (
+          <AdaptiveCycleWizard
+            onClose={() => setActiveWizard(null)}
+            onSave={handleSaveAdaptiveCycleSession}
           />
         );
       case 'big-mind':

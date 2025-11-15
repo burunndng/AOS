@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IFSSession, IFSPart, IFSDialogueEntry, WizardPhase, IntegratedInsight } from '../types.ts';
-import { X, Mic, MicOff, Sparkles, Save, Lightbulb } from 'lucide-react';
+import { X, Mic, MicOff, Sparkles, Save, Lightbulb, TrendingUp } from 'lucide-react';
 import { getCoachResponse, extractPartInfo, summarizeIFSSession } from '../services/geminiService.ts';
 import * as ragService from '../services/ragService.ts';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob, Content } from "@google/genai";
 import { MerkabaIcon } from './MerkabaIcon.tsx';
+import { getWizardSequenceContext } from '../services/insightContext.ts';
 
 // --- Audio Helper Functions ---
 function encode(bytes: Uint8Array) {
@@ -276,11 +277,13 @@ interface IFSWizardProps {
   draft: IFSSession | null;
   partsLibrary: IFSPart[];
   insightContext?: IntegratedInsight | null;
+  allInsights?: IntegratedInsight[];
   markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void;
   userId: string;
 }
 
-const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, draft, partsLibrary, insightContext, markInsightAsAddressed, userId }) => {
+const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, draft, partsLibrary, insightContext, allInsights = [], markInsightAsAddressed, userId }) => {
+  const sequenceContext = getWizardSequenceContext('IFS Session', allInsights);
   const [session, setSession] = useState<IFSSession | null>(null);
   const [currentPhase, setCurrentPhase] = useState<WizardPhase>('IDENTIFY');
   const [connectionState, setConnectionState] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
@@ -839,7 +842,19 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
                     </ul>
                 </div>
             )}
-            
+
+            {sequenceContext && !insightContext && (
+              <div className="mt-4 bg-cyan-900/20 border border-cyan-600/50 rounded-md p-3 text-sm text-cyan-200 space-y-2">
+                <p className="font-semibold flex items-center gap-2">
+                  <TrendingUp size={16}/> Building on Your Previous Work
+                </p>
+                <p className="text-cyan-300">{sequenceContext.progressionNote}</p>
+                <p className="text-xs text-cyan-400 mt-1">
+                  Last session: {sequenceContext.lastSessionDate}
+                </p>
+              </div>
+            )}
+
             {insightContext && (
                 <div className="mt-4 bg-neutral-900/30 border border-neutral-700 rounded-md p-3 text-sm text-neutral-200 space-y-2">
                     <p className="font-bold flex items-center gap-2"><Lightbulb size={16}/> Context from Insight:</p>

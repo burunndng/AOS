@@ -364,3 +364,59 @@ export async function enrichInsightWithGuidance(
     };
   }
 }
+
+/**
+ * Get wizard sequence context - MVP version
+ * Shows simple "last session" info to help users build on previous work
+ */
+export interface WizardSequenceContext {
+  totalSessions: number;
+  lastSessionDate: string;
+  lastSessionSummary: string;
+  progressionNote: string;
+}
+
+export function getWizardSequenceContext(
+  wizardType: IntegratedInsight['mindToolType'],
+  allInsights: IntegratedInsight[]
+): WizardSequenceContext | null {
+  // Get all insights for this wizard type, sorted by date
+  const wizardInsights = allInsights
+    .filter(insight => insight.mindToolType === wizardType)
+    .sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+
+  if (wizardInsights.length === 0) {
+    return null; // First time using this wizard
+  }
+
+  const lastInsight = wizardInsights[0];
+  const totalSessions = wizardInsights.length;
+
+  // Format date nicely
+  const lastDate = new Date(lastInsight.dateCreated);
+  const daysSince = Math.floor((Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  let dateString: string;
+  if (daysSince === 0) dateString = 'earlier today';
+  else if (daysSince === 1) dateString = 'yesterday';
+  else if (daysSince < 7) dateString = `${daysSince} days ago`;
+  else if (daysSince < 30) dateString = `${Math.floor(daysSince / 7)} weeks ago`;
+  else dateString = lastDate.toLocaleDateString();
+
+  // Create progression note
+  let progressionNote: string;
+  if (totalSessions === 1) {
+    progressionNote = `You explored: "${lastInsight.detectedPattern}"`;
+  } else if (totalSessions === 2) {
+    progressionNote = `Building on your previous session where you explored: "${lastInsight.detectedPattern}"`;
+  } else {
+    progressionNote = `This is your ${totalSessions}th session. Last time you explored: "${lastInsight.detectedPattern}"`;
+  }
+
+  return {
+    totalSessions,
+    lastSessionDate: dateString,
+    lastSessionSummary: lastInsight.mindToolShortSummary,
+    progressionNote
+  };
+}

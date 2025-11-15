@@ -1427,3 +1427,34 @@ export interface CachedGuidance {
   contextHash: string; // hash of context to detect changes
 }
 
+// Adaptive Cycle Mapper Types
+export interface AdaptiveCycleDiagnosticAnswers {
+  potential: number; // Score from 1-10 (Low to High)
+  connectedness: number; // Score from 1-10 (Low to High)
+  resilience: number; // Score from 1-10 (Low to High)
+}
+
+// Content for a single quadrant on the Adaptive Cycle map
+export interface AdaptiveCycleQuadrantAnalysis {
+  phase: 'r' | 'K' | 'Ω' | 'α';
+  title: string; // e.g., "Growth / Exploitation (r)"
+  points: string[]; // 3-5 specific bullet points for this quadrant
+}
+
+export interface AdaptiveCycleSession {
+  id: string;
+  date: string;
+  systemToAnalyze: string; // The user's context, e.g., "My Career"
+  // Optional self-assessment from the user (used as hint for AI)
+  userHint?: AdaptiveCycleDiagnosticAnswers;
+  // The main data: the full, four-quadrant map
+  cycleMap: {
+    r: AdaptiveCycleQuadrantAnalysis;
+    K: AdaptiveCycleQuadrantAnalysis;
+    Ω: AdaptiveCycleQuadrantAnalysis;
+    α: AdaptiveCycleQuadrantAnalysis;
+  };
+  // This will be used for the rich report in the insight journal
+  fullReport?: string;
+}
+

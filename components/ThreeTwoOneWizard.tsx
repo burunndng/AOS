@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { ThreeTwoOneSession, IntegratedInsight } from '../types.ts';
-import { X, ArrowLeft, ArrowRight, Lightbulb } from 'lucide-react';
+import { X, ArrowLeft, ArrowRight, Lightbulb, TrendingUp } from 'lucide-react';
 import { summarizeThreeTwoOneSession } from '../services/geminiService.ts';
+import { getWizardSequenceContext } from '../services/insightContext.ts';
 
 type Step = 'TRIGGER' | 'FACE_IT' | 'TALK_TO_IT' | 'BE_IT' | 'INTEGRATE' | 'SUMMARY';
 
@@ -11,10 +12,12 @@ interface ThreeTwoOneWizardProps {
   onSave: (session: ThreeTwoOneSession) => void;
   session: Partial<ThreeTwoOneSession> | null;
   insightContext?: IntegratedInsight | null;
+  allInsights?: IntegratedInsight[];
   markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void;
 }
 
-export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, insightContext, markInsightAsAddressed }: ThreeTwoOneWizardProps) {
+export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, insightContext, allInsights = [], markInsightAsAddressed }: ThreeTwoOneWizardProps) {
+  const sequenceContext = getWizardSequenceContext('3-2-1 Reflection', allInsights);
   const [session, setSession] = useState<Partial<ThreeTwoOneSession>>(() => {
     if (insightContext && (!draft || !draft.linkedInsightId)) {
       return { ...draft, linkedInsightId: insightContext.id };
@@ -107,6 +110,21 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
         return (
           <>
             <h3 className="text-lg font-semibold font-mono text-slate-100">Step 1: The Trigger</h3>
+
+            {sequenceContext && !insightContext && (
+              <div className="bg-cyan-900/20 border border-cyan-600/50 rounded-md p-4 my-4 text-sm text-cyan-200">
+                <p className="font-semibold flex items-center gap-2 mb-2">
+                  <TrendingUp size={16}/> Building on Your Previous Work
+                </p>
+                <p className="text-cyan-300">
+                  {sequenceContext.progressionNote}
+                </p>
+                <p className="text-xs text-cyan-400 mt-2">
+                  Last session: {sequenceContext.lastSessionDate} • Total: {sequenceContext.totalSessions} {sequenceContext.totalSessions === 1 ? 'session' : 'sessions'}
+                </p>
+              </div>
+            )}
+
             {insightContext && (
                 <div className="bg-blue-900/30 border border-blue-700 rounded-md p-4 my-4 text-sm text-blue-200 space-y-3">
                     <p className="font-bold flex items-center gap-2"><Lightbulb size={16}/> Starting from an Insight:</p>
