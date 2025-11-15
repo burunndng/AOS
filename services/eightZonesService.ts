@@ -1,5 +1,45 @@
-import { ZoneAnalysis } from '../types.ts';
+import { ZoneAnalysis, DialogueEntry } from '../types.ts';
 import { generateText } from './geminiService.ts';
+
+/**
+ * Generate AI-facilitated connection dialogue between zones
+ * Acts as an Integral Theory facilitator using Socratic questioning
+ */
+export const generateConnectionDialogue = async (
+  focalQuestion: string,
+  zoneA: ZoneAnalysis,
+  zoneB: ZoneAnalysis,
+  dialogueHistory: DialogueEntry[]
+): Promise<string> => {
+  const previousContext = dialogueHistory.length > 0
+    ? `\n\nPrevious dialogue:\n${dialogueHistory.map(d => `${d.role === 'user' ? 'User' : 'Facilitator'}: ${d.text}`).join('\n')}`
+    : '';
+
+  const prompt = `You are an Integral Theory facilitator guiding someone through the "Eight Zones of Knowing" framework.
+
+Focal Question: "${focalQuestion}"
+
+The user has just completed:
+- **Zone ${zoneA.zoneNumber}: ${zoneA.zoneFocus}**
+  User's analysis: "${zoneA.userInput}"
+
+- **Zone ${zoneB.zoneNumber}: ${zoneB.zoneFocus}**
+  User's analysis: "${zoneB.userInput}"
+${previousContext}
+
+Your role: Ask ONE open-ended, Socratic question that helps the user discover the connection between these two zones. The question should:
+1. Be conversational and encouraging (not academic)
+2. Help them see how insights from Zone ${zoneA.zoneNumber} might relate to or inform Zone ${zoneB.zoneNumber}
+3. Invite them to articulate patterns, tensions, or synergies they notice
+4. Be specific to their actual responses (not generic)
+5. If they've already shared some insights in the dialogue, acknowledge what they've discovered and probe deeper
+
+${dialogueHistory.length >= 3 ? 'The user has reflected on this enough. Acknowledge their insight and invite them to continue to the next zone.' : ''}
+
+Return ONLY the question/response text, nothing else.`;
+
+  return await generateText(prompt);
+};
 
 /**
  * Enhance user's zone analysis with AI-generated insights
@@ -41,7 +81,8 @@ Return only the enhancement text.`;
 export const generateSynthesis = async (
   userId: string,
   focalQuestion: string,
-  zoneAnalyses: Record<number, ZoneAnalysis>
+  zoneAnalyses: Record<number, ZoneAnalysis>,
+  connectionReflections?: Array<{ zones: string; dialogue: DialogueEntry[] }>
 ): Promise<{
   blindSpots: string[];
   novelInsights: string[];
@@ -54,12 +95,18 @@ export const generateSynthesis = async (
     .map(zone => `**Zone ${zone.zoneNumber}: ${zone.zoneFocus}**\nUser Input: ${zone.userInput}\nAI Enhancement: ${zone.aiEnhancement || 'N/A'}`)
     .join('\n\n');
 
+  const connectionsText = connectionReflections && connectionReflections.length > 0
+    ? `\n\nUser's Connection Reflections:\n${connectionReflections.map(conn =>
+        `**${conn.zones}:**\n${conn.dialogue.map(d => `- ${d.role === 'user' ? 'User' : 'Facilitator'}: ${d.text}`).join('\n')}`
+      ).join('\n\n')}`
+    : '';
+
   const prompt = `You are synthesizing insights from the "Eight Zones of Knowing" framework exploration.
 
 Focal Question: "${focalQuestion}"
 
 All Zones Explored:
-${zonesText}
+${zonesText}${connectionsText}
 
 Generate a comprehensive synthesis in the following JSON format:
 {
@@ -76,10 +123,10 @@ Generate a comprehensive synthesis in the following JSON format:
 
 Guidelines:
 - blindSpots: What perspectives or aspects are missing or underexplored?
-- novelInsights: What unexpected or profound realizations emerged from seeing all zones together?
+- novelInsights: What unexpected or profound realizations emerged from seeing all zones together? ${connectionsText ? 'Pay special attention to insights the user discovered in their connection reflections.' : ''}
 - recommendations: What are 3 actionable next steps based on this exploration?
-- synthesisReport: A narrative that integrates all zones meaningfully
-- connections: Identify 3-5 key relationships between different zones
+- synthesisReport: A narrative that integrates all zones meaningfully${connectionsText ? ', building on the user\'s own articulated connections between zones' : ''}
+- connections: Identify 3-5 key relationships between different zones${connectionsText ? ' (include and expand on the connections the user already discovered)' : ''}
 
 Return ONLY valid JSON, no additional text.`;
 

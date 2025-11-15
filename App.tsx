@@ -1026,21 +1026,42 @@ ${session.integrationNote}
     setDraftEightZones(null);
     navigateBack();
 
+    // Build rich report from zone analyses and connection dialogues
+    const zoneAnalysesText = Object.values(session.zoneAnalyses || {})
+      .sort((a, b) => a.zoneNumber - b.zoneNumber)
+      .map(zone => `### Zone ${zone.zoneNumber}: ${zone.zoneFocus}
+**User Analysis:** ${zone.userInput}
+${zone.aiEnhancement ? `\n**AI Enhancement:** ${zone.aiEnhancement}` : ''}`)
+      .join('\n\n');
+
+    const connectionReflectionsText = session.connectionReflections && session.connectionReflections.length > 0
+      ? `\n\n## Connection Reflections\n\n${session.connectionReflections.map(conn => `### ${conn.zones}
+${conn.dialogue.map(d => `- **${d.role === 'user' ? 'You' : 'Facilitator'}:** ${d.text}`).join('\n')}`).join('\n\n')}`
+      : '';
+
+    const sessionReport = `# Eight Zones Analysis: ${session.focalQuestion}
+
+## Zone-by-Zone Analysis
+
+${zoneAnalysesText}${connectionReflectionsText}
+
+## Integral Synthesis
+
+${session.synthesisReport || 'Synthesis pending'}
+
+## Key Insights
+
+### Blind Spots
+${session.blindSpots?.map(spot => `- ${spot}`).join('\n') || '- None identified'}
+
+### Novel Insights
+${session.novelInsights?.map(insight => `- ${insight}`).join('\n') || '- None identified'}
+
+### Recommendations
+${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identified'}`;
+
     // Generate integrated insight for Journal
     if (session.synthesisReport) {
-      const sessionReport = `# Eight Zones Analysis: ${session.focalQuestion}
-
-${session.synthesisReport}
-
-## Blind Spots
-${session.blindSpots?.map(spot => `- ${spot}`).join('\n') || 'None identified'}
-
-## Novel Insights
-${session.novelInsights?.map(insight => `- ${insight}`).join('\n') || 'None identified'}
-
-## Recommendations
-${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified'}`;
-
       try {
         const insight = await generateInsightFromSession({
           wizardType: 'Eight Zones',
@@ -1050,7 +1071,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
           sessionSummary: session.synthesisReport.substring(0, 200) + '...',
           userId: userId,
           availablePractices: Object.values(corePractices).flat(),
-        userProfile,
+          userProfile,
         });
 
         setIntegratedInsights(prev => [...prev, insight]);
