@@ -292,6 +292,8 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
   // FIX: Added useState for isPlaying state
   const [isPlaying, setIsPlaying] = useState(false);
   const [ragSyncing, setRagSyncing] = useState(false);
+  const [isPartProfileAnalyzed, setIsPartProfileAnalyzed] = useState(false);
+  const [isAnalyzingPartProfile, setIsAnalyzingPartProfile] = useState(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const sessionPromiseRef = useRef<any>(null);
@@ -368,6 +370,10 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
     if (draft) {
       setSession(draft);
       setCurrentPhase(draft.currentPhase);
+      // Check if part profile was already analyzed in the draft
+      if (draft.partRole || draft.partFears || draft.partPositiveIntent) {
+        setIsPartProfileAnalyzed(true);
+      }
     } else {
       const newSessionId = `ifs-${Date.now()}`;
       const initialSession: IFSSession = {
@@ -382,6 +388,8 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
       };
       setSession(initialSession);
       setCurrentPhase('IDENTIFY');
+      setIsPartProfileAnalyzed(false);
+      setIsAnalyzingPartProfile(false);
     }
   }, [draft, insightContext]);
 
@@ -588,6 +596,11 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
                       // Update component state if phase changed
                       if (newPhase !== updatedSession.currentPhase) {
                           setCurrentPhase(newPhase);
+
+                          // Automatically trigger part profile analysis when reaching DEEPEN phase
+                          if ((newPhase === 'DEEPEN' || newPhase === 'UNBURDEN') && !isPartProfileAnalyzed && !isAnalyzingPartProfile) {
+                              setTimeout(() => getPartInfo(), 500);
+                          }
                       }
                   }
                   updatedSession.transcript = newTranscript;
@@ -689,22 +702,19 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
   };
   
   const getPartInfo = async () => {
-      if (!session || isSaving) return;
-      setIsSaving(true);
-      // FIX: Use setError hook to update error state
+      if (!session || isAnalyzingPartProfile) return;
+      setIsAnalyzingPartProfile(true);
       setError('');
       try {
           const fullTranscript = session.transcript.map(entry => `${entry.role}: ${entry.text}`).join('\n');
           const info = await extractPartInfo(fullTranscript);
           setSession(prev => ({ ...prev!, partRole: info.role, partFears: info.fears, partPositiveIntent: info.positiveIntent }));
-          updateTranscript('bot', `Okay, I'm hearing that this part's role is typically a ${info.role}, and its fears might be around ${info.fears}. It sounds like its positive intent for you is to ${info.positiveIntent}. Does that resonate?`, currentPhase);
+          setIsPartProfileAnalyzed(true);
       } catch (e) {
           console.error("Error extracting part info:", e);
-          // FIX: Use setError hook to update error state
-          setError("Failed to extract part information. Please try again.");
-          updateTranscript('bot', "Sorry, I couldn't quite get that part's information. Let's try to gently explore it with your words. What are you noticing about its role, its fears, and what it's trying to do for you?", currentPhase);
+          setError("Failed to extract part information.");
       } finally {
-          setIsSaving(false);
+          setIsAnalyzingPartProfile(false);
       }
   };
 
@@ -816,17 +826,30 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
             </div>
 
             {session && currentPhase !== 'CLOSING' && (
-              <>
-                <button onClick={getPartInfo} disabled={isSaving || connectionState !== 'connected'} className="w-full bg-neutral-600 hover:bg-neutral-700 text-white font-medium py-2 rounded-md flex items-center justify-center gap-2 transition">
-                  <Sparkles size={18} /> AI Part Info
-                </button>
-                <div className="bg-slate-700/50 p-3 rounded-md text-sm text-slate-300">
-                    <p className="font-semibold">Part Name: <span className="text-cyan-300">{session.partName || 'N/A'}</span></p>
-                    <p>Role: {session.partRole || 'N/A'}</p>
-                    <p>Fears: {session.partFears || 'N/A'}</p>
-                    <p>Intent: {session.partPositiveIntent || 'N/A'}</p>
-                </div>
-              </>
+              <div className="bg-slate-700/50 p-3 rounded-md text-sm text-slate-300">
+                  <p className="font-semibold mb-2 flex items-center gap-2">
+                    <Sparkles size={16} className="text-cyan-400" />
+                    Part Profile
+                    {isAnalyzingPartProfile && (
+                      <span className="ml-auto text-xs text-cyan-400 flex items-center gap-1">
+                        <div className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                        Analyzing...
+                      </span>
+                    )}
+                  </p>
+                  {isAnalyzingPartProfile ? (
+                    <div className="text-slate-400 text-xs italic">
+                      Analyzing the transcript to extract part information...
+                    </div>
+                  ) : (
+                    <>
+                      <p className="font-semibold">Part Name: <span className="text-cyan-300">{session.partName || 'N/A'}</span></p>
+                      <p>Role: {session.partRole || 'N/A'}</p>
+                      <p>Fears: {session.partFears || 'N/A'}</p>
+                      <p>Intent: {session.partPositiveIntent || 'N/A'}</p>
+                    </>
+                  )}
+              </div>
             )}
 
             {currentPhase === 'CLOSING' && summaryData && (

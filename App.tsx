@@ -781,10 +781,44 @@ ${session.integrationPlan.relatedPracticeId ? `- **Related Practice:** ${session
       });
     }
 
-    // Generate insight from IFS session
-    const transcriptSummary = session.transcript.slice(-5).map(t => t.text).join(' ');
-    const report = `# IFS Session: ${session.partName}\n- Part: ${session.partName}${session.partRole ? ` (${session.partRole})` : ''}\n- Phase: ${session.currentPhase}\n- Dialogue: ${transcriptSummary}\n- Integration: ${session.integrationNote || 'Pending'}`;
-    const summary = `Worked with part "${session.partName}" at phase: ${session.currentPhase}${session.summary ? ` - ${session.summary}` : ''}`;
+    // Build rich report from IFS session data
+    const transcriptByPhase = session.transcript.reduce((acc, entry) => {
+      const phase = entry.phase || 'IDENTIFY';
+      if (!acc[phase]) acc[phase] = [];
+      acc[phase].push(`- **${entry.role === 'user' ? 'You' : 'Facilitator'}:** ${entry.text}`);
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    const report = `# IFS Session: ${session.partName || 'Unnamed Part'}
+
+## Part Profile
+${session.partRole || session.partFears || session.partPositiveIntent ? `
+- **Role:** ${session.partRole || 'Not identified'}
+- **Fears/Concerns:** ${session.partFears || 'Not identified'}
+- **Positive Intent:** ${session.partPositiveIntent || 'Not identified'}
+` : '- Part profile analysis pending'}
+
+## Session Progression
+
+${Object.entries(transcriptByPhase).map(([phase, entries]) => `
+### ${phase.replace('_', ' ')} Phase
+${entries.join('\n')}
+`).join('\n')}
+
+## Session Summary
+${session.summary || 'Session completed at phase: ' + session.currentPhase}
+
+${session.aiIndications && session.aiIndications.length > 0 ? `
+## AI Indications for Follow-up
+${session.aiIndications.map(ind => `- ${ind}`).join('\n')}
+` : ''}
+
+${session.integrationNote ? `
+## Integration Note
+${session.integrationNote}
+` : ''}`;
+
+    const summary = `Worked with part "${session.partName || 'Unnamed Part'}"${session.partRole ? ` (${session.partRole})` : ''} - reached ${session.currentPhase} phase${session.summary ? ` - ${session.summary}` : ''}`;
 
     try {
       const insight = await generateInsightFromSession({
