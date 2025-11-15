@@ -325,6 +325,8 @@ export default function App() {
    */
   const navigateBack = useCallback(() => {
     if (navigationStack.length === 0) {
+      // If stack is empty, just close the active wizard
+      setActiveWizard(null);
       return;
     }
 
