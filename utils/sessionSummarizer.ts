@@ -206,14 +206,25 @@ function summarizeSession(wizardType: string, session: any): WizardSessionSummar
       if (session.systemToAnalyze) {
         insights.push(`System analyzed: ${session.systemToAnalyze}`);
       }
-      if (session.diagnosedPhase && session.phaseAnalysis) {
+      if (session.cycleMap) {
+        // Extract key points from all 4 quadrants
+        const allPhases = ['r', 'K', 'Ω', 'α'] as const;
         const phaseNames: Record<string, string> = {
-          'r': 'Growth/Exploitation',
-          'K': 'Conservation',
-          'Ω': 'Release/Collapse',
-          'α': 'Reorganization'
+          'r': 'Growth (r)',
+          'K': 'Conservation (K)',
+          'Ω': 'Release (Ω)',
+          'α': 'Reorganization (α)'
         };
-        insights.push(`Current phase: ${phaseNames[session.diagnosedPhase] || session.diagnosedPhase}`);
+
+        // Show insights from each quadrant
+        for (const phase of allPhases) {
+          if (session.cycleMap[phase]?.points?.[0]) {
+            insights.push(`${phaseNames[phase]}: ${session.cycleMap[phase].points[0]}`);
+          }
+        }
+      }
+      if (session.userHint) {
+        insights.push(`Self-assessment: Potential ${session.userHint.potential}/10, Connectedness ${session.userHint.connectedness}/10, Resilience ${session.userHint.resilience}/10`);
       }
       break;
 
