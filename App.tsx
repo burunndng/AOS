@@ -101,6 +101,7 @@ import * as geminiService from './services/geminiService.ts';
 import * as ragService from './services/ragService.ts';
 import { generateInsightFromSession } from './services/insightGenerator.ts';
 import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
+import { getWizardSequenceContext } from './services/wizardSequenceContext.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
 import { generateEnhancedRecommendationsForApp } from './services/enhancedRecommendationHelper.ts';
@@ -1083,6 +1084,17 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
     if (!activeWizard) return null;
     const insightContext = getActiveInsightContext();
 
+    // Generate wizard sequence context for current wizard
+    let sequenceContext = null;
+    if (activeWizard === '321') {
+      sequenceContext = getWizardSequenceContext(
+        '3-2-1 Reflection',
+        history321,
+        integratedInsights,
+        linkedInsightId
+      );
+    }
+
     switch (activeWizard) {
       case '321':
         return (
@@ -1092,6 +1104,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
             session={draft321}
             insightContext={insightContext}
             markInsightAsAddressed={markInsightAsAddressed}
+            sequenceContext={sequenceContext}
           />
         );
       case 'ifs':
