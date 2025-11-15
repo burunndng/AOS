@@ -21,6 +21,13 @@ interface CoachRequest {
   modules: Record<string, { name: string; count: number }>;
   practiceNotes: Record<string, string>;
   dailyNotes: Record<string, string>;
+  userProfile?: {
+    experienceLevel: 'beginner' | 'intermediate' | 'advanced';
+    preferredIntensity: 'low' | 'moderate' | 'high' | 'variable';
+    recurringPatterns?: string[];
+    commonBlockers?: string[];
+    practiceComplianceRate?: number;
+  };
 }
 
 export default async function handler(
@@ -57,6 +64,7 @@ export default async function handler(
       modules,
       practiceNotes,
       dailyNotes,
+      userProfile,
     } = req.body as CoachRequest;
 
     if (!userId || !message) {
@@ -95,24 +103,41 @@ export default async function handler(
 
     const timeContext = `Total weekly commitment: ${timeCommitment.toFixed(1)} hours (${timeIndicator}).`;
 
-    // Build the complete prompt
-    const fullPrompt = `You are an intelligent ILP (Integrative Life Practices) coach. You're helping someone build and sustain transformative life practices.
+    // Build user profile context if available
+    let profileContext = '';
+    if (userProfile) {
+      profileContext = `
+User profile:
+- Experience: ${userProfile.experienceLevel}
+- Intensity preference: ${userProfile.preferredIntensity}
+- Compliance: ${(userProfile.practiceComplianceRate ?? 0 * 100).toFixed(0)}%${
+        userProfile.recurringPatterns && userProfile.recurringPatterns.length > 0
+          ? `\n- Recurring patterns: ${userProfile.recurringPatterns.slice(0, 2).join(', ')}`
+          : ''
+      }${
+        userProfile.commonBlockers && userProfile.commonBlockers.length > 0
+          ? `\n- Blockers to address: ${userProfile.commonBlockers.slice(0, 2).join(', ')}`
+          : ''
+      }`;
+    }
 
-User's current context:
+    // Build the complete prompt with strict word limit enforcement
+    const fullPrompt = `You are a concise ILP (Integrative Life Practices) coach helping someone with transformative practices.
+
+User's context:
 - ${stackContext}
-- Modules breakdown: ${moduleBreakdown || 'None selected yet'}
+- Modules: ${moduleBreakdown || 'None selected'}
 - ${completionContext}
-- ${timeContext}
+- ${timeContext}${profileContext}
 
-The user just asked: "${message}"
+User asked: "${message}"
 
-Guidelines:
-- Be conversational, warm, and grounded in their actual selections
-- Pay close attention to any general and daily user notes on their practices, as they are critical context
-- If they ask for the "why" of practices, explain the research and benefits
-- If they're struggling (especially if mentioned in notes), suggest making it smaller or easier
-- If they're motivated, suggest adding one more practice
-- Keep responses to 2-4 sentences. Be direct and authentic.`;
+CRITICAL: Respond in 30-40 words MAX. Be direct, warm, and grounded.
+- Reference their profile/patterns when relevant
+- Suggest smaller changes if struggling, bigger if motivated
+- Be authentic and conversational`;
+
+    console.log('[Coach API] Building prompt with word limit constraint (30-40 words max)');
 
     // Set up streaming response
     res.setHeader('Content-Type', 'text/event-stream');
@@ -145,8 +170,8 @@ Guidelines:
             },
           ],
           stream: true,
-          temperature: 0.7,
-          max_tokens: 1024,
+          temperature: 0.5,
+          max_tokens: 120,
         }),
       });
 
