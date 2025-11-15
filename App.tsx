@@ -151,6 +151,10 @@ export default function App() {
   const [activeTab, setActiveTab] = useLocalStorage<ActiveTab>('activeTab', 'dashboard');
   const [highlightPracticeId, setHighlightPracticeId] = useState<string | null>(null);
 
+  // User profile for adaptive personalization
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+
   // Clear highlight when changing tabs
   useEffect(() => {
     if (activeTab !== 'browse') {
@@ -252,9 +256,7 @@ export default function App() {
   const [aqalReport, setAqalReport] = useLocalStorage<AqalReportData | null>('aqalReport', null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isProfileLoading, setIsProfileLoading] = useState(false);
-  
+
   // Modals state
   const [activeWizard, setActiveWizard] = useLocalStorage<string | null>('activeWizard', null);
   const [linkedInsightId, setLinkedInsightId] = useState<string | undefined>(undefined);
