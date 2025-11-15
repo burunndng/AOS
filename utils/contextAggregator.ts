@@ -11,6 +11,7 @@ import type {
   PlanHistoryEntry,
 } from '../types';
 import { extractWizardSessions } from './sessionSummarizer';
+import { generateText } from '../services/geminiService';
 
 /**
  * User profile containing analyzed preferences, patterns, and experience
@@ -35,6 +36,12 @@ export interface UserProfile {
   primaryFocusArea?: string;
   developmentalStage?: KeganStage;
   attachmentStyle?: string;
+  sentimentSummary?: {
+    averageMoodScore: number; // -1.0 to 1.0 scale
+    moodTrend: 'improving' | 'declining' | 'stable' | 'variable';
+    recentMoodKeywords: string[]; // e.g., ['stress', 'anxiety', 'joy']
+    lastAnalyzedDate: string;
+  };
 }
 
 /**
@@ -143,16 +150,110 @@ function extractPrimaryChallenges(
 }
 
 /**
+ * Analyze daily notes for sentiment and mood trends
+ * Returns mood score, trend, and keywords for use in personalized recommendations
+ */
+async function analyzeDailyNotesSentiment(
+  dailyNotes: Record<string, string>
+): Promise<{
+  averageMoodScore: number;
+  moodTrend: 'improving' | 'declining' | 'stable' | 'variable';
+  recentMoodKeywords: string[];
+}> {
+  if (!dailyNotes || Object.keys(dailyNotes).length === 0) {
+    return {
+      averageMoodScore: 0,
+      moodTrend: 'stable',
+      recentMoodKeywords: [],
+    };
+  }
+
+  const sentiments: number[] = [];
+  const allKeywords = new Map<string, number>();
+
+  // Analyze the last 7 notes for sentiment
+  const recentNotes = Object.entries(dailyNotes)
+    .sort((a, b) => (b[0] > a[0] ? 1 : -1))
+    .slice(0, 7);
+
+  for (const [_date, noteText] of recentNotes) {
+    try {
+      const prompt = `Analyze the following daily note for emotional sentiment and extract up to 3 key mood-related keywords. Return a JSON object with:
+{
+  "sentimentScore": number from -1.0 (very negative) to 1.0 (very positive),
+  "keywords": string[] of mood-related keywords (e.g., "stressed", "hopeful", "energized")
+}
+
+Daily note: "${noteText}"
+
+Return ONLY the JSON object.`;
+
+      const response = await generateText(prompt);
+      const parsed = JSON.parse(response);
+
+      sentiments.push(parsed.sentimentScore || 0);
+
+      // Aggregate keywords
+      for (const keyword of parsed.keywords || []) {
+        allKeywords.set(keyword, (allKeywords.get(keyword) || 0) + 1);
+      }
+    } catch (e) {
+      console.warn('Error analyzing note sentiment:', e);
+      sentiments.push(0); // Neutral fallback
+    }
+  }
+
+  // Calculate average mood score
+  const averageMoodScore =
+    sentiments.length > 0
+      ? sentiments.reduce((a, b) => a + b, 0) / sentiments.length
+      : 0;
+
+  // Determine mood trend by comparing recent (last 3) to older (previous 3-7)
+  let moodTrend: 'improving' | 'declining' | 'stable' | 'variable' = 'stable';
+  if (sentiments.length >= 3) {
+    const recentAvg =
+      sentiments.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(3, sentiments.length);
+    const olderAvg =
+      sentiments.length > 3
+        ? sentiments.slice(3).reduce((a, b) => a + b, 0) / (sentiments.length - 3)
+        : recentAvg;
+
+    const difference = recentAvg - olderAvg;
+    if (difference > 0.2) {
+      moodTrend = 'improving';
+    } else if (difference < -0.2) {
+      moodTrend = 'declining';
+    } else if (Math.abs(difference) > 0.1) {
+      moodTrend = 'variable';
+    }
+  }
+
+  // Get top 3 keywords
+  const recentMoodKeywords = Array.from(allKeywords.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([keyword]) => keyword);
+
+  return {
+    averageMoodScore: Math.round(averageMoodScore * 100) / 100,
+    moodTrend,
+    recentMoodKeywords,
+  };
+}
+
+/**
  * Build comprehensive user profile from historical data
  * Analyzes completion history, plan feedback, and insights to understand preferences and patterns
  */
-export function buildUserProfile(
+export async function buildUserProfile(
   completionHistory: CompletionRecord[],
   integratedInsights: IntegratedInsight[],
   planHistory: PlanHistoryEntry[],
   currentPracticeStack: AllPractice[],
-  wizardSessions: any[]
-): UserProfile {
+  wizardSessions: any[],
+  dailyNotes?: Record<string, string>
+): Promise<UserProfile> {
   // Calculate modality preferences from completion history
   const modalityCount = { mind: 0, body: 0, spirit: 0, shadow: 0 };
   const practiceModalities: Record<string, string> = {};
@@ -277,6 +378,9 @@ export function buildUserProfile(
     primaryFocusArea = pendingInsights[0].detectedPattern;
   }
 
+  // Analyze daily notes for sentiment and mood trends
+  const sentimentAnalysis = await analyzeDailyNotesSentiment(dailyNotes || {});
+
   return {
     preferredModalities,
     experienceLevel,
@@ -292,6 +396,12 @@ export function buildUserProfile(
     primaryFocusArea,
     developmentalStage,
     attachmentStyle,
+    sentimentSummary: {
+      averageMoodScore: sentimentAnalysis.averageMoodScore,
+      moodTrend: sentimentAnalysis.moodTrend,
+      recentMoodKeywords: sentimentAnalysis.recentMoodKeywords,
+      lastAnalyzedDate: new Date().toISOString(),
+    },
   };
 }
 

@@ -107,7 +107,7 @@ import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } fro
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
 import { generateEnhancedRecommendationsForApp } from './services/enhancedRecommendationHelper.ts';
 import { getIntelligentGuidance, clearGuidanceCache } from './services/intelligenceHub.ts';
-import { aggregateUserContext } from './utils/contextAggregator.ts';
+import { aggregateUserContext, buildUserProfile, type UserProfile } from './utils/contextAggregator.ts';
 
 // Custom Hook for Local Storage
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -157,6 +157,39 @@ export default function App() {
       setHighlightPracticeId(null);
     }
   }, [activeTab]);
+
+  // Build user profile from activity data for adaptive personalization
+  useEffect(() => {
+    const buildProfile = async () => {
+      try {
+        setIsProfileLoading(true);
+        // Build completion history from completionHistory object
+        const completionRecords = Object.entries(completionHistory).flatMap(([date, practiceIds]) =>
+          practiceIds.map(practiceId => ({
+            practiceId,
+            date,
+            completed: true,
+          }))
+        );
+
+        const profile = await buildUserProfile(
+          completionRecords,
+          integratedInsights,
+          integralBodyPlanHistory,
+          practiceStack,
+          [], // wizardSessions - could be extracted from localStorage if needed
+          dailyNotes
+        );
+        setUserProfile(profile);
+      } catch (error) {
+        console.error('[App] Error building user profile:', error);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    buildProfile();
+  }, [practiceStack, integratedInsights, integralBodyPlanHistory, dailyNotes, completionHistory]);
 
   // RAG System & User Context
   const [userId] = useLocalStorage<string>('userId', (() => {
@@ -219,6 +252,8 @@ export default function App() {
   const [aqalReport, setAqalReport] = useLocalStorage<AqalReportData | null>('aqalReport', null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
   
   // Modals state
   const [activeWizard, setActiveWizard] = useLocalStorage<string | null>('activeWizard', null);
@@ -529,7 +564,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -552,7 +588,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -574,7 +611,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -596,7 +634,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -618,7 +657,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -640,7 +680,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -664,7 +705,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -686,7 +728,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -715,7 +758,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -755,7 +799,8 @@ export default function App() {
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {
@@ -935,6 +980,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
           sessionSummary: session.synthesisReport.substring(0, 200) + '...',
           userId: userId,
           availablePractices: Object.values(corePractices).flat(),
+        userProfile,
         });
 
         setIntegratedInsights(prev => [...prev, insight]);
@@ -986,7 +1032,8 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
         sessionReport: report,
         sessionSummary: summary,
         userId,
-        availablePractices: Object.values(corePractices).flat()
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
       });
       setIntegratedInsights(prev => [...prev, insight]);
     } catch (err) {

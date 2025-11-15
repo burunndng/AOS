@@ -178,13 +178,25 @@ USER PROFILE (Personalization Context):
 - Recurring Patterns: ${userProfile.recurringPatterns.join(', ') || 'None identified'}
 - Common Blockers: ${userProfile.commonBlockers.join(', ') || 'None identified'}
 ${userProfile.developmentalStage ? `- Developmental Stage: ${userProfile.developmentalStage}` : ''}
+${userProfile.sentimentSummary ? `
+MOOD & EMOTIONAL CONTEXT:
+- Current Mood Score: ${userProfile.sentimentSummary.averageMoodScore.toFixed(2)} (scale: -1.0 very negative to 1.0 very positive)
+- Mood Trend: ${userProfile.sentimentSummary.moodTrend}
+- Recent Keywords: ${userProfile.sentimentSummary.recentMoodKeywords.join(', ') || 'neutral'}
+` : ''}
 
 PERSONALIZATION INSTRUCTIONS:
 - Tailor recommendations to match this user's experience level and modality preferences
 - Consider their preferred intensity: ${userProfile.preferredIntensity === 'low' ? 'avoid intense practices; focus on gentle inquiry' : userProfile.preferredIntensity === 'high' ? 'can handle challenging practices; encourage growth-edge work' : 'vary intensity; offer options'}
 - Be mindful of their recurring patterns (${userProfile.recurringPatterns[0] || 'general patterns'}) - use it as a lens for understanding the current session
 - If their compliance is low, suggest simpler, more achievable practices
-- If their compliance is high, can suggest more complex integrated practices`;
+- If their compliance is high, can suggest more complex integrated practices
+${userProfile.sentimentSummary ? `
+EMOTIONAL TONE GUIDANCE:
+- User's emotional state: ${userProfile.sentimentSummary.moodTrend === 'declining' || userProfile.sentimentSummary.averageMoodScore < -0.3 ? 'Current mood is low or declining - prioritize gentle, supportive practices that build capacity without adding pressure' : userProfile.sentimentSummary.moodTrend === 'improving' || userProfile.sentimentSummary.averageMoodScore > 0.3 ? 'User is in positive or improving mood - can suggest momentum-building practices that leverage current energy' : 'Mood is stable - balanced approach works well'}
+- Keywords to consider (${userProfile.sentimentSummary.recentMoodKeywords.join(', ') || 'neutral'}): Avoid practices that trigger these emotions; suggest practices that help process or transform them
+- If mood score is below -0.5: recommend grounding, embodiment, and self-compassion practices
+- If mood score is above 0.5: recommend practices that sustain momentum and deepen engagement` : ''}`;
   }
 
   basePrompt += `
