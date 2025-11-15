@@ -105,7 +105,7 @@ Return ONLY valid JSON with this exact structure:
 
 Return ONLY valid JSON, no markdown code blocks, no additional commentary.`;
 
-  const responseText = await generateText(prompt, { model: 'gemini-2.5-pro' });
+  const responseText = await generateText(prompt, { model: 'gemini-2.5-flash' });
 
   try {
     // Remove markdown code blocks if present
