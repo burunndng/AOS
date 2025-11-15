@@ -443,6 +443,8 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
                 <label className="block text-sm font-semibold text-slate-300 mb-2">Which practice from your stack might support this integration? (Optional)</label>
                 <input
                   type="text"
+                  value={integrationPlan.relatedPracticeId || ''}
+                  onChange={(e) => setIntegrationPlan(prev => ({ ...prev, relatedPracticeId: e.target.value }))}
                   placeholder="e.g., Reflective journaling, IFS practice, or meditation"
                   className="w-full bg-slate-900/50 border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
                 />
