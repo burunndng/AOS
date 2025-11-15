@@ -1374,6 +1374,10 @@ export interface PracticeRecommendation {
   startTiming?: string; // e.g., "Week 2, after 1 Polarity session"
   timeCommitment?: string; // e.g., "10 min/day for 7 days"
   integration?: string; // How to integrate with existing practices
+  sequenceWeek?: number; // Which week to start this practice
+  sequenceGuidance?: string; // When to start (e.g., "Week 2, after 1 Polarity session")
+  expectedBenefits?: string; // Expected benefits from this practice
+  integrationTips?: string; // Tips for integrating with existing practices
 }
 
 export interface PracticeAdjustment {
