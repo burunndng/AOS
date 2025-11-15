@@ -177,6 +177,24 @@ Example:
 
 ---
 
+## ANALYZING WIZARD SESSIONS
+
+For each wizard session in the Integrated Insights section:
+
+**3-2-1 Shadow Work Sessions** contain structured analysis:
+- **Face It** (3rd person): Objective description, specific actions, triggered emotions
+- **Talk To It** (2nd person): Dialogue transcript with quality being integrated
+- **Be It** (1st person): Embodiment statement, somatic location, core message/gift
+- **Integration Plan**: Re-owning statement, actionable step, related practice
+
+Extract key insights from each section. If a session shows NO dialogue, embodiment, or integration data, it genuinely wasn't completed. If it HAS this data, use it to inform recommendations.
+
+**Other Wizards** (IFS, Bias Detective, Subject-Object, etc.) follow their own structures - read the session report carefully.
+
+CRITICAL: DO NOT claim a session is "incomplete" if the report clearly shows structured work. Use the actual content provided.
+
+---
+
 ## WIZARD ROUTING GUIDELINES
 
 Route to **Bias Detective** if: Stuck in repetitive thinking patterns, defending positions rigidly, making decisions with blind spots
@@ -264,10 +282,26 @@ function buildUserPrompt(context: IntelligenceContext): string {
     parts.push('No pending insights.');
   } else {
     for (const insight of context.integratedInsights.filter((i) => i.status === 'pending')) {
-      parts.push(`- **${insight.mindToolType}**: ${insight.detectedPattern}`);
-      if (insight.suggestedShadowWork && insight.suggestedShadowWork.length > 0) {
-        parts.push(`  Suggested: ${insight.suggestedShadowWork.map((s) => s.practiceName).join(', ')}`);
+      parts.push(`### ${insight.mindToolType}: ${insight.mindToolName}`);
+      parts.push(`**Session ID:** ${insight.mindToolSessionId}`);
+      parts.push('');
+
+      // Include the full session report with all structured data
+      if (insight.mindToolReport) {
+        parts.push(insight.mindToolReport);
       }
+
+      parts.push('');
+      parts.push(`**Detected Pattern:** ${insight.detectedPattern}`);
+
+      if (insight.suggestedShadowWork && insight.suggestedShadowWork.length > 0) {
+        parts.push(`**Suggested Shadow Work:** ${insight.suggestedShadowWork.map((s) => s.practiceName).join(', ')}`);
+      }
+      if (insight.suggestedNextSteps && insight.suggestedNextSteps.length > 0) {
+        parts.push(`**Suggested Next Steps:** ${insight.suggestedNextSteps.map((s) => s.practiceName).join(', ')}`);
+      }
+
+      parts.push('');
     }
   }
   parts.push('');
