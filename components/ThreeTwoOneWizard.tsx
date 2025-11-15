@@ -3,8 +3,18 @@ import React, { useState, useEffect } from 'react';
 import { ThreeTwoOneSession, IntegratedInsight } from '../types.ts';
 import { X, ArrowLeft, ArrowRight, Lightbulb } from 'lucide-react';
 import { summarizeThreeTwoOneSession } from '../services/geminiService.ts';
+import type { WizardSequenceContext } from '../services/wizardSequenceContext.ts';
 
 type Step = 'TRIGGER' | 'FACE_IT' | 'TALK_TO_IT' | 'BE_IT' | 'INTEGRATE' | 'SUMMARY';
+
+function getOrdinalSuffix(num: number): string {
+  const j = num % 10;
+  const k = num % 100;
+  if (j === 1 && k !== 11) return 'st';
+  if (j === 2 && k !== 12) return 'nd';
+  if (j === 3 && k !== 13) return 'rd';
+  return 'th';
+}
 
 interface ThreeTwoOneWizardProps {
   onClose: () => void;
@@ -12,9 +22,10 @@ interface ThreeTwoOneWizardProps {
   session: Partial<ThreeTwoOneSession> | null;
   insightContext?: IntegratedInsight | null;
   markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void;
+  sequenceContext?: WizardSequenceContext | null;
 }
 
-export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, insightContext, markInsightAsAddressed }: ThreeTwoOneWizardProps) {
+export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, insightContext, markInsightAsAddressed, sequenceContext }: ThreeTwoOneWizardProps) {
   const [session, setSession] = useState<Partial<ThreeTwoOneSession>>(() => {
     if (insightContext && (!draft || !draft.linkedInsightId)) {
       return { ...draft, linkedInsightId: insightContext.id };
@@ -204,6 +215,72 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
                 <button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={24} /></button>
             </header>
             <main className="p-6 flex-grow overflow-y-auto space-y-4">
+                {/* Wizard Sequence Context */}
+                {sequenceContext && sequenceContext.sessionCount > 0 && step === 'TRIGGER' && (
+                  <div className="mb-6 bg-purple-900/20 border border-purple-700/50 rounded-lg p-5">
+                    <h3 className="text-sm font-semibold text-purple-300 mb-3 uppercase tracking-wider flex items-center gap-2">
+                      <span className="text-purple-500">⬢</span>
+                      Your Journey with this Practice
+                    </h3>
+
+                    {/* Session count */}
+                    <p className="text-sm text-slate-300 mb-3">
+                      This is your <strong className="text-purple-200">{sequenceContext.sessionCount + 1}{getOrdinalSuffix(sequenceContext.sessionCount + 1)}</strong> time with the 3-2-1 Process.
+                      {sequenceContext.firstSessionDate && (
+                        <> First session: <strong className="text-purple-200">{new Date(sequenceContext.firstSessionDate).toLocaleDateString()}</strong></>
+                      )}
+                    </p>
+
+                    {/* Building on narrative */}
+                    {sequenceContext.buildingOn && (
+                      <div className="bg-slate-800/60 border-l-2 border-purple-500 p-3 mb-3">
+                        <p className="text-sm text-purple-200">
+                          <strong className="text-purple-300">Building on:</strong> {sequenceContext.buildingOn}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Suggested focus */}
+                    {sequenceContext.suggestedFocus && (
+                      <div className="bg-slate-800/60 border-l-2 border-blue-500 p-3 mb-3">
+                        <p className="text-sm text-blue-200">
+                          <strong className="text-blue-300">Suggested focus:</strong> {sequenceContext.suggestedFocus}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Pattern evolution */}
+                    {sequenceContext.patternEvolution.length > 0 && (
+                      <details className="mt-3">
+                        <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-300 select-none">
+                          View pattern evolution ({sequenceContext.patternEvolution.length} sessions) ▼
+                        </summary>
+                        <div className="mt-2 space-y-1 pl-4 border-l border-purple-700/50">
+                          {sequenceContext.patternEvolution.map((entry, idx) => (
+                            <p key={idx} className="text-xs text-slate-400">{entry}</p>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+
+                    {/* Related insights from other wizards */}
+                    {sequenceContext.relatedInsights.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-purple-900/50">
+                        <p className="text-xs text-slate-400 mb-2">
+                          Related work from other wizards:
+                        </p>
+                        <div className="space-y-1">
+                          {sequenceContext.relatedInsights.slice(0, 2).map(insight => (
+                            <div key={insight.insightId} className="text-xs text-slate-500">
+                              <span className="text-purple-400">{insight.wizardType}:</span> {insight.pattern}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {renderStep()}
                 {isLoading && <p className="text-slate-400 animate-pulse">Aura is generating your summary...</p>}
             </main>

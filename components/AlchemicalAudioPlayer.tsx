@@ -92,9 +92,9 @@ export default function AlchemicalAudioPlayer({
 
         {/* Header section */}
         <div className="mb-4 flex-shrink-0">
-          <h3 className="text-base font-semibold text-amber-100 font-serif tracking-wider mb-1">
+          <h4 className="text-lg font-semibold text-amber-50 tracking-wide mb-1">
             {title}
-          </h3>
+          </h4>
           <p className="text-xs text-slate-400 font-mono tracking-widest uppercase mb-2">
             {symbol} {description}
           </p>
