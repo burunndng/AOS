@@ -49,6 +49,7 @@ const MeditationWizard = lazy(() => import('./components/MeditationWizard.tsx'))
 const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.tsx'));
 const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
 const EightZonesWizard = lazy(() => import('./components/EightZonesWizard.tsx'));
+const AdaptiveCycleWizard = lazy(() => import('./components/AdaptiveCycleWizard.tsx'));
 const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizard.tsx'));
 const IntegralBodyArchitectWizard = lazy(() => import('./components/IntegralBodyArchitectWizard.tsx'));
 const DynamicWorkoutArchitectWizard = lazy(() => import('./components/DynamicWorkoutArchitectWizard.tsx'));
@@ -90,6 +91,7 @@ import {
   MemoryReconsolidationDraft,
   EightZonesSession,
   EightZonesDraft,
+  AdaptiveCycleSession,
   EnhancedRecommendationSet,
   IntelligentGuidance,
   NavigationEntry
@@ -202,6 +204,7 @@ export default function App() {
   const [historyJhana, setHistoryJhana] = useLocalStorage<JhanaSession[]>('historyJhana', []);
   const [memoryReconHistory, setMemoryReconHistory] = useLocalStorage<MemoryReconsolidationSession[]>('memoryReconHistory', []);
   const [eightZonesHistory, setEightZonesHistory] = useLocalStorage<EightZonesSession[]>('eightZonesHistory', []);
+  const [adaptiveCycleHistory, setAdaptiveCycleHistory] = useLocalStorage<AdaptiveCycleSession[]>('adaptiveCycleHistory', []);
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
@@ -1081,6 +1084,65 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     }
   };
 
+  const handleSaveAdaptiveCycleSession = async (session: AdaptiveCycleSession) => {
+    setAdaptiveCycleHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+    navigateBack();
+
+    // Build rich report following the established pattern
+    const phaseNames = {
+      'r': 'Growth/Exploitation (r)',
+      'K': 'Conservation (K)',
+      'Ω': 'Release/Collapse (Ω)',
+      'α': 'Reorganization (α)'
+    };
+
+    const sessionReport = `# Adaptive Cycle Analysis: ${session.systemToAnalyze}
+
+## Current Phase
+**${phaseNames[session.diagnosedPhase]}**
+
+${session.phaseAnalysis.description}
+
+## Diagnostic Scores (1-10 scale)
+- **Potential for growth/change:** ${session.diagnosticAnswers.potential}/10
+- **Connectedness/rigidity of structure:** ${session.diagnosticAnswers.connectedness}/10
+- **Resilience/capacity to absorb disruption:** ${session.diagnosticAnswers.resilience}/10
+
+## Analysis
+
+### Strengths of This Phase
+${session.phaseAnalysis.strengths.map(s => `- ${s}`).join('\n')}
+
+### Risks to Watch For
+${session.phaseAnalysis.risks.map(r => `- ${r}`).join('\n')}
+
+### Strategies for Navigation
+${session.phaseAnalysis.strategies.map((s, idx) => `${idx + 1}. ${s}`).join('\n')}
+
+## Systems Thinking Context
+The Adaptive Cycle is a framework from resilience theory that helps us understand the natural rhythms of complex systems. This analysis maps "${session.systemToAnalyze}" onto this cycle to provide clarity on the current phase and actionable strategies for navigation.`;
+
+    // Generate integrated insight for Journal
+    try {
+      const detectedPattern = `Currently in a ${phaseNames[session.diagnosedPhase]} phase regarding ${session.systemToAnalyze}`;
+
+      const insight = await generateInsightFromSession({
+        wizardType: 'Adaptive Cycle Mapper',
+        sessionId: session.id,
+        sessionName: session.systemToAnalyze,
+        sessionReport: sessionReport,
+        sessionSummary: session.phaseAnalysis.description,
+        userId: userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile,
+      });
+
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (error) {
+      console.error('Failed to generate insight for Adaptive Cycle session:', error);
+    }
+  };
+
   const handleLaunchYangPractice = (payload: any) => {
     // Store the handoff payload and switch to Dynamic Workout Architect
     setBodyArchitectHandoff({ type: 'yang', payload });
@@ -1424,6 +1486,13 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
             session={draftEightZones}
             setDraft={setDraftEightZones}
             userId={userId}
+          />
+        );
+      case 'adaptive-cycle':
+        return (
+          <AdaptiveCycleWizard
+            onClose={() => navigateBack()}
+            onSave={handleSaveAdaptiveCycleSession}
           />
         );
       case 'big-mind':

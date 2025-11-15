@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrainCircuit, GitCompareArrows, Layers, Shuffle, TrendingUp, Sparkles, Target, Heart, SearchCode, Compass } from 'lucide-react'; // Removed Activity
+import { BrainCircuit, GitCompareArrows, Layers, Shuffle, TrendingUp, Sparkles, Target, Heart, SearchCode, Compass, RefreshCw } from 'lucide-react'; // Removed Activity
 import { SectionDivider } from './SectionDivider.tsx';
 import { ActiveTab, AttachmentAssessmentSession, Practice } from '../types.ts';
 import { AttachmentStyle } from '../data/attachmentMappings.ts';
@@ -223,6 +223,12 @@ export default function MindToolsTab({
           title="8 Zones of Knowing"
           description="Apply Integral Theory to understand any complex topic through eight interconnected perspectives. Avoid flatland thinking and generate holistic insights."
           onStart={() => setActiveWizard('eight-zones')}
+        />
+        <ToolCard
+          icon={<RefreshCw size={28} className="text-cyan-400"/>}
+          title="Adaptive Cycle Mapper"
+          description="Map any challenge or life situation onto a powerful systems-thinking framework to understand where you are, what's next, and how to navigate change."
+          onStart={() => setActiveWizard('adaptive-cycle')}
         />
         </div>
       </section>
