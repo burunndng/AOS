@@ -77,10 +77,19 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
     // Get Socratic response from AI using the updated transcript
     setIsLoadingProbe(true);
     try {
+      console.log('[3-2-1] Submitting dialogue with trigger:', session.trigger);
       const aiResponse = await generateSocraticProbe(updatedTranscript, session.trigger || '');
-      setDialogueTranscript(prev => [...prev, { role: 'bot', text: aiResponse }]);
+      if (!aiResponse || aiResponse.trim() === '') {
+        console.error('[3-2-1] AI returned empty response');
+      } else {
+        console.log('[3-2-1] Received AI response:', aiResponse.substring(0, 100));
+        setDialogueTranscript(prev => [...prev, { role: 'bot', text: aiResponse }]);
+      }
     } catch (e) {
-      console.error("Error generating Socratic probe:", e);
+      console.error("[3-2-1] Error generating Socratic probe:", e);
+      // Add error message to transcript so user sees it
+      const errorMessage = e instanceof Error ? e.message : 'Failed to generate response. Please try again.';
+      setDialogueTranscript(prev => [...prev, { role: 'bot', text: `[Error: ${errorMessage}]` }]);
     } finally {
       setIsLoadingProbe(false);
     }

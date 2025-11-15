@@ -15,13 +15,22 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 // Helper function to generate text
 export async function generateText(prompt: string): Promise<string> {
-  // FIX: Use the correct API call `ai.models.generateContent` for text generation.
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-lite',
-    contents: prompt,
-  });
-  // FIX: Access the generated text directly from the `text` property of the response.
-  return response.text;
+  try {
+    // FIX: Use the correct API call `ai.models.generateContent` for text generation.
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-lite',
+      contents: prompt,
+    });
+    // FIX: Access the generated text directly from the `text` property of the response.
+    if (!response.text) {
+      console.error('[generateText] Response has no text property:', response);
+      throw new Error('No text in API response');
+    }
+    return response.text;
+  } catch (error) {
+    console.error('[generateText] Error calling Gemini API:', error);
+    throw error;
+  }
 }
 
 // FIX: Added missing `explainPractice` function called from `App.tsx`.
