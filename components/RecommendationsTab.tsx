@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 // FIX: Add file extension to import path.
-import { StarterStack, IntegratedInsight, AllPractice, EnhancedRecommendationSet, IntelligentGuidance } from '../types.ts';
+import { StarterStack, IntegratedInsight, AllPractice, EnhancedRecommendationSet, IntelligentGuidance, PersonalizationSummary } from '../types.ts';
 import { Sparkles, CheckCircle, Lightbulb, ArrowRight, Zap, Clock, Target, Brain, AlertTriangle, TrendingUp, RefreshCw } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 import { getPendingInsights, getHighImpactPractices } from '../services/insightContext.ts';
@@ -24,6 +24,7 @@ interface RecommendationsTabProps {
   integratedInsights: IntegratedInsight[];
   allPractices: AllPractice[];
   addToStack: (practice: AllPractice) => void;
+  personalizationSummary?: PersonalizationSummary | null;
 }
 
 export default function RecommendationsTab({
@@ -43,7 +44,8 @@ export default function RecommendationsTab({
   onClearGuidanceCache,
   integratedInsights,
   allPractices,
-  addToStack
+  addToStack,
+  personalizationSummary
 }: RecommendationsTabProps) {
   const pendingInsights = getPendingInsights(integratedInsights);
   const highImpactPractices = getHighImpactPractices(integratedInsights, allPractices, 2);
@@ -227,6 +229,75 @@ export default function RecommendationsTab({
           </div>
         )}
       </section>
+
+      <SectionDivider />
+
+      {/* Adaptive Body Plan Recommendations Section */}
+      {personalizationSummary && personalizationSummary.adjustmentDirectives && personalizationSummary.adjustmentDirectives.length > 0 && (
+        <section className="bg-gradient-to-br from-green-900/20 to-teal-900/20 border border-green-700/50 rounded-lg p-6">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-100 mb-2 flex items-center gap-3">
+            <TrendingUp className="text-green-400"/> Adaptive Body Plan Recommendations
+          </h2>
+          <p className="text-slate-400 mb-6">Based on your plan feedback, here are data-driven adjustments for your next plan:</p>
+
+          <div className="space-y-4">
+            {personalizationSummary.adjustmentDirectives.map((directive, idx) => (
+              <div
+                key={idx}
+                className={`bg-slate-800/60 border rounded-lg p-5 ${
+                  directive.impact === 'high'
+                    ? 'border-red-500/50 bg-red-900/10'
+                    : directive.impact === 'medium'
+                    ? 'border-amber-500/50 bg-amber-900/10'
+                    : 'border-blue-500/50 bg-blue-900/10'
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <AlertTriangle
+                    className={`mt-1 flex-shrink-0 ${
+                      directive.impact === 'high'
+                        ? 'text-red-400'
+                        : directive.impact === 'medium'
+                        ? 'text-amber-400'
+                        : 'text-blue-400'
+                    }`}
+                    size={24}
+                  />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-slate-100 mb-2">
+                      {directive.description}
+                    </h3>
+                    <p className="text-sm text-slate-300 leading-relaxed mb-3">
+                      {directive.rationale}
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-mono px-3 py-1 rounded ${
+                        directive.impact === 'high'
+                          ? 'bg-red-500/20 text-red-300'
+                          : directive.impact === 'medium'
+                          ? 'bg-amber-500/20 text-amber-300'
+                          : 'bg-blue-500/20 text-blue-300'
+                      }`}>
+                        {directive.impact} impact
+                      </span>
+                      <span className="text-xs font-mono bg-slate-700/80 text-slate-300 px-3 py-1 rounded">
+                        {directive.confidence}% confident
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+            <p className="text-sm text-slate-300">
+              <strong className="text-slate-200">How it works:</strong> The app analyzes your daily feedback (intensity felt, energy levels, blockers)
+              and automatically generates these personalized adjustments. They'll be incorporated into your next plan generation.
+            </p>
+          </div>
+        </section>
+      )}
 
       <SectionDivider />
 
