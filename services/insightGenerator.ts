@@ -4,14 +4,17 @@
  *
  * This service:
  * 1. Takes any wizard session and converts to standardized format
- * 2. Uses Gemini to detect patterns
+ * 2. Uses Grok-4-Fast (primary) or Gemini (fallback) to detect patterns
  * 3. Suggests both shadow work (reflection) and next steps (action)
- * 4. Tracks outcomes to show pattern improvement over time
+ * 4. Tailors recommendations based on user profile (Phase 2)
+ * 5. Tracks outcomes to show pattern improvement over time
  */
 
 import { v4 as uuidv4 } from 'uuid';
 import type { IntegratedInsight } from '../types.ts';
 import { generateText } from './geminiService.ts';
+import { generateOpenRouterResponse, buildMessagesWithSystem } from './openRouterService.ts';
+import type { UserProfile } from '../utils/contextAggregator.ts';
 
 interface InsightGenerationInput {
   wizardType:
@@ -39,11 +42,13 @@ interface InsightGenerationInput {
   sessionSummary: string;
   userId: string;
   availablePractices: Array<{ id: string; name: string; category?: string }>;
+  userProfile?: UserProfile;
 }
 
 /**
  * Generate a comprehensive insight from any wizard session
- * This ensures consistent insight generation across all wizards
+ * Uses Grok-4-Fast (primary) with Gemini fallback (Phase 2)
+ * Incorporates user profile for adaptive recommendations
  */
 export async function generateInsightFromSession(
   input: InsightGenerationInput
@@ -55,15 +60,101 @@ export async function generateInsightFromSession(
     sessionReport,
     sessionSummary,
     availablePractices,
+    userProfile,
   } = input;
 
   try {
     console.log(`[InsightGenerator] Generating insight for ${wizardType}: ${sessionId}`);
 
-    // Prepare context for Gemini
+    // Prepare context for AI
     const practiceList = availablePractices.map((p) => `- ${p.name} (${p.category || 'General'})`).join('\n');
 
-    const prompt = `You are an expert at analyzing personal development sessions and suggesting transformative practices.
+    // Build adaptive prompt with user profile context
+    const prompt = buildAdaptivePrompt(
+      wizardType,
+      sessionName,
+      sessionReport,
+      practiceList,
+      userProfile
+    );
+
+    let response: string;
+    let usedGrok = false;
+
+    // Try Grok-4-Fast first (primary)
+    try {
+      console.log('[InsightGenerator] Attempting Grok-4-Fast for insight generation');
+      const messages = buildMessagesWithSystem(
+        'You are an expert at analyzing personal development sessions and suggesting transformative practices.',
+        [{ role: 'user' as const, content: prompt }]
+      );
+
+      const grokResponse = await generateOpenRouterResponse(
+        messages,
+        undefined,
+        {
+          model: 'x-ai/grok-4-fast',
+          maxTokens: 1500,
+          temperature: 0.7,
+        }
+      );
+
+      if (grokResponse.success && grokResponse.text) {
+        response = grokResponse.text;
+        usedGrok = true;
+        console.log('[InsightGenerator] Successfully used Grok-4-Fast');
+      } else {
+        throw new Error('Grok response was not successful');
+      }
+    } catch (grokError) {
+      console.warn('[InsightGenerator] Grok-4-Fast failed, falling back to Gemini:', grokError);
+
+      // Fallback to Gemini-2.5-flash-lite
+      console.log('[InsightGenerator] Using Gemini-2.5-flash-lite fallback');
+      response = await generateText(prompt);
+      usedGrok = false;
+    }
+
+    // Parse response
+    const { pattern, shadowWork, nextSteps } = parseInsightResponse(response, availablePractices);
+
+    // Create insight
+    const insight: IntegratedInsight = {
+      id: uuidv4(),
+      mindToolType: wizardType,
+      mindToolSessionId: sessionId,
+      mindToolName: sessionName,
+      mindToolReport: sessionReport,
+      mindToolShortSummary: sessionSummary,
+      detectedPattern: pattern,
+      suggestedShadowWork: shadowWork,
+      suggestedNextSteps: nextSteps,
+      dateCreated: new Date().toISOString(),
+      status: 'pending',
+    };
+
+    console.log(
+      `[InsightGenerator] Successfully generated insight with ${shadowWork.length} shadow work and ${nextSteps.length} next steps (${usedGrok ? 'Grok' : 'Gemini'})`
+    );
+
+    return insight;
+  } catch (error) {
+    console.error('[InsightGenerator] Error generating insight:', error);
+    throw error;
+  }
+}
+
+/**
+ * Build adaptive prompt that incorporates user profile for personalization
+ */
+function buildAdaptivePrompt(
+  wizardType: string,
+  sessionName: string,
+  sessionReport: string,
+  practiceList: string,
+  userProfile?: UserProfile
+): string {
+  let basePrompt = `You are an expert at analyzing personal development sessions and suggesting transformative practices.
 
 Wizard Session: ${wizardType}
 Session Name: ${sessionName}
@@ -72,7 +163,31 @@ Session Report:
 ${sessionReport}
 
 Available Practices:
-${practiceList}
+${practiceList}`;
+
+  // Add user profile context if available
+  if (userProfile) {
+    basePrompt += `
+
+USER PROFILE (Personalization Context):
+- Experience Level: ${userProfile.experienceLevel}
+- Practice Compliance: ${(userProfile.practiceComplianceRate * 100).toFixed(0)}%
+- Preferred Modalities: Mind (${(userProfile.preferredModalities.mind * 100).toFixed(0)}%), Body (${(userProfile.preferredModalities.body * 100).toFixed(0)}%), Spirit (${(userProfile.preferredModalities.spirit * 100).toFixed(0)}%), Shadow (${(userProfile.preferredModalities.shadow * 100).toFixed(0)}%)
+- Preferred Intensity Level: ${userProfile.preferredIntensity}
+- Average Energy Level: ${userProfile.energyResponseToPractice.averageEnergyLevel}/10
+- Recurring Patterns: ${userProfile.recurringPatterns.join(', ') || 'None identified'}
+- Common Blockers: ${userProfile.commonBlockers.join(', ') || 'None identified'}
+${userProfile.developmentalStage ? `- Developmental Stage: ${userProfile.developmentalStage}` : ''}
+
+PERSONALIZATION INSTRUCTIONS:
+- Tailor recommendations to match this user's experience level and modality preferences
+- Consider their preferred intensity: ${userProfile.preferredIntensity === 'low' ? 'avoid intense practices; focus on gentle inquiry' : userProfile.preferredIntensity === 'high' ? 'can handle challenging practices; encourage growth-edge work' : 'vary intensity; offer options'}
+- Be mindful of their recurring patterns (${userProfile.recurringPatterns[0] || 'general patterns'}) - use it as a lens for understanding the current session
+- If their compliance is low, suggest simpler, more achievable practices
+- If their compliance is high, can suggest more complex integrated practices`;
+  }
+
+  basePrompt += `
 
 Please analyze this session and provide:
 
@@ -97,33 +212,7 @@ NEXT STEPS:
 - [Practice Name] | Rationale: [rationale]
 - [Practice Name] | Rationale: [rationale]`;
 
-    const response = await generateText(prompt);
-
-    // Parse response
-    const { pattern, shadowWork, nextSteps } = parseInsightResponse(response, availablePractices);
-
-    // Create insight
-    const insight: IntegratedInsight = {
-      id: uuidv4(),
-      mindToolType: wizardType,
-      mindToolSessionId: sessionId,
-      mindToolName: sessionName,
-      mindToolReport: sessionReport,
-      mindToolShortSummary: sessionSummary,
-      detectedPattern: pattern,
-      suggestedShadowWork: shadowWork,
-      suggestedNextSteps: nextSteps,
-      dateCreated: new Date().toISOString(),
-      status: 'pending',
-    };
-
-    console.log(`[InsightGenerator] Successfully generated insight with ${shadowWork.length} shadow work and ${nextSteps.length} next steps`);
-
-    return insight;
-  } catch (error) {
-    console.error('[InsightGenerator] Error generating insight:', error);
-    throw error;
-  }
+  return basePrompt;
 }
 
 /**
