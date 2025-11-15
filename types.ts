@@ -334,6 +334,7 @@ export interface IntegratedInsight {
     | 'Big Mind Process'
     | 'Memory Reconsolidation'
     | 'Eight Zones'
+    | 'Adaptive Cycle Mapper'
     | 'Somatic Practice'
     | 'Jhana Guide'
     | 'Meditation Finder'
@@ -1475,5 +1476,35 @@ export interface CachedGuidance {
   guidance: IntelligentGuidance;
   cachedAt: number; // timestamp
   contextHash: string; // hash of context to detect changes
+}
+
+// ============================================================================
+// Adaptive Cycle Wizard Types
+// ============================================================================
+
+export interface AdaptiveCycleDiagnosticAnswers {
+  potential: number; // Score from 1-10 (Low to High)
+  connectedness: number; // Score from 1-10 (Low to High)
+  resilience: number; // Score from 1-10 (Low to High)
+}
+
+export interface AdaptiveCyclePhaseAnalysis {
+  phase: 'r' | 'K' | 'Ω' | 'α';
+  title: string; // e.g., "Conservation (K)"
+  description: string; // Personalized description of the phase
+  strengths: string[]; // Strengths of being in this phase
+  risks: string[]; // Risks/shadow aspects of this phase
+  strategies: string[]; // Actionable strategies for this phase
+}
+
+export interface AdaptiveCycleSession {
+  id: string;
+  date: string;
+  systemToAnalyze: string; // The user's context, e.g., "My Career"
+  diagnosticAnswers: AdaptiveCycleDiagnosticAnswers;
+  diagnosedPhase: 'r' | 'K' | 'Ω' | 'α';
+  phaseAnalysis: AdaptiveCyclePhaseAnalysis;
+  // This will be used for the rich report in the insight journal
+  fullReport?: string;
 }
 
