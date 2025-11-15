@@ -771,18 +771,52 @@ export interface InjuryRestriction {
   bodyPart: string;
   severity: 'mild' | 'moderate' | 'severe';
   restrictions: string[]; // e.g., "no overhead pressing", "avoid running"
+  affectedMovements?: string[]; // e.g., ['squatting', 'overhead pressing', 'running']
+  painLevel?: number; // 1-10 scale
+  medicalClearance?: boolean; // Has doctor cleared for exercise?
   notes?: string;
 }
 
 export interface YangConstraints {
+  // Core Biometrics (PHASE 1 - Essential)
   bodyweight?: number; // in kg
+  height?: number; // in cm
+  age?: number; // years
+  sex?: 'male' | 'female' | 'other';
+  activityLevel?: 'sedentary' | 'lightly-active' | 'moderately-active' | 'very-active' | 'athlete';
+
+  // Training Background (PHASE 1)
+  strengthTrainingExperience?: 'never' | 'beginner' | 'intermediate' | 'advanced';
+  primaryGoal?: 'lose-fat' | 'gain-muscle' | 'recomp' | 'maintain' | 'performance' | 'general-health';
+
+  // Session Constraints (PHASE 1)
+  maxWorkoutDuration?: number; // minutes per session
   sleepHours?: number; // target hours per night
   equipment: string[];
   unavailableDays: string[];
+  preferredWorkoutTimes?: ('morning' | 'afternoon' | 'evening')[];
+
+  // Advanced Constraints (Existing)
   availableTimeWindows?: TimeWindow[]; // Optional: specific availability windows
   injuryRestrictions?: InjuryRestriction[]; // Optional: injury/pain restrictions
   nutritionFocus?: string;
   additionalConstraints?: string;
+
+  // Body Composition (Optional)
+  targetBodyComposition?: {
+    currentBodyFat?: number; // percentage
+    targetBodyFat?: number; // percentage
+    targetWeight?: number; // kg
+  };
+
+  // Enhanced Nutrition (PHASE 2)
+  nutritionDetails?: {
+    targetCalories?: number; // kcal/day (if known by user)
+    proteinGramsPerKg?: number; // e.g., 1.6-2.2 for muscle gain
+    dietaryRestrictions?: string[]; // ['gluten-free', 'dairy-free', 'vegetarian', 'vegan']
+    mealsPerDay?: number; // 2, 3, 4, 5+
+    cookingSkill?: 'minimal' | 'basic' | 'intermediate' | 'advanced';
+  };
 }
 
 export interface YinPreferences {
