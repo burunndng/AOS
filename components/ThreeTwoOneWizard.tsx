@@ -70,13 +70,14 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
   };
 
   const handleDialogueSubmit = async (userMessage: string) => {
-    // Add user message to transcript
-    setDialogueTranscript(prev => [...prev, { role: 'user', text: userMessage }]);
+    // Build updated transcript immediately (don't wait for state update)
+    const updatedTranscript = [...dialogueTranscript, { role: 'user' as const, text: userMessage }];
+    setDialogueTranscript(updatedTranscript);
 
-    // Get Socratic response from AI
+    // Get Socratic response from AI using the updated transcript
     setIsLoadingProbe(true);
     try {
-      const aiResponse = await generateSocraticProbe(dialogueTranscript, session.trigger || '');
+      const aiResponse = await generateSocraticProbe(updatedTranscript, session.trigger || '');
       setDialogueTranscript(prev => [...prev, { role: 'bot', text: aiResponse }]);
     } catch (e) {
       console.error("Error generating Socratic probe:", e);
