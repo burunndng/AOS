@@ -927,12 +927,16 @@ ${session.integrationPlan.relatedPracticeId ? `- **Related Practice:** ${session
     const buildProfile = async () => {
       try {
         setIsProfileLoading(true);
-        // Build completion history from completedToday
-        const completionRecords = Object.entries(completedToday).map(([practiceId, completed]) => ({
-          practiceId,
-          date: new Date().toISOString().split('T')[0],
-          completed,
-        }));
+        // Build completion history from completionHistory
+        // NOTE: Don't depend on completedToday - it's recalculated on each render
+        const today = new Date().toISOString().split('T')[0];
+        const completionRecords = Object.entries(completionHistory)
+          .filter(([_, dates]) => dates.includes(today))
+          .map(([practiceId, _]) => ({
+            practiceId,
+            date: today,
+            completed: true,
+          }));
 
         // Extract wizard sessions for context
         const wizardSessions = [];
@@ -956,7 +960,7 @@ ${session.integrationPlan.relatedPracticeId ? `- **Related Practice:** ${session
     };
 
     buildProfile();
-  }, [completedToday, integratedInsights, integralBodyPlanHistory, practiceStack, historyKegan, historyAttachment, dailyNotes]);
+  }, [completionHistory, integratedInsights, integralBodyPlanHistory, practiceStack, historyKegan, historyAttachment, dailyNotes]);
 
   // Auto-generate personalization when the Integral Body Architect wizard is opened
   useEffect(() => {
