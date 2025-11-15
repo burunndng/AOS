@@ -1088,7 +1088,6 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
 
   const handleSaveAdaptiveCycleSession = async (session: AdaptiveCycleSession) => {
     setAdaptiveCycleHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
-    navigateBack();
 
     // Build rich report showing the full four-quadrant landscape
     const selfAssessmentSection = session.userHint
@@ -1155,8 +1154,12 @@ The Adaptive Cycle is a framework from resilience theory that describes how all 
       });
 
       setIntegratedInsights(prev => [...prev, insight]);
+      console.log('[Adaptive Cycle] Insight successfully saved:', insight.id);
     } catch (error) {
       console.error('Failed to generate insight for Adaptive Cycle session:', error);
+    } finally {
+      // Navigate back after insight generation is complete
+      navigateBack();
     }
   };
 
