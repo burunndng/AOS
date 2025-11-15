@@ -86,16 +86,118 @@ export async function getDailyReflection(notes: { practiceName: string; note: st
 }
 
 // FIX: Added missing `summarizeThreeTwoOneSession` function called from `ThreeTwoOneWizard.tsx`.
+// UPDATED: Now generates a narrative synthesis connecting trigger → dialogue → embodiment → integration
 export async function summarizeThreeTwoOneSession(session: ThreeTwoOneSession): Promise<string> {
-    const prompt = `Summarize this 3-2-1 shadow work session in 2-3 sentences.
-    Focus on the core pattern and the key insight from the integration step.
-    - Trigger: ${session.trigger}
-    - Description (Face It): ${session.triggerDescription}
-    - Embodiment (Be It): ${session.embodiment}
-    - Integration: ${session.integration}
-    
-    Return only the summary as a string.`;
+    const dialogueText = session.dialogueTranscript
+        ?.map(entry => `${entry.role === 'user' ? 'You' : 'Quality'}: ${entry.text}`)
+        .join('\n') || session.dialogue || '';
+
+    const prompt = `Create a narrative synthesis of this 3-2-1 shadow work session. The synthesis should tell the story of transformation from trigger to integration.
+
+Structure your response as a coherent narrative (3-4 sentences) that connects:
+1. The initial trigger and what the user observed objectively
+2. The insight discovered through dialogue with the quality (its positive intention/gift)
+3. The embodied experience and core message (what was discovered in the "Be It" perspective)
+4. The integration plan and how this gift will be re-owned in a healthy way
+
+Make it powerful and memorable - this is a moment of personal insight and transformation.
+
+Session Data:
+- Trigger: ${session.trigger}
+- Objective Description (Face It): ${session.faceItAnalysis?.objectiveDescription || session.triggerDescription}
+- Dialogue:
+${dialogueText}
+- Embodiment Statement (Be It): ${session.embodimentAnalysis?.embodimentStatement || session.embodiment}
+- Core Message: ${session.embodimentAnalysis?.coreMessage || ''}
+- Somatic Location: ${session.embodimentAnalysis?.somaticLocation || ''}
+- Re-owning Statement: ${session.integrationPlan?.reowningStatement || ''}
+- Integration Action: ${session.integrationPlan?.actionableStep || session.integration}
+
+Return ONLY the narrative synthesis as a string. Make it feel like a genuine moment of insight.`;
+
     return await generateText(prompt);
+}
+
+/**
+ * Generate a Socratic probe for the TALK_TO_IT step
+ * Facilitates dialogue with the projected quality to uncover its positive intention
+ */
+export async function generateSocraticProbe(dialogueHistory: Array<{ role: string; text: string }>, trigger: string): Promise<string> {
+    const conversationContext = dialogueHistory
+        .map(entry => `${entry.role === 'user' ? 'User' : 'Quality'}: ${entry.text}`)
+        .join('\n');
+
+    const prompt = `You are a compassionate Socratic guide helping someone uncover the positive intention and gift hidden within a projected shadow quality.
+
+The person is in dialogue with: "${trigger}"
+
+Conversation so far:
+${conversationContext}
+
+Your role is to ask a gentle, powerful question that:
+1. Honors the quality's perspective (never judges it as "bad")
+2. Probes deeper toward its POSITIVE INTENTION - what is it trying to protect or give the person?
+3. Moves toward the GIFT - how could this quality serve the person if integrated?
+4. Is specific and grounded, not abstract
+
+Examples of good probes:
+- "What would happen if you weren't here protecting them?"
+- "If you had the person's best interests at heart, what would you want them to know?"
+- "What strength or courage are you trying to cultivate in them?"
+
+Ask ONE powerful question that takes the dialogue deeper. Respond in the voice of the quality, as if responding to what the user just said.
+Return ONLY the response from the quality's perspective.`;
+
+    return await generateText(prompt);
+}
+
+/**
+ * Generate a reflective probe for FACE_IT or BE_IT steps
+ * Deepens the psychological process at key junctures
+ */
+export async function generateReflectiveProbe(step: 'FACE_IT' | 'BE_IT', input: any, trigger: string): Promise<string> {
+    if (step === 'FACE_IT') {
+        const prompt = `A person is doing shadow work on the trigger: "${trigger}"
+
+They've described it objectively as:
+${input.objectiveDescription}
+
+Behaviors they noticed:
+${input.specificActions?.join(', ') || 'N/A'}
+
+Emotions triggered:
+${input.triggeredEmotions?.join(', ') || 'N/A'}
+
+Now, offer a reflective probe that deepens their awareness. Ask them:
+"Beyond this specific person/situation, where else in your life does this same pattern or dynamic show up?"
+
+This helps them see the trigger as a recurring pattern, not an isolated incident. This is crucial for shadow work - recognizing where we unconsciously attract or create these situations.
+
+Formulate the probe as a warm, conversational question that invites reflection. Keep it to 2-3 sentences.
+Return ONLY the question.`;
+
+        return await generateText(prompt);
+    } else if (step === 'BE_IT') {
+        const prompt = `A person is embodying a shadow quality: "${trigger}"
+
+They've created this "I am..." statement:
+"${input.embodimentStatement}"
+
+Now guide them into the somatic (body-based) experience of this quality. Generate a gentle, guided prompt that:
+1. Invites them to feel this quality in their body
+2. Helps them locate physical sensations (energy, tension, warmth, etc.)
+3. Deepens their embodied understanding
+4. Is framed like a mini-meditation
+
+Example tone:
+"Now, take a moment. Close your eyes if you feel comfortable. Really feel into that statement. What sensations arise? Where is the energy strongest in your body? Is there heat, cold, expansion, contraction? Describe the physical feeling of being [quality]."
+
+Return ONLY the somatic guidance prompt as a string, ready to be spoken aloud.`;
+
+        return await generateText(prompt);
+    }
+
+    return '';
 }
 
 // Function used in Coach.tsx and ThreeTwoOneWizard.tsx

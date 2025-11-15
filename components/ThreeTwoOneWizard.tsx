@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { ThreeTwoOneSession, IntegratedInsight, FaceItAnalysis, DialogueEntry, EmbodimentAnalysis, IntegrationPlan } from '../types.ts';
-import { X, ArrowLeft, ArrowRight, Lightbulb, MessageCircle, Heart, Zap } from 'lucide-react';
-import { summarizeThreeTwoOneSession } from '../services/geminiService.ts';
+import { X, ArrowLeft, ArrowRight, Lightbulb, MessageCircle, Heart, Zap, Loader } from 'lucide-react';
+import { summarizeThreeTwoOneSession, generateSocraticProbe, generateReflectiveProbe } from '../services/geminiService.ts';
 import type { WizardSequenceContext } from '../services/wizardSequenceContext.ts';
 
 type Step = 'ONBOARDING' | 'TRIGGER' | 'FACE_IT' | 'TALK_TO_IT' | 'BE_IT' | 'INTEGRATE' | 'SUMMARY';
@@ -34,10 +34,16 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
   });
   const [step, setStep] = useState<Step>('ONBOARDING');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingProbe, setIsLoadingProbe] = useState(false);
   const [faceItAnalysis, setFaceItAnalysis] = useState<Partial<FaceItAnalysis>>({});
   const [dialogueTranscript, setDialogueTranscript] = useState<DialogueEntry[]>([]);
   const [embodimentAnalysis, setEmbodimentAnalysis] = useState<Partial<EmbodimentAnalysis>>({});
   const [integrationPlan, setIntegrationPlan] = useState<Partial<IntegrationPlan>>({});
+
+  // AI-guided probes and reflections
+  const [faceItProbe, setFaceItProbe] = useState<string>('');
+  const [beItSomaticPrompt, setBeItSomaticPrompt] = useState<string>('');
+  const [userSomaticResponse, setUserSomaticResponse] = useState<string>('');
 
   useEffect(() => {
     if (draft) {
@@ -61,6 +67,48 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
 
   const updateSession = (field: keyof ThreeTwoOneSession, value: string) => {
     setSession(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDialogueSubmit = async (userMessage: string) => {
+    // Add user message to transcript
+    setDialogueTranscript(prev => [...prev, { role: 'user', text: userMessage }]);
+
+    // Get Socratic response from AI
+    setIsLoadingProbe(true);
+    try {
+      const aiResponse = await generateSocraticProbe(dialogueTranscript, session.trigger || '');
+      setDialogueTranscript(prev => [...prev, { role: 'bot', text: aiResponse }]);
+    } catch (e) {
+      console.error("Error generating Socratic probe:", e);
+    } finally {
+      setIsLoadingProbe(false);
+    }
+  };
+
+  const handleGenerateFaceItProbe = async () => {
+    if (!faceItAnalysis.objectiveDescription) return;
+    setIsLoadingProbe(true);
+    try {
+      const probe = await generateReflectiveProbe('FACE_IT', faceItAnalysis, session.trigger || '');
+      setFaceItProbe(probe);
+    } catch (e) {
+      console.error("Error generating Face It probe:", e);
+    } finally {
+      setIsLoadingProbe(false);
+    }
+  };
+
+  const handleGenerateBeItPrompt = async () => {
+    if (!embodimentAnalysis.embodimentStatement) return;
+    setIsLoadingProbe(true);
+    try {
+      const prompt = await generateReflectiveProbe('BE_IT', embodimentAnalysis, session.trigger || '');
+      setBeItSomaticPrompt(prompt);
+    } catch (e) {
+      console.error("Error generating somatic prompt:", e);
+    } finally {
+      setIsLoadingProbe(false);
+    }
   };
 
   const handleNext = async () => {
@@ -140,16 +188,23 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
             <h3 className="text-xl font-semibold font-mono text-slate-100 flex items-center gap-2 mb-4">
               <Heart className="text-purple-400" size={24} /> The 3-2-1 Shadow Work Process
             </h3>
+            {insightContext && (
+              <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-200">
+                  <strong>Welcome back.</strong> It looks like you're ready to work deeper with the pattern: <strong>"{insightContext.detectedPattern}"</strong>
+                </p>
+              </div>
+            )}
             <div className="space-y-4 text-slate-300">
               <p>
-                This guided process helps you integrate disowned parts of yourself by working with the qualities that trigger you most.
+                This guided process helps you integrate disowned parts of yourself by working with the qualities that trigger you most. Through dialogue and embodiment, you'll uncover the hidden gift in what you've rejected.
               </p>
               <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-4 space-y-3">
                 <p className="font-semibold text-purple-200">How it works:</p>
                 <ol className="space-y-2 text-sm">
-                  <li><strong>1. Face It:</strong> Describe the triggering quality objectively (3rd person)</li>
-                  <li><strong>2. Talk to It:</strong> Dialogue with this quality to understand its gifts (2nd person)</li>
-                  <li><strong>3. Be It:</strong> Embody the quality and speak from its perspective (1st person)</li>
+                  <li><strong>1. Face It:</strong> Describe the triggering quality objectively (3rd person view)</li>
+                  <li><strong>2. Talk to It:</strong> Dialogue with this quality to understand its gifts (2nd person engagement)</li>
+                  <li><strong>3. Be It:</strong> Embody the quality and speak from its perspective (1st person experience)</li>
                   <li><strong>4. Integrate:</strong> Re-own this quality as a valuable part of yourself</li>
                 </ol>
               </div>
@@ -157,7 +212,7 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
                 <p className="font-semibold text-blue-200 mb-2">A note on approach:</p>
                 <p className="text-sm">
                   Approach this process with <strong>curiosity, not criticism</strong>. The goal is integration, not self-blame.
-                  The qualities that trigger you often contain gifts or positive intentions.
+                  The qualities that trigger you often contain gifts or positive intentions we've learned to hide from ourselves.
                 </p>
               </div>
             </div>
@@ -230,6 +285,23 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
                 />
               </div>
             </div>
+
+            {!faceItProbe && faceItAnalysis.objectiveDescription && (
+              <button
+                onClick={handleGenerateFaceItProbe}
+                disabled={isLoadingProbe}
+                className="mt-4 text-sm text-purple-300 hover:text-purple-200 flex items-center gap-2 disabled:opacity-50"
+              >
+                {isLoadingProbe ? <Loader size={14} className="animate-spin" /> : '✨'}
+                {isLoadingProbe ? 'Generating reflection...' : 'Get a reflective question'}
+              </button>
+            )}
+
+            {faceItProbe && (
+              <div className="mt-4 bg-purple-900/20 border border-purple-700/50 rounded-lg p-4">
+                <p className="text-sm text-purple-200 italic">💭 {faceItProbe}</p>
+              </div>
+            )}
           </>
         );
       case 'TALK_TO_IT':
@@ -264,17 +336,19 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
             </div>
             <input
               type="text"
-              placeholder="Type your question or the quality's response..."
+              placeholder="Ask your question..."
               onKeyPress={(e) => {
-                if (e.key === 'Enter' && (e.target as HTMLInputElement).value) {
+                if (e.key === 'Enter' && (e.target as HTMLInputElement).value && !isLoadingProbe) {
                   const text = (e.target as HTMLInputElement).value;
-                  setDialogueTranscript(prev => [...prev, { role: 'user', text }]);
+                  handleDialogueSubmit(text);
                   (e.target as HTMLInputElement).value = '';
                 }
               }}
-              className="w-full bg-slate-900/50 border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
+              disabled={isLoadingProbe}
+              className="w-full bg-slate-900/50 border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
             />
-            <p className="text-xs text-slate-500 mt-2">Press Enter to add to the dialogue</p>
+            {isLoadingProbe && <p className="text-xs text-purple-400 mt-2 flex items-center gap-2"><Loader size={12} className="animate-spin" /> Listening...</p>}
+            {!isLoadingProbe && <p className="text-xs text-slate-500 mt-2">Press Enter to continue the dialogue</p>}
           </>
         );
       case 'BE_IT':
@@ -295,6 +369,24 @@ export default function ThreeTwoOneWizard({ onClose, onSave, session: draft, ins
                   className="w-full bg-slate-900/50 border-slate-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
+
+              {!beItSomaticPrompt && embodimentAnalysis.embodimentStatement && (
+                <button
+                  onClick={handleGenerateBeItPrompt}
+                  disabled={isLoadingProbe}
+                  className="text-sm text-yellow-300 hover:text-yellow-200 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isLoadingProbe ? <Loader size={14} className="animate-spin" /> : '🧘'}
+                  {isLoadingProbe ? 'Generating somatic guidance...' : 'Get a somatic check-in'}
+                </button>
+              )}
+
+              {beItSomaticPrompt && (
+                <div className="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                  <p className="text-sm text-yellow-200">{beItSomaticPrompt}</p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-semibold text-slate-300 mb-2">Where do you feel this in your body?</label>
                 <input
