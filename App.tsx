@@ -1088,50 +1088,65 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     setAdaptiveCycleHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
     navigateBack();
 
-    // Build rich report following the established pattern
-    const phaseNames = {
-      'r': 'Growth/Exploitation (r)',
-      'K': 'Conservation (K)',
-      'Ω': 'Release/Collapse (Ω)',
-      'α': 'Reorganization (α)'
-    };
+    // Build rich report showing the full four-quadrant landscape
+    const selfAssessmentSection = session.userHint
+      ? `\n## Self-Assessment Scores (1-10 scale)
+- **Potential for growth/change:** ${session.userHint.potential}/10
+- **Connectedness/rigidity of structure:** ${session.userHint.connectedness}/10
+- **Resilience/capacity to absorb disruption:** ${session.userHint.resilience}/10\n`
+      : '';
 
-    const sessionReport = `# Adaptive Cycle Analysis: ${session.systemToAnalyze}
+    const sessionReport = `# Adaptive Cycle Landscape: ${session.systemToAnalyze}
+${selfAssessmentSection}
+## Four-Quadrant Map
 
-## Current Phase
-**${phaseNames[session.diagnosedPhase]}**
+### ${session.cycleMap.r.title}
+${session.cycleMap.r.points.map(p => `- ${p}`).join('\n')}
 
-${session.phaseAnalysis.description}
+### ${session.cycleMap.K.title}
+${session.cycleMap.K.points.map(p => `- ${p}`).join('\n')}
 
-## Diagnostic Scores (1-10 scale)
-- **Potential for growth/change:** ${session.diagnosticAnswers.potential}/10
-- **Connectedness/rigidity of structure:** ${session.diagnosticAnswers.connectedness}/10
-- **Resilience/capacity to absorb disruption:** ${session.diagnosticAnswers.resilience}/10
+### ${session.cycleMap.Ω.title}
+${session.cycleMap.Ω.points.map(p => `- ${p}`).join('\n')}
 
-## Analysis
-
-### Strengths of This Phase
-${session.phaseAnalysis.strengths.map(s => `- ${s}`).join('\n')}
-
-### Risks to Watch For
-${session.phaseAnalysis.risks.map(r => `- ${r}`).join('\n')}
-
-### Strategies for Navigation
-${session.phaseAnalysis.strategies.map((s, idx) => `${idx + 1}. ${s}`).join('\n')}
+### ${session.cycleMap.α.title}
+${session.cycleMap.α.points.map(p => `- ${p}`).join('\n')}
 
 ## Systems Thinking Context
-The Adaptive Cycle is a framework from resilience theory that helps us understand the natural rhythms of complex systems. This analysis maps "${session.systemToAnalyze}" onto this cycle to provide clarity on the current phase and actionable strategies for navigation.`;
+The Adaptive Cycle is a framework from resilience theory that describes how all complex systems move through cycles of growth, stability, release, and renewal. This landscape map shows how all four phases are present in "${session.systemToAnalyze}", providing a holistic view of the current dynamics and possibilities.`;
 
     // Generate integrated insight for Journal
     try {
-      const detectedPattern = `Currently in a ${phaseNames[session.diagnosedPhase]} phase regarding ${session.systemToAnalyze}`;
+      // Determine the most energized quadrant for the pattern
+      const getHighlightedQuadrant = (): string => {
+        if (!session.userHint) return 'all phases of the Adaptive Cycle';
+
+        const { potential, connectedness } = session.userHint;
+        const isPotentialHigh = potential > 5.5;
+        const isConnectednessHigh = connectedness > 5.5;
+
+        if (isPotentialHigh && !isConnectednessHigh) return 'Growth/Exploitation (r) phase';
+        if (isPotentialHigh && isConnectednessHigh) return 'Conservation (K) phase';
+        if (!isPotentialHigh && isConnectednessHigh) return 'Release/Collapse (Ω) phase';
+        return 'Reorganization (α) phase';
+      };
+
+      const detectedPattern = `Mapped ${session.systemToAnalyze} across the Adaptive Cycle, with emphasis on ${getHighlightedQuadrant()}`;
+
+      // Create a concise summary for the insight
+      const allPoints = [
+        ...session.cycleMap.r.points.slice(0, 1),
+        ...session.cycleMap.K.points.slice(0, 1),
+        ...session.cycleMap.Ω.points.slice(0, 1),
+        ...session.cycleMap.α.points.slice(0, 1),
+      ].join(' | ');
 
       const insight = await generateInsightFromSession({
         wizardType: 'Adaptive Cycle Mapper',
         sessionId: session.id,
         sessionName: session.systemToAnalyze,
         sessionReport: sessionReport,
-        sessionSummary: session.phaseAnalysis.description,
+        sessionSummary: allPoints.substring(0, 200),
         userId: userId,
         availablePractices: Object.values(corePractices).flat(),
         userProfile,

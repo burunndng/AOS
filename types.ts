@@ -1482,28 +1482,33 @@ export interface CachedGuidance {
 // Adaptive Cycle Wizard Types
 // ============================================================================
 
+// Optional user self-assessment (used as "hint" for AI, not a hard diagnosis)
 export interface AdaptiveCycleDiagnosticAnswers {
   potential: number; // Score from 1-10 (Low to High)
   connectedness: number; // Score from 1-10 (Low to High)
   resilience: number; // Score from 1-10 (Low to High)
 }
 
-export interface AdaptiveCyclePhaseAnalysis {
+// Content for a single quadrant on the Adaptive Cycle map
+export interface AdaptiveCycleQuadrantAnalysis {
   phase: 'r' | 'K' | 'Ω' | 'α';
-  title: string; // e.g., "Conservation (K)"
-  description: string; // Personalized description of the phase
-  strengths: string[]; // Strengths of being in this phase
-  risks: string[]; // Risks/shadow aspects of this phase
-  strategies: string[]; // Actionable strategies for this phase
+  title: string; // e.g., "Growth / Exploitation (r)"
+  points: string[]; // 3-5 specific bullet points for this quadrant
 }
 
 export interface AdaptiveCycleSession {
   id: string;
   date: string;
   systemToAnalyze: string; // The user's context, e.g., "My Career"
-  diagnosticAnswers: AdaptiveCycleDiagnosticAnswers;
-  diagnosedPhase: 'r' | 'K' | 'Ω' | 'α';
-  phaseAnalysis: AdaptiveCyclePhaseAnalysis;
+  // Optional self-assessment from the user (used as hint for AI)
+  userHint?: AdaptiveCycleDiagnosticAnswers;
+  // The main data: the full, four-quadrant map
+  cycleMap: {
+    r: AdaptiveCycleQuadrantAnalysis;
+    K: AdaptiveCycleQuadrantAnalysis;
+    Ω: AdaptiveCycleQuadrantAnalysis;
+    α: AdaptiveCycleQuadrantAnalysis;
+  };
   // This will be used for the rich report in the insight journal
   fullReport?: string;
 }
