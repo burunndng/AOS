@@ -91,7 +91,8 @@ import {
   EightZonesSession,
   EightZonesDraft,
   EnhancedRecommendationSet,
-  IntelligentGuidance
+  IntelligentGuidance,
+  NavigationEntry
 } from './types.ts';
 import { practices as corePractices, starterStacks, modules } from './constants.ts'; // FIX: Moved import to prevent re-declaration.
 
@@ -242,6 +243,9 @@ export default function App() {
   // Flabbergaster Easter Egg
   const [isFlabbergasterPortalOpen, setIsFlabbergasterPortalOpen] = useLocalStorage<boolean>('isFlabbergasterPortalOpen', false);
   const [hasUnlockedFlabbergaster, setHasUnlockedFlabbergaster] = useLocalStorage<boolean>('hasUnlockedFlabbergaster', false);
+
+  // Navigation Stack (Phase 3: Back button functionality)
+  const [navigationStack, setNavigationStack] = useState<NavigationEntry[]>([]);
   const [hasDiscoveredHiddenMode, setHasDiscoveredHiddenMode] = useLocalStorage<boolean>('hasDiscoveredHiddenMode', false);
 
   // Mobile sidebar toggle
@@ -266,10 +270,69 @@ export default function App() {
     }
   };
 
+  /**
+   * Launch a wizard with optional linked insight (Phase 3: tracks in navigation stack)
+   * Wraps the wizards with navigation history
+   */
   const setActiveWizardAndLink = (wizardName: string | null, insightId?: string) => {
-    setActiveWizard(wizardName);
-    setLinkedInsightId(insightId);
+    navigateTo(activeTab, wizardName, insightId);
   }
+
+  /**
+   * Navigate to a new tab/view, pushing current state to navigation stack (Phase 3)
+   * Handles back button history with max depth of 10 entries
+   */
+  const navigateTo = useCallback((
+    newTab: ActiveTab,
+    wizardId?: string | null,
+    insightId?: string | null
+  ) => {
+    // Don't push to stack if navigating to same tab with same wizard
+    if (activeTab === newTab && activeWizard === (wizardId ?? null)) {
+      return;
+    }
+
+    // Push current state to navigation stack (max 10 entries)
+    const currentEntry: NavigationEntry = {
+      tab: activeTab,
+      activeWizard: activeWizard,
+      linkedInsightId: linkedInsightId,
+      timestamp: Date.now(),
+    };
+
+    setNavigationStack(prev => {
+      const updated = [...prev, currentEntry];
+      // Keep only last 10 entries
+      return updated.slice(-9);
+    });
+
+    // Update current state
+    setActiveTab(newTab);
+    setActiveWizard(wizardId ?? null);
+    setLinkedInsightId(insightId);
+  }, [activeTab, activeWizard, linkedInsightId]);
+
+  /**
+   * Navigate back using the navigation stack (Phase 3)
+   */
+  const navigateBack = useCallback(() => {
+    if (navigationStack.length === 0) {
+      return;
+    }
+
+    setNavigationStack(prev => {
+      const newStack = [...prev];
+      const previousEntry = newStack.pop();
+
+      if (previousEntry) {
+        setActiveTab(previousEntry.tab);
+        setActiveWizard(previousEntry.activeWizard ?? null);
+        setLinkedInsightId(previousEntry.linkedInsightId);
+      }
+
+      return newStack;
+    });
+  }, [navigationStack]);
 
   const findModuleKey = useCallback((practiceId: string): ModuleKey => {
     const practice = practiceStack.find(p => p.id === practiceId);
@@ -454,7 +517,7 @@ export default function App() {
   const handleSaveBiasSession = async (session: BiasDetectiveSession) => {
     setHistoryBias(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftBias(null);
-    setActiveWizard(null);
+    navigateBack();
     const report = `# Bias Detective: ${session.decisionText}\n- Diagnosis: ${session.diagnosis}\n- Takeaway: ${session.oneThingToRemember}`;
     const summary = `Identified bias in decision: ${session.decisionText}`;
     try {
@@ -476,7 +539,7 @@ export default function App() {
   const handleSaveBiasFinderSession = async (session: BiasFinderSession) => {
     setHistoryBiasFinder(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftBiasFinder(null);
-    setActiveWizard(null);
+    navigateBack();
     const biasesSummary = session.hypotheses.filter(h => h.confidence).map(h => `${h.biasName} (${h.confidence}%)`).join(', ');
     const report = `# Bias Finder: ${session.targetDecision}\n- Biases Identified: ${biasesSummary}\n- Recommendations: ${session.diagnosticReport?.recommendations.join('; ') || 'N/A'}`;
     const summary = `Found ${session.hypotheses.filter(h => h.confidence).length} biases in decision`;
@@ -499,7 +562,7 @@ export default function App() {
   const handleSaveSOSession = async (session: SubjectObjectSession) => {
     setHistorySO(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftSO(null);
-    setActiveWizard(null);
+    navigateBack();
     const report = `# S-O Explorer: ${session.pattern}\n- Subject to: ${session.subjectToStatement}\n- Insight: ${session.integrationShift}`;
     const summary = `Pattern identified: ${session.pattern}`;
     try {
@@ -521,7 +584,7 @@ export default function App() {
   const handleSavePSSession = async (session: PerspectiveShifterSession) => {
     setHistoryPS(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftPS(null);
-    setActiveWizard(null);
+    navigateBack();
     const report = `# P-S Shifter: ${session.stuckSituation}\n- Synthesis: ${session.synthesis}\n- Action Plan: ${session.realityCheckRefinement}`;
     const summary = `Shifted perspective on: ${session.stuckSituation}`;
     try {
@@ -543,7 +606,7 @@ export default function App() {
   const handleSavePMSession = async (map: PolarityMap) => {
     setHistoryPM(prev => [...prev.filter(m => m.id !== map.id), map]);
     setDraftPM(null);
-    setActiveWizard(null);
+    navigateBack();
     const report = `# Polarity Map: ${map.dilemma}\n- Pole A: ${map.poleA_name}\n- Pole B: ${map.poleB_name}`;
     const summary = `Mapped dilemma: ${map.dilemma}`;
     try {
@@ -565,7 +628,7 @@ export default function App() {
   const handleSaveKeganSession = async (session: KeganAssessmentSession) => {
     setHistoryKegan(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftKegan(null);
-    setActiveWizard(null);
+    navigateBack();
     const report = `# Kegan Assessment\n- Stage: ${session.overallInterpretation?.centerOfGravity || 'Pending'}\n- Key Insights: ${JSON.stringify(session.responses).substring(0, 200)}`;
     const summary = `Development stage assessed: ${session.overallInterpretation?.centerOfGravity || 'Assessment completed'}`;
     try {
@@ -587,7 +650,7 @@ export default function App() {
   const handleSaveAttachmentAssessment = async (session: AttachmentAssessmentSession) => {
     setHistoryAttachment(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftRelational(null);
-    setActiveWizard(null);
+    navigateBack();
 
     const report = `# Attachment Assessment\n- Style: ${session.style}\n- Anxiety Score: ${session.scores.anxiety}\n- Avoidance Score: ${session.scores.avoidance}\n- Assessment Notes: ${session.notes || session.description}`;
     const summary = `Attachment style assessed: ${session.style} (anxiety: ${session.scores.anxiety}, avoidance: ${session.scores.avoidance})`;
@@ -611,7 +674,7 @@ export default function App() {
   const handleSaveRelationalSession = async (session: RelationalPatternSession) => {
     setHistoryRelational(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftRelational(null);
-    setActiveWizard(null);
+    navigateBack();
     const report = `# Relational Pattern\n- Context: ${session.conversation.slice(-3).map(m => m.text).join(' ')}`;
     const summary = `Relational pattern explored through dialogue`;
     try {
@@ -632,13 +695,13 @@ export default function App() {
 
   const handleSaveJhanaSession = (session: JhanaSession) => {
     setHistoryJhana(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setActiveWizard(null);
+    navigateBack();
   };
 
   const handleSave321Session = async (session: ThreeTwoOneSession) => {
     setHistory321(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraft321(null);
-    setActiveWizard(null);
+    navigateBack();
 
     const report = `# 3-2-1 Reflection: ${session.trigger}\n- Trigger: ${session.triggerDescription}\n- Dialogue: ${session.dialogue}\n- Embodiment: ${session.embodiment}\n- Integration: ${session.integration}`;
     const summary = `Reflected on trigger: ${session.trigger}${session.aiSummary ? ` - ${session.aiSummary}` : ''}`;
@@ -662,7 +725,7 @@ export default function App() {
   const handleSaveIFSSession = async (session: IFSSession) => {
     setHistoryIFS(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftIFS(null);
-    setActiveWizard(null);
+    navigateBack();
 
     // Update parts library
     if (session.partId && session.partName) {
@@ -827,7 +890,7 @@ export default function App() {
   const handleSaveBigMindSession = (session: BigMindSession) => {
     setHistoryBigMind(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftBigMind(null);
-    setActiveWizard(null);
+    navigateBack();
 
     // Create integrated insight from the session
     if (session.summary) {
@@ -839,13 +902,13 @@ export default function App() {
   const handleSaveMemoryReconsolidationSession = (session: MemoryReconsolidationSession) => {
     setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftMemoryRecon(null);
-    setActiveWizard(null);
+    navigateBack();
   };
 
   const handleSaveEightZonesSession = async (session: EightZonesSession) => {
     setEightZonesHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftEightZones(null);
-    setActiveWizard(null);
+    navigateBack();
 
     // Generate integrated insight for Journal
     if (session.synthesisReport) {
@@ -897,14 +960,14 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
     setWorkoutPrograms(prev => [...prev.filter(p => p.id !== program.id), program]);
     // Clear handoff source after saving
     setWorkoutHandoffSource(null);
-    setActiveWizard(null);
+    navigateBack();
     alert(`Your personalized workout program has been saved!`);
   };
 
   const handleSaveMemoryReconSession = async (session: MemoryReconsolidationSession) => {
     setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftMemoryRecon(null);
-    setActiveWizard(null);
+    navigateBack();
 
     const selectedBelief = session.implicitBeliefs[0];
     const shiftPercentage = session.completionSummary?.intensityShift
@@ -1087,7 +1150,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case '321':
         return (
           <ThreeTwoOneWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSave321Session}
             session={draft321}
             insightContext={insightContext}
@@ -1098,7 +1161,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
         return (
           <IFSWizard
             isOpen={true}
-            onClose={(draft) => { setDraftIFS(draft); setActiveWizard(null); }}
+            onClose={(draft) => { setDraftIFS(draft); navigateBack(); }}
             onSaveSession={handleSaveIFSSession}
             draft={draftIFS}
             partsLibrary={partsLibrary}
@@ -1110,7 +1173,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
         return (
           <BiasDetectiveWizard
             userId={userId}
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveBiasSession}
             session={draftBias}
             setDraft={setDraftBias}
@@ -1119,7 +1182,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'biasfinder':
         return (
           <BiasFinderWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveBiasFinderSession}
             session={draftBiasFinder}
             setDraft={setDraftBiasFinder}
@@ -1128,7 +1191,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'so':
         return (
           <SubjectObjectWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveSOSession}
             session={draftSO}
             setDraft={setDraftSO}
@@ -1137,7 +1200,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'ps':
         return (
           <PerspectiveShifterWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSavePSSession}
             session={draftPS}
             setDraft={setDraftPS}
@@ -1146,7 +1209,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'pm':
         return (
           <PolarityMapperWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSavePMSession}
             draft={draftPM}
             setDraft={setDraftPM}
@@ -1155,7 +1218,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'kegan':
         return (
           <KeganAssessmentWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveKeganSession}
             session={draftKegan}
             setDraft={setDraftKegan}
@@ -1164,7 +1227,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'relational':
         return (
           <RelationalPatternChatbot
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveRelationalSession}
             session={draftRelational}
             setDraft={setDraftRelational}
@@ -1173,39 +1236,39 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'jhana':
         return (
           <JhanaTracker
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveJhanaSession}
           />
         );
       case 'somatic':
         return (
           <SomaticGeneratorWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveSomaticPractice}
           />
         );
       case 'meditation':
         return (
           <MeditationWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
           />
         );
       case 'consciousness-graph':
         return (
           <ConsciousnessGraph
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
           />
         );
       case 'role-alignment':
         return (
           <RoleAlignmentWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
           />
         );
       case 'eight-zones':
         return (
           <EightZonesWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveEightZonesSession}
             session={draftEightZones}
             setDraft={setDraftEightZones}
@@ -1215,7 +1278,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'big-mind':
         return (
           <BigMindProcessWizard
-            onClose={(draft) => { setDraftBigMind(draft); setActiveWizard(null); }}
+            onClose={(draft) => { setDraftBigMind(draft); navigateBack(); }}
             onSave={handleSaveBigMindSession}
             session={draftBigMind}
             practiceStack={practiceStack.map(p => p.id)}
@@ -1232,7 +1295,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'memory-reconsolidation':
         return (
           <MemoryReconsolidationWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveMemoryReconsolidationSession}
             session={draftMemoryRecon}
             setDraft={setDraftMemoryRecon}
@@ -1242,7 +1305,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'integral-body-architect':
         return (
           <IntegralBodyArchitectWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveIntegralBodyPlan}
             onLaunchYangPractice={handleLaunchYangPractice}
             onLaunchYinPractice={handleLaunchYinPractice}
@@ -1252,21 +1315,21 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
       case 'dynamic-workout-architect':
         return (
           <DynamicWorkoutArchitectWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveWorkoutProgram}
           />
         );
       case 'insight-practice-map':
         return (
           <InsightPracticeMapWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
           />
         );
       // DISABLED: Memory Reconsolidation - keeping code for future reference
       /* case 'memory-reconsolidation':
         return (
           <MemoryReconsolidationWizard
-            onClose={() => setActiveWizard(null)}
+            onClose={() => navigateBack()}
             onSave={handleSaveMemoryReconSession}
             session={draftMemoryRecon}
             setDraft={setDraftMemoryRecon}
@@ -1283,9 +1346,9 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
     return integratedInsights.find(i => i.id === linkedInsightId) || null;
   }
   
-  // Close sidebar on mobile when tab changes
+  // Close sidebar on mobile when tab changes (Phase 3: uses navigateTo for history)
   const handleTabChange = (tab: ActiveTab) => {
-    setActiveTab(tab);
+    navigateTo(tab);
     if (window.innerWidth < 768) {
       setSidebarOpen(false);
     }
@@ -1316,21 +1379,50 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || 'None identified
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden relative z-10">
-        {/* Mobile Header with Hamburger */}
-        <div className="md:hidden flex items-center gap-4 px-4 py-3 border-b border-accent/20 flex-shrink-0">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors touch-target"
-            aria-label="Toggle menu"
-            aria-expanded={sidebarOpen}
-          >
-            {sidebarOpen ? (
-              <X size={24} className="text-accent" />
-            ) : (
-              <Menu size={24} className="text-slate-400" />
-            )}
-          </button>
-          <h1 className="text-lg font-bold font-mono tracking-tighter bg-gradient-to-r from-accent to-accent-gold bg-clip-text text-transparent">Aura OS</h1>
+        {/* Header with Hamburger and Back Button */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-accent/20 flex-shrink-0">
+          {/* Mobile Menu Toggle */}
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-slate-800/50 rounded-lg transition-colors touch-target"
+              aria-label="Toggle menu"
+              aria-expanded={sidebarOpen}
+            >
+              {sidebarOpen ? (
+                <X size={24} className="text-accent" />
+              ) : (
+                <Menu size={24} className="text-slate-400" />
+              )}
+            </button>
+            <h1 className="text-lg font-bold font-mono tracking-tighter bg-gradient-to-r from-accent to-accent-gold bg-clip-text text-transparent">Aura OS</h1>
+          </div>
+
+          {/* Back Button (visible on both mobile and desktop when history exists) */}
+          {navigationStack.length > 0 && (
+            <button
+              onClick={navigateBack}
+              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800/50 transition-colors text-slate-300 hover:text-accent"
+              aria-label="Go back"
+              title="Back to previous view"
+            >
+              <span className="text-sm font-medium">← Back</span>
+            </button>
+          )}
+
+          {/* Mobile Back Button (right side) */}
+          {navigationStack.length > 0 && (
+            <button
+              onClick={navigateBack}
+              className="md:hidden p-2 hover:bg-slate-800/50 rounded-lg transition-colors text-slate-300 hover:text-accent"
+              aria-label="Go back"
+              title="Back to previous view"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Scrollable Content Area */}
