@@ -48,14 +48,18 @@ export default function HealingAudios() {
 
         return (
           <div key={categoryKey} className="space-y-4">
-            {/* Category Header */}
-            <div className="relative pl-4 border-l border-amber-900/50 hover:border-amber-900 transition-colors">
-              <h3 className="text-base font-semibold text-amber-100 font-serif tracking-wider uppercase text-opacity-90">
-                {categoryName}
-              </h3>
-              <p className="text-xs text-slate-500 mt-2 font-mono tracking-widest">
-                {audios.length} {audios.length === 1 ? 'PRACTICE' : 'PRACTICES'}
-              </p>
+            {/* Category Header - Subtle divider label */}
+            <div className="flex items-center gap-3 mb-1">
+              <div className="h-px flex-1 bg-amber-900/30" />
+              <div className="text-center">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                  {categoryName}
+                </h3>
+                <p className="text-xs text-slate-600 font-mono tracking-widest mt-1">
+                  {audios.length} {audios.length === 1 ? 'PRACTICE' : 'PRACTICES'}
+                </p>
+              </div>
+              <div className="h-px flex-1 bg-amber-900/30" />
             </div>
 
             {/* Audio Grid */}
