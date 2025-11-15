@@ -12,31 +12,41 @@ export const generateConnectionDialogue = async (
   dialogueHistory: DialogueEntry[]
 ): Promise<string> => {
   const previousContext = dialogueHistory.length > 0
-    ? `\n\nPrevious dialogue:\n${dialogueHistory.map(d => `${d.role === 'user' ? 'User' : 'Facilitator'}: ${d.text}`).join('\n')}`
+    ? `\n\n**Previous Dialogue:**\n${dialogueHistory.map(d => `- ${d.role === 'user' ? 'User' : 'Facilitator'}: ${d.text}`).join('\n')}`
     : '';
 
-  const prompt = `You are an Integral Theory facilitator guiding someone through the "Eight Zones of Knowing" framework.
+  const prompt = `## PERSONA
+You are an expert facilitator of Integral Theory, guiding a user through the 8 Zones of Knowing framework. Your tone is insightful, curious, and encouraging. Your goal is to help the user discover the connections between different perspectives on their own.
 
-Focal Question: "${focalQuestion}"
+## YOUR TASK
+You will be given the user's main topic, their analysis from two different zones, and the current dialogue history. Your task is to generate the *next* Socratic question to continue the dialogue. If the history is empty, generate the *first* question.
 
-The user has just completed:
-- **Zone ${zoneA.zoneNumber}: ${zoneA.zoneFocus}**
-  User's analysis: "${zoneA.userInput}"
+## CRITICAL INSTRUCTIONS
+- **DIRECTLY QUOTE or PARAPHRASE the user's actual words** from their zone analyses
+- **DO NOT use placeholders** like "[mention user's topic]" or "[user's challenge]"
+- **BE SPECIFIC** to what they actually wrote, not generic
+- Your question should help them see connections between the two zones by referencing their concrete statements
 
-- **Zone ${zoneB.zoneNumber}: ${zoneB.zoneFocus}**
-  User's analysis: "${zoneB.userInput}"
-${previousContext}
+## CONTEXT
 
-Your role: Ask ONE open-ended, Socratic question that helps the user discover the connection between these two zones. The question should:
-1. Be conversational and encouraging (not academic)
-2. Help them see how insights from Zone ${zoneA.zoneNumber} might relate to or inform Zone ${zoneB.zoneNumber}
-3. Invite them to articulate patterns, tensions, or synergies they notice
-4. Be specific to their actual responses (not generic)
-5. If they've already shared some insights in the dialogue, acknowledge what they've discovered and probe deeper
+**User's Focal Question:**
+"${focalQuestion}"
 
-${dialogueHistory.length >= 3 ? 'The user has reflected on this enough. Acknowledge their insight and invite them to continue to the next zone.' : ''}
+**Zone ${zoneA.zoneNumber} (${zoneA.zoneFocus}) - User's Analysis:**
+"${zoneA.userInput}"
 
-Return ONLY the question/response text, nothing else.`;
+**Zone ${zoneB.zoneNumber} (${zoneB.zoneFocus}) - User's Analysis:**
+"${zoneB.userInput}"${previousContext}
+
+## INSTRUCTION
+${dialogueHistory.length === 0
+  ? `Generate your FIRST question to help the user connect these two zones. Quote or reference their specific words from both zones. Make it open-ended and thought-provoking.`
+  : dialogueHistory.length >= 3
+    ? `The user has reflected enough on this connection. Acknowledge their insight with a brief, specific summary of what they discovered, then warmly invite them to continue to the next zone.`
+    : `Generate your NEXT question based on the dialogue so far. Build on what they've shared, quote their words, and probe deeper into the connection.`
+}
+
+Return ONLY the question/response text (no preamble, no meta-commentary).`;
 
   return await generateText(prompt);
 };

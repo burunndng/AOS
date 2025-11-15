@@ -11,21 +11,24 @@ export function extractWizardSessions(): WizardSessionSummary[] {
   const sessions: WizardSessionSummary[] = [];
 
   // List of wizard session keys to check in localStorage
+  // These must match the exact keys used in App.tsx
   const wizardKeys = [
-    'biasDetectiveSessions',
-    'ifsSessions',
-    'subjectObjectSessions',
-    'threeTwoOneSessions',
-    'keganAssessmentSession',
-    'attachmentAssessmentSession',
-    'bigMindSessions',
-    'somaticGeneratorSessions',
-    'memoryReconsolidationSessions',
-    'polarityMapperSessions',
-    'perspectiveShifterSessions',
-    'eightZonesSessions',
+    'historyBias',              // BiasDetectiveSession[]
+    'historyBiasFinder',        // BiasFinderSession[]
+    'historyIFS',               // IFSSession[]
+    'historySO',                // SubjectObjectSession[]
+    'history321',               // ThreeTwoOneSession[]
+    'historyKegan',             // KeganAssessmentSession[]
+    'historyAttachment',        // AttachmentAssessmentSession[]
+    'historyBigMind',           // BigMindSession[]
+    'somaticPracticeHistory',   // SomaticPracticeSession[]
+    'memoryReconHistory',       // MemoryReconsolidationSession[]
+    'polarityMapperSessions',   // PolarityMap[]
+    'historyPS',                // PerspectiveShifterSession[]
+    'eightZonesHistory',        // EightZonesSession[] ← FIX: was 'eightZonesSessions'
+    'adaptiveCycleHistory',     // AdaptiveCycleSession[] ← NEW: added for Adaptive Cycle wizard
     'insightPracticeMapSession',
-    'relationalPatternSessions',
+    'historyRelational',        // RelationalPatternSession[]
     'roleAlignmentSessions',
     'meditationWizardSessions',
     'integralBodyArchitectSessions',
@@ -37,7 +40,7 @@ export function extractWizardSessions(): WizardSessionSummary[] {
       const data = localStorage.getItem(key);
       if (data) {
         const parsed = JSON.parse(data);
-        const wizardType = key.replace('Sessions', '').replace('Session', '');
+        const wizardType = mapKeyToWizardType(key);
 
         // Handle both single sessions and arrays
         if (Array.isArray(parsed)) {
@@ -55,6 +58,36 @@ export function extractWizardSessions(): WizardSessionSummary[] {
 
   // Sort by date, most recent first
   return sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+/**
+ * Map localStorage key to wizard type name
+ */
+function mapKeyToWizardType(key: string): string {
+  const keyMap: Record<string, string> = {
+    'historyBias': 'biasDetective',
+    'historyBiasFinder': 'biasFinder',
+    'historyIFS': 'ifs',
+    'historySO': 'subjectObject',
+    'history321': 'threeTwoOne',
+    'historyKegan': 'keganAssessment',
+    'historyAttachment': 'attachmentAssessment',
+    'historyBigMind': 'bigMind',
+    'somaticPracticeHistory': 'somaticGenerator',
+    'memoryReconHistory': 'memoryReconsolidation',
+    'polarityMapperSessions': 'polarityMapper',
+    'historyPS': 'perspectiveShifter',
+    'eightZonesHistory': 'eightZones',
+    'adaptiveCycleHistory': 'adaptiveCycle',
+    'insightPracticeMapSession': 'insightPracticeMap',
+    'historyRelational': 'relationalPattern',
+    'roleAlignmentSessions': 'roleAlignment',
+    'meditationWizardSessions': 'meditationWizard',
+    'integralBodyArchitectSessions': 'integralBodyArchitect',
+    'dynamicWorkoutSessions': 'dynamicWorkout',
+  };
+
+  return keyMap[key] || key.replace('Sessions', '').replace('Session', '').replace('history', '').replace('History', '');
 }
 
 /**
@@ -169,6 +202,21 @@ function summarizeSession(wizardType: string, session: any): WizardSessionSummar
       }
       break;
 
+    case 'adaptiveCycle':
+      if (session.systemToAnalyze) {
+        insights.push(`System analyzed: ${session.systemToAnalyze}`);
+      }
+      if (session.diagnosedPhase && session.phaseAnalysis) {
+        const phaseNames: Record<string, string> = {
+          'r': 'Growth/Exploitation',
+          'K': 'Conservation',
+          'Ω': 'Release/Collapse',
+          'α': 'Reorganization'
+        };
+        insights.push(`Current phase: ${phaseNames[session.diagnosedPhase] || session.diagnosedPhase}`);
+      }
+      break;
+
     case 'insightPracticeMap':
       if (session.currentStage) {
         insights.push(`Current insight stage: ${session.currentStage}`);
@@ -280,6 +328,7 @@ function formatWizardName(type: string): string {
     polarityMapper: 'Polarity Mapper',
     perspectiveShifter: 'Perspective Shifter',
     eightZones: 'Eight Zones (AQAL)',
+    adaptiveCycle: 'Adaptive Cycle Mapper',
     insightPracticeMap: 'Insight Practice Map',
     relationalPattern: 'Relational Pattern Tracker',
     roleAlignment: 'Role Alignment',
