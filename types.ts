@@ -140,16 +140,45 @@ export interface CoachMessage {
   text: string;
 }
 
+export interface FaceItAnalysis {
+  objectiveDescription: string; // What does the trigger do/act like?
+  specificActions: string[]; // Specific behaviors or actions
+  triggeredEmotions: string[]; // Emotions triggered by this quality
+}
+
+export interface DialogueEntry {
+  role: 'user' | 'bot';
+  text: string;
+}
+
+export interface EmbodimentAnalysis {
+  embodimentStatement: string; // "I am..." statement from the quality's perspective
+  somaticLocation: string; // Where is this felt in the body?
+  coreMessage: string; // What is the core message of this quality?
+}
+
+export interface IntegrationPlan {
+  reowningStatement: string; // How can you re-own this quality?
+  actionableStep: string; // Specific action to integrate this insight
+  relatedPracticeId?: string; // Link to practice for integration
+}
+
 export interface ThreeTwoOneSession {
   id: string;
   date: string;
   trigger: string;
-  triggerDescription: string;
-  dialogue: string;
-  embodiment: string;
-  integration: string;
+  triggerDescription: string; // Legacy: kept for backward compatibility
+  dialogue: string; // Legacy: kept for backward compatibility
+  embodiment: string; // Legacy: kept for backward compatibility
+  integration: string; // Legacy: kept for backward compatibility
   aiSummary?: string;
   linkedInsightId?: string;
+
+  // New structured fields (Phase 5)
+  faceItAnalysis?: FaceItAnalysis;
+  dialogueTranscript?: DialogueEntry[]; // Chat interface transcription
+  embodimentAnalysis?: EmbodimentAnalysis;
+  integrationPlan?: IntegrationPlan;
 }
 
 export type WizardPhase = 'IDENTIFY' | 'EXPLORE' | 'DEEPEN' | 'UNBURDEN' | 'INTEGRATE' | 'CLOSING';
