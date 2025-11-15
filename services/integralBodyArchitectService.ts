@@ -7,6 +7,23 @@ import {
   PersonalizationSummary
 } from '../types.ts';
 import { generateOpenRouterResponse, buildMessagesWithSystem, OpenRouterMessage, QWEN_FAST_MODEL } from './openRouterService.ts';
+import { GoogleGenAI } from "@google/genai";
+
+// Gemini Robotics model (primary)
+const GEMINI_ROBOTICS_MODEL = 'models/gemini-robotics-er-1.5-preview';
+
+// Initialize Gemini client
+let geminiClient: GoogleGenAI | null = null;
+function getGeminiClient(): GoogleGenAI {
+  if (!geminiClient) {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      throw new Error('API_KEY is not set for Gemini');
+    }
+    geminiClient = new GoogleGenAI({ apiKey });
+  }
+  return geminiClient;
+}
 
 interface GeneratePlanInput {
   goalStatement: string;
@@ -21,33 +38,62 @@ export async function generateIntegralWeeklyPlan(input: GeneratePlanInput): Prom
   console.log('[IntegralArchitect] Goal:', input.goalStatement);
 
   const prompt = buildPrompt(input);
+  let jsonText = '';
 
-  const messages: OpenRouterMessage[] = buildMessagesWithSystem(
-    'You are an expert weekly planner. Return ONLY valid JSON with no markdown.',
-    [{ role: 'user', content: prompt }]
-  );
-
-  console.log('[IntegralArchitect] Calling API...');
-
+  // Try Gemini Robotics first
   try {
-    const response = await generateOpenRouterResponse(messages, undefined, {
-      model: QWEN_FAST_MODEL,
-      maxTokens: 16000,
-      temperature: 0.7,
-      provider: {
-        quantizations: ['fp8'],
-        sort: 'latency'
+    console.log('[IntegralArchitect] Trying Gemini Robotics model:', GEMINI_ROBOTICS_MODEL);
+
+    const gemini = getGeminiClient();
+    const response = await gemini.models.generateContent({
+      model: GEMINI_ROBOTICS_MODEL,
+      contents: `You are an expert weekly planner. Return ONLY valid JSON with no markdown.\n\n${prompt}`,
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 16000,
       }
     });
 
-    if (!response.success) {
-      throw new Error(response.error || 'API call failed');
+    jsonText = response.text.trim();
+    console.log('[IntegralArchitect] ✅ Gemini Robotics response received, length:', jsonText.length);
+
+  } catch (geminiError) {
+    console.warn('[IntegralArchitect] ⚠️ Gemini Robotics failed, falling back to Qwen:', geminiError instanceof Error ? geminiError.message : geminiError);
+
+    // Fallback to Qwen via OpenRouter
+    try {
+      console.log('[IntegralArchitect] Trying Qwen fallback model:', QWEN_FAST_MODEL);
+
+      const messages: OpenRouterMessage[] = buildMessagesWithSystem(
+        'You are an expert weekly planner. Return ONLY valid JSON with no markdown.',
+        [{ role: 'user', content: prompt }]
+      );
+
+      const response = await generateOpenRouterResponse(messages, undefined, {
+        model: QWEN_FAST_MODEL,
+        maxTokens: 16000,
+        temperature: 0.7,
+        provider: {
+          quantizations: ['fp8'],
+          sort: 'latency'
+        }
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || 'Qwen API call failed');
+      }
+
+      jsonText = response.text.trim();
+      console.log('[IntegralArchitect] ✅ Qwen fallback response received, length:', jsonText.length);
+
+    } catch (qwenError) {
+      console.error('[IntegralArchitect] ❌ Both Gemini and Qwen failed');
+      throw new Error(`Failed to generate plan with both models: Gemini error: ${geminiError instanceof Error ? geminiError.message : geminiError}, Qwen error: ${qwenError instanceof Error ? qwenError.message : qwenError}`);
     }
+  }
 
-    console.log('[IntegralArchitect] Got response, length:', response.text.length);
-
-    // Parse JSON
-    let jsonText = response.text.trim();
+  // Parse JSON response (common for both models)
+  try {
     if (jsonText.startsWith('```')) {
       jsonText = jsonText.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     }
@@ -57,9 +103,9 @@ export async function generateIntegralWeeklyPlan(input: GeneratePlanInput): Prom
 
     // Build the plan
     return buildPlan(data, input);
-  } catch (error) {
-    console.error('[IntegralArchitect] Error:', error);
-    throw new Error(`Failed to generate plan: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  } catch (parseError) {
+    console.error('[IntegralArchitect] JSON parsing error:', parseError);
+    throw new Error(`Failed to parse plan JSON: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
   }
 }
 
