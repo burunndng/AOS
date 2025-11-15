@@ -1087,7 +1087,9 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
   };
 
   const handleSaveAdaptiveCycleSession = async (session: AdaptiveCycleSession) => {
+    console.log('🔄 [Adaptive Cycle] handleSaveAdaptiveCycleSession called with session:', session);
     setAdaptiveCycleHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+    console.log('✅ [Adaptive Cycle] Session saved to history');
 
     // Build rich report showing the full four-quadrant landscape
     const selfAssessmentSection = session.userHint
@@ -1142,6 +1144,12 @@ The Adaptive Cycle is a framework from resilience theory that describes how all 
         ...session.cycleMap.α.points.slice(0, 1),
       ].join(' | ');
 
+      console.log('🤖 [Adaptive Cycle] Calling generateInsightFromSession with:', {
+        wizardType: 'Adaptive Cycle Mapper',
+        sessionId: session.id,
+        sessionName: session.systemToAnalyze
+      });
+
       const insight = await generateInsightFromSession({
         wizardType: 'Adaptive Cycle Mapper',
         sessionId: session.id,
@@ -1153,10 +1161,11 @@ The Adaptive Cycle is a framework from resilience theory that describes how all 
         userProfile,
       });
 
+      console.log('✅ [Adaptive Cycle] Insight generated:', insight);
       setIntegratedInsights(prev => [...prev, insight]);
-      console.log('[Adaptive Cycle] Insight successfully saved:', insight.id);
+      console.log('✅ [Adaptive Cycle] Insight saved to state. Total insights:', integratedInsights.length + 1);
     } catch (error) {
-      console.error('Failed to generate insight for Adaptive Cycle session:', error);
+      console.error('❌ [Adaptive Cycle] Failed to generate insight:', error);
     } finally {
       // Navigate back after insight generation is complete
       navigateBack();
