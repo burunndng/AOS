@@ -31,37 +31,6 @@ export default function SpiritToolsTab({ setActiveWizard, historyBigMind }: Spir
 
       <SectionDivider />
 
-      {/* Concentration & Jhana Practice Section */}
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-100 mb-1">Concentration & Absorption States</h2>
-          <p className="text-sm text-slate-400">Deepen your meditation practice with structured guidance on jhana states</p>
-        </div>
-        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
-          <div className="flex items-center gap-4 mb-3">
-            <Sparkles size={32} className="text-neutral-400" />
-            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Jhana/Samadhi Guide</h3>
-            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-1 rounded-full font-semibold">Instructional</span>
-          </div>
-          <p className="text-slate-300 mb-4 leading-relaxed">
-            An instructional guide to understanding and working with concentration states and jhana practice.
-            Learn about the eight jhanas, the five factors of absorption, nimittas (signs), and how to recognize
-            and deepen these states in your meditation.
-          </p>
-          <p className="text-sm text-slate-400 mb-5 italic">
-            Based on Theravada jhana maps. Provides detailed explanations of all 8 jhanas, access concentration,
-            the five factors, and practical guidance for recognizing and stabilizing these states. Perfect for
-            practitioners working with samatha/jhana practice.
-          </p>
-          <button
-            onClick={() => setActiveWizard('jhana')}
-            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
-          >
-            Open Jhana Guide
-          </button>
-        </div>
-      </section>
-
       {/* Meditation Practice Finder */}
       <SectionDivider />
 
@@ -248,6 +217,39 @@ export default function SpiritToolsTab({ setActiveWizard, historyBigMind }: Spir
             </div>
           </div>
         )}
+      </section>
+
+      {/* Concentration & Jhana Practice Section */}
+      <SectionDivider />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-1">Concentration & Absorption States</h2>
+          <p className="text-sm text-slate-400">Deepen your meditation practice with structured guidance on jhana states</p>
+        </div>
+        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
+          <div className="flex items-center gap-4 mb-3">
+            <Sparkles size={32} className="text-neutral-400" />
+            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Jhana/Samadhi Guide</h3>
+            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-1 rounded-full font-semibold">Instructional</span>
+          </div>
+          <p className="text-slate-300 mb-4 leading-relaxed">
+            An instructional guide to understanding and working with concentration states and jhana practice.
+            Learn about the eight jhanas, the five factors of absorption, nimittas (signs), and how to recognize
+            and deepen these states in your meditation.
+          </p>
+          <p className="text-sm text-slate-400 mb-5 italic">
+            Based on Theravada jhana maps. Provides detailed explanations of all 8 jhanas, access concentration,
+            the five factors, and practical guidance for recognizing and stabilizing these states. Perfect for
+            practitioners working with samatha/jhana practice.
+          </p>
+          <button
+            onClick={() => setActiveWizard('jhana')}
+            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
+          >
+            Open Jhana Guide
+          </button>
+        </div>
       </section>
 
       {/* Insight Practice Map Section */}

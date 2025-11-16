@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { JhanaSession, JhanaLevel, JhanaFactor, NimittaType } from '../types.ts';
 import { X, ArrowRight, Info, Sparkles, Book, Target, Lightbulb, CheckCircle } from 'lucide-react';
+import JhanaSpiralVisualizer from './JhanaSpiralVisualizer.tsx';
 
 interface JhanaTrackerProps {
   onClose: () => void;
@@ -238,49 +239,12 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
 
     return (
       <div className="space-y-6">
-        {/* Mode Selector */}
-        <div className="flex gap-2 bg-slate-800 p-1 rounded-lg">
-          <button
-            onClick={() => setMode('guide')}
-            className={`flex-1 px-4 py-2 rounded-md font-medium transition ${
-              mode === 'guide' ? 'bg-accent text-slate-900' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Book size={16} className="inline mr-2" />
-            Instructional Guide
-          </button>
-          <button
-            onClick={() => setMode('practice-log')}
-            className={`flex-1 px-4 py-2 rounded-md font-medium transition ${
-              mode === 'practice-log' ? 'bg-accent text-slate-900' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Sparkles size={16} className="inline mr-2" />
-            Log Practice Session
-          </button>
-        </div>
 
-        {/* Jhana Selector */}
-        <div>
-          <label className="block text-sm font-semibold text-slate-200 mb-3">
-            Select Jhana State to Learn About:
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {(Object.keys(JHANA_INFO) as JhanaLevel[]).map(jhana => (
-              <button
-                key={jhana}
-                onClick={() => setSelectedJhana(jhana)}
-                className={`text-left p-3 rounded-lg border-2 transition text-sm ${
-                  selectedJhana === jhana
-                    ? 'border-accent bg-accent/10 font-semibold'
-                    : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-                }`}
-              >
-                {jhana}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Jhana Spiral Visualizer */}
+        <JhanaSpiralVisualizer
+          selectedJhana={selectedJhana}
+          onSelectJhana={setSelectedJhana}
+        />
 
         {/* View Tabs */}
         <div className="flex gap-2 border-b border-slate-700">
@@ -402,27 +366,6 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
     // Simplified practice log - keeping the essential logging functionality
     return (
       <div className="space-y-6 animate-fade-in">
-        {/* Mode Selector */}
-        <div className="flex gap-2 bg-slate-800 p-1 rounded-lg">
-          <button
-            onClick={() => setMode('guide')}
-            className={`flex-1 px-4 py-2 rounded-md font-medium transition ${
-              mode === 'guide' ? 'bg-accent text-slate-900' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Book size={16} className="inline mr-2" />
-            Instructional Guide
-          </button>
-          <button
-            onClick={() => setMode('practice-log')}
-            className={`flex-1 px-4 py-2 rounded-md font-medium transition ${
-              mode === 'practice-log' ? 'bg-accent text-slate-900' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Sparkles size={16} className="inline mr-2" />
-            Log Practice Session
-          </button>
-        </div>
 
         <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-4">
           <p className="text-slate-300 text-sm">
