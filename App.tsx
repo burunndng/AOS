@@ -524,7 +524,44 @@ export default function App() {
       }
       return streak;
   }
-  
+
+  /**
+   * Utility to generate an insight and auto-refresh Intelligence Hub
+   * Ensures wizards automatically trigger guidance updates after completion
+   * Returns the insight immediately, refreshes guidance in background
+   */
+  const generateInsightAndRefreshGuidance = async (
+    input: Parameters<typeof generateInsightFromSession>[0]
+  ): Promise<IntegratedInsight> => {
+    try {
+      const insight = await generateInsightFromSession(input);
+
+      // Auto-refresh Intelligence Hub with updated context
+      // Do this in the background without blocking wizard completion
+      (async () => {
+        try {
+          const context = aggregateUserContext(
+            practiceStack,
+            practiceNotes,
+            [...integratedInsights, insight], // Include new insight
+            completedToday
+          );
+          const guidance = await getIntelligentGuidance(context);
+          setIntelligentGuidance(guidance);
+          console.log('[Wizard Integration] Intelligence Hub refreshed after insight generation');
+        } catch (err) {
+          console.warn('[Wizard Integration] Failed to refresh Intelligence Hub:', err);
+          // Graceful degradation - insight was still generated
+        }
+      })();
+
+      return insight;
+    } catch (err) {
+      console.error('[generateInsightAndRefreshGuidance] Error:', err);
+      throw err;
+    }
+  };
+
   const handleSaveBiasSession = async (session: BiasDetectiveSession) => {
     setHistoryBias(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftBias(null);
@@ -532,7 +569,7 @@ export default function App() {
     const report = `# Bias Detective: ${session.decisionText}\n- Diagnosis: ${session.diagnosis}\n- Takeaway: ${session.oneThingToRemember}`;
     const summary = `Identified bias in decision: ${session.decisionText}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Bias Detective',
         sessionId: session.id,
         sessionName: 'Bias Detective Session',
@@ -556,7 +593,7 @@ export default function App() {
     const report = `# Bias Finder: ${session.targetDecision}\n- Biases Identified: ${biasesSummary}\n- Recommendations: ${session.diagnosticReport?.recommendations.join('; ') || 'N/A'}`;
     const summary = `Found ${session.hypotheses.filter(h => h.confidence).length} biases in decision`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Bias Finder',
         sessionId: session.id,
         sessionName: 'Bias Finder Session',
@@ -579,7 +616,7 @@ export default function App() {
     const report = `# S-O Explorer: ${session.pattern}\n- Subject to: ${session.subjectToStatement}\n- Insight: ${session.integrationShift}`;
     const summary = `Pattern identified: ${session.pattern}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Subject-Object Explorer',
         sessionId: session.id,
         sessionName: 'Subject-Object Session',
@@ -602,7 +639,7 @@ export default function App() {
     const report = `# P-S Shifter: ${session.stuckSituation}\n- Synthesis: ${session.synthesis}\n- Action Plan: ${session.realityCheckRefinement}`;
     const summary = `Shifted perspective on: ${session.stuckSituation}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Perspective-Shifter',
         sessionId: session.id,
         sessionName: 'Perspective-Shifter Session',
@@ -617,7 +654,7 @@ export default function App() {
       console.error('[Perspective-Shifter] Failed to generate insight:', err);
     }
   };
-  
+
   const handleSavePMSession = async (map: PolarityMap) => {
     setHistoryPM(prev => [...prev.filter(m => m.id !== map.id), map]);
     setDraftPM(null);
@@ -625,7 +662,7 @@ export default function App() {
     const report = `# Polarity Map: ${map.dilemma}\n- Pole A: ${map.poleA_name}\n- Pole B: ${map.poleB_name}`;
     const summary = `Mapped dilemma: ${map.dilemma}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Polarity Mapper',
         sessionId: map.id,
         sessionName: 'Polarity Mapper Session',
@@ -648,7 +685,7 @@ export default function App() {
     const report = `# Kegan Assessment\n- Stage: ${session.overallInterpretation?.centerOfGravity || 'Pending'}\n- Key Insights: ${JSON.stringify(session.responses).substring(0, 200)}`;
     const summary = `Development stage assessed: ${session.overallInterpretation?.centerOfGravity || 'Assessment completed'}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Kegan Assessment',
         sessionId: session.id,
         sessionName: 'Kegan Assessment Session',
@@ -673,7 +710,7 @@ export default function App() {
     const summary = `Attachment style assessed: ${session.style} (anxiety: ${session.scores.anxiety}, avoidance: ${session.scores.avoidance})`;
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Attachment Assessment',
         sessionId: session.id,
         sessionName: 'Attachment Assessment Session',
@@ -696,7 +733,7 @@ export default function App() {
     const report = `# Relational Pattern\n- Context: ${session.conversation.slice(-3).map(m => m.text).join(' ')}`;
     const summary = `Relational pattern explored through dialogue`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Relational Pattern',
         sessionId: session.id,
         sessionName: 'Relational Pattern Session',
@@ -752,7 +789,7 @@ ${session.integrationPlan.relatedPracticeId ? `- **Related Practice:** ${session
     const summary = `Reflected on trigger: ${session.trigger}${session.aiSummary ? ` - ${session.aiSummary}` : ''}`;
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: '3-2-1 Reflection',
         sessionId: session.id,
         sessionName: '3-2-1 Reflection Session',
@@ -767,7 +804,7 @@ ${session.integrationPlan.relatedPracticeId ? `- **Related Practice:** ${session
       console.error('[3-2-1 Reflection] Failed to generate insight:', err);
     }
   };
-  
+
   const handleSaveIFSSession = async (session: IFSSession) => {
     setHistoryIFS(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftIFS(null);
@@ -827,7 +864,7 @@ ${session.integrationNote}
     const summary = `Worked with part "${session.partName || 'Unnamed Part'}"${session.partRole ? ` (${session.partRole})` : ''} - reached ${session.currentPhase} phase${session.summary ? ` - ${session.summary}` : ''}`;
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'IFS Session',
         sessionId: session.id,
         sessionName: 'IFS Session',
@@ -842,7 +879,7 @@ ${session.integrationNote}
       console.error('[IFS Session] Failed to generate insight:', err);
     }
   };
-  
+
   const handleSaveSomaticPractice = (session: SomaticPracticeSession) => {
     setSomaticPracticeHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
     alert(`Practice "${session.title}" saved! You can find it in your Library.`);
@@ -1063,7 +1100,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     // Generate integrated insight for Journal
     if (session.synthesisReport) {
       try {
-        const insight = await generateInsightFromSession({
+        const insight = await generateInsightAndRefreshGuidance({
           wizardType: 'Eight Zones',
           sessionId: session.id,
           sessionName: session.focalQuestion,
@@ -1165,7 +1202,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     navigateBack();
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Adaptive Cycle Lens',
         sessionId: sessionWithReport.id,
         sessionName: sessionWithReport.systemToAnalyze,
@@ -1219,7 +1256,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     const summary = `Reconsolidated belief shift: ${shiftPercentage}%`;
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Memory Reconsolidation',
         sessionId: session.id,
         sessionName: 'Memory Reconsolidation Session',
