@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { JhanaLevel } from '../types.ts';
 import { X } from 'lucide-react';
@@ -53,6 +53,9 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
   const animationIdRef = useRef<number>();
   const spiralGroupRef = useRef<THREE.Group | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
+  const spiralMeshRef = useRef<THREE.Mesh | null>(null);
+  const isCameraFocusingRef = useRef(false);
+  const cameraFocusTargetRef = useRef(new THREE.Vector3());
 
   const jhanasInOrder: JhanaLevel[] = [
     'Access Concentration',
@@ -167,6 +170,7 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     spiralMesh.castShadow = true;
     spiralMesh.receiveShadow = true;
     spiralGroup.add(spiralMesh);
+    spiralMeshRef.current = spiralMesh;
 
     // Create jhana points along spiral
     jhanasInOrder.forEach((jhana, i) => {
@@ -208,7 +212,7 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       });
     });
 
-    // Create particle system
+    // Create particle system with tangent-aligned coherent flow
     const particleCount = 1000;
     const particleGeometry = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
@@ -216,14 +220,22 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
 
     for (let i = 0; i < particleCount; i++) {
       const t = Math.random();
-      const pos = createSpiralCurve().getPointAt(t);
+      const spiralCurve = createSpiralCurve();
+      const pos = spiralCurve.getPointAt(t);
+
+      // Get tangent vector to align particle velocity with spiral flow
+      const tangent = spiralCurve.getTangentAt(t).normalize();
+      const speed = 0.05 + Math.random() * 0.05; // Base speed + random variation
+
+      // Position particles near the spiral with slight randomness
       particlePositions[i * 3] = pos.x + (Math.random() - 0.5) * 2;
       particlePositions[i * 3 + 1] = pos.y + (Math.random() - 0.5) * 2;
       particlePositions[i * 3 + 2] = pos.z + (Math.random() - 0.5) * 2;
 
-      particleVelocities[i * 3] = (Math.random() - 0.5) * 0.05;
-      particleVelocities[i * 3 + 1] = Math.random() * 0.02;
-      particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.05;
+      // Velocity aligned with spiral tangent for coherent upward flow
+      particleVelocities[i * 3] = tangent.x * speed;
+      particleVelocities[i * 3 + 1] = tangent.y * speed;
+      particleVelocities[i * 3 + 2] = tangent.z * speed;
     }
 
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
@@ -241,7 +253,7 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     // Store velocities for animation
     (particles as any).userData.velocities = particleVelocities;
 
-    // Mouse click handler
+    // Mouse click handler - triggers camera focus transition
     const onMouseClick = (event: MouseEvent) => {
       if (!containerRef.current) return;
 
@@ -259,49 +271,96 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
         const selectedPoint = jhanaPointsRef.current.find((p) => p.mesh === clickedMesh);
         if (selectedPoint) {
           onSelectJhana(selectedPoint.jhana);
-          // Camera continues smooth orbiting - no interruption
+
+          // Calculate focus target: position above and behind the selected point
+          const targetPos = selectedPoint.position.clone();
+          targetPos.y += 3;
+          targetPos.z += 5;
+          cameraFocusTargetRef.current.copy(targetPos);
+          isCameraFocusingRef.current = true;
         }
       }
     };
 
     renderer.domElement.addEventListener('click', onMouseClick);
 
-    // Animation loop
+    // Animation loop with dynamic camera, particles, and spiral breathing
     let animationTime = 0;
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
       animationTime += 0.002;
 
-      // Orbit camera around spiral - smooth, continuous rotation
-      const orbitRadius = 25;
-      const orbitHeight = 10;
-      const orbitSpeed = 0.0003;
+      // --- CAMERA LOGIC: Focused transition or passive orbit ---
+      if (isCameraFocusingRef.current) {
+        const currentPos = camera.position;
+        const targetPos = cameraFocusTargetRef.current;
+        const lerpFactor = 0.05; // 5% movement towards target each frame
 
-      camera.position.x = Math.cos(animationTime * orbitSpeed) * orbitRadius;
-      camera.position.y = orbitHeight;
-      camera.position.z = Math.sin(animationTime * orbitSpeed) * orbitRadius;
-      camera.lookAt(0, orbitHeight, 0);
+        // Smooth lerp towards focus target
+        currentPos.lerp(targetPos, lerpFactor);
 
-      // Update particles
+        // Look at the selected jhana point
+        const selectedPoint = jhanaPointsRef.current.find(p => p.jhana === selectedJhana);
+        if (selectedPoint) {
+          camera.lookAt(selectedPoint.position);
+        }
+
+        // Resume orbit when close enough (0.15 units distance)
+        if (currentPos.distanceTo(targetPos) < 0.15) {
+          isCameraFocusingRef.current = false;
+        }
+      } else {
+        // Passive orbit around spiral
+        const orbitRadius = 25;
+        const orbitHeight = 10;
+        const orbitSpeed = 0.0003;
+
+        camera.position.x = Math.cos(animationTime * orbitSpeed) * orbitRadius;
+        camera.position.y = orbitHeight;
+        camera.position.z = Math.sin(animationTime * orbitSpeed) * orbitRadius;
+        camera.lookAt(0, orbitHeight, 0);
+      }
+
+      // --- PARTICLE SYSTEM: Coherent upward flow with drift ---
       if (particlesRef.current) {
         const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
         const velocities = (particlesRef.current.userData as any).velocities as Float32Array;
 
+        const upwardDraft = 0.001; // Constant upward acceleration
+        const wrapAroundHeight = 20; // Max height before wrap
+
         for (let i = 0; i < particleCount; i++) {
+          // Apply upward drift (acceleration)
+          velocities[i * 3 + 1] += upwardDraft;
+
+          // Update position based on velocity
           positions[i * 3] += velocities[i * 3];
           positions[i * 3 + 1] += velocities[i * 3 + 1];
           positions[i * 3 + 2] += velocities[i * 3 + 2];
 
-          // Wrap particles around spiral
-          if (positions[i * 3 + 1] > 20) {
-            positions[i * 3 + 1] = 0;
-            const randomT = Math.random();
-            const pos = createSpiralCurve().getPointAt(randomT);
-            positions[i * 3] = pos.x + (Math.random() - 0.5) * 2;
-            positions[i * 3 + 2] = pos.z + (Math.random() - 0.5) * 2;
+          // Smooth wrap-around when particles reach top
+          if (positions[i * 3 + 1] > wrapAroundHeight) {
+            // Reset to bottom with velocity realigned to spiral start tangent
+            positions[i * 3 + 1] -= wrapAroundHeight;
+            const spiralCurve = createSpiralCurve();
+            const newTangent = spiralCurve.getTangentAt(0).normalize();
+            const speed = 0.05 + Math.random() * 0.05;
+            velocities[i * 3] = newTangent.x * speed;
+            velocities[i * 3 + 1] = newTangent.y * speed;
+            velocities[i * 3 + 2] = newTangent.z * speed;
           }
         }
         particlesRef.current.geometry.attributes.position.needsUpdate = true;
+      }
+
+      // --- SPIRAL BREATHING EFFECT: Subtle pulsing and rotation ---
+      if (spiralMeshRef.current && spiralGroupRef.current) {
+        // Breathing effect: subtle scale pulse
+        const breathePulse = 1.0 + Math.sin(animationTime * 2) * 0.02;
+        spiralMeshRef.current.scale.set(breathePulse, 1, breathePulse);
+
+        // Subtle spiral group rotation for dynamic feel
+        spiralGroupRef.current.rotation.y = Math.sin(animationTime * 0.3) * 0.05;
       }
 
       // Highlight selected jhana
