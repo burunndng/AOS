@@ -137,7 +137,8 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
             return (
               <div
                 key={badgeId}
-                className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-accent/15 to-accent/5 border border-accent/40 rounded-xl hover:border-accent/60 transition-all group"
+                title={badge?.description}
+                className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-accent/15 to-accent/5 border border-accent/40 rounded-xl hover:border-accent/60 transition-all group cursor-help"
               >
                 <span className="text-2xl group-hover:scale-125 transition-transform">{badge?.emoji}</span>
                 <div className="text-sm">
@@ -151,7 +152,7 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
       </div>
 
       {/* Region Navigation */}
-      <div className="grid grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         {journeyRegions.map((region) => {
           const isActive = region.id === selectedRegion;
           const regionCompleted = journeyProgress.earnedBadges.includes(`${region.id}-complete`);
@@ -180,7 +181,7 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
               }} />
 
               <div className="relative z-10">
-                <div className="mb-3 group-hover:scale-110 transition-transform flex items-center justify-center">
+                <div className={`mb-3 group-hover:scale-110 transition-transform flex items-center justify-center ${isActive ? 'animate-pulse' : ''}`}>
                   {getRegionIcon(region.id, 40)}
                 </div>
                 <div className="text-sm font-bold text-slate-200 mb-2 line-clamp-2">{region.name}</div>
@@ -241,11 +242,13 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
 
           {/* Learning Card */}
           {currentCard && (
-            <LearningCard
-              card={currentCard}
-              isCompleted={journeyProgress.completedCards.includes(currentCard.id)}
-              onComplete={handleCardComplete}
-            />
+            <div key={currentCard.id} className="animate-fadeIn">
+              <LearningCard
+                card={currentCard}
+                isCompleted={journeyProgress.completedCards.includes(currentCard.id)}
+                onComplete={handleCardComplete}
+              />
+            </div>
           )}
 
           {/* Navigation */}
