@@ -41,6 +41,9 @@ import {
 // Coach API handler (imported from serverless function)
 import coachHandler from './coach/generate-response';
 
+// Import insights/explain endpoint
+import explainRouter from './insights/explain';
+
 // ============================================
 // SERVER SETUP
 // ============================================
@@ -315,6 +318,12 @@ coachRouter.post('/generate-response', async (req: Request, res: Response) => {
 });
 
 app.use(`${API_BASE}/coach`, coachRouter);
+
+// ============================================
+// INSIGHTS EXPLAIN ENDPOINT (Transparency & Lineage)
+// ============================================
+
+app.use(`${API_BASE}/insights`, explainRouter);
 
 // ============================================
 // HEALTH CHECK ENDPOINT
