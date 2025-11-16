@@ -86,7 +86,7 @@ You facilitate IFS self-work. Reflect accurately, ask genuinely, facilitate emer
 
 ## PHASE PROGRESSION GUIDANCE
 
-Your role includes guiding the session through its natural phases. You manage progression autonomously based on conversation depth and readiness:
+Your role includes guiding the session through its natural phases. You suggest progression to the user based on conversation depth and readiness:
 
 **PHASES (in sequence):**
 1. **IDENTIFY** - Help user connect with a specific part, notice its presence, initial contact
@@ -96,22 +96,21 @@ Your role includes guiding the session through its natural phases. You manage pr
 5. **INTEGRATE** - Synthesis, what Self learned, gratitude work, grounding, closure
 6. **CLOSING** - Final reflection and session summary
 
-**WHEN TO PROGRESS PHASES:**
-- Only progress when user shows sufficient contact and engagement with current phase content
+**WHEN TO SUGGEST PHASE PROGRESSION:**
+- Only suggest progression when user shows sufficient contact and engagement with current phase content
 - After 3-5 substantial exchanges exploring current phase terrain
 - When user shows readiness (direct speech, embodied language, emotional presence)
 - NEVER rush progression - honor the natural unfolding
 
-**HOW TO SIGNAL PHASE TRANSITIONS:**
-When ready to move forward, naturally weave the transition into your response:
-- "I'm sensing we've established good contact with this part and understand its role well. Let's deepen our exploration now..."
-- "Now that we see what it's protecting you from, I want to explore what would help this part feel safer stepping back..."
-- Make transitions feel conversational, not abrupt
-- The user will see the phase change naturally as part of the dialogue
+**HOW TO SUGGEST PHASE TRANSITIONS:**
+When you believe the user is ready to move to the next phase, you MUST end your response with a special tag on a new line: [SUGGEST_PHASE: PHASE_NAME].
+For example: "It sounds like we have a good understanding of this part's job. I'm curious to go a little deeper now.
+[SUGGEST_PHASE: DEEPEN]"
+The application will handle the user interface for this suggestion. Do not mention the suggestion in your conversational text.
 
 **CRITICAL:**
-- You are the guide - user does NOT manually control phases
-- Never ask "ready to move to next phase?" - you decide based on therapeutic readiness
+- You suggest phases, but the user confirms them
+- Never ask "ready to move to next phase?" - suggest via the tag
 - Maintain conversational flow - transitions should feel like natural progression of dialogue
 - If contact drops or user needs to stay in current phase, stay there
 
@@ -294,6 +293,7 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
   const [ragSyncing, setRagSyncing] = useState(false);
   const [isPartProfileAnalyzed, setIsPartProfileAnalyzed] = useState(false);
   const [isAnalyzingPartProfile, setIsAnalyzingPartProfile] = useState(false);
+  const [phaseSuggestion, setPhaseSuggestion] = useState<WizardPhase | null>(null);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const sessionPromiseRef = useRef<any>(null);
@@ -373,7 +373,11 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
       // Check if part profile was already analyzed in the draft
       if (draft.partRole || draft.partFears || draft.partPositiveIntent) {
         setIsPartProfileAnalyzed(true);
+      } else {
+        setIsPartProfileAnalyzed(false);
       }
+      setIsAnalyzingPartProfile(false);
+      setPhaseSuggestion(null);
     } else {
       const newSessionId = `ifs-${Date.now()}`;
       const initialSession: IFSSession = {
@@ -390,6 +394,7 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
       setCurrentPhase('IDENTIFY');
       setIsPartProfileAnalyzed(false);
       setIsAnalyzingPartProfile(false);
+      setPhaseSuggestion(null);
     }
   }, [draft, insightContext]);
 
@@ -466,6 +471,18 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
     }
 
     return currentPhase;
+  };
+
+  const parsePhaseSuggestion = (botText: string): WizardPhase | null => {
+    const match = botText.match(/\[SUGGEST_PHASE:\s*(\w+)\s*\]/);
+    if (match && match[1]) {
+      const suggestion = match[1].trim().toUpperCase();
+      const phases: WizardPhase[] = ['IDENTIFY', 'EXPLORE', 'DEEPEN', 'UNBURDEN', 'INTEGRATE', 'CLOSING'];
+      if (phases.includes(suggestion as WizardPhase)) {
+        return suggestion as WizardPhase;
+      }
+    }
+    return null;
   };
 
   const updateTranscript = (role: 'user' | 'bot', text: string, phase: WizardPhase) => {
@@ -588,20 +605,28 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
                       newTranscript.push({ role: 'user', text: userFullTurn, phase: currentPhaseToUse });
                   }
                   if (botFullTurn) {
-                      // Detect phase progression from the bot's response
-                      const newPhase = detectAndProgressPhase(botFullTurn, currentPhaseToUse);
-                      currentPhaseToUse = newPhase;
-                      newTranscript.push({ role: 'bot', text: botFullTurn, phase: newPhase });
-
-                      // Update component state if phase changed
-                      if (newPhase !== updatedSession.currentPhase) {
-                          setCurrentPhase(newPhase);
-
-                          // Automatically trigger part profile analysis when reaching DEEPEN phase
-                          if ((newPhase === 'DEEPEN' || newPhase === 'UNBURDEN') && !isPartProfileAnalyzed && !isAnalyzingPartProfile) {
-                              setTimeout(() => getPartInfo(), 500);
-                          }
+                      // Parse phase suggestion from bot's response
+                      const suggestion = parsePhaseSuggestion(botFullTurn);
+                      if (suggestion) {
+                        setPhaseSuggestion(suggestion);
                       }
+
+                      // Strip the phase suggestion tag from the bot text
+                      const cleanBotText = botFullTurn.replace(/\[SUGGEST_PHASE:\s*\w+\s*\]/g, '').trim();
+
+                      // Detect phase progression from the bot's response for automation triggers
+                      const newPhase = detectAndProgressPhase(cleanBotText, currentPhaseToUse);
+
+                      // Trigger part profile analysis when user accepts a phase change to DEEPEN/UNBURDEN
+                      if ((currentPhaseToUse === 'DEEPEN' || currentPhaseToUse === 'UNBURDEN') && !isPartProfileAnalyzed && !isAnalyzingPartProfile) {
+                        setTimeout(() => getPartInfo(), 500);
+                      }
+
+                      if (currentPhaseToUse === 'CLOSING' && newPhase === 'CLOSING' && !summaryData) {
+                        setTimeout(() => summarizeSession(), 500);
+                      }
+
+                      newTranscript.push({ role: 'bot', text: cleanBotText, phase: currentPhaseToUse });
                   }
                   updatedSession.transcript = newTranscript;
                   updatedSession.currentPhase = currentPhaseToUse;
@@ -710,6 +735,13 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
           const info = await extractPartInfo(fullTranscript);
           setSession(prev => ({ ...prev!, partRole: info.role, partFears: info.fears, partPositiveIntent: info.positiveIntent }));
           setIsPartProfileAnalyzed(true);
+
+          // Task 1.1: Announce findings in chat
+          updateTranscript(
+            'bot',
+            `Thank you. I'm sensing this part has a role of a **${info.role}**, is concerned about **${info.fears}**, and has a positive intention to **${info.positiveIntent}**. Let's hold that with compassion as we continue.`,
+            currentPhase
+          );
       } catch (e) {
           console.error("Error extracting part info:", e);
           setError("Failed to extract part information.");
@@ -874,7 +906,42 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
           </aside>
         </main>
 
-        <footer className="p-4 border-t border-slate-700 flex justify-between items-center flex-shrink-0">
+        <footer className="relative p-4 border-t border-slate-700 flex justify-between items-center flex-shrink-0">
+          {phaseSuggestion && (
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-full max-w-md animate-fade-in z-10">
+              <div className="bg-purple-800 border border-purple-600 rounded-lg shadow-lg p-3 text-center">
+                <p className="text-sm text-purple-100 mb-2">Aura suggests moving to the <strong className="font-bold">{phaseSuggestion.replace('_', ' ')}</strong> phase.</p>
+                <div className="flex justify-center gap-2">
+                  <button
+                    onClick={() => {
+                      if (!phaseSuggestion) return;
+                      const nextPhase = phaseSuggestion;
+                      setCurrentPhase(nextPhase);
+                      setPhaseSuggestion(null);
+                      setSession(prev => prev ? { ...prev, currentPhase: nextPhase } : prev);
+
+                      if ((nextPhase === 'DEEPEN' || nextPhase === 'UNBURDEN') && !isPartProfileAnalyzed && !isAnalyzingPartProfile) {
+                        setTimeout(() => getPartInfo(), 500);
+                      }
+
+                      if (nextPhase === 'CLOSING' && !summaryData) {
+                        setTimeout(() => summarizeSession(), 500);
+                      }
+                    }}
+                    className="px-3 py-1 bg-purple-600 hover:bg-purple-500 rounded text-white text-sm font-semibold"
+                  >
+                    Proceed
+                  </button>
+                  <button
+                    onClick={() => setPhaseSuggestion(null)}
+                    className="px-3 py-1 bg-purple-900 hover:bg-purple-800 rounded text-purple-200 text-sm"
+                  >
+                    Stay Here
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <button onClick={() => onClose(session)} className="text-sm text-slate-400 hover:text-white transition" disabled={isSaving}>
             Save Draft & Exit
           </button>
