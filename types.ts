@@ -1515,6 +1515,28 @@ export interface CachedGuidance {
 }
 
 // ============================================================================
+// Confidence Validation & Tonal Shifts
+// ============================================================================
+
+export interface ConfidenceValidationResult {
+  isValid: boolean;
+  claimedConfidence: 'high' | 'medium' | 'low' | 'unknown';
+  actualConfidence: 'high' | 'medium' | 'low';
+  mismatchFound: boolean;
+  mismatchType?: 'overconfident' | 'underconfident';
+  suggestion?: string;
+}
+
+export type ToneType = 'exploratory' | 'observational' | 'definitive';
+
+export interface TonalShiftResult {
+  originalText: string;
+  shiftedText: string;
+  toneUsed: ToneType;
+  changesApplied: string[];
+}
+
+// ============================================================================
 // Adaptive Cycle Wizard Types
 // ============================================================================
 

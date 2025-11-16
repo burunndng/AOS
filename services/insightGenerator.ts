@@ -16,6 +16,8 @@ import { generateText } from './geminiService.ts';
 import { generateOpenRouterResponse, buildMessagesWithSystem } from './openRouterService.ts';
 import { createInsightLineage } from './synthesisLineageService.ts';
 import type { UserProfile } from '../utils/contextAggregator.ts';
+import { buildToneInstructions } from './tonalShifter.ts';
+import { validateConfidence, calculateConfidenceFromDataVolume } from './confidenceValidator.ts';
 
 interface InsightGenerationInput {
   wizardType:
@@ -46,6 +48,11 @@ interface InsightGenerationInput {
   userId: string;
   availablePractices: Array<{ id: string; name: string; category?: string }>;
   userProfile?: UserProfile;
+  dataContext?: {
+    totalSessions?: number;
+    sessionsInLastWeek?: number;
+    existingInsights?: number;
+  };
 }
 
 /**
@@ -64,10 +71,20 @@ export async function generateInsightFromSession(
     sessionSummary,
     availablePractices,
     userProfile,
+    dataContext,
   } = input;
 
   try {
     console.log(`[InsightGenerator] Generating insight for ${wizardType}: ${sessionId}`);
+
+    // Calculate actual confidence from data volume
+    const dataConfidence = dataContext
+      ? calculateConfidenceFromDataVolume(
+          dataContext.totalSessions || 1,
+          dataContext.sessionsInLastWeek || 0,
+          dataContext.existingInsights || 0
+        )
+      : 0.65; // Default moderate confidence if no data context
 
     // Prepare context for AI
     const practiceList = availablePractices.map((p) => `- ${p.name} (${p.category || 'General'})`).join('\n');
@@ -78,7 +95,8 @@ export async function generateInsightFromSession(
       sessionName,
       sessionReport,
       practiceList,
-      userProfile
+      userProfile,
+      dataConfidence
     );
 
     let response: string;
@@ -136,8 +154,20 @@ export async function generateInsightFromSession(
       dateCreated: new Date().toISOString(),
       status: 'pending',
       generatedBy: usedGrok ? 'grok' : 'gemini',
-      confidenceScore: 0.8, // Default confidence; can be adjusted based on response quality
+      confidenceScore: dataConfidence, // Use calculated confidence from data volume
     };
+
+    // Validate confidence language matches actual confidence
+    const confidenceValidation = validateConfidence(
+      pattern,
+      dataConfidence,
+      dataContext?.totalSessions
+    );
+
+    if (!confidenceValidation.isValid && confidenceValidation.suggestion) {
+      console.warn(`[InsightGenerator] Confidence mismatch detected: ${confidenceValidation.suggestion}`);
+      // Note: In a production system, we might log this for review or adjust the language
+    }
 
     // Track lineage for transparency
     try {
@@ -167,8 +197,11 @@ function buildAdaptivePrompt(
   sessionName: string,
   sessionReport: string,
   practiceList: string,
-  userProfile?: UserProfile
+  userProfile?: UserProfile,
+  dataConfidence: number = 0.65
 ): string {
+  const toneInstructions = buildToneInstructions(dataConfidence);
+
   let basePrompt = `You are an expert at analyzing personal development sessions and suggesting transformative practices.
 
 Wizard Session: ${wizardType}
@@ -178,7 +211,9 @@ Session Report:
 ${sessionReport}
 
 Available Practices:
-${practiceList}`;
+${practiceList}
+
+${toneInstructions}`;
 
   // Add user profile context if available
   if (userProfile) {

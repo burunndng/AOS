@@ -1,6 +1,7 @@
 /**
  * Intelligence Hub - Unified AI Guidance System
  * Uses Grok-4-Fast via OpenRouter to synthesize all user data
+ * Includes confidence validation and tonal shifts
  */
 
 import type { IntelligenceContext, IntelligentGuidance, CachedGuidance, AllPractice } from '../types';
@@ -8,6 +9,8 @@ import { practices as allPractices } from '../constants';
 import { summarizeWizardSessionsForAI } from '../utils/sessionSummarizer';
 import { hashContext, type UserProfile } from '../utils/contextAggregator';
 import { generateOpenRouterResponse, buildMessagesWithSystem } from './openRouterService';
+import { buildToneInstructions } from './tonalShifter';
+import { calculateConfidenceFromDataVolume } from './confidenceValidator';
 
 const CACHE_KEY = 'intelligentGuidanceCache';
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -40,7 +43,18 @@ export async function getIntelligentGuidance(
  * Generate guidance using Grok-4-Fast
  */
 async function generateGuidance(context: IntelligenceContext, userProfile?: UserProfile): Promise<IntelligentGuidance> {
-  const systemPrompt = buildSystemPrompt();
+  // Calculate actual confidence from data volume
+  const dataConfidence = calculateConfidenceFromDataVolume(
+    context.wizardSessions.length,
+    context.wizardSessions.filter(s => {
+      const sessionDate = new Date(s.completedAt || s.dateStarted);
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      return sessionDate > oneWeekAgo;
+    }).length,
+    context.integratedInsights.length
+  );
+
+  const systemPrompt = buildSystemPrompt(dataConfidence);
   const userPrompt = buildUserPrompt(context, userProfile);
 
   try {
@@ -79,12 +93,16 @@ async function generateGuidance(context: IntelligenceContext, userProfile?: User
 /**
  * Build comprehensive system prompt
  */
-function buildSystemPrompt(): string {
+function buildSystemPrompt(dataConfidence: number = 0.7): string {
+  const toneInstructions = buildToneInstructions(dataConfidence);
+
   return `You are an expert Integral Life Practice intelligence system specializing in developmental psychology, contemplative practice, and shadow work integration.
 
 ## YOUR TASK
 
 Analyze the user data and generate a report in **Markdown format with an embedded JSON block for structured recommendations**.
+
+${toneInstructions}
 
 ## RESPONSE FORMAT
 
@@ -104,6 +122,7 @@ Start your response with \`## Where You Are\` (no preamble). Use these exact sec
 - Every claim must have evidence
 - Cut academic jargon
 - Be direct and conversational
+- Adjust confidence language to match data strength (see TONE section above)
 
 Example:
 NO: "The user demonstrates consistency in a broad foundational practice stack..."
