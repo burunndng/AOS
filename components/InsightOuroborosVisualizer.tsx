@@ -53,21 +53,19 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
   // Helper function to create serpent biting its tail (ouroboros)
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
-    const numPoints = 300;
+    const numPoints = 250;
 
     for (let i = 0; i <= numPoints; i++) {
       const t = i / numPoints;
       const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
 
-      // Create a coiling spiral that loops back on itself (serpent biting tail)
-      // The snake coils around itself with increasing complexity
-      const coils = 2.5; // Number of complete loops
-      const angle = t * Math.PI * 2 * coils;
+      // Create a circle with organic serpent-like undulation
+      const angle = t * Math.PI * 2;
+      const radius = 10;
 
-      // Spiral outward and back inward - serpent curves
-      const spiralRadius = 10 * Math.sin(t * Math.PI); // Expands then contracts
-      const x = Math.cos(angle) * spiralRadius;
-      const z = Math.sin(angle) * spiralRadius;
+      // Base circular position
+      let x = Math.cos(angle) * radius;
+      let z = Math.sin(angle) * radius;
 
       // Asymmetric narrative arc: sharp descent into Dark Night, gradual ascent to High Equanimity
       let y = 0;
@@ -84,10 +82,14 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
         y = Math.pow(ascent, 0.8) * 3; // Higher ascent
       }
 
-      // Add subtle wave to make it more serpent-like
-      const waveAmount = Math.sin(t * Math.PI * 4) * 0.5;
+      // Add serpent-like undulation
+      const undulate = Math.sin(t * Math.PI * 6) * 0.8; // More wave motion
+      const radiusModulation = 1 + Math.sin(t * Math.PI * 3) * 0.15; // Serpent thickness variation
 
-      points.push(new THREE.Vector3(x, y + waveAmount, z));
+      x *= radiusModulation;
+      z *= radiusModulation;
+
+      points.push(new THREE.Vector3(x, y + undulate, z));
     }
 
     return new THREE.CatmullRomCurve3(points);
