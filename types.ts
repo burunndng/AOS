@@ -335,6 +335,7 @@ export interface IntegratedInsight {
     | 'Memory Reconsolidation'
     | 'Eight Zones'
     | 'Adaptive Cycle Mapper'
+    | 'Adaptive Cycle Lens'
     | 'Somatic Practice'
     | 'Jhana Guide'
     | 'Meditation Finder'

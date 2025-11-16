@@ -7,7 +7,7 @@ type Step = 'ONBOARDING' | 'CONTEXT' | 'SELF_ASSESSMENT' | 'LANDSCAPE' | 'COMPLE
 
 interface AdaptiveCycleWizardProps {
   onClose: () => void;
-  onSave: (session: AdaptiveCycleSession) => void;
+  onSave: (session: AdaptiveCycleSession) => Promise<void> | void;
 }
 
 export default function AdaptiveCycleWizard({ onClose, onSave }: AdaptiveCycleWizardProps) {
@@ -57,10 +57,9 @@ export default function AdaptiveCycleWizard({ onClose, onSave }: AdaptiveCycleWi
             cycleMap,
           };
           console.log('🔄 [AdaptiveCycle Wizard] Saving session:', session);
-          onSave(session);
-          console.log('✅ [AdaptiveCycle Wizard] onSave called');
+          await onSave(session);
+          console.log('✅ [AdaptiveCycle Wizard] onSave completed');
         }
-        onClose();
         break;
       case 'COMPLETE':
         // This case is never reached (no button on COMPLETE step)
