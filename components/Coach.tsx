@@ -4,6 +4,7 @@ import { MessageCircle, Send, X, ChevronsDown, Sparkles } from 'lucide-react';
 import { CoachMessage, Practice, ModuleKey, ModuleInfo, AllPractice } from '../types.ts';
 import { practices } from '../constants.ts';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
+import { generateCoachResponse, CoachContext } from '../services/coachChatService.ts';
 
 interface CoachProps {
   userId: string;
@@ -80,10 +81,6 @@ export default function Coach({
     setIsLoading(true);
     setShowSuggestions(false);
 
-    // Add empty coach message that will be streamed into
-    const coachMessageIndex = coachResponses.length + 1;
-    setCoachResponses(prev => [...prev, { role: 'coach', text: '' }]);
-
     try {
       const today = new Date().toISOString().split('T')[0];
 
@@ -104,104 +101,84 @@ export default function Coach({
         return acc;
       }, {} as Record<string, { name: string; count: number }>);
 
-      // Call the enhanced backend API with streaming
-      const response = await fetch('/api/coach/generate-response', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          message: currentMessage,
-          practiceStack: practiceStack.map(p => ({
-            id: p.id,
-            name: p.name,
-            module: 'isCustom' in p && p.isCustom ? p.module : undefined,
-          })),
-          completedCount,
-          completionRate,
-          timeCommitment,
-          timeIndicator,
-          modules: moduleBreakdown,
-          practiceNotes,
-          dailyNotes,
-          userProfile,
-        }),
-      });
+      // Build context for coach service
+      const context: CoachContext = {
+        practiceStack: practiceStack.map(p => ({
+          id: p.id,
+          name: p.name,
+          module: 'isCustom' in p && p.isCustom ? p.module : undefined,
+        })),
+        completedCount,
+        completionRate,
+        timeCommitment,
+        timeIndicator,
+        modules: moduleBreakdown,
+        practiceNotes,
+        dailyNotes,
+        userProfile,
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error', message: response.statusText }));
-        console.error('[Coach] API error:', errorData);
-        throw new Error(errorData.message || errorData.error || `API error: ${response.statusText}`);
-      }
+      // Stream the coach's response
+      let streamedText = '';
+      const coachMessageIndex = coachResponses.length + 1;
 
-      // Handle streaming response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullText = '';
+      const result = await generateCoachResponse(
+        context,
+        currentMessage,
+        coachResponses,
+        (chunk) => {
+          streamedText += chunk;
+          // Update the UI with streaming chunks
+          setCoachResponses(prev => {
+            const lastMessage = prev[prev.length - 1];
 
-      if (reader) {
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = JSON.parse(line.slice(6));
-
-                  if (data.error) {
-                    throw new Error(data.error);
-                  }
-
-                  if (data.chunk) {
-                    fullText += data.chunk;
-                    // Update the coach message in real-time
-                    setCoachResponses(prev => {
-                      const updated = [...prev];
-                      updated[coachMessageIndex] = { role: 'coach', text: fullText };
-                      return updated;
-                    });
-                  }
-
-                  if (data.done) {
-                    // Use fullResponse if available, otherwise use accumulated fullText
-                    const finalText = data.fullResponse || fullText;
-                    setCoachResponses(prev => {
-                      const updated = [...prev];
-                      updated[coachMessageIndex] = { role: 'coach', text: finalText };
-                      return updated;
-                    });
-                    break;
-                  }
-                } catch (parseError) {
-                  // Ignore JSON parse errors for incomplete chunks
-                  console.debug('[Coach] Parse error (likely incomplete chunk):', parseError);
-                }
-              }
+            if (lastMessage?.role === 'coach') {
+              // Update existing coach message
+              return [
+                ...prev.slice(0, -1),
+                { ...lastMessage, text: streamedText }
+              ];
+            } else {
+              // Create a new coach message
+              return [
+                ...prev,
+                { role: 'coach', text: streamedText }
+              ];
             }
-          }
-        } catch (streamError) {
-          console.error('[Coach] Streaming error:', streamError);
-          throw streamError;
+          });
         }
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to generate response');
       }
+
+      // Ensure final message is set
+      setCoachResponses(prev => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.role === 'coach') {
+          return [
+            ...prev.slice(0, -1),
+            { ...lastMessage, text: result.text }
+          ];
+        } else {
+          return [
+            ...prev,
+            { role: 'coach', text: result.text }
+          ];
+        }
+      });
     } catch (error) {
       console.error('Coach error:', error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-      // Replace the empty coach message with error
-      setCoachResponses(prev => {
-        const updated = [...prev];
-        updated[coachMessageIndex] = {
+      // Add error message
+      setCoachResponses(prev => [
+        ...prev,
+        {
           role: 'coach',
           text: `Sorry, I'm having trouble connecting. ${errorMessage}`
-        };
-        return updated;
-      });
+        }
+      ]);
     } finally {
       setIsLoading(false);
     }

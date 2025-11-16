@@ -16,7 +16,23 @@
   },
   "rewrites": [
     {
-      "source": "/api/((?!coach).*)",
+      "source": "/api/practices/:path*",
+      "destination": "/api/server.ts"
+    },
+    {
+      "source": "/api/user/:path*",
+      "destination": "/api/server.ts"
+    },
+    {
+      "source": "/api/shadow/:path*",
+      "destination": "/api/server.ts"
+    },
+    {
+      "source": "/api/mind/:path*",
+      "destination": "/api/server.ts"
+    },
+    {
+      "source": "/api/health",
       "destination": "/api/server.ts"
     }
   ]
