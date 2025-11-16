@@ -8,9 +8,10 @@ interface FlabbergasterPortalProps {
   hasUnlocked?: boolean;
   onHiddenModeDiscovered?: () => void;
   onStartGeometricGame?: () => void;
+  onGameComplete?: (data: { resonanceAchieved?: boolean }) => void;
 }
 
-export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHiddenModeDiscovered, onStartGeometricGame }: FlabbergasterPortalProps) {
+export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHiddenModeDiscovered, onStartGeometricGame, onGameComplete }: FlabbergasterPortalProps) {
   const [messages, setMessages] = useState<FlabbergasterMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,6 +19,8 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hiddenModeNotifiedRef = useRef(false);
+  const [hasAchievedResonance, setHasAchievedResonance] = useState(false);
+  const [pendingResonanceNotification, setPendingResonanceNotification] = useState(false);
 
   // Notify hidden mode discovery once per component lifecycle
   useEffect(() => {
@@ -49,6 +52,21 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Handle resonance achievement notification
+  useEffect(() => {
+    if (pendingResonanceNotification && !hasAchievedResonance) {
+      const congratulatoryMessage: FlabbergasterMessage = {
+        id: `msg-${Date.now()}`,
+        role: 'oracle',
+        text: '✨ Magnificent! You have achieved harmonic resonance with the sacred geometry. Your alignment with the cosmic patterns has resonated through the planes of existence. The universe acknowledges your attunement. ✨',
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, congratulatoryMessage]);
+      setHasAchievedResonance(true);
+      setPendingResonanceNotification(false);
+    }
+  }, [pendingResonanceNotification, hasAchievedResonance]);
 
   // Reset state when portal closes
   useEffect(() => {
@@ -282,7 +300,16 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
           {/* Game Launch Button */}
           {onStartGeometricGame && (
             <button
-              onClick={onStartGeometricGame}
+              onClick={() => {
+                onStartGeometricGame();
+                // Set callback to handle game completion
+                (window as any).__handleGameCompletion = (data: { resonanceAchieved?: boolean }) => {
+                  if (data?.resonanceAchieved && onGameComplete) {
+                    setPendingResonanceNotification(true);
+                    onGameComplete(data);
+                  }
+                };
+              }}
               className="w-full bg-gradient-to-r from-cyan-600/40 to-purple-600/40 hover:from-cyan-600/60 hover:to-purple-600/60 border border-cyan-500/30 rounded-lg px-4 py-2 text-cyan-200 text-sm font-medium transition-all flex items-center justify-center gap-2"
               style={{
                 boxShadow: '0 4px 15px rgba(0, 217, 255, 0.2)'

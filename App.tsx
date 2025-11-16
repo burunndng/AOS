@@ -2078,10 +2078,22 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
           setIsFlabbergasterPortalOpen(false);
           setIsGeometricGameOpen(true);
         }}
+        onGameComplete={(data) => {
+          if (data?.resonanceAchieved) {
+            // Reopen the portal so user can see the Oracle's response
+            setIsFlabbergasterPortalOpen(true);
+          }
+        }}
       />
       <GeometricResonanceGame
         isOpen={isGeometricGameOpen}
-        onClose={() => setIsGeometricGameOpen(false)}
+        onClose={(data) => {
+          setIsGeometricGameOpen(false);
+          // Trigger game completion callback in the portal
+          if ((window as any).__handleGameCompletion) {
+            (window as any).__handleGameCompletion(data);
+          }
+        }}
         onGameEvent={(event, data) => {
           console.log(`🎮 Game Event: ${event}`, data);
         }}
