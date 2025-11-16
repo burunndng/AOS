@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Brain, Layers, GitCompare, Lightbulb, AlertTriangle, ChevronDown } from 'lucide-react';
+import * as THREE from 'three';
 
 interface ConsciousnessGraphProps {
   onClose: () => void;
@@ -99,104 +100,89 @@ const CONSCIOUSNESS_DATA: LevelData[] = [
     wilber: {
       name: "Mythic (Amber) → Rational (Orange)",
       isState: false,
-      description: "Mythic/Amber: Concrete operational thinking, rules, roles, order. Rational/Orange: Formal operational thinking, hypothetical reasoning, scientific method.",
-      characteristics: "Abstract thought emerges. Can take other perspectives. Linear, logical reasoning. Belief in objective truth.",
-      insight: "Amber and Orange both use concepts/thinking but differently: Amber: 'The book says it, therefore it's true.' Orange: 'Let me test it and see if it's true.'"
+      description: "Amber (7-12 years, 35% of adults): Rule/role-based, single-perspective. Orange (Modernity): Rational, empirical, goal-oriented.",
+      characteristics: "Amber: Loyalist, rule-following, narrative-based worldview. Orange: Strategic, scientific, individualistic.",
+      insight: "The breakthrough that created science, rights, and democracy came from Orange. But Orange assumes ONLY rational thinking matters - missing embodied, emotional, and non-rational dimensions."
     },
     relationship: {
-      similarity: "Both recognize the emergence of conceptual, symbolic thinking as distinctly human.",
-      difference: "Leary: One circuit for all semantic/rational activity. Wilber: Distinguishes between conformist-rational (Amber) and scientific-rational (Orange).",
-      keyInsight: "Your C3 circuit enables thinking. Your stage determines WHAT KIND of thinking: Mythic thinkers use concepts to reinforce tradition. Rational thinkers use concepts to achieve and discover. Pluralistic thinkers use concepts to deconstruct and include. Integral thinkers use concepts while recognizing their limits."
+      similarity: "Both involve abstract thinking and symbolic representation.",
+      difference: "Leary: C3 stays active your whole life for language/concepts. Wilber: Developmental stages where Orange transcends but includes Amber.",
+      keyInsight: "You need C3 to learn, communicate, and solve problems. But over-reliance (analysis paralysis) means you're stuck in maps while missing direct experience. Mature consciousness uses C3 strategically while remaining grounded in C1-2."
     },
     color: "#FFD700",
-    wilberColor: "#FF8C00"
+    wilberColor: "#FFA500"
   },
   {
     number: 4,
     leary: {
       name: "Socio-Sexual Circuit",
-      shortName: "C4: Social/Moral",
-      description: "Activates in puberty/adolescence. Governs sexual identity, social roles, moral codes, tribal belonging, adult personality. Cultural imprinting.",
-      when_active: "Strong sense of cultural identity. Moral clarity (this is right/wrong). Sexual attraction and bonding. Feeling 'in' or 'out' of groups. Playing social roles.",
-      insight: "This circuit creates your 'personality' and social self. It's the sum of cultural programming. Most people never question it. Psychedelics (C6) can make you see C4 as constructed rather than absolute.",
-      quote: "Who am I in society? What's right and wrong? Who's my tribe?"
+      shortName: "C4: Bonding/Morality",
+      description: "Activates around age 4-5 (with others). Governs bonding, love, morality, cooperation, altruism. Primate/mammalian affiliation system.",
+      when_active: "Feeling love, empathy, moral concern, desire to belong, sexual attraction, cooperation, guilt (moral emotion). Group identification.",
+      insight: "C4 is the heart circuit - what makes us capable of love, morality, and cooperation. Without positive C4 imprinting (secure attachment), you might have trouble with intimacy, trust, and moral empathy throughout life.",
+      quote: "Do people care about me? Can I trust? Am I worthy of love?"
     },
     wilber: {
-      name: "Mythic (Amber) → Pluralistic (Green)",
+      name: "Pluralistic (Green)",
       isState: false,
-      description: "Amber: Ethnocentric, clear social hierarchy. Orange: Achievement-oriented roles, merit-based. Green: World-centric, egalitarian, multiple identities celebrated.",
-      characteristics: "Social identity development. Moral frameworks. Relationship to community. Sexual/gender identity.",
-      insight: "Same social-moral circuit, different stages of complexity: Amber: 'Be a good Christian man/woman in your proper role.' Orange: 'Be successful; relationships should work for both.' Green: 'All identities valid; dismantle oppressive structures.'"
+      description: "Emerged 1960s. Emphasis on equality, inclusion, feelings, authenticity, community, sensitivity to power dynamics.",
+      characteristics: "Egalitarian, relativistic ('all perspectives equally valid'), feelings-centered, inclusive, anti-hierarchical.",
+      insight: "Green brought us feminism, environmentalism, civil rights, and therapy culture. Its strength: inclusion and empathy. Its shadow: false equivalence ('all views equally true'), moral relativism, decision paralysis."
     },
     relationship: {
-      similarity: "Both recognize a stage/circuit centered on social identity, moral codes, sexuality, and cultural programming.",
-      difference: "Leary: One socio-sexual circuit (though acknowledges it's culturally programmed). Wilber: Maps the EVOLUTION of moral/social thinking (Amber → Orange → Green).",
-      keyInsight: "Everyone has a 'social self' (C4). But that self can be: Traditional and role-based (Amber), Individual and achievement-based (Orange), Inclusive and justice-oriented (Green), Integrative and systems-aware (Teal)."
+      similarity: "Both emphasize belonging, bonding, empathy, and moral concern.",
+      difference: "Leary: C4 is a neurological circuit for bonding/sexuality that lasts your whole life. Wilber: Green is a stage you develop through, transcending self-interest with Green-level concern for all.",
+      keyInsight: "Healthy C4 + Green = genuine empathy and moral development. Unhealthy: C4 wounds create attachment issues; Green can become 'spiritual bypassing' where you use empathy language to avoid boundaries/discernment."
     },
-    color: "#32CD32",
-    wilberColor: "#00FF00"
+    color: "#00CED1",
+    wilberColor: "#00FF7F"
   },
   {
     number: 5,
     leary: {
       name: "Neurosomatic Circuit",
-      shortName: "C5: Somatic Bliss",
-      description: "'Rapture circuit' - body-based bliss. First post-terrestrial circuit. Governs somatic ecstasy, sensory enhancement, hedonic consciousness.",
-      when_active: "Body high, sensory enhancement. Time slows down. Euphoria without reason. Everything feels good. Synesthesia possible. Hedonic glow.",
-      insight: "This circuit is mostly dormant in ordinary consciousness. When activated, you realize pleasure and bliss are neurological states, not dependent on external rewards. This can free you from addiction to external validation.",
-      quote: "I feel incredible, alive in every cell, like my body is made of light and pleasure."
+      shortName: "C5: Somatic/Bliss",
+      description: "Activates through exercise, sex, yoga, dance, breathing. Governs bliss, sensory pleasure, body mastery, flow states. Higher-brain hedonic reward.",
+      when_active: "Athletic flow state. Sexual pleasure and orgasm. Meditative bliss. Sensory absorption (music, food, art, nature). Feeling present in your body.",
+      insight: "C5 is about transcending C1-4 limitations through the body. It's not spiritual - it's neurological reward for integrated sensorimotor excellence. Bliss isn't 'special' - it's your neurology rewarding whole-brain integration.",
+      quote: "I'm completely present. No thinking, no history - just this. Pure sensation and flow."
     },
     wilber: {
-      name: "Somatic Bliss State (Accessible from Any Stage)",
-      isState: true,
-      description: "A STATE of somatic bliss - which can be accessed from any developmental stage. Traditionally through cannabis, tantra, yoga mastery, ecstatic practices.",
-      characteristics: "Temporary experience of body euphoria. Can be accessed through practice or substances. NOT a developmental stage.",
-      insight: "Somatic bliss is a state anyone can access (dancers, yogis, athletes, cannabis users), but your developmental stage determines: Whether you seek it addictively or use it wisely. How you interpret what's happening. Whether it leads to growth or spiritual bypassing.",
-      stageInterpretations: {
-        "Red": "I feel amazing, I'm invincible! - Interprets as personal power, might become hedonistic",
-        "Amber": "This is divine grace OR this is sinful pleasure - Interprets religiously",
-        "Orange": "Interesting endorphin response, I should track this - Interprets scientifically",
-        "Green": "This healing should be available to everyone - Interprets through social justice lens",
-        "Teal": "Somatic intelligence arising - Interprets as one state among many, doesn't cling"
-      }
+      name: "Systemic (Teal)",
+      isState: false,
+      description: "Emerged 1990s. Integrative, complex-systems thinking. Can simultaneously hold multiple perspectives and hierarchies.",
+      characteristics: "Systems-thinking, flexible, can shift perspectives, values-driven, post-materialist.",
+      insight: "Teal brought us integral thinking - the ability to see partial truths in Red, Amber, Orange, Green simultaneously without collapsing into relativism. Only 5-10% of world population."
     },
     relationship: {
-      similarity: "Both recognize somatic bliss as a distinct territory of consciousness.",
-      difference: "Leary: C5 is a new circuit that most people haven't activated - it's evolutionary potential. Wilber: Somatic bliss is a STATE anyone can access, but your developmental STAGE determines how you relate to it.",
-      keyInsight: "You can be highly developed (Teal) and never access C5. You can frequently access C5 (through cannabis) but remain at Red or Amber. State access ≠ stage development.",
-      warning: "⚠️ THE GREAT DIVIDE: From here on, Leary and Wilber fundamentally diverge. Leary sees C5-8 as evolutionary circuits to activate. Wilber sees them as STATES accessible from any STAGE. This distinction is crucial."
+      similarity: "Both transcend lower circuits/stages through integration - C5 through body mastery, Teal through cognitive/systems integration.",
+      difference: "Leary: C5 is accessible from any stage - your body always has capacity for pleasure/flow. Wilber: Teal is a rare developmental achievement requiring sustained development through previous stages.",
+      keyInsight: "C5 + Teal = You can access nondual body states AND understand their place in the system. You feel the bliss while understanding its neurological basis. The paradox: understanding how it works doesn't diminish the experience."
     },
-    color: "#4169E1",
-    wilberColor: "#1E90FF"
+    color: "#00FF00",
+    wilberColor: "#4169E1"
   },
   {
     number: 6,
     leary: {
-      name: "Neuroelectric/Metaprogramming Circuit",
-      shortName: "C6: Reprogramming",
-      description: "'Reprogramming consciousness' - the mind editing itself. Governs belief system recognition, reality-tunnel flexibility, self-authoring. The 'psychedelic' circuit.",
-      when_active: "Thoughts themselves become objects of awareness. Beliefs visible as constructs, not truths. Reality feels malleable. Meta-cognitive clarity. 'Aha!' insights cascade.",
-      insight: "C6 lets you see and edit the programs C1-4 installed. You realize your personality, beliefs, and reality-tunnel are constructed. This is the 'psychedelic' circuit - not just from drugs, but any practice that lets you reprogram your mind.",
-      quote: "I can see how I created this belief, this fear, this story - and I can choose differently."
+      name: "Metaprogramming Circuit",
+      shortName: "C6: Meta/Witness",
+      description: "Access to metaprogramming - reprogramming your own circuits. Self-observation, self-reflection, changing beliefs, perspective-taking.",
+      when_active: "Watching your own thoughts (mindfulness/metacognition). Deliberate belief-change. Recognizing patterns in your behavior. 'I notice I'm thinking in circles...'",
+      insight: "C6 is the first 'self-aware' circuit - you can observe your own programming rather than just run it. Most humans rarely access this deliberately. This is where 'free will' begins - the ability to choose your programming.",
+      quote: "I can see how I got here. I can choose differently. I'm not trapped - I'm observing the trap."
     },
     wilber: {
-      name: "Meta-Awareness States (Subtle/Causal)",
-      isState: true,
-      description: "Access to meta-awareness - witnessing consciousness, ability to observe and shift mental content. Traditionally through LSD, psilocybin, meditation retreats, intensive therapy.",
-      characteristics: "Temporary capacity to see beliefs as beliefs. Powerful for insight and growth. But you return to your baseline stage.",
-      insight: "Meta-awareness states are real and powerful, but your stage determines what you can reprogram: Can't reprogram beyond your current stage's complexity. A person at Orange can't truly think in Teal without years of development. Psychedelics give temporary access; development requires integration work.",
-      stageInterpretations: {
-        "Amber": "Might see specific dogma as constructed, but usually doubles down on 'the truth'",
-        "Orange": "Therapeutic insights - 'I see how my childhood created this pattern'",
-        "Green": "Deconstructs oppressive narratives, may become relativistic",
-        "Teal": "Sees ALL perspectives as partial truths, can hold multiple contradictory programs"
-      }
+      name: "Integral/Aware (Turquoise/Aqua)",
+      isState: false,
+      description: "Holds both systemic complexity AND nondual awareness. Can move between different perspectives while maintaining non-dual consciousness.",
+      characteristics: "Transcends and includes all previous stages. Holistic. Rare. Often has peak experiences of non-duality.",
+      insight: "Very few people stably inhabit this. It requires development through Teal plus regular access to non-dual states plus continued integration."
     },
     relationship: {
-      similarity: "Both recognize meta-awareness as a distinct mode - the ability to see and edit your mental programming.",
-      difference: "Leary: C6 = THE psychedelic circuit - grants god-like power to edit your mind. Wilber: Powerful STATE for insight, but can't reprogram beyond your current STAGE's capacity. Temporary access ≠ permanent transformation.",
-      keyInsight: "Use C6 states to ACCELERATE growth through your current stage's challenges, not to SKIP stages. Integration is key.",
-      warning: "Without grounding in C1-4 and healthy stage development, C6 can lead to spiritual inflation or dissociation."
+      similarity: "Both are meta-level - standing apart from the machinery and observing it.",
+      difference: "Leary: C6 gives you metaprogramming ability, but you still operate from your stage. Wilber: Integral combines all previous wisdom with nondual awareness.",
+      keyInsight: "C6 is a superpower IF grounded in healthy C1-5. But C6 without grounding = dissociation, analysis paralysis, spiritual ego ('I'm so aware'). The mature approach: Feel C1-5 fully, observe with C6, understand with Teal thinking."
     },
     color: "#9370DB",
     wilberColor: "#8B00FF"
@@ -268,570 +254,418 @@ const CONSCIOUSNESS_DATA: LevelData[] = [
   }
 ];
 
-// Particle system for dynamic backgrounds
-function ParticleBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+// Three.js Scene Component
+function ThreeScene() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const particlesRef = useRef<THREE.Points | null>(null);
+  const lightsRef = useRef<THREE.Light[]>([]);
+  const radarRef = useRef<THREE.Group | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!containerRef.current) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    // Scene setup
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = new THREE.Color(0x000000);
+    scene.fog = new THREE.FogExp2(0x000000, 0.002);
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Camera
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    camera.position.z = 30;
 
-    interface Particle {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      radius: number;
-      opacity: number;
-      color: string;
-      pulse: number;
+    // Renderer with post-processing
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    rendererRef.current = renderer;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowShadowMap;
+    containerRef.current.appendChild(renderer.domElement);
+
+    // Advanced Lighting Setup
+    // Main directional light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    directionalLight.position.set(10, 20, 10);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.camera.far = 100;
+    scene.add(directionalLight);
+
+    // Dynamic point lights (8 circuit colors)
+    const circuitColors = [
+      0x8B4513, 0xDC143C, 0xFFD700, 0x00CED1,
+      0x00FF00, 0x9370DB, 0xC0C0C0, 0xFFD700
+    ];
+
+    circuitColors.forEach((color, i) => {
+      const angle = (i / circuitColors.length) * Math.PI * 2;
+      const light = new THREE.PointLight(color, 2, 50);
+      light.position.set(
+        Math.cos(angle) * 25,
+        Math.sin(angle) * 15,
+        Math.random() * 10 - 5
+      );
+      scene.add(light);
+      lightsRef.current.push(light);
+    });
+
+    // Ambient light for general illumination
+    const ambientLight = new THREE.AmbientLight(0x4a5568, 0.3);
+    scene.add(ambientLight);
+
+    // Advanced Particle System
+    const particleCount = 2000;
+    const particleGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const velocities = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 80;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 80;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 80;
+
+      velocities[i * 3] = (Math.random() - 0.5) * 0.2;
+      velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.2;
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
+
+      const hue = Math.random();
+      const color = new THREE.Color().setHSL(hue, 0.8, 0.6);
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
     }
 
-    const particles: Particle[] = [];
-    const colors = ['#a855f7', '#06b6d4', '#0ea5e9', '#8b5cf6', '#6366f1'];
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    particleGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+    particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    // Create particles
-    for (let i = 0; i < 20; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        radius: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.3 + 0.1,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        pulse: Math.random() * Math.PI * 2
-      });
-    }
+    const particleMaterial = new THREE.PointsMaterial({
+      size: 0.15,
+      vertexColors: true,
+      sizeAttenuation: true,
+      transparent: true,
+      opacity: 0.8,
+      map: createParticleTexture()
+    });
 
-    let animationId: number;
-    let time = 0;
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    particles.castShadow = true;
+    scene.add(particles);
+    particlesRef.current = particles;
 
-    const animate = () => {
-      time += 0.01;
+    // Radar/Grid System - represents consciousness circuits
+    const radarGroup = new THREE.Group();
+    radarRef.current = radarGroup;
 
-      // Clear with gradient
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
-      gradient.addColorStop(0.5, 'rgba(10, 10, 10, 1)');
-      gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Create rotating rings representing circuits
+    for (let i = 1; i <= 8; i++) {
+      const radius = i * 3;
+      const ringGeometry = new THREE.BufferGeometry();
+      const ringPositions = [];
 
-      // Update and draw particles
-      particles.forEach((p, i) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.pulse += 0.02;
-
-        // Wrap around edges
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-
-        // Pulsing opacity
-        const pulseOpacity = p.opacity + Math.sin(p.pulse) * 0.15;
-
-        // Draw glow
-        const glowGradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 8);
-        glowGradient.addColorStop(0, p.color + Math.floor(pulseOpacity * 255).toString(16).padStart(2, '0'));
-        glowGradient.addColorStop(1, p.color + '00');
-        ctx.fillStyle = glowGradient;
-        ctx.fillRect(p.x - p.radius * 8, p.y - p.radius * 8, p.radius * 16, p.radius * 16);
-
-        // Draw core
-        ctx.fillStyle = p.color + Math.floor(pulseOpacity * 200).toString(16).padStart(2, '0');
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Draw connecting lines between nearby particles
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 150) {
-            ctx.strokeStyle = particles[i].color + Math.floor((1 - distance / 150) * 50).toString(16).padStart(2, '0');
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.stroke();
-          }
-        }
+      for (let angle = 0; angle < Math.PI * 2; angle += 0.1) {
+        ringPositions.push(
+          Math.cos(angle) * radius,
+          Math.sin(angle) * radius,
+          0
+        );
       }
 
+      ringGeometry.setAttribute('position', new THREE.BufferAttribute(
+        new Float32Array(ringPositions),
+        3
+      ));
+
+      const ringMaterial = new THREE.LineBasicMaterial({
+        color: circuitColors[i - 1],
+        transparent: true,
+        opacity: 0.3,
+        fog: true
+      });
+
+      const ring = new THREE.Line(ringGeometry, ringMaterial);
+      radarGroup.add(ring);
+    }
+
+    scene.add(radarGroup);
+
+    // Animation loop with physics
+    let animationId: number;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
       animationId = requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+
+      // Update particle physics
+      if (particlesRef.current) {
+        const posAttr = particlesRef.current.geometry.getAttribute('position') as THREE.BufferAttribute;
+        const velAttr = particlesRef.current.geometry.getAttribute('velocity') as THREE.BufferAttribute;
+        const positions = posAttr.array as Float32Array;
+        const velocities = velAttr.array as Float32Array;
+
+        for (let i = 0; i < particleCount; i++) {
+          // Update position
+          positions[i * 3] += velocities[i * 3] * 50 * delta;
+          positions[i * 3 + 1] += velocities[i * 3 + 1] * 50 * delta;
+          positions[i * 3 + 2] += velocities[i * 3 + 2] * 50 * delta;
+
+          // Wrap around
+          if (Math.abs(positions[i * 3]) > 40) positions[i * 3] *= -0.8;
+          if (Math.abs(positions[i * 3 + 1]) > 40) positions[i * 3 + 1] *= -0.8;
+          if (Math.abs(positions[i * 3 + 2]) > 40) positions[i * 3 + 2] *= -0.8;
+        }
+
+        posAttr.needsUpdate = true;
+      }
+
+      // Rotate radar
+      if (radarRef.current) {
+        radarRef.current.rotation.z += 0.0002;
+      }
+
+      // Animate lights
+      lightsRef.current.forEach((light, i) => {
+        const angle = (i / lightsRef.current.length) * Math.PI * 2 + clock.getElapsedTime();
+        if (light instanceof THREE.PointLight) {
+          light.position.x = Math.cos(angle) * 25;
+          light.position.y = Math.sin(angle) * 15 + Math.sin(clock.getElapsedTime() * 0.5) * 5;
+          light.intensity = 2 + Math.sin(clock.getElapsedTime() * 2 + i) * 1;
+        }
+      });
+
+      // Subtle camera movement
+      camera.position.x = Math.sin(clock.getElapsedTime() * 0.1) * 5;
+      camera.position.y = Math.cos(clock.getElapsedTime() * 0.08) * 3;
+      camera.lookAt(0, 0, 0);
+
+      renderer.render(scene, camera);
     };
 
     animate();
 
+    // Handle window resize
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
     };
 
     window.addEventListener('resize', handleResize);
 
     return () => {
-      cancelAnimationFrame(animationId);
       window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationId);
+      containerRef.current?.removeChild(renderer.domElement);
+      renderer.dispose();
+      particleGeometry.dispose();
+      particleMaterial.dispose();
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none" />;
+  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
+}
+
+// Helper to create particle texture
+function createParticleTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 32;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+  ctx.fillRect(0, 0, 32, 32);
+
+  const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 32, 32);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
 }
 
 export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('both');
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [showIntro, setShowIntro] = useState(true);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedData = selectedLevel !== null ? CONSCIOUSNESS_DATA[selectedLevel - 1] : null;
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
   return (
-    <div
-      ref={containerRef}
-      className="fixed inset-0 bg-black z-50 overflow-y-auto"
-      style={{
-        background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(168, 85, 247, 0.05), transparent 50%),
-                     linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(10, 10, 10, 1) 50%, rgba(0, 0, 0, 1) 100%)`
-      }}
-    >
-      <ParticleBackground />
+    <div className="fixed inset-0 bg-black z-50 overflow-y-auto">
+      {/* Three.js Background */}
+      <div className="fixed inset-0 -z-10">
+        <ThreeScene />
+      </div>
 
-      <style>{`
-        @keyframes glow-pulse {
-          0%, 100% { filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.3)); }
-          50% { filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.7)); }
-        }
-
-        @keyframes light-flare {
-          0% { opacity: 0; }
-          50% { opacity: 0.5; }
-          100% { opacity: 0; }
-        }
-
-        @keyframes float-up {
-          0% { opacity: 0; transform: translateY(20px); }
-          50% { opacity: 1; }
-          100% { opacity: 0; transform: translateY(-60px); }
-        }
-
-        @keyframes rotate-glow {
-          0% { transform: rotate(0deg) translateX(100px) rotate(0deg); opacity: 0.2; }
-          50% { opacity: 0.5; }
-          100% { transform: rotate(360deg) translateX(100px) rotate(-360deg); opacity: 0.2; }
-        }
-
-        @keyframes shimmer-scan {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-
-        @keyframes neon-flicker {
-          0%, 100% { text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(168, 85, 247, 0.4); }
-          50% { text-shadow: 0 0 20px rgba(168, 85, 247, 1), 0 0 40px rgba(168, 85, 247, 0.6), 0 0 60px rgba(106, 90, 255, 0.4); }
-        }
-
-        .animate-glow-pulse { animation: glow-pulse 4s ease-in-out infinite; }
-        .animate-light-flare { animation: light-flare 6s ease-in-out infinite; }
-        .animate-neon-flicker { animation: neon-flicker 3s ease-in-out infinite; }
-
-        .consciousness-card {
-          position: relative;
-          background: linear-gradient(135deg, rgba(30, 30, 40, 0.4), rgba(20, 20, 30, 0.4));
-          border: 1px solid rgba(168, 85, 247, 0.2);
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-          overflow: hidden;
-          backdrop-filter: blur(10px);
-        }
-
-        .consciousness-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
-                      rgba(168, 85, 247, 0.2), transparent 60%);
-          opacity: 0;
-          transition: opacity 0.3s;
-          pointer-events: none;
-        }
-
-        .consciousness-card:hover::before {
-          opacity: 1;
-        }
-
-        .consciousness-card::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(45deg,
-            transparent 0%,
-            rgba(255, 255, 255, 0.1) 50%,
-            transparent 100%);
-          opacity: 0;
-          transition: opacity 0.5s;
-          pointer-events: none;
-        }
-
-        .consciousness-card:hover::after {
-          opacity: 1;
-          animation: shimmer-scan 2s infinite;
-        }
-
-        .consciousness-card:hover {
-          border-color: rgba(168, 85, 247, 0.6);
-          transform: translateY(-8px) perspective(1000px) rotateX(5deg);
-          box-shadow:
-            0 20px 40px rgba(168, 85, 247, 0.2),
-            0 0 30px rgba(168, 85, 247, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-          background: linear-gradient(135deg, rgba(40, 40, 50, 0.6), rgba(30, 30, 45, 0.6));
-        }
-
-        .level-orb {
-          position: relative;
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-          box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .level-orb::before {
-          content: '';
-          position: absolute;
-          inset: -4px;
-          border-radius: 50%;
-          background: inherit;
-          opacity: 0.4;
-          filter: blur(8px);
-          z-index: -1;
-        }
-
-        .consciousness-card:hover .level-orb {
-          transform: scale(1.15) translateY(-4px);
-          box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
-        }
-
-        .card-content {
-          transition: all 0.4s ease;
-        }
-
-        .consciousness-card:hover .card-content {
-          color: #e0e7ff;
-          text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
-        }
-
-        .modal-overlay {
-          background: radial-gradient(circle at center, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95));
-          backdrop-filter: blur(8px);
-        }
-
-        .modal-content {
-          background: linear-gradient(135deg, rgba(30, 30, 45, 0.95), rgba(20, 20, 35, 0.95));
-          border: 1px solid rgba(168, 85, 247, 0.3);
-          box-shadow:
-            0 0 60px rgba(168, 85, 247, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(20px);
-        }
-
-        .btn-active {
-          background: linear-gradient(135deg, rgba(168, 85, 247, 0.8), rgba(139, 92, 246, 0.6));
-          box-shadow:
-            0 0 30px rgba(168, 85, 247, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2);
-          border-color: rgba(168, 85, 247, 0.8);
-        }
-
-        .chevron-icon {
-          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .consciousness-card.selected .chevron-icon {
-          transform: rotate(180deg);
-        }
-
-        /* Floating light effects */
-        .light-ray {
-          position: absolute;
-          pointer-events: none;
-        }
-      `}</style>
-
-      {/* Floating light rays */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-light-flare pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-light-flare pointer-events-none" style={{ animationDelay: '3s' }} />
-
-      <div className="relative z-10 min-h-screen p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex justify-between items-start mb-8 relative">
-            <div>
-              <h1 className="text-6xl md:text-7xl font-black font-mono tracking-tighter mb-2 animate-neon-flicker relative">
-                <span className="bg-clip-text text-transparent bg-gradient-to-br from-violet-300 via-cyan-200 to-purple-300">
-                  Consciousness Graph
-                </span>
-              </h1>
-              <p className="text-slate-300 text-lg font-light drop-shadow-lg">Leary's 8 Circuits × Wilber's Integral Development</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-violet-300 transition-all p-3 rounded-xl hover:bg-slate-800/50 backdrop-blur-sm group"
-            >
-              <X size={32} className="group-hover:drop-shadow-lg group-hover:drop-shadow-violet-500/50" />
-            </button>
+      {/* Overlay Content */}
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="sticky top-0 bg-gradient-to-b from-black via-black/90 to-transparent backdrop-blur-sm border-b border-slate-800/30 p-4 sm:p-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-mono text-slate-100 tracking-tighter flex items-center gap-2">
+              <Brain size={28} />
+              Consciousness Map
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 mt-1">Leary Circuits × Wilber Stages</p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
+          >
+            <X size={24} className="text-slate-300" />
+          </button>
+        </div>
 
-          {/* Introduction */}
-          {showIntro && (
-            <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-violet-500/30 rounded-2xl p-8 mb-8 backdrop-blur-sm relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-violet-500/5 to-violet-500/0 pointer-events-none" />
-              <div className="relative z-10 flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-4 bg-gradient-to-br from-violet-600/30 to-cyan-600/30 rounded-xl backdrop-blur-sm border border-violet-500/30">
-                    <Lightbulb size={32} className="text-violet-300 drop-shadow-lg" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-slate-100">Two Maps, One Territory</h2>
-                </div>
-                <button
-                  onClick={() => setShowIntro(false)}
-                  className="text-slate-400 hover:text-slate-200 transition-colors p-2 rounded-lg"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-              <div className="space-y-4 text-slate-300 leading-relaxed relative z-10">
-                <p>
-                  <strong className="text-violet-300 text-lg">Timothy Leary's 8 Circuits</strong> map the different <em>functions</em> of consciousness.
-                </p>
-                <p>
-                  <strong className="text-violet-300 text-lg">Ken Wilber's Integral Stages</strong> map how you <em>develop</em> through life.
-                </p>
-              </div>
-            </div>
-          )}
+        {/* Mode Selector */}
+        <div className="sticky top-16 bg-black/50 backdrop-blur-sm border-b border-slate-800/20 p-4 flex gap-2 flex-wrap">
+          <button
+            onClick={() => setViewMode('both')}
+            className={`px-3 py-2 rounded-lg font-mono text-sm transition-all ${
+              viewMode === 'both' ? 'bg-accent text-black' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }`}
+          >
+            Both
+          </button>
+          <button
+            onClick={() => setViewMode('leary')}
+            className={`px-3 py-2 rounded-lg font-mono text-sm transition-all ${
+              viewMode === 'leary' ? 'bg-accent text-black' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }`}
+          >
+            <Lightbulb size={14} className="inline mr-1" />
+            Leary
+          </button>
+          <button
+            onClick={() => setViewMode('wilber')}
+            className={`px-3 py-2 rounded-lg font-mono text-sm transition-all ${
+              viewMode === 'wilber' ? 'bg-accent text-black' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            }`}
+          >
+            <Layers size={14} className="inline mr-1" />
+            Wilber
+          </button>
+        </div>
 
-          {/* View Toggles */}
-          <div className="flex gap-3 mb-8 flex-wrap">
-            {(['both', 'leary', 'wilber'] as const).map(mode => (
+        {/* Levels Grid */}
+        <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {CONSCIOUSNESS_DATA.map(level => (
               <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm border ${
-                  viewMode === mode
-                    ? 'btn-active text-white'
-                    : 'bg-slate-700/20 text-slate-300 hover:bg-slate-700/40 border-slate-700/40'
+                key={level.number}
+                onClick={() => setSelectedLevel(selectedLevel === level.number ? null : level.number)}
+                className={`relative group p-4 rounded-lg border-2 transition-all duration-300 ${
+                  selectedLevel === level.number
+                    ? 'bg-slate-900/80 border-accent shadow-lg shadow-accent/50'
+                    : 'bg-slate-900/40 border-slate-700/50 hover:border-slate-600'
                 }`}
+                style={{
+                  borderColor: selectedLevel === level.number ? '#a855f7' : undefined
+                }}
               >
-                {mode === 'both' && <GitCompare className="inline mr-2" size={18} />}
-                {mode === 'leary' && <Brain className="inline mr-2" size={18} />}
-                {mode === 'wilber' && <Layers className="inline mr-2" size={18} />}
-                {mode === 'both' && 'Compare'}
-                {mode === 'leary' && 'Leary'}
-                {mode === 'wilber' && 'Wilber'}
+                <div className="text-xs font-mono text-slate-400 mb-1">Circuit {level.number}</div>
+                <h3 className="text-sm font-bold text-slate-100 line-clamp-2">{level.leary.name}</h3>
+                <div className="mt-2 h-1 bg-gradient-to-r from-slate-700 to-transparent rounded"
+                  style={{
+                    background: `linear-gradient(90deg, ${level.color}, transparent)`
+                  }}
+                />
               </button>
             ))}
           </div>
 
-          {/* Consciousness Cards */}
-          <div className="grid grid-cols-1 gap-4 mb-8 relative z-10">
-            {CONSCIOUSNESS_DATA.map((level, idx) => (
-              <div key={level.number} style={{ animationDelay: `${idx * 50}ms` }} className="group">
-                <button
-                  onClick={() => setSelectedLevel(selectedLevel === level.number ? null : level.number)}
-                  className="consciousness-card w-full text-left p-6 rounded-2xl"
-                  style={{
-                    '--mouse-x': `${mousePosition.x}px`,
-                    '--mouse-y': `${mousePosition.y}px`
-                  } as any}
-                >
-                  <div className="flex items-center gap-6">
-                    {/* Level Orb */}
-                    <div
-                      className="level-orb text-2xl font-bold w-20 h-20 rounded-full flex items-center justify-center text-white font-mono flex-shrink-0"
-                      style={{
-                        background: `linear-gradient(135deg, ${level.color}, ${level.wilberColor})`,
-                        boxShadow: `0 0 40px ${level.color}80`
-                      }}
-                    >
-                      {level.number}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 card-content">
-                      {(viewMode === 'both' || viewMode === 'leary') && (
-                        <div>
-                          <h3 className="text-lg font-bold text-slate-100 mb-1">{level.leary.shortName}</h3>
-                          <p className="text-sm text-slate-400 line-clamp-2">{level.leary.description}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {(viewMode === 'both' || viewMode === 'wilber') && (
-                      <div className="flex-1 card-content">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-slate-100">{level.wilber.name}</h3>
-                          <span className={`text-xs px-2.5 py-1 rounded-full whitespace-nowrap font-medium ${
-                            level.wilber.isState
-                              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                              : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          }`}>
-                            {level.wilber.isState ? 'STATE' : 'STAGE'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-400 line-clamp-2">{level.wilber.description}</p>
-                      </div>
-                    )}
-
-                    <ChevronDown
-                      size={24}
-                      className="chevron-icon text-slate-500 flex-shrink-0 group-hover:text-violet-400 transition-colors"
-                    />
-                  </div>
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Modal */}
+          {/* Detail Panel */}
           {selectedData && (
-            <div className="fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4" onClick={() => setSelectedLevel(null)}>
-              <div
-                className="modal-content rounded-3xl max-h-[90vh] overflow-y-auto w-full max-w-4xl shadow-2xl relative"
-                onClick={e => e.stopPropagation()}
+            <div className="mt-8 bg-slate-900/60 backdrop-blur-sm border border-slate-800 rounded-lg p-6 space-y-6">
+              <button
+                onClick={() => setSelectedLevel(null)}
+                className="absolute top-4 right-4 p-1 hover:bg-slate-700/50 rounded transition-colors"
               >
-                <div className="sticky top-0 bg-gradient-to-r from-slate-800/80 to-slate-900/80 border-b border-violet-500/30 px-8 py-6 flex justify-between items-start backdrop-blur-xl z-10 flex">
-                  <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-cyan-300">
-                    Level {selectedData.number} — Deep Dive
-                  </h2>
-                  <button
-                    onClick={() => setSelectedLevel(null)}
-                    className="text-slate-400 hover:text-slate-200 transition-colors p-2 rounded-xl hover:bg-slate-700/50"
-                  >
-                    <X size={28} />
-                  </button>
-                </div>
+                <X size={20} />
+              </button>
 
-                <div className="p-8 space-y-8">
-                  {/* Two Column */}
-                  <div className="grid md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                      <div className="border-l-4 pl-5" style={{ borderColor: selectedData.color }}>
-                        <h3 className="text-2xl font-bold text-slate-100 mb-3">{selectedData.leary.name}</h3>
-                        <p className="text-slate-300 mb-4">{selectedData.leary.description}</p>
+              <h2 className="text-2xl font-bold text-slate-100">{selectedData.leary.name}</h2>
 
-                        <div className="bg-neutral-900/50 border border-neutral-500/30 rounded-xl p-4 mb-4">
-                          <p className="text-sm text-slate-400 mb-2 font-semibold">When Active:</p>
-                          <p className="text-sm text-slate-300">{selectedData.leary.when_active}</p>
-                        </div>
-
-                        <div className="bg-violet-900/20 border border-violet-500/30 rounded-xl p-4 mb-4">
-                          <p className="text-sm text-violet-300 mb-2 font-semibold">Key Questions:</p>
-                          <p className="text-sm text-violet-200 italic">"{selectedData.leary.quote}"</p>
-                        </div>
-
-                        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                          <p className="text-sm text-slate-400 mb-2 font-semibold">Leary's Insight:</p>
-                          <p className="text-sm text-slate-300">{selectedData.leary.insight}</p>
-                        </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {(viewMode === 'both' || viewMode === 'leary') && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                      <Lightbulb size={20} className="text-yellow-400" />
+                      Leary Circuit
+                    </h3>
+                    <div className="space-y-3 text-sm text-slate-300">
+                      <div>
+                        <h4 className="font-bold text-slate-200 mb-1">When Active:</h4>
+                        <p>{selectedData.leary.when_active}</p>
                       </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="border-l-4 pl-5" style={{ borderColor: selectedData.wilberColor }}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <h3 className="text-2xl font-bold text-slate-100">{selectedData.wilber.name}</h3>
-                          <span className={`text-xs px-3 py-1 rounded-full font-medium border ${
-                            selectedData.wilber.isState
-                              ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
-                              : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                          }`}>
-                            {selectedData.wilber.isState ? 'STATE' : 'STAGE'}
-                          </span>
-                        </div>
-                        <p className="text-slate-300 mb-4">{selectedData.wilber.description}</p>
-
-                        <div className="bg-slate-800/50 rounded-xl p-4 mb-4 border border-slate-700/50">
-                          <p className="text-sm text-slate-400 mb-2 font-semibold">Characteristics:</p>
-                          <p className="text-sm text-slate-300">{selectedData.wilber.characteristics}</p>
-                        </div>
-
-                        <div className="bg-slate-800/50 rounded-xl p-4 mb-4 border border-slate-700/50">
-                          <p className="text-sm text-slate-400 mb-2 font-semibold">Wilber's Insight:</p>
-                          <p className="text-sm text-slate-300">{selectedData.wilber.insight}</p>
-                        </div>
-
-                        {selectedData.wilber.stageInterpretations && (
-                          <div className="bg-neutral-900/40 border border-neutral-500/30 rounded-xl p-4">
-                            <p className="text-sm text-neutral-300 mb-3 font-semibold">How Different Stages Experience This:</p>
-                            <div className="space-y-2.5">
-                              {Object.entries(selectedData.wilber.stageInterpretations).map(([stage, interpretation]) => (
-                                <div key={stage} className="text-sm">
-                                  <span className="text-neutral-400 font-semibold">{stage}:</span>{' '}
-                                  <span className="text-slate-300">{interpretation}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                      <div>
+                        <h4 className="font-bold text-slate-200 mb-1">Key Insight:</h4>
+                        <p>{selectedData.leary.insight}</p>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-200 mb-1 italic">"{selectedData.leary.quote}"</h4>
                       </div>
                     </div>
                   </div>
+                )}
 
-                  {/* Relationships */}
-                  <div className="pt-8 border-t border-violet-500/20">
-                    <h3 className="text-2xl font-bold text-slate-100 mb-6">How They Relate</h3>
-
-                    <div className="grid md:grid-cols-3 gap-6 mb-6">
-                      <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-5">
-                        <p className="text-sm text-emerald-300 mb-3 font-semibold">Similarity</p>
-                        <p className="text-sm text-slate-300">{selectedData.relationship.similarity}</p>
+                {(viewMode === 'both' || viewMode === 'wilber') && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                      <Layers size={20} className="text-blue-400" />
+                      Wilber Stage
+                    </h3>
+                    <div className="space-y-3 text-sm text-slate-300">
+                      <div>
+                        <h4 className="font-bold text-slate-200 mb-1">{selectedData.wilber.name}</h4>
+                        <p className="text-xs text-slate-400 mb-2">{selectedData.wilber.isState ? 'STATE' : 'STAGE'}</p>
+                        <p>{selectedData.wilber.description}</p>
                       </div>
-
-                      <div className="bg-orange-900/20 border border-orange-500/30 rounded-xl p-5">
-                        <p className="text-sm text-orange-300 mb-3 font-semibold">Difference</p>
-                        <p className="text-sm text-slate-300">{selectedData.relationship.difference}</p>
-                      </div>
-
-                      <div className="bg-violet-900/20 border border-violet-500/30 rounded-xl p-5">
-                        <p className="text-sm text-violet-300 mb-3 font-semibold">Key Insight</p>
-                        <p className="text-sm text-slate-300">{selectedData.relationship.keyInsight}</p>
+                      <div>
+                        <h4 className="font-bold text-slate-200 mb-1">Characteristics:</h4>
+                        <p>{selectedData.wilber.characteristics}</p>
                       </div>
                     </div>
+                  </div>
+                )}
+              </div>
 
+              {(viewMode === 'both') && (
+                <div className="border-t border-slate-700 pt-6 space-y-4">
+                  <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                    <GitCompare size={20} className="text-purple-400" />
+                    Integration
+                  </h3>
+                  <div className="space-y-3 text-sm text-slate-300">
+                    <div>
+                      <h4 className="font-bold text-slate-200 mb-1">Key Insight:</h4>
+                      <p>{selectedData.relationship.keyInsight}</p>
+                    </div>
                     {selectedData.relationship.warning && (
-                      <div className="bg-red-900/20 border-2 border-red-500/40 rounded-xl p-5 flex items-start gap-4">
-                        <AlertTriangle size={28} className="text-red-400 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-sm text-red-300 font-semibold mb-1">Important Warning</p>
-                          <p className="text-sm text-slate-300">{selectedData.relationship.warning}</p>
-                        </div>
+                      <div className="flex gap-3 p-3 bg-red-900/20 border border-red-800/50 rounded">
+                        <AlertTriangle size={18} className="text-red-400 flex-shrink-0 mt-0.5" />
+                        <p>{selectedData.relationship.warning}</p>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
