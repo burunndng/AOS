@@ -211,23 +211,23 @@ export default function Coach({
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-slate-800/50 backdrop-blur-sm btn-luminous text-accent rounded-full p-4 shadow-lg z-50 animate-fade-in-up transition-transform transform hover:scale-110"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 bg-slate-800/50 backdrop-blur-sm btn-luminous text-accent rounded-full p-3 sm:p-4 shadow-lg z-50 animate-fade-in-up transition-transform transform hover:scale-110 touch-target"
         aria-label="Open AI Coach"
       >
-        <MessageCircle size={28} />
+        <MessageCircle size={24} className="sm:w-7 sm:h-7" />
       </button>
     );
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 h-[60vh] bg-slate-900/70 backdrop-blur-md rounded-lg border border-accent/20 overflow-hidden flex flex-col z-50 shadow-2xl shadow-accent/10 animate-fade-in-up">
-      <div className="bg-slate-900/50 p-4 flex items-center justify-between gap-3 shadow-md border-b border-accent/20">
-        <div className="flex items-center gap-3">
-            <MerkabaIcon size={20} className="text-accent" />
-            <h3 className="font-bold font-mono text-slate-50">AI Practice Coach</h3>
+    <div className="fixed bottom-4 right-4 left-4 sm:bottom-6 sm:right-6 sm:left-auto sm:w-96 w-full h-[50vh] sm:h-[60vh] bg-slate-900/70 backdrop-blur-md rounded-lg border border-accent/20 overflow-hidden flex flex-col z-50 shadow-2xl shadow-accent/10 animate-fade-in-up">
+      <div className="bg-slate-900/50 p-3 sm:p-4 flex items-center justify-between gap-3 shadow-md border-b border-accent/20">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <MerkabaIcon size={18} className="text-accent flex-shrink-0" />
+            <h3 className="font-bold font-mono text-slate-50 text-sm sm:text-base truncate">AI Practice Coach</h3>
         </div>
-        <button onClick={() => setIsOpen(false)} className="text-slate-300 hover:text-white transition-opacity">
-            <X size={20} />
+        <button onClick={() => setIsOpen(false)} className="text-slate-300 hover:text-white transition-opacity p-1.5 flex-shrink-0 rounded hover:bg-slate-700/50">
+            <X size={18} />
         </button>
       </div>
 
@@ -280,7 +280,7 @@ export default function Coach({
         )}
       </div>
 
-      <div className="border-t border-accent/20 p-3 flex gap-2 bg-slate-900/50 backdrop-blur-sm">
+      <div className="border-t border-accent/20 p-2 sm:p-3 flex gap-2 bg-slate-900/50 backdrop-blur-sm">
         <input
           type="text"
           value={chatMessage}
@@ -290,7 +290,7 @@ export default function Coach({
           className="flex-1 bg-slate-800 text-slate-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent transition border border-slate-700"
           disabled={isLoading}
         />
-        <button onClick={handleCoachMessage} disabled={isLoading} className="bg-accent/80 text-white rounded-md px-3 py-2 hover:bg-accent transition disabled:bg-slate-600 disabled:cursor-not-allowed">
+        <button onClick={handleCoachMessage} disabled={isLoading} className="bg-accent/80 text-white rounded-md px-2.5 sm:px-3 py-2 hover:bg-accent transition disabled:bg-slate-600 disabled:cursor-not-allowed flex-shrink-0 touch-target">
           <Send size={16} />
         </button>
       </div>

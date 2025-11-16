@@ -179,16 +179,16 @@ export default function AttachmentAssessmentWizard({ onClose, onComplete, userId
             <div className="space-y-3">
               <div className="flex justify-between text-xs text-slate-400 px-1">
                 <span>Strongly Disagree</span>
-                <span>Neutral</span>
+                <span className="hidden sm:inline">Neutral</span>
                 <span>Strongly Agree</span>
               </div>
 
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 sm:grid-cols-7 gap-1 sm:gap-2">
                 {[1, 2, 3, 4, 5, 6, 7].map(score => (
                   <button
                     key={score}
                     onClick={() => handleAnswer(score)}
-                    className={`py-3 rounded-lg font-semibold text-sm transition-all ${
+                    className={`py-2 sm:py-3 px-1 sm:px-2 rounded-lg font-semibold text-xs sm:text-sm transition-all ${
                       answers[question.id] === score
                         ? 'bg-accent text-slate-900 shadow-lg'
                         : 'bg-slate-800 border border-slate-700 text-slate-300 hover:border-accent/50'

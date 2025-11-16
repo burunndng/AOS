@@ -23,10 +23,10 @@ const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode
 
 export default function SpiritToolsTab({ setActiveWizard, historyBigMind }: SpiritToolsTabProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <header>
-        <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter">Spirit Tools</h1>
-        <p className="text-slate-400 mt-2">Contemplative practices for deepening meditation, concentration, and spiritual insight.</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-mono text-slate-100 tracking-tighter">Spirit Tools</h1>
+        <p className="text-sm sm:text-base text-slate-400 mt-2">Contemplative practices for deepening meditation, concentration, and spiritual insight.</p>
       </header>
 
       <SectionDivider />

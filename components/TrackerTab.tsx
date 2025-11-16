@@ -73,7 +73,7 @@ export default function TrackerTab({
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter">Daily Tracker</h1>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-mono text-slate-100 tracking-tighter">Daily Tracker</h1>
         <p className="text-slate-400 mt-2">Track your practices for {todayFormatted}.</p>
       </header>
 

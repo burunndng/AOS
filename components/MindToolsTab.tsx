@@ -38,10 +38,10 @@ export default function MindToolsTab({
   const [selectedAttachmentStyle, setSelectedAttachmentStyle] = useState<AttachmentStyle>(attachmentAssessment?.style || 'secure');
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <header>
-        <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter">Mind Tools</h1>
-        <p className="text-slate-400 mt-2">Wizards to train metacognition, reveal blind spots, and accelerate your cognitive development.</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-mono text-slate-100 tracking-tighter">Mind Tools</h1>
+        <p className="text-sm sm:text-base text-slate-400 mt-2">Wizards to train metacognition, reveal blind spots, and accelerate your cognitive development.</p>
       </header>
 
       <SectionDivider />

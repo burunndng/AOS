@@ -11,10 +11,10 @@ interface AqalTabProps {
 
 export default function AqalTab({ report, isLoading, error, onGenerate }: AqalTabProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <header>
-        <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter">AQAL Report</h1>
-        <p className="text-slate-400 mt-2">Get a holistic, AI-powered analysis of your practice across all four quadrants of your being.</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-mono text-slate-100 tracking-tighter">AQAL Report</h1>
+        <p className="text-sm sm:text-base text-slate-400 mt-2">Get a holistic, AI-powered analysis of your practice across all four quadrants of your being.</p>
       </header>
 
       <section className="bg-slate-800/50 border border-slate-700/80 rounded-lg p-6 text-center">
