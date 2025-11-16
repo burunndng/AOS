@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, ArrowRight, ArrowLeft, Check, Target, TrendingUp, BookOpen, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import {
   generateRoleActionSuggestion,
@@ -80,9 +80,20 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
     }
   }, [session?.id, lastLoadedSessionId]);
 
-  // Auto-save draft as user progresses
+  // Debounce timer for auto-save to prevent excessive re-renders
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-save draft as user progresses (debounced to prevent input issues)
   useEffect(() => {
-    if (setDraft) {
+    if (!setDraft) return;
+
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Set new debounced save (500ms delay)
+    autoSaveTimerRef.current = setTimeout(() => {
       const draftSession: RoleAlignmentSession = {
         id: sessionId,
         date: new Date().toISOString(),
@@ -91,10 +102,15 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
         aiIntegralReflection: aiIntegralReflection || undefined
       };
       setDraft(draftSession);
-    }
-    // Note: Intentionally excluding setDraft from dependencies to prevent infinite loops
-    // setDraft is a stable function reference from parent (setState)
-  }, [roles, integralNote, aiIntegralReflection, sessionId]);
+    }, 500);
+
+    // Cleanup: clear timer on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [roles, integralNote, aiIntegralReflection, sessionId, setDraft]);
 
   const currentRole = roles[currentRoleIndex];
   const activeRoles = roles.filter(r => r.name.trim() !== '');
@@ -310,8 +326,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
     const roleData = activeRoles[currentRoleIndex];
     if (!roleData) return null;
 
-    // Find the actual index of this role in the roles array
-    const actualRoleIndex = roles.findIndex(r => r.name === roleData.name && r.why === roleData.why);
+    // Find the actual index of this role in the roles array by matching name (unique identifier)
+    const actualRoleIndex = roles.findIndex(r => r.name === roleData.name);
 
     return (
       <div className="space-y-6">
