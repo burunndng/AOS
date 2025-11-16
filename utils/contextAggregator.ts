@@ -159,22 +159,20 @@ async function analyzeDailyNotesSentiment(
   averageMoodScore: number;
   moodTrend: 'improving' | 'declining' | 'stable' | 'variable';
   recentMoodKeywords: string[];
-}> {
-  if (!dailyNotes || Object.keys(dailyNotes).length === 0) {
-    return {
-      averageMoodScore: 0,
-      moodTrend: 'stable',
-      recentMoodKeywords: [],
-    };
+} | null> {
+  // Return null if fewer than 3 notes available (per spec)
+  const noteCount = Object.keys(dailyNotes || {}).length;
+  if (noteCount < 3) {
+    return null;
   }
 
   const sentiments: number[] = [];
   const allKeywords = new Map<string, number>();
 
-  // Analyze the last 7 notes for sentiment
+  // Analyze the last 14 notes for sentiment (per spec)
   const recentNotes = Object.entries(dailyNotes)
     .sort((a, b) => (b[0] > a[0] ? 1 : -1))
-    .slice(0, 7);
+    .slice(0, 14);
 
   for (const [_date, noteText] of recentNotes) {
     try {
@@ -220,9 +218,10 @@ Return ONLY the JSON object.`;
         : recentAvg;
 
     const difference = recentAvg - olderAvg;
-    if (difference > 0.2) {
+    // Use 0.15 threshold for improving/declining detection (per spec)
+    if (difference > 0.15) {
       moodTrend = 'improving';
-    } else if (difference < -0.2) {
+    } else if (difference < -0.15) {
       moodTrend = 'declining';
     } else if (Math.abs(difference) > 0.1) {
       moodTrend = 'variable';
@@ -396,12 +395,12 @@ export async function buildUserProfile(
     primaryFocusArea,
     developmentalStage,
     attachmentStyle,
-    sentimentSummary: {
+    sentimentSummary: sentimentAnalysis ? {
       averageMoodScore: sentimentAnalysis.averageMoodScore,
       moodTrend: sentimentAnalysis.moodTrend,
       recentMoodKeywords: sentimentAnalysis.recentMoodKeywords,
       lastAnalyzedDate: new Date().toISOString(),
-    },
+    } : undefined,
   };
 }
 
