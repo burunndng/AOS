@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { JhanaLevel } from '../types.ts';
 import { X } from 'lucide-react';
 
@@ -56,6 +57,7 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
   const spiralMeshRef = useRef<THREE.Mesh | null>(null);
   const isCameraFocusingRef = useRef(false);
   const cameraFocusTargetRef = useRef(new THREE.Vector3());
+  const controlsRef = useRef<OrbitControls | null>(null);
 
   const jhanasInOrder: JhanaLevel[] = [
     'Access Concentration',
@@ -70,14 +72,15 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     '8th Jhana',
   ];
 
-  // Helper function to create a proper spiral curve
+  // Helper function to create a proper spiral curve with balanced geometry
   function createSpiralCurve(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
     const numPoints = 200;
     for (let i = 0; i <= numPoints; i++) {
       const t = i / numPoints;
       const height = t * 20;
-      const radius = 5 + t * 3;
+      // Reduced radius growth for more balanced visual appearance (3 → 2)
+      const radius = 5 + t * 2;
       const angle = t * Math.PI * 8;
       points.push(
         new THREE.Vector3(
@@ -103,7 +106,8 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 10, 25);
+    // Adjusted camera position: further back (35) and centered on spiral (y = 10)
+    camera.position.set(0, 10, 35);
     camera.lookAt(0, 10, 0);
     cameraRef.current = camera;
 
@@ -117,6 +121,16 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     renderer.toneMappingExposure = 1.2;
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
+
+    // Initialize OrbitControls for interactive camera control
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false;
+    controls.minDistance = 15;
+    controls.maxDistance = 100;
+    controls.autoRotate = false; // User controls rotation instead of passive animation
+    controlsRef.current = controls;
 
     // Elegant multi-source lighting
     // Soft ambient light
@@ -290,35 +304,29 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       animationIdRef.current = requestAnimationFrame(animate);
       animationTime += 0.002;
 
-      // --- CAMERA LOGIC: Focused transition or passive orbit ---
+      // --- CAMERA LOGIC: User-controlled with optional focus transition ---
+      // Update OrbitControls (handles damping and smooth rotation)
+      if (controlsRef.current) {
+        controlsRef.current.update();
+      }
+
+      // Smooth focus transition when clicking a stage (overrides user input momentarily)
       if (isCameraFocusingRef.current) {
         const currentPos = camera.position;
         const targetPos = cameraFocusTargetRef.current;
-        const lerpFactor = 0.05; // 5% movement towards target each frame
+        const lerpFactor = 0.05;
 
-        // Smooth lerp towards focus target
         currentPos.lerp(targetPos, lerpFactor);
 
-        // Look at the selected jhana point
         const selectedPoint = jhanaPointsRef.current.find(p => p.jhana === selectedJhana);
         if (selectedPoint) {
           camera.lookAt(selectedPoint.position);
         }
 
-        // Resume orbit when close enough (0.15 units distance)
+        // Resume user control when close enough
         if (currentPos.distanceTo(targetPos) < 0.15) {
           isCameraFocusingRef.current = false;
         }
-      } else {
-        // Passive orbit around spiral
-        const orbitRadius = 25;
-        const orbitHeight = 10;
-        const orbitSpeed = 0.0003;
-
-        camera.position.x = Math.cos(animationTime * orbitSpeed) * orbitRadius;
-        camera.position.y = orbitHeight;
-        camera.position.z = Math.sin(animationTime * orbitSpeed) * orbitRadius;
-        camera.lookAt(0, orbitHeight, 0);
       }
 
       // --- PARTICLE SYSTEM: Coherent upward flow with drift ---
@@ -388,6 +396,9 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       camera.aspect = newWidth / newHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(newWidth, newHeight);
+      if (controlsRef.current) {
+        controlsRef.current.handleResize?.();
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -398,6 +409,9 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       renderer.domElement.removeEventListener('click', onMouseClick);
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
+      }
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
       }
       containerRef.current?.removeChild(renderer.domElement);
       renderer.dispose();
