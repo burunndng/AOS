@@ -122,19 +122,19 @@ const PRACTICE_PRESETS: PracticePreset[] = [
   {
     module: 'body',
     name: 'Physical Resilience',
-    icon: '💪',
+    icon: '▲',
     template: 'Create a 10-minute somatic practice for building physical resilience and body awareness. Include breath work coordinated with gentle movement cues, progressive activation of muscle groups, and integration of breath with intention. Tone: grounded and empowering.',
   },
   {
     module: 'body',
     name: 'Metabolic Reset',
-    icon: '🔥',
+    icon: '☥',
     template: 'Create a 7-minute energizing practice to activate metabolism and boost vitality. Include dynamic breathing techniques (like breath of fire or bellows breath), activation sequences, and circulation-enhancing cues. Tone: invigorating and dynamic.',
   },
   {
     module: 'body',
     name: 'Nervous System Healing',
-    icon: '🧘',
+    icon: '◯',
     template: 'Create a 12-minute vagal toning practice to activate the parasympathetic nervous system and heal nervous system dysregulation. Include humming, extended exhales, gentle sounding, and grounding body awareness. Tone: deeply calming and restorative.',
   },
 
@@ -142,19 +142,19 @@ const PRACTICE_PRESETS: PracticePreset[] = [
   {
     module: 'mind',
     name: 'Cognitive Clarity',
-    icon: '🧠',
+    icon: '◇',
     template: 'Create a 8-minute practice for sharpening cognitive function and mental clarity. Include concentration techniques, working memory activation through sequential instruction, and executive function development. Tone: clear, precise, and mentally activating.',
   },
   {
     module: 'mind',
     name: 'Perspective Taking',
-    icon: '👁️',
+    icon: '⬟',
     template: 'Create a 10-minute guided practice for developing cognitive perspective-taking ability. Walk through first-person, second-person, third-person, and witness/metacognitive perspectives on a chosen situation. Include transitions between viewpoints and synthesis. Tone: contemplative and expansive.',
   },
   {
     module: 'mind',
     name: 'Learning Integration',
-    icon: '📚',
+    icon: '⟡',
     template: 'Create a 7-minute active recall and memory consolidation practice. Include retrieval practice techniques, spaced repetition principles, and encoding optimization methods. Designed for deepening learning and knowledge retention. Tone: educational and supportive.',
   },
 
@@ -162,25 +162,25 @@ const PRACTICE_PRESETS: PracticePreset[] = [
   {
     module: 'shadow',
     name: 'Inner Critic Integration',
-    icon: '👹',
+    icon: '◆',
     template: 'Create a 12-minute guided shadow work practice to integrate the inner critic and transform its energy. Include: recognizing the inner critic\'s presence, understanding its protective purpose, dialoguing with it, discovering its positive intent, and transforming its energy toward self-advocacy. Use inquiry-based guidance. Tone: compassionate, understanding, and empowering.',
   },
   {
     module: 'shadow',
     name: 'Shadow Reclamation',
-    icon: '🌑',
+    icon: '◈',
     template: 'Create a 15-minute deep shadow integration practice for reclaiming disowned parts. Include: identifying a disowned quality or trait, examining where this came from, recognizing why it was rejected, finding its hidden gifts and wisdom, and beginning to reintegrate it as a resource. Tone: validating, curious, and liberating.',
   },
   {
     module: 'shadow',
     name: 'Reactive Pattern Release',
-    icon: '⚡',
+    icon: '▼',
     template: 'Create a 10-minute 3-2-1 guided process for working with a reactive trigger. Include: facing the triggered response (3rd person), dialoguing with what triggered you (2nd person), becoming that trigger to find its message (1st person), and integrating the insight. Tone: gentle but direct, exploratory.',
   },
   {
     module: 'shadow',
     name: 'Self-Compassion & Shame Release',
-    icon: '💜',
+    icon: '◊',
     template: 'Create a 13-minute self-compassion practice specifically for releasing shame and internal judgment. Include: recognizing suffering and self-criticism, connecting to common humanity of struggle, applying self-kindness phrases, somatic self-soothing, and safe emotional expression. Tone: deeply warm, protective, and unconditional.',
   },
 
@@ -188,37 +188,37 @@ const PRACTICE_PRESETS: PracticePreset[] = [
   {
     module: 'spirit',
     name: 'Non-Dual Awareness',
-    icon: '∞',
+    icon: '◉',
     template: 'Create a 15-minute non-dual meditation practice pointing to awareness itself beyond subject-object duality. Include: settling into present moment, inquiring into the awareness that\'s aware, noticing the absence of separation, resting in luminous emptiness. Draw from Advaita Vedanta and non-dual traditions. Tone: spacious, profound, pointing to the ultimate.',
   },
   {
     module: 'spirit',
     name: 'Heart-Centered Loving-Kindness',
-    icon: '❤️‍🔥',
+    icon: '☯',
     template: 'Create a 12-minute loving-kindness (metta) practice expanding from the heart. Include: cultivating warmth toward self, loved ones, neutral people, difficult people, and all beings. Use phrases like "May you be at peace, may you be loved, may you be free." Focus on heart activation and energetic expansion. Tone: warm, expansive, devotional.',
   },
   {
     module: 'spirit',
     name: 'Witness Consciousness',
-    icon: '👁️‍🗨️',
+    icon: '⊙',
     template: 'Create a 18-minute practice for resting in Witness consciousness. Include: grounding in the present moment, noticing thoughts and sensations without attachment, identifying with the awareness that observes all arising, resting as the Witness beyond all change. Tone: stillness, clarity, impartial presence.',
   },
   {
     module: 'spirit',
     name: 'Deep Meditation',
-    icon: '🤫',
+    icon: '◙',
     template: 'Create a 20-minute meditation practice moving toward silence and stillness. Include: settling through layers of mind toward quiet, releasing the sense of separation, moving beyond conceptual thinking, resting in formless awareness. Minimal instruction, maximum space. Tone: calm, minimal, using silence and space.',
   },
   {
     module: 'spirit',
     name: 'Integral Invocation',
-    icon: '✨',
+    icon: '⬡',
     template: 'Create a 10-minute practice invoking the I-We-It dimensions of integral consciousness (First, Second, Third person perspectives simultaneously). Include: feeling into individual awareness (I), interconnection with all beings (We), and objective reality (It). Bring all dimensions into integrated presence. Tone: integrative, spacious, multidimensional.',
   },
   {
     module: 'spirit',
     name: 'Gratitude Practice',
-    icon: '🙏',
+    icon: '※',
     template: 'Create a 11-minute practice of gratitude as a path to deeper well-being. Include: appreciation of existence, gratitude for challenges as learning opportunities, opening to abundance, expressing appreciation for life. Tone: warm, appreciative, grounded.',
   },
 ];
@@ -234,10 +234,10 @@ const TONE_OPTIONS = [
 const DURATION_OPTIONS = [5, 10, 15, 20, 30];
 
 const MODULE_INFO = {
-  body: { name: 'Body', color: 'bg-green-900', textColor: 'text-green-200', borderColor: 'border-green-700', icon: '💚' },
-  mind: { name: 'Mind', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '💙' },
-  shadow: { name: 'Shadow', color: 'bg-amber-900', textColor: 'text-amber-200', borderColor: 'border-amber-700', icon: '🧡' },
-  spirit: { name: 'Spirit', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '💜' },
+  body: { name: 'Body', color: 'bg-green-900', textColor: 'text-green-200', borderColor: 'border-green-700', icon: '▲' },
+  mind: { name: 'Mind', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '◇' },
+  shadow: { name: 'Shadow', color: 'bg-amber-900', textColor: 'text-amber-200', borderColor: 'border-amber-700', icon: '◆' },
+  spirit: { name: 'Spirit', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '◉' },
 };
 
 export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice }: GuidedPracticeGeneratorProps) {
