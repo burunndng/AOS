@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Sparkles, Zap, Send, Loader } from 'lucide-react';
+import { X, Sparkles, Zap, Send, Loader, Volume2, VolumeX } from 'lucide-react';
 import { generateFlabbergasterResponse, getFlabbergasterGreeting, FlabbergasterMessage } from '../services/flabbergasterChatService.ts';
 
 interface FlabbergasterPortalProps {
@@ -17,11 +17,14 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hiddenModeNotifiedRef = useRef(false);
   const [hasAchievedResonance, setHasAchievedResonance] = useState(false);
   const [pendingResonanceNotification, setPendingResonanceNotification] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioNodesRef = useRef<Array<OscillatorNode | GainNode>>([]);
 
   // Notify hidden mode discovery once per component lifecycle
   useEffect(() => {
@@ -41,13 +44,26 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
         timestamp: new Date().toISOString()
       };
       setMessages([greeting]);
-      
+
       // Focus input after a brief delay
       setTimeout(() => {
         inputRef.current?.focus();
       }, 300);
     }
   }, [isOpen]);
+
+  // Start/stop ambient audio based on portal state and sound enabled
+  useEffect(() => {
+    if (isOpen && isSoundEnabled) {
+      startAmbientAudio();
+    } else {
+      stopAmbientAudio();
+    }
+
+    return () => {
+      stopAmbientAudio();
+    };
+  }, [isOpen, isSoundEnabled]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -170,6 +186,87 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
     }
   };
 
+  // Create and play ambient 432Hz oracle presence
+  const startAmbientAudio = () => {
+    try {
+      if (audioContextRef.current) return; // Already playing
+
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = audioContext;
+      const now = audioContext.currentTime;
+
+      // Master gain for overall volume control
+      const masterGain = audioContext.createGain();
+      masterGain.gain.setValueAtTime(0.15, now); // Subtle volume
+      masterGain.connect(audioContext.destination);
+
+      // Oscillator 1: 432Hz base frequency (healing frequency)
+      const osc1 = audioContext.createOscillator();
+      const gain1 = audioContext.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(432, now);
+      gain1.gain.setValueAtTime(0.3, now);
+      osc1.connect(gain1);
+      gain1.connect(masterGain);
+
+      // Oscillator 2: Perfect fifth harmonic (648Hz = 432 * 1.5)
+      const osc2 = audioContext.createOscillator();
+      const gain2 = audioContext.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(648, now);
+      gain2.gain.setValueAtTime(0.2, now);
+      osc2.connect(gain2);
+      gain2.connect(masterGain);
+
+      // Oscillator 3: Major third harmonic (540Hz = 432 * 1.25)
+      const osc3 = audioContext.createOscillator();
+      const gain3 = audioContext.createGain();
+      osc3.type = 'sine';
+      osc3.frequency.setValueAtTime(540, now);
+      gain3.gain.setValueAtTime(0.15, now);
+      osc3.connect(gain3);
+      gain3.connect(masterGain);
+
+      // Start all oscillators
+      osc1.start(now);
+      osc2.start(now);
+      osc3.start(now);
+
+      // Store nodes for cleanup
+      audioNodesRef.current = [osc1, osc2, osc3, gain1, gain2, gain3, masterGain];
+    } catch (e) {
+      console.log('Audio context not available:', e);
+    }
+  };
+
+  // Stop the ambient audio
+  const stopAmbientAudio = () => {
+    try {
+      if (audioContextRef.current && audioNodesRef.current.length > 0) {
+        const now = audioContextRef.current.currentTime;
+
+        // Fade out the master gain
+        const masterGain = audioNodesRef.current[audioNodesRef.current.length - 1] as GainNode;
+        masterGain.gain.setValueAtTime(masterGain.gain.value, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+        // Stop oscillators after fade
+        setTimeout(() => {
+          audioNodesRef.current.forEach((node) => {
+            if (node instanceof OscillatorNode) {
+              node.stop();
+            }
+          });
+          audioContextRef.current?.close().catch(() => {});
+          audioContextRef.current = null;
+          audioNodesRef.current = [];
+        }, 500);
+      }
+    } catch (e) {
+      console.log('Error stopping audio:', e);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -216,13 +313,27 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
               </p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className="text-purple-300 hover:text-purple-100 p-2 rounded-full hover:bg-purple-800/30 transition-all duration-200"
-            aria-label="Close portal"
-          >
-            <X size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+              className="text-purple-300 hover:text-purple-100 p-2 rounded-full hover:bg-purple-800/30 transition-all duration-200"
+              aria-label="Toggle sound"
+              title={isSoundEnabled ? "Mute oracle" : "Unmute oracle"}
+            >
+              {isSoundEnabled ? (
+                <Volume2 size={20} />
+              ) : (
+                <VolumeX size={20} />
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-purple-300 hover:text-purple-100 p-2 rounded-full hover:bg-purple-800/30 transition-all duration-200"
+              aria-label="Close portal"
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Chat Messages */}
