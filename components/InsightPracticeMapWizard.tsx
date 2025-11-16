@@ -14,6 +14,7 @@ import {
   getPhaseColor,
   isCurrentStage
 } from '../services/insightPracticeMapService';
+import InsightOuroborosVisualizer from './InsightOuroborosVisualizer';
 
 interface Props {
   onClose: () => void;
@@ -191,6 +192,12 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
             <h2 className="text-4xl font-bold font-mono text-neutral-100 mb-2">progress of insight</h2>
             <p className="text-sm text-neutral-400">the 16 ñanas journey through vipassana meditation</p>
           </div>
+
+          {/* 3D Ouroboros Visualizer */}
+          <InsightOuroborosVisualizer
+            selectedStage={session.currentStage || null}
+            onSelectStage={handleMarkCurrentStage}
+          />
 
           {/* Progress Bar with Stats */}
           <div className="space-y-4">
