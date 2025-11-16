@@ -16,11 +16,7 @@
   },
   "rewrites": [
     {
-      "source": "/api/coach/generate-response",
-      "destination": "/api/coach/generate-response"
-    },
-    {
-      "source": "/api/(.*)",
+      "source": "/api/((?!coach).*)",
       "destination": "/api/server.ts"
     }
   ]
