@@ -11,17 +11,29 @@ import { AttachmentStyle, getRecommendedPracticesBySystem } from '../data/attach
 
 // Initialize the Google AI client
 // FIX: Initialize GoogleGenAI with apiKey from environment variables as per guidelines.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+const apiKey = process.env.API_KEY;
+if (!apiKey) {
+  throw new Error('API_KEY environment variable is not set');
+}
+const ai = new GoogleGenAI({ apiKey });
 
 // Helper function to generate text
 export async function generateText(prompt: string): Promise<string> {
-  // FIX: Use the correct API call `ai.models.generateContent` for text generation.
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-lite',
-    contents: prompt,
-  });
-  // FIX: Access the generated text directly from the `text` property of the response.
-  return response.text;
+  try {
+    // FIX: Use the correct API call `ai.models.generateContent` for text generation.
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-lite',
+      contents: prompt,
+    });
+    // FIX: Access the generated text directly from the `text` property of the response.
+    if (!response.text) {
+      throw new Error('API response returned empty text');
+    }
+    return response.text;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to generate text: ${errorMessage}`);
+  }
 }
 
 // FIX: Added missing `explainPractice` function called from `App.tsx`.
@@ -48,29 +60,45 @@ Return ONLY the explanation as a string.`;
 
 // FIX: Added missing `populateCustomPractice` function called from `CustomPracticeModal.tsx`.
 export async function populateCustomPractice(practiceName: string): Promise<{ description: string; why: string; how: string[]; }> {
-    const prompt = `A user wants to create a custom practice called "${practiceName}".
+    try {
+        const prompt = `A user wants to create a custom practice called "${practiceName}".
     Generate a concise description, a compelling "why" (the core benefit), and an array of 3-4 simple "how-to" steps.
     Return a JSON object with keys: "description" (string), "why" (string), and "how" (array of strings).
     Return ONLY the JSON object.`;
-    
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    description: { type: Type.STRING },
-                    why: { type: Type.STRING },
-                    how: { type: Type.ARRAY, items: { type: Type.STRING } },
-                },
-                required: ['description', 'why', 'how']
-            }
-        }
-    });
 
-    return JSON.parse(response.text);
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        description: { type: Type.STRING },
+                        why: { type: Type.STRING },
+                        how: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    },
+                    required: ['description', 'why', 'how']
+                }
+            }
+        });
+
+        if (!response.text) {
+            throw new Error('API response returned empty text');
+        }
+
+        const cleanJson = response.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+
+        if (!parsed || typeof parsed !== 'object') {
+            throw new Error('Invalid response structure');
+        }
+
+        return parsed as { description: string; why: string; how: string[]; };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to populate custom practice: ${errorMessage}`);
+    }
 }
 
 // FIX: Added missing `getDailyReflection` function called from `TrackerTab.tsx`.
@@ -222,36 +250,52 @@ export async function getPersonalizedHowTo(practice: Practice, userAnswer: strin
 
 // Function for GuidedPracticeGenerator.tsx (Script)
 export async function generatePracticeScript(userPrompt: string): Promise<{ title: string, script: string }> {
-    const prompt = `Generate a guided practice script based on this user request: "${userPrompt}".
+    try {
+        const prompt = `Generate a guided practice script based on this user request: "${userPrompt}".
     The output should be a JSON object with two keys: "title" (a creative and fitting title for the practice) and "script" (the full text of the guided meditation script, around 300-500 words).
     The script should be gentle, guiding, and paced appropriately for a spoken meditation. Include pauses where appropriate, indicated by "(...)"
-    
+
     Example output format:
     {
       "title": "Finding Your Calm Center",
       "script": "Begin by finding a comfortable position. (...) Gently close your eyes. (...)"
     }
-    
+
     Return ONLY the JSON object.`;
 
-    // FIX: Use `gemini-2.5-flash-lite` for complex JSON generation and define the response schema correctly.
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    title: { type: Type.STRING },
-                    script: { type: Type.STRING }
-                },
-                required: ['title', 'script']
+        // FIX: Use `gemini-2.5-flash-lite` for complex JSON generation and define the response schema correctly.
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING },
+                        script: { type: Type.STRING }
+                    },
+                    required: ['title', 'script']
+                }
             }
-        }
-    });
+        });
 
-    return JSON.parse(response.text);
+        if (!response.text) {
+            throw new Error('API response returned empty text');
+        }
+
+        const cleanJson = response.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+
+        if (!parsed || typeof parsed !== 'object' || !parsed.title || !parsed.script) {
+            throw new Error('Invalid response structure - missing title or script');
+        }
+
+        return parsed as { title: string, script: string };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to generate practice script: ${errorMessage}`);
+    }
 }
 
 // Function for GuidedPracticeGenerator.tsx (Speech)
@@ -290,7 +334,8 @@ export async function articulateSubjectTo(pattern: string, feelings: string): Pr
 }
 
 export async function suggestSubjectObjectExperiments(pattern: string, subjectToStatement: string, costs: string[]): Promise<string[]> {
-    const prompt = `A user is working on making a pattern object.
+    try {
+        const prompt = `A user is working on making a pattern object.
     - Pattern: "${pattern}"
     - Subject to: "${subjectToStatement}"
     - Costs: "${costs.join(', ')}"
@@ -299,18 +344,34 @@ export async function suggestSubjectObjectExperiments(pattern: string, subjectTo
     Return a JSON array of strings.
     Example: ["For one day, what if you acted as if the opposite were true?", "Notice the physical sensation just before the pattern starts."]
     Return ONLY the JSON array.`;
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-lite',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING }
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-lite',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                }
             }
+        });
+
+        if (!response.text) {
+            throw new Error('API response returned empty text');
         }
-    });
-    return JSON.parse(response.text);
+
+        const cleanJson = response.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+
+        if (!Array.isArray(parsed)) {
+            throw new Error('Invalid response structure - expected an array');
+        }
+
+        return parsed as string[];
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to suggest subject-object experiments: ${errorMessage}`);
+    }
 }
 
 // FIX: Add new function to provide AI suggestions for tracing the origin of a pattern.

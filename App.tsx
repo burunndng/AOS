@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react';
 import NavSidebar from './components/NavSidebar.tsx';
 import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 import LoadingFallback, { TabLoadingFallback, WizardLoadingFallback, ModalLoadingFallback } from './components/LoadingFallback.tsx';
+import ErrorBoundary from './components/ErrorBoundary.tsx';
 
 // Lazy-loaded Core Enhancements
 const Coach = lazy(() => import('./components/Coach.tsx'));
@@ -1894,8 +1895,9 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
   };
 
   return (
-    <div className="flex h-screen bg-neutral-950 text-neutral-100 font-sans relative overflow-hidden">
-      {/* Layer 1: Solid dark base */}
+    <ErrorBoundary>
+      <div className="flex h-screen bg-neutral-950 text-neutral-100 font-sans relative overflow-hidden">
+        {/* Layer 1: Solid dark base */}
       <div className="absolute inset-0 bg-black" />
 
       {/* Layer 2: Subtle depth gradient */}
@@ -2022,6 +2024,7 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
         hasUnlocked={hasUnlockedFlabbergaster}
         onHiddenModeDiscovered={onHiddenModeDiscovered}
       />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

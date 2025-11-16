@@ -1,7 +1,11 @@
 // services/biasDetectiveService.ts
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+const apiKey = process.env.API_KEY;
+if (!apiKey) {
+  throw new Error('API_KEY environment variable is not set');
+}
+const ai = new GoogleGenAI({ apiKey });
 
 interface DiscoveryAnswers {
   alternativesConsidered: string;
@@ -27,7 +31,8 @@ export async function generateBiasedDecisionAnalysis(
   reasoning: string,
   discoveryAnswers: DiscoveryAnswers
 ): Promise<string> {
-  const prompt = `
+  try {
+    const prompt = `
     As a cognitive psychologist, analyze the user's decision-making process based on their own reflections.
     Your task is to provide a grounded, narrative diagnosis of potential cognitive biases at play.
     Reference their specific answers to make the analysis feel undeniable and personalized.
@@ -54,12 +59,21 @@ export async function generateBiasedDecisionAnalysis(
 
     Return ONLY the narrative analysis as a single string.
     `;
-  
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: prompt,
-  });
-  return response.text;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    if (!response.text) {
+      throw new Error('API response returned empty text');
+    }
+
+    return response.text;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to generate biased decision analysis: ${errorMessage}`);
+  }
 }
 
 /**
@@ -71,9 +85,10 @@ export async function generateBiasScenarios(
   reasoning: string,
   diagnosis: string
 ): Promise<BiasScenario[]> {
-  const prompt = `
+  try {
+    const prompt = `
     A user has made a decision and received a diagnosis of potential biases.
-    
+
     **Decision:** "${decision}"
     **Reasoning:** "${reasoning}"
     **AI Diagnosis:** "${diagnosis}"
@@ -92,25 +107,40 @@ export async function generateBiasScenarios(
     `;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        biasName: { type: Type.STRING },
-                        howItInfluenced: { type: Type.STRING },
-                        scenario: { type: Type.STRING },
-                        alternativeDecision: { type: Type.STRING },
-                    },
-                    required: ['biasName', 'howItInfluenced', 'scenario', 'alternativeDecision']
-                }
-            }
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              biasName: { type: Type.STRING },
+              howItInfluenced: { type: Type.STRING },
+              scenario: { type: Type.STRING },
+              alternativeDecision: { type: Type.STRING },
+            },
+            required: ['biasName', 'howItInfluenced', 'scenario', 'alternativeDecision']
+          }
         }
+      }
     });
 
-    return JSON.parse(response.text);
+    if (!response.text) {
+      throw new Error('API response returned empty text');
+    }
+
+    const cleanJson = response.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const parsed = JSON.parse(cleanJson);
+
+    if (!Array.isArray(parsed)) {
+      throw new Error('Invalid response structure - expected an array');
+    }
+
+    return parsed as BiasScenario[];
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to generate bias scenarios: ${errorMessage}`);
+  }
 }
