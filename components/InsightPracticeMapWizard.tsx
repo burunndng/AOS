@@ -341,24 +341,8 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
                             )}
                           </div>
 
-                          {/* Description Preview */}
-                          <p className="text-sm text-neutral-400 line-clamp-2 mb-2">
-                            {stage.description}
-                          </p>
-
-                          {/* Key Markers Preview */}
-                          {stage.keyMarkers.length > 0 && (
-                            <div className="space-y-1 mb-3">
-                              <p className="text-xs font-mono text-neutral-500">Key markers:</p>
-                              <p className="text-xs text-neutral-400">
-                                {stage.keyMarkers[0]}...
-                              </p>
-                            </div>
-                          )}
-
-                          {/* Duration + Action */}
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-neutral-600 font-mono">⏱ {stage.duration}</span>
+                          {/* Action indicator */}
+                          <div className="flex items-center justify-end mt-2">
                             <ChevronRight size={16} className="text-neutral-600 group-hover:text-neutral-400 transition-colors" />
                           </div>
                         </div>

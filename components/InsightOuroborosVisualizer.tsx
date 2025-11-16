@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { INSIGHT_STAGES, getStageByNumber } from '../services/insightPracticeMapService';
+import { Zap } from 'lucide-react';
 
 interface InsightOuroborosVisualizerProps {
   selectedStage: number | null;
@@ -14,25 +16,6 @@ const PHASE_COLORS: Record<string, number> = {
   'Dark Night': 0xa8a8c8,              // Muted blue-gray
   'High Equanimity': 0xa0d4d0,         // Soft teal
 };
-
-const INSIGHT_STAGES = [
-  { number: 1, name: 'Mind and Body', phase: 'Pre-Vipassana' },
-  { number: 2, name: 'Cause and Effect', phase: 'Pre-Vipassana' },
-  { number: 3, name: 'Three Characteristics', phase: 'Pre-Vipassana' },
-  { number: 4, name: 'Arising and Passing Away', phase: 'Vipassana Begins' },
-  { number: 5, name: 'Dissolution', phase: 'Dark Night' },
-  { number: 6, name: 'Fear', phase: 'Dark Night' },
-  { number: 7, name: 'Misery', phase: 'Dark Night' },
-  { number: 8, name: 'Disgust', phase: 'Dark Night' },
-  { number: 9, name: 'Desire for Deliverance', phase: 'Dark Night' },
-  { number: 10, name: 'Re-observation', phase: 'Dark Night' },
-  { number: 11, name: 'Equanimity', phase: 'High Equanimity' },
-  { number: 12, name: 'Conformity', phase: 'High Equanimity' },
-  { number: 13, name: 'Change of Lineage', phase: 'High Equanimity' },
-  { number: 14, name: 'Path', phase: 'High Equanimity' },
-  { number: 15, name: 'Fruition', phase: 'High Equanimity' },
-  { number: 16, name: 'Review', phase: 'High Equanimity' },
-];
 
 interface StagePoint {
   number: number;
@@ -501,23 +484,57 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
           <div ref={containerRef} className="relative w-full h-full rounded-lg overflow-hidden border border-slate-700 bg-slate-950" />
         </div>
 
-        {/* Right Column: Info Panel - Compact */}
+        {/* Right Column: Info Panel - Full Details */}
         <div className="w-1/3">
           {selectedStage ? (
             (() => {
-              const stage = INSIGHT_STAGES.find((s) => s.number === selectedStage);
+              const stage = INSIGHT_STAGES.find((s) => s.stage === selectedStage);
               return stage ? (
                 <div className="h-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-2 border-slate-700 rounded-2xl p-4 animate-fade-in overflow-y-auto">
                   <div className="space-y-3">
+                    {/* Header */}
                     <div>
                       <div
                         className="inline-block w-3 h-3 rounded-full mb-2"
                         style={{ backgroundColor: `#${PHASE_COLORS[stage.phase].toString(16).padStart(6, '0')}` }}
                       />
-                      <h4 className="text-lg font-bold text-slate-100">Stage {stage.number}</h4>
+                      <h4 className="text-lg font-bold text-slate-100">Stage {stage.stage}</h4>
                       <p className="text-sm font-semibold text-slate-300">{stage.name}</p>
                       <p className="text-xs text-slate-400 mt-1">{stage.phase}</p>
                     </div>
+
+                    {/* Description */}
+                    {stage.description && (
+                      <div className="pt-2 border-t border-slate-700/50">
+                        <p className="text-xs text-slate-300 leading-relaxed">{stage.description}</p>
+                      </div>
+                    )}
+
+                    {/* Key Markers */}
+                    {stage.keyMarkers && stage.keyMarkers.length > 0 && (
+                      <div className="pt-2 border-t border-slate-700/50">
+                        <div className="flex items-center gap-1 mb-2">
+                          <Zap size={12} className="text-amber-400" />
+                          <p className="text-xs font-mono text-amber-400">Markers</p>
+                        </div>
+                        <ul className="space-y-1">
+                          {stage.keyMarkers.map((marker, idx) => (
+                            <li key={idx} className="text-xs text-slate-400 pl-3 list-disc list-inside">
+                              {marker}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Duration */}
+                    {stage.duration && (
+                      <div className="pt-2 border-t border-slate-700/50">
+                        <p className="text-xs text-slate-400">
+                          <span className="font-mono text-slate-500">⏱</span> {stage.duration}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : null;
