@@ -1,15 +1,24 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
+interface VideoSource {
+  src: string;
+  type: string;
+}
+
 interface VideoMinigameProps {
   isOpen: boolean;
   onClose: () => void;
-  videoUrl: string;
+  videoUrl?: string;
+  videoSources?: VideoSource[];
   title?: string;
 }
 
-export default function VideoMinigame({ isOpen, onClose, videoUrl, title = "Coming Soon" }: VideoMinigameProps) {
+export default function VideoMinigame({ isOpen, onClose, videoUrl, videoSources, title = "Coming Soon" }: VideoMinigameProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Use videoSources if provided, otherwise create from videoUrl for backward compatibility
+  const sources: VideoSource[] = videoSources || (videoUrl ? [{ src: videoUrl, type: 'video/mp4' }] : []);
 
   // Autoplay when opened
   useEffect(() => {
@@ -52,15 +61,19 @@ export default function VideoMinigame({ isOpen, onClose, videoUrl, title = "Comi
         <div className="flex-1 flex items-center justify-center bg-black p-4">
           <video
             ref={videoRef}
-            src={videoUrl}
             controls
             autoPlay
             loop
+            muted
+            playsInline
             className="max-w-full max-h-full rounded-lg shadow-2xl"
             style={{
               boxShadow: '0 0 50px rgba(147, 51, 234, 0.5)',
             }}
           >
+            {sources.map((source, index) => (
+              <source key={index} src={source.src} type={source.type} />
+            ))}
             Your browser does not support the video tag.
           </video>
         </div>
