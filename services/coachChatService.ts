@@ -1,12 +1,15 @@
 /**
  * AI Practice Coach Chat Service
  * Uses OpenRouter API for conversational coaching (frontend implementation)
+ * Primary Model: DeepSeek v3.2
+ * Fallback Model: Grok-4-fast
  */
 
 import {
   generateOpenRouterResponse,
   buildMessagesWithSystem,
 } from './openRouterService';
+import { getFallbackModel, shouldUseFallback, logFallbackAttempt } from '../utils/modelFallback';
 
 export interface CoachMessage {
   role: 'user' | 'coach';
@@ -169,7 +172,8 @@ CRITICAL: Respond in 30-40 words MAX. Be direct, warm, and grounded.
 }
 
 /**
- * Generate a coach response with streaming support
+ * Generate a coach response with streaming support and intelligent model fallback
+ * Primary: DeepSeek v3.2 | Fallback: Grok-4-fast
  */
 export async function generateCoachResponse(
   context: CoachContext,
@@ -205,18 +209,50 @@ export async function generateCoachResponse(
     // Build messages with system prompt
     const fullMessages = buildMessagesWithSystem(systemPrompt, chatMessages);
 
-    // Call OpenRouter service with DeepSeek model
-    const response = await generateOpenRouterResponse(
-      fullMessages,
-      onStreamChunk,
-      {
-        model: 'deepseek/deepseek-v3.2-exp',
-        maxTokens: 120,
-        temperature: 0.5,
-      }
-    );
+    const primaryModel = 'deepseek/deepseek-v3.2-exp';
+    const fallbackConfig = getFallbackModel(primaryModel);
 
-    return response;
+    // Try primary model (DeepSeek)
+    try {
+      const response = await generateOpenRouterResponse(
+        fullMessages,
+        onStreamChunk,
+        {
+          model: primaryModel,
+          maxTokens: 120,
+          temperature: 0.5,
+        }
+      );
+      return response;
+    } catch (primaryError) {
+      // Check if we should attempt fallback
+      if (!shouldUseFallback(primaryError)) {
+        throw primaryError;
+      }
+
+      logFallbackAttempt('Coach', primaryModel, fallbackConfig.fallbackModel, primaryError);
+
+      // Try fallback model (Grok-4-fast)
+      try {
+        const fallbackResponse = await generateOpenRouterResponse(
+          fullMessages,
+          onStreamChunk,
+          {
+            model: fallbackConfig.fallbackModel,
+            maxTokens: 120,
+            temperature: 0.5,
+          }
+        );
+        return fallbackResponse;
+      } catch (fallbackError) {
+        console.error('[Coach] Fallback model also failed:', fallbackError);
+        throw new Error(
+          `Both primary (${primaryModel}) and fallback (${fallbackConfig.fallbackModel}) models failed. ` +
+          `Primary: ${String(primaryError).substring(0, 100)}. ` +
+          `Fallback: ${String(fallbackError).substring(0, 100)}`
+        );
+      }
+    }
   } catch (error) {
     console.error('[Coach] Error generating response:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
