@@ -24,6 +24,10 @@
       "destination": "/api/server.ts"
     },
     {
+      "source": "/api/insights/:path*",
+      "destination": "/api/server.ts"
+    },
+    {
       "source": "/api/shadow/:path*",
       "destination": "/api/server.ts"
     },

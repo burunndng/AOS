@@ -186,6 +186,7 @@ export default function App() {
   const [draftPM, setDraftPM] = useLocalStorage<PolarityMapDraft | null>('draftPM', null);
   const [draftKegan, setDraftKegan] = useLocalStorage<KeganAssessmentSession | null>('draftKegan', null);
   const [draftRelational, setDraftRelational] = useLocalStorage<RelationalPatternSession | null>('draftRelational', null);
+  const [draftAttachment, setDraftAttachment] = useLocalStorage<AttachmentAssessmentSession | null>('draftAttachment', null);
   const [draftRoleAlignment, setDraftRoleAlignment] = useLocalStorage<RoleAlignmentSession | null>('draftRoleAlignment', null);
   const [draftBigMind, setDraftBigMind] = useLocalStorage<Partial<BigMindSession> | null>('draftBigMind', null);
   const [draftMemoryRecon, setDraftMemoryRecon] = useLocalStorage<MemoryReconsolidationDraft | null>('memoryReconDraft', null);
@@ -1637,6 +1638,7 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
         onCompleteAttachmentAssessment={handleSaveAttachmentAssessment}
         addToStack={addToStack}
         practiceStack={practiceStack}
+        userId={userId}
       />;
       // FIX: Changed prop `setDraftIFSSession` to `setDraftIFS` to match the updated ShadowToolsTabProps interface.
       case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} onStartMemoryRecon={(id) => setActiveWizardAndLink('memory-reconsolidation', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} memoryReconHistory={memoryReconHistory} draft321Session={draft321} draftIFSSession={draftIFS} draftMemoryRecon={draftMemoryRecon} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;

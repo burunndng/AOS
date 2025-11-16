@@ -12,6 +12,7 @@ interface MindToolsTabProps {
   onCompleteAttachmentAssessment?: (session: AttachmentAssessmentSession) => void;
   addToStack?: (practice: Practice) => void;
   practiceStack?: any[];
+  userId?: string;
 }
 
 const ToolCard = ({ icon, title, description, onStart }: { icon: React.ReactNode, title: string, description: string, onStart: () => void }) => (
@@ -32,7 +33,8 @@ export default function MindToolsTab({
   attachmentAssessment,
   onCompleteAttachmentAssessment,
   addToStack,
-  practiceStack = []
+  practiceStack = [],
+  userId = ''
 }: MindToolsTabProps) {
   const [showAttachmentWizard, setShowAttachmentWizard] = useState(false);
   const [selectedAttachmentStyle, setSelectedAttachmentStyle] = useState<AttachmentStyle>(attachmentAssessment?.style || 'secure');
@@ -160,6 +162,7 @@ export default function MindToolsTab({
             setSelectedAttachmentStyle(session.style);
             setShowAttachmentWizard(false);
           }}
+          userId={userId}
         />
       )}
 
