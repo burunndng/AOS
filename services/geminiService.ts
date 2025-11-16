@@ -463,6 +463,9 @@ export async function generateAqalReport(context: IntelligenceContext): Promise<
       if (quadrant) quadrantActivity[quadrant as keyof typeof quadrantActivity]++;
     });
 
+    // Calculate total sessions for prompt
+    const totalSessions = Object.values(quadrantActivity).reduce((a, b) => a + b, 0);
+
     const prompt = `Analyze this user's integral practice through the AQAL (All Quadrants, All Levels) lens.
 
 CURRENT PRACTICES:
@@ -549,7 +552,6 @@ Return ONLY the JSON object.`;
         return Math.min(10, absoluteScore + balanceBonus);
     };
 
-    const totalSessions = Object.values(quadrantActivity).reduce((a, b) => a + b, 0);
     const quadrantScores = {
         I: calculateScore(quadrantActivity.I, totalSessions),
         It: calculateScore(quadrantActivity.It, totalSessions),
