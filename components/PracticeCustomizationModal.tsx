@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // FIX: Correct import paths for types and services.
 import { Practice } from '../types.ts';
 import { getPersonalizedHowTo } from '../services/geminiService.ts';
@@ -17,6 +17,23 @@ export default function PracticeCustomizationModal({ practice, onSave, onClose, 
   const [answer, setAnswer] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Scroll page to top and lock body scroll when modal opens
+  useEffect(() => {
+    // Save original overflow state
+    const originalOverflow = document.body.style.overflow;
+
+    // Lock background scroll
+    document.body.style.overflow = 'hidden';
+
+    // Scroll page to top smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Restore overflow when modal closes
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
 
   const handleGenerate = async () => {
     if (!answer.trim()) {

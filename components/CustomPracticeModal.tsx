@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // FIX: Add `Practice` to the type imports to resolve errors on lines 29 and 36.
 import { CustomPractice, ModuleKey, Practice } from '../types.ts';
 import { modules } from '../constants.ts';
@@ -44,6 +44,25 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
 
   const [error, setError] = useState('');
+
+  // Scroll page to top and lock body scroll when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Save original overflow state
+      const originalOverflow = document.body.style.overflow;
+
+      // Lock background scroll
+      document.body.style.overflow = 'hidden';
+
+      // Scroll page to top smoothly
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Restore overflow when modal closes
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
 
   // =====================
   // Step Handlers
