@@ -167,7 +167,9 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const instancedMeshRef = useRef<THREE.InstancedMesh | null>(null);
   const elapsedTimeRef = useRef(0);
   const trailMeshRef = useRef<THREE.LineSegments | null>(null);
+  const trailAgesRef = useRef<Float32Array | null>(null);
   const gravityWellSphereRef = useRef<THREE.Mesh | null>(null);
+  const gravityWellLightRef = useRef<THREE.Light | null>(null);
   const gravityWellFadeRef = useRef(0);
   const playerRotationVelocityRef = useRef({ x: 0, y: 0 });
   const rotationInputRef = useRef({ x: 0, y: 0 });
@@ -495,14 +497,24 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     // Create particle trails system
     const trailSegmentsCount = 500; // One trail per particle
     const trailPositions = new Float32Array(trailSegmentsCount * 2 * 3);
+    const trailColors = new Float32Array(trailSegmentsCount * 2 * 4); // RGBA for each vertex
     const trailGeometry = new THREE.BufferGeometry();
     trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+    trailGeometry.setAttribute('color', new THREE.BufferAttribute(trailColors, 4));
+
+    // Initialize trail colors with full opacity
+    for (let i = 0; i < trailColors.length; i += 4) {
+      trailColors[i] = 1.0; // R (gold)
+      trailColors[i + 1] = 0.86; // G (D7)
+      trailColors[i + 2] = 0; // B (00)
+      trailColors[i + 3] = 0.6; // A (start at 0.6)
+    }
 
     const trailMaterial = new THREE.LineBasicMaterial({
       color: 0xffd700,
       blending: THREE.AdditiveBlending,
       transparent: true,
-      opacity: 0.6,
+      vertexColors: true, // Use per-vertex colors for opacity decay
       depthWrite: false,
       linewidth: 2,
     });
@@ -510,6 +522,10 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     const trailMesh = new THREE.LineSegments(trailGeometry, trailMaterial);
     sceneGroup.add(trailMesh);
     trailMeshRef.current = trailMesh;
+
+    // Initialize trail age tracking
+    const trailAges = new Float32Array(trailSegmentsCount);
+    trailAgesRef.current = trailAges;
 
     // Create gravity well visual anchor (glowing sphere at center)
     const gravityWellGeometry = new THREE.SphereGeometry(0.3, 32, 32);
@@ -535,6 +551,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     const gravityWellLight = new THREE.PointLight(0x00d9ff, 0, 20);
     gravityWellLight.position.set(0, 0, 0);
     sceneGroup.add(gravityWellLight);
+    gravityWellLightRef.current = gravityWellLight;
 
     // Handle resize
     const handleResize = () => {
@@ -659,10 +676,24 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
             }
           }
 
+          // Update gravity well light with pulsing effect
+          if (gravityWellLightRef.current) {
+            if (gravityWellActive) {
+              // Pulse light intensity in sync with sphere fade
+              const pulseAmount = 2 + Math.sin(Date.now() * 0.005) * 1.5; // Slow pulse
+              gravityWellLightRef.current.intensity = gravityWellFadeRef.current * pulseAmount;
+            } else {
+              // Fade out light when gravity well is inactive
+              gravityWellLightRef.current.intensity = 0;
+            }
+          }
+
           // Update particle trails
-          if (trailMeshRef.current && prevParticlePositionsRef.current) {
+          if (trailMeshRef.current && prevParticlePositionsRef.current && trailAgesRef.current) {
             const trailPositionsArray = trailMeshRef.current.geometry.attributes.position.array as Float32Array;
+            const trailColorsArray = trailMeshRef.current.geometry.attributes.color.array as Float32Array;
             const particleCount = 500;
+            const maxTrailAge = 40; // Trails fade out after 40 frames
 
             for (let i = 0; i < particleCount; i++) {
               // Each particle gets 2 vertices for a line segment (prev→current)
@@ -675,9 +706,26 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
               trailPositionsArray[i * 6 + 3] = positions[i * 3 + 0];
               trailPositionsArray[i * 6 + 4] = positions[i * 3 + 1];
               trailPositionsArray[i * 6 + 5] = positions[i * 3 + 2];
+
+              // Update trail age and opacity
+              trailAgesRef.current[i]++;
+              const age = Math.min(trailAgesRef.current[i], maxTrailAge);
+              const opacityDecay = 1 - (age / maxTrailAge); // Decay from 1 to 0
+              const finalOpacity = 0.6 * opacityDecay; // Start at 0.6, decay to 0
+
+              // Update both vertices' alpha values
+              const colorBaseIdx = i * 8; // 2 vertices * 4 RGBA
+              for (let v = 0; v < 2; v++) {
+                const colorIdx = colorBaseIdx + v * 4;
+                trailColorsArray[colorIdx] = 1.0; // R
+                trailColorsArray[colorIdx + 1] = 0.86; // G
+                trailColorsArray[colorIdx + 2] = 0; // B
+                trailColorsArray[colorIdx + 3] = finalOpacity; // A
+              }
             }
 
             trailMeshRef.current.geometry.attributes.position.needsUpdate = true;
+            trailMeshRef.current.geometry.attributes.color.needsUpdate = true;
           }
 
           // Store current positions for next frame
@@ -1083,6 +1131,11 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const triggerResonanceBurst = () => {
     // Track burst time for optimized gravity well
     lastBurstTimeRef.current = Date.now();
+
+    // Reset trail ages for fresh cascade effect
+    if (trailAgesRef.current) {
+      trailAgesRef.current.fill(0);
+    }
 
     // Trigger the spectacular cascading burst animation
     if ((window as any).__triggerBurst) {
