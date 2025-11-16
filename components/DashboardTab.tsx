@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Sparkles, Search } from 'lucide-react';
 import { ActiveTab } from '../types.ts';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
+import VideoMinigame from './VideoMinigame.tsx';
 
 interface DashboardTabProps {
   openGuidedPracticeGenerator: () => void;
@@ -9,9 +10,10 @@ interface DashboardTabProps {
 }
 
 export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab }: DashboardTabProps) {
+  const [showVideo] = useState(true);
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-full text-center overflow-hidden">
+    <div className="relative flex flex-col items-center justify-center min-h-full text-center overflow-y-auto pb-20">
       {/* Subtle background effect - background icon */}
       <MerkabaIcon className="absolute inset-0 w-full h-full text-slate-700/30 opacity-5" style={{ transform: 'scale(2.5)' }}/>
 
@@ -100,6 +102,30 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
           </p>
         </div>
       </div>
+
+      {/* Autoplay Video Section - positioned well below the Body • Mind • Spirit • Shadow */}
+      {showVideo && (
+        <div className="w-full mt-32 px-6 mb-20 animate-fade-in" style={{ animationDelay: '400ms' }}>
+          <div className="max-w-4xl mx-auto">
+            {/* Video container */}
+            <div className="relative bg-black/40 border border-purple-500/30 rounded-2xl overflow-hidden backdrop-blur shadow-2xl" style={{
+              boxShadow: '0 25px 50px -12px rgba(147, 51, 234, 0.5), 0 0 100px rgba(147, 51, 234, 0.3)'
+            }}>
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+                className="w-full h-auto display-block"
+              >
+                <source src="https://files.catbox.moe/fpwjc2.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
