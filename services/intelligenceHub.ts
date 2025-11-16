@@ -47,7 +47,7 @@ async function generateGuidance(context: IntelligenceContext, userProfile?: User
   const dataConfidence = calculateConfidenceFromDataVolume(
     context.wizardSessions.length,
     context.wizardSessions.filter(s => {
-      const sessionDate = new Date(s.completedAt || s.dateStarted);
+      const sessionDate = new Date(s.date);
       const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       return sessionDate > oneWeekAgo;
     }).length,
