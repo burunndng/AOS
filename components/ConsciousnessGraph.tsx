@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Info, Brain, Layers, GitCompare, Lightbulb, AlertTriangle, ChevronDown } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Brain, Layers, GitCompare, Lightbulb, AlertTriangle, ChevronDown } from 'lucide-react';
 
 interface ConsciousnessGraphProps {
   onClose: () => void;
@@ -268,215 +268,351 @@ const CONSCIOUSNESS_DATA: LevelData[] = [
   }
 ];
 
+// Particle system for dynamic backgrounds
+function ParticleBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    interface Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+      opacity: number;
+      color: string;
+      pulse: number;
+    }
+
+    const particles: Particle[] = [];
+    const colors = ['#a855f7', '#06b6d4', '#0ea5e9', '#8b5cf6', '#6366f1'];
+
+    // Create particles
+    for (let i = 0; i < 20; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.3 + 0.1,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        pulse: Math.random() * Math.PI * 2
+      });
+    }
+
+    let animationId: number;
+    let time = 0;
+
+    const animate = () => {
+      time += 0.01;
+
+      // Clear with gradient
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      gradient.addColorStop(0.5, 'rgba(10, 10, 10, 1)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 1)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Update and draw particles
+      particles.forEach((p, i) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.pulse += 0.02;
+
+        // Wrap around edges
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        // Pulsing opacity
+        const pulseOpacity = p.opacity + Math.sin(p.pulse) * 0.15;
+
+        // Draw glow
+        const glowGradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 8);
+        glowGradient.addColorStop(0, p.color + Math.floor(pulseOpacity * 255).toString(16).padStart(2, '0'));
+        glowGradient.addColorStop(1, p.color + '00');
+        ctx.fillStyle = glowGradient;
+        ctx.fillRect(p.x - p.radius * 8, p.y - p.radius * 8, p.radius * 16, p.radius * 16);
+
+        // Draw core
+        ctx.fillStyle = p.color + Math.floor(pulseOpacity * 200).toString(16).padStart(2, '0');
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Draw connecting lines between nearby particles
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 150) {
+            ctx.strokeStyle = particles[i].color + Math.floor((1 - distance / 150) * 50).toString(16).padStart(2, '0');
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none" />;
+}
+
 export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('both');
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [showIntro, setShowIntro] = useState(true);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedData = selectedLevel !== null ? CONSCIOUSNESS_DATA[selectedLevel - 1] : null;
 
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-black/96 via-slate-950/94 to-black/96 backdrop-blur-xl z-50 overflow-y-auto perspective">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 bg-black z-50 overflow-y-auto"
+      style={{
+        background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(168, 85, 247, 0.05), transparent 50%),
+                     linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(10, 10, 10, 1) 50%, rgba(0, 0, 0, 1) 100%)`
+      }}
+    >
+      <ParticleBackground />
+
       <style>{`
-        @keyframes fadeInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-16px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        @keyframes glow-pulse {
+          0%, 100% { filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.3)); }
+          50% { filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.7)); }
         }
 
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        @keyframes light-flare {
+          0% { opacity: 0; }
+          50% { opacity: 0.5; }
+          100% { opacity: 0; }
         }
 
-        @keyframes shimmer {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.7;
-          }
+        @keyframes float-up {
+          0% { opacity: 0; transform: translateY(20px); }
+          50% { opacity: 1; }
+          100% { opacity: 0; transform: translateY(-60px); }
         }
 
-        @keyframes expandBorder {
-          from {
-            box-shadow: 0 0 0 0px currentColor;
-          }
-          to {
-            box-shadow: 0 0 0 2px currentColor;
-          }
+        @keyframes rotate-glow {
+          0% { transform: rotate(0deg) translateX(100px) rotate(0deg); opacity: 0.2; }
+          50% { opacity: 0.5; }
+          100% { transform: rotate(360deg) translateX(100px) rotate(-360deg); opacity: 0.2; }
         }
 
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-4px);
-          }
+        @keyframes shimmer-scan {
+          0% { left: -100%; }
+          100% { left: 100%; }
         }
 
-        .animate-fade-in-down {
-          animation: fadeInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        @keyframes neon-flicker {
+          0%, 100% { text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(168, 85, 247, 0.4); }
+          50% { text-shadow: 0 0 20px rgba(168, 85, 247, 1), 0 0 40px rgba(168, 85, 247, 0.6), 0 0 60px rgba(106, 90, 255, 0.4); }
         }
 
-        .animate-slide-up {
-          animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
+        .animate-glow-pulse { animation: glow-pulse 4s ease-in-out infinite; }
+        .animate-light-flare { animation: light-flare 6s ease-in-out infinite; }
+        .animate-neon-flicker { animation: neon-flicker 3s ease-in-out infinite; }
 
         .consciousness-card {
           position: relative;
+          background: linear-gradient(135deg, rgba(30, 30, 40, 0.4), rgba(20, 20, 30, 0.4));
+          border: 1px solid rgba(168, 85, 247, 0.2);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           overflow: hidden;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          backdrop-filter: blur(10px);
         }
 
         .consciousness-card::before {
           content: '';
           position: absolute;
           inset: 0;
-          background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.1), transparent 50%);
+          background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+                      rgba(168, 85, 247, 0.2), transparent 60%);
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.3s;
+          pointer-events: none;
         }
 
         .consciousness-card:hover::before {
           opacity: 1;
         }
 
-        .consciousness-card:hover {
-          transform: translateY(-4px);
-          border-color: rgba(168, 85, 247, 0.4);
-          box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4), 0 0 32px rgba(168, 85, 247, 0.1);
-        }
-
-        .consciousness-card.selected {
-          animation: expandBorder 0.3s ease-out forwards;
-          background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(96, 165, 250, 0.05));
-        }
-
-        .consciousness-card.selected::after {
+        .consciousness-card::after {
           content: '';
           position: absolute;
           inset: 0;
-          border-radius: inherit;
-          padding: 1px;
-          background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(96, 165, 250, 0.1));
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
+          background: linear-gradient(45deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.1) 50%,
+            transparent 100%);
+          opacity: 0;
+          transition: opacity 0.5s;
           pointer-events: none;
         }
 
-        .level-circle {
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        .consciousness-card:hover::after {
+          opacity: 1;
+          animation: shimmer-scan 2s infinite;
         }
 
-        .consciousness-card:hover .level-circle {
-          transform: scale(1.08);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        .consciousness-card:hover {
+          border-color: rgba(168, 85, 247, 0.6);
+          transform: translateY(-8px) perspective(1000px) rotateX(5deg);
+          box-shadow:
+            0 20px 40px rgba(168, 85, 247, 0.2),
+            0 0 30px rgba(168, 85, 247, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          background: linear-gradient(135deg, rgba(40, 40, 50, 0.6), rgba(30, 30, 45, 0.6));
+        }
+
+        .level-orb {
+          position: relative;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .level-orb::before {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          border-radius: 50%;
+          background: inherit;
+          opacity: 0.4;
+          filter: blur(8px);
+          z-index: -1;
+        }
+
+        .consciousness-card:hover .level-orb {
+          transform: scale(1.15) translateY(-4px);
+          box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
+        }
+
+        .card-content {
+          transition: all 0.4s ease;
+        }
+
+        .consciousness-card:hover .card-content {
+          color: #e0e7ff;
+          text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+        }
+
+        .modal-overlay {
+          background: radial-gradient(circle at center, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.95));
+          backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+          background: linear-gradient(135deg, rgba(30, 30, 45, 0.95), rgba(20, 20, 35, 0.95));
+          border: 1px solid rgba(168, 85, 247, 0.3);
+          box-shadow:
+            0 0 60px rgba(168, 85, 247, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(20px);
+        }
+
+        .btn-active {
+          background: linear-gradient(135deg, rgba(168, 85, 247, 0.8), rgba(139, 92, 246, 0.6));
+          box-shadow:
+            0 0 30px rgba(168, 85, 247, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+          border-color: rgba(168, 85, 247, 0.8);
         }
 
         .chevron-icon {
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .consciousness-card.selected .chevron-icon {
           transform: rotate(180deg);
         }
 
-        .detail-content {
-          animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .modal-backdrop {
-          animation: fadeInDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .btn-toggle {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .btn-toggle::before {
-          content: '';
+        /* Floating light effects */
+        .light-ray {
           position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-          transform: translateX(-100%);
-          transition: transform 0.5s ease;
-        }
-
-        .btn-toggle:hover::before {
-          transform: translateX(100%);
-        }
-
-        /* Stagger animations */
-        .consciousness-card:nth-child(1) {
-          animation-delay: 0.05s;
-        }
-        .consciousness-card:nth-child(2) {
-          animation-delay: 0.1s;
-        }
-        .consciousness-card:nth-child(3) {
-          animation-delay: 0.15s;
-        }
-        .consciousness-card:nth-child(4) {
-          animation-delay: 0.2s;
-        }
-        .consciousness-card:nth-child(5) {
-          animation-delay: 0.25s;
-        }
-        .consciousness-card:nth-child(6) {
-          animation-delay: 0.3s;
-        }
-        .consciousness-card:nth-child(7) {
-          animation-delay: 0.35s;
-        }
-        .consciousness-card:nth-child(8) {
-          animation-delay: 0.4s;
+          pointer-events: none;
         }
       `}</style>
 
-      <div className="min-h-screen p-4 md:p-8">
+      {/* Floating light rays */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl animate-light-flare pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-light-flare pointer-events-none" style={{ animationDelay: '3s' }} />
+
+      <div className="relative z-10 min-h-screen p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Header with Gradient */}
-          <div className="flex justify-between items-start mb-8 animate-fade-in-down">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-8 relative">
             <div>
-              <h1 className="text-5xl md:text-6xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-br from-violet-200 via-slate-100 to-cyan-200 tracking-tighter mb-3 leading-tight">
-                Consciousness Graph
+              <h1 className="text-6xl md:text-7xl font-black font-mono tracking-tighter mb-2 animate-neon-flicker relative">
+                <span className="bg-clip-text text-transparent bg-gradient-to-br from-violet-300 via-cyan-200 to-purple-300">
+                  Consciousness Graph
+                </span>
               </h1>
-              <p className="text-slate-400 text-lg font-light">Explore Leary's 8 Circuits and Wilber's Developmental Stages</p>
+              <p className="text-slate-300 text-lg font-light drop-shadow-lg">Leary's 8 Circuits × Wilber's Integral Development</p>
             </div>
             <button
               onClick={onClose}
-              className="btn-toggle text-slate-400 hover:text-violet-300 transition-colors p-3 rounded-xl hover:bg-slate-800/50 backdrop-blur-sm"
-              aria-label="Close"
+              className="text-slate-400 hover:text-violet-300 transition-all p-3 rounded-xl hover:bg-slate-800/50 backdrop-blur-sm group"
             >
-              <X size={32} />
+              <X size={32} className="group-hover:drop-shadow-lg group-hover:drop-shadow-violet-500/50" />
             </button>
           </div>
 
-          {/* Introduction Modal */}
+          {/* Introduction */}
           {showIntro && (
-            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-900/40 border border-slate-700/60 rounded-2xl p-6 md:p-8 mb-8 backdrop-blur-sm animate-slide-up">
-              <div className="flex items-start justify-between mb-4">
+            <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-violet-500/30 rounded-2xl p-8 mb-8 backdrop-blur-sm relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-violet-500/0 via-violet-500/5 to-violet-500/0 pointer-events-none" />
+              <div className="relative z-10 flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-violet-600/20 rounded-xl">
-                    <Lightbulb size={32} className="text-violet-300" />
+                  <div className="p-4 bg-gradient-to-br from-violet-600/30 to-cyan-600/30 rounded-xl backdrop-blur-sm border border-violet-500/30">
+                    <Lightbulb size={32} className="text-violet-300 drop-shadow-lg" />
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-slate-100">Two Maps, One Territory</h2>
+                  <h2 className="text-3xl font-bold text-slate-100">Two Maps, One Territory</h2>
                 </div>
                 <button
                   onClick={() => setShowIntro(false)}
@@ -485,118 +621,77 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                   <X size={24} />
                 </button>
               </div>
-              <div className="space-y-4 text-slate-300 leading-relaxed">
+              <div className="space-y-4 text-slate-300 leading-relaxed relative z-10">
                 <p>
-                  <strong className="text-violet-300 text-lg">Timothy Leary's 8 Circuits</strong> map the different{' '}
-                  <em>functions</em> of consciousness - from survival to mystical union. Think of these as
-                  different territories you can visit.
+                  <strong className="text-violet-300 text-lg">Timothy Leary's 8 Circuits</strong> map the different <em>functions</em> of consciousness.
                 </p>
                 <p>
-                  <strong className="text-violet-300 text-lg">Ken Wilber's Integral Stages</strong> map how you{' '}
-                  <em>develop</em> through life - how your capacity to understand, include, and integrate
-                  grows over time.
+                  <strong className="text-violet-300 text-lg">Ken Wilber's Integral Stages</strong> map how you <em>develop</em> through life.
                 </p>
-                <div className="bg-gradient-to-r from-violet-950/40 to-slate-950/40 border border-violet-500/30 rounded-xl p-4 mt-4">
-                  <p className="text-violet-200 font-semibold mb-2">✨ The Key Insight:</p>
-                  <p className="text-slate-300">
-                    You can visit advanced territories (Leary's higher circuits) from any level of
-                    development (Wilber's stages). But where you're developed determines how you navigate
-                    and integrate what you find there.
-                  </p>
-                </div>
               </div>
             </div>
           )}
 
-          {/* View Mode Toggles */}
-          <div className="flex gap-3 mb-8 flex-wrap animate-fade-in-down" style={{ animationDelay: '0.1s' }}>
-            <button
-              onClick={() => setViewMode('both')}
-              className={`btn-toggle px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 backdrop-blur-sm border ${
-                viewMode === 'both'
-                  ? 'bg-gradient-to-r from-violet-600 to-violet-500 text-white border-violet-400/50 shadow-lg shadow-violet-500/20'
-                  : 'bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100 border-slate-700/50'
-              }`}
-            >
-              <GitCompare size={20} />
-              Compare Both
-            </button>
-            <button
-              onClick={() => setViewMode('leary')}
-              className={`btn-toggle px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 backdrop-blur-sm border ${
-                viewMode === 'leary'
-                  ? 'bg-gradient-to-r from-violet-600 to-violet-500 text-white border-violet-400/50 shadow-lg shadow-violet-500/20'
-                  : 'bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100 border-slate-700/50'
-              }`}
-            >
-              <Brain size={20} />
-              Leary Only
-            </button>
-            <button
-              onClick={() => setViewMode('wilber')}
-              className={`btn-toggle px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 backdrop-blur-sm border ${
-                viewMode === 'wilber'
-                  ? 'bg-gradient-to-r from-violet-600 to-violet-500 text-white border-violet-400/50 shadow-lg shadow-violet-500/20'
-                  : 'bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100 border-slate-700/50'
-              }`}
-            >
-              <Layers size={20} />
-              Wilber Only
-            </button>
+          {/* View Toggles */}
+          <div className="flex gap-3 mb-8 flex-wrap">
+            {(['both', 'leary', 'wilber'] as const).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 backdrop-blur-sm border ${
+                  viewMode === mode
+                    ? 'btn-active text-white'
+                    : 'bg-slate-700/20 text-slate-300 hover:bg-slate-700/40 border-slate-700/40'
+                }`}
+              >
+                {mode === 'both' && <GitCompare className="inline mr-2" size={18} />}
+                {mode === 'leary' && <Brain className="inline mr-2" size={18} />}
+                {mode === 'wilber' && <Layers className="inline mr-2" size={18} />}
+                {mode === 'both' && 'Compare'}
+                {mode === 'leary' && 'Leary'}
+                {mode === 'wilber' && 'Wilber'}
+              </button>
+            ))}
           </div>
 
-          {/* Main Graph */}
-          <div className="grid grid-cols-1 gap-4 mb-8">
-            {CONSCIOUSNESS_DATA.map((level) => (
-              <div
-                key={level.number}
-                className="consciousness-card animate-slide-up"
-              >
+          {/* Consciousness Cards */}
+          <div className="grid grid-cols-1 gap-4 mb-8 relative z-10">
+            {CONSCIOUSNESS_DATA.map((level, idx) => (
+              <div key={level.number} style={{ animationDelay: `${idx * 50}ms` }} className="group">
                 <button
                   onClick={() => setSelectedLevel(selectedLevel === level.number ? null : level.number)}
-                  className="w-full text-left p-5 rounded-2xl border border-slate-700/60 backdrop-blur-sm hover:backdrop-blur-md"
+                  className="consciousness-card w-full text-left p-6 rounded-2xl"
                   style={{
-                    background: selectedLevel === level.number
-                      ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(96, 165, 250, 0.05))'
-                      : 'linear-gradient(135deg, rgba(51, 65, 85, 0.2), rgba(30, 41, 59, 0.2))'
-                  }}
+                    '--mouse-x': `${mousePosition.x}px`,
+                    '--mouse-y': `${mousePosition.y}px`
+                  } as any}
                 >
-                  <div className="flex items-center gap-5">
-                    {/* Level Circle */}
+                  <div className="flex items-center gap-6">
+                    {/* Level Orb */}
                     <div
-                      className="level-circle text-2xl font-bold w-16 h-16 rounded-2xl flex items-center justify-center text-white font-mono flex-shrink-0"
+                      className="level-orb text-2xl font-bold w-20 h-20 rounded-full flex items-center justify-center text-white font-mono flex-shrink-0"
                       style={{
                         background: `linear-gradient(135deg, ${level.color}, ${level.wilberColor})`,
-                        opacity: viewMode === 'wilber' ? 0.7 : 1
+                        boxShadow: `0 0 40px ${level.color}80`
                       }}
                     >
                       {level.number}
                     </div>
 
-                    {/* Leary Column */}
-                    {(viewMode === 'both' || viewMode === 'leary') && (
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-slate-100 mb-1 truncate">
-                          {level.leary.shortName}
-                        </h3>
-                        <p className="text-sm text-slate-400 line-clamp-2">
-                          {level.leary.description}
-                        </p>
-                      </div>
-                    )}
+                    {/* Content */}
+                    <div className="flex-1 card-content">
+                      {(viewMode === 'both' || viewMode === 'leary') && (
+                        <div>
+                          <h3 className="text-lg font-bold text-slate-100 mb-1">{level.leary.shortName}</h3>
+                          <p className="text-sm text-slate-400 line-clamp-2">{level.leary.description}</p>
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Divider */}
-                    {viewMode === 'both' && (
-                      <div className="w-px h-20 bg-gradient-to-b from-slate-600/40 via-slate-600/20 to-transparent" />
-                    )}
-
-                    {/* Wilber Column */}
                     {(viewMode === 'both' || viewMode === 'wilber') && (
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 card-content">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-slate-100 truncate">
-                            {level.wilber.name}
-                          </h3>
+                          <h3 className="text-lg font-bold text-slate-100">{level.wilber.name}</h3>
                           <span className={`text-xs px-2.5 py-1 rounded-full whitespace-nowrap font-medium ${
                             level.wilber.isState
                               ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
@@ -605,16 +700,13 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                             {level.wilber.isState ? 'STATE' : 'STAGE'}
                           </span>
                         </div>
-                        <p className="text-sm text-slate-400 line-clamp-2">
-                          {level.wilber.description}
-                        </p>
+                        <p className="text-sm text-slate-400 line-clamp-2">{level.wilber.description}</p>
                       </div>
                     )}
 
-                    {/* Chevron */}
                     <ChevronDown
                       size={24}
-                      className="chevron-icon text-slate-500 flex-shrink-0 transition-transform"
+                      className="chevron-icon text-slate-500 flex-shrink-0 group-hover:text-violet-400 transition-colors"
                     />
                   </div>
                 </button>
@@ -622,16 +714,15 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
             ))}
           </div>
 
-          {/* Detailed View Modal */}
+          {/* Modal */}
           {selectedData && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4 modal-backdrop" onClick={() => setSelectedLevel(null)}>
+            <div className="fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4" onClick={() => setSelectedLevel(null)}>
               <div
-                className="bg-gradient-to-b from-slate-800/95 to-slate-900/95 border border-slate-700/80 rounded-3xl max-h-[90vh] overflow-y-auto w-full max-w-4xl backdrop-blur-xl shadow-2xl"
+                className="modal-content rounded-3xl max-h-[90vh] overflow-y-auto w-full max-w-4xl shadow-2xl relative"
                 onClick={e => e.stopPropagation()}
               >
-                {/* Modal Header */}
-                <div className="sticky top-0 bg-gradient-to-r from-slate-800/80 to-slate-900/80 border-b border-slate-700/50 px-8 py-6 flex justify-between items-start backdrop-blur-xl z-10">
-                  <h2 className="text-4xl font-bold text-slate-100">
+                <div className="sticky top-0 bg-gradient-to-r from-slate-800/80 to-slate-900/80 border-b border-violet-500/30 px-8 py-6 flex justify-between items-start backdrop-blur-xl z-10 flex">
+                  <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-cyan-300">
                     Level {selectedData.number} — Deep Dive
                   </h2>
                   <button
@@ -642,23 +733,17 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                   </button>
                 </div>
 
-                <div className="detail-content p-8 space-y-8">
-                  {/* Two Column Layout */}
+                <div className="p-8 space-y-8">
+                  {/* Two Column */}
                   <div className="grid md:grid-cols-2 gap-8">
-                    {/* Leary Detail */}
                     <div className="space-y-4">
-                      <div
-                        className="border-l-4 pl-5"
-                        style={{ borderColor: selectedData.color }}
-                      >
-                        <h3 className="text-2xl font-bold text-slate-100 mb-3">
-                          {selectedData.leary.name}
-                        </h3>
-                        <p className="text-slate-300 mb-4 leading-relaxed">{selectedData.leary.description}</p>
+                      <div className="border-l-4 pl-5" style={{ borderColor: selectedData.color }}>
+                        <h3 className="text-2xl font-bold text-slate-100 mb-3">{selectedData.leary.name}</h3>
+                        <p className="text-slate-300 mb-4">{selectedData.leary.description}</p>
 
                         <div className="bg-neutral-900/50 border border-neutral-500/30 rounded-xl p-4 mb-4">
                           <p className="text-sm text-slate-400 mb-2 font-semibold">When Active:</p>
-                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.leary.when_active}</p>
+                          <p className="text-sm text-slate-300">{selectedData.leary.when_active}</p>
                         </div>
 
                         <div className="bg-violet-900/20 border border-violet-500/30 rounded-xl p-4 mb-4">
@@ -668,21 +753,15 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
 
                         <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
                           <p className="text-sm text-slate-400 mb-2 font-semibold">Leary's Insight:</p>
-                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.leary.insight}</p>
+                          <p className="text-sm text-slate-300">{selectedData.leary.insight}</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Wilber Detail */}
                     <div className="space-y-4">
-                      <div
-                        className="border-l-4 pl-5"
-                        style={{ borderColor: selectedData.wilberColor }}
-                      >
+                      <div className="border-l-4 pl-5" style={{ borderColor: selectedData.wilberColor }}>
                         <div className="flex items-center gap-2 mb-3">
-                          <h3 className="text-2xl font-bold text-slate-100">
-                            {selectedData.wilber.name}
-                          </h3>
+                          <h3 className="text-2xl font-bold text-slate-100">{selectedData.wilber.name}</h3>
                           <span className={`text-xs px-3 py-1 rounded-full font-medium border ${
                             selectedData.wilber.isState
                               ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
@@ -691,33 +770,28 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                             {selectedData.wilber.isState ? 'STATE' : 'STAGE'}
                           </span>
                         </div>
-                        <p className="text-slate-300 mb-4 leading-relaxed">{selectedData.wilber.description}</p>
+                        <p className="text-slate-300 mb-4">{selectedData.wilber.description}</p>
 
                         <div className="bg-slate-800/50 rounded-xl p-4 mb-4 border border-slate-700/50">
                           <p className="text-sm text-slate-400 mb-2 font-semibold">Characteristics:</p>
-                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.wilber.characteristics}</p>
+                          <p className="text-sm text-slate-300">{selectedData.wilber.characteristics}</p>
                         </div>
 
                         <div className="bg-slate-800/50 rounded-xl p-4 mb-4 border border-slate-700/50">
                           <p className="text-sm text-slate-400 mb-2 font-semibold">Wilber's Insight:</p>
-                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.wilber.insight}</p>
+                          <p className="text-sm text-slate-300">{selectedData.wilber.insight}</p>
                         </div>
 
-                        {/* Stage Interpretations */}
                         {selectedData.wilber.stageInterpretations && (
                           <div className="bg-neutral-900/40 border border-neutral-500/30 rounded-xl p-4">
-                            <p className="text-sm text-neutral-300 mb-3 font-semibold">
-                              How Different Stages Experience This:
-                            </p>
+                            <p className="text-sm text-neutral-300 mb-3 font-semibold">How Different Stages Experience This:</p>
                             <div className="space-y-2.5">
-                              {Object.entries(selectedData.wilber.stageInterpretations).map(
-                                ([stage, interpretation]) => (
-                                  <div key={stage} className="text-sm">
-                                    <span className="text-neutral-400 font-semibold">{stage}:</span>{' '}
-                                    <span className="text-slate-300">{interpretation}</span>
-                                  </div>
-                                )
-                              )}
+                              {Object.entries(selectedData.wilber.stageInterpretations).map(([stage, interpretation]) => (
+                                <div key={stage} className="text-sm">
+                                  <span className="text-neutral-400 font-semibold">{stage}:</span>{' '}
+                                  <span className="text-slate-300">{interpretation}</span>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         )}
@@ -725,24 +799,24 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                     </div>
                   </div>
 
-                  {/* Relationship Section */}
-                  <div className="pt-8 border-t border-slate-700/50">
+                  {/* Relationships */}
+                  <div className="pt-8 border-t border-violet-500/20">
                     <h3 className="text-2xl font-bold text-slate-100 mb-6">How They Relate</h3>
 
                     <div className="grid md:grid-cols-3 gap-6 mb-6">
                       <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-5">
                         <p className="text-sm text-emerald-300 mb-3 font-semibold">Similarity</p>
-                        <p className="text-sm text-slate-300 leading-relaxed">{selectedData.relationship.similarity}</p>
+                        <p className="text-sm text-slate-300">{selectedData.relationship.similarity}</p>
                       </div>
 
                       <div className="bg-orange-900/20 border border-orange-500/30 rounded-xl p-5">
                         <p className="text-sm text-orange-300 mb-3 font-semibold">Difference</p>
-                        <p className="text-sm text-slate-300 leading-relaxed">{selectedData.relationship.difference}</p>
+                        <p className="text-sm text-slate-300">{selectedData.relationship.difference}</p>
                       </div>
 
                       <div className="bg-violet-900/20 border border-violet-500/30 rounded-xl p-5">
                         <p className="text-sm text-violet-300 mb-3 font-semibold">Key Insight</p>
-                        <p className="text-sm text-slate-300 leading-relaxed">{selectedData.relationship.keyInsight}</p>
+                        <p className="text-sm text-slate-300">{selectedData.relationship.keyInsight}</p>
                       </div>
                     </div>
 
@@ -751,7 +825,7 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                         <AlertTriangle size={28} className="text-red-400 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-sm text-red-300 font-semibold mb-1">Important Warning</p>
-                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.relationship.warning}</p>
+                          <p className="text-sm text-slate-300">{selectedData.relationship.warning}</p>
                         </div>
                       </div>
                     )}
