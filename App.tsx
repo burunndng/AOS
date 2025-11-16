@@ -48,6 +48,7 @@ const RelationalPatternChatbot = lazy(() => import('./components/RelationalPatte
 const JhanaTracker = lazy(() => import('./components/JhanaTracker.tsx'));
 const MeditationWizard = lazy(() => import('./components/MeditationWizard.tsx'));
 const ConsciousnessGraph = lazy(() => import('./components/ConsciousnessGraph.tsx'));
+const SOTADashboard = lazy(() => import('./components/SOTADashboard.tsx'));
 const RoleAlignmentWizard = lazy(() => import('./components/RoleAlignmentWizard.tsx'));
 const EightZonesWizard = lazy(() => import('./components/EightZonesWizard.tsx'));
 const AdaptiveCycleWizard = lazy(() => import('./components/AdaptiveCycleWizard.tsx'));
@@ -1806,6 +1807,12 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
       case 'consciousness-graph':
         return (
           <ConsciousnessGraph
+            onClose={() => navigateBack()}
+          />
+        );
+      case 'sota-dashboard':
+        return (
+          <SOTADashboard
             onClose={() => navigateBack()}
           />
         );
