@@ -131,24 +131,32 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
             style={{ width: `${totalProgress}%`, boxShadow: '0 0 20px rgba(217, 170, 239, 0.5)' }}
           />
         </div>
-        <div className="flex gap-3 mt-6 flex-wrap">
-          {journeyProgress.earnedBadges.map((badgeId) => {
-            const badge = journeyBadges[badgeId as keyof typeof journeyBadges];
-            return (
-              <div
-                key={badgeId}
-                title={badge?.description}
-                className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-accent/15 to-accent/5 border border-accent/40 rounded-xl hover:border-accent/60 transition-all group cursor-help"
-              >
-                <span className="text-2xl group-hover:scale-125 transition-transform">{badge?.emoji}</span>
-                <div className="text-sm">
-                  <div className="font-bold text-accent">{badge?.name}</div>
-                  <div className="text-xs text-slate-400">{badge?.description}</div>
+        {journeyProgress.earnedBadges.length > 0 ? (
+          <div className="flex gap-3 mt-6 flex-wrap">
+            {journeyProgress.earnedBadges.map((badgeId) => {
+              const badge = journeyBadges[badgeId as keyof typeof journeyBadges];
+              return (
+                <div
+                  key={badgeId}
+                  title={badge?.description}
+                  className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-accent/15 to-accent/5 border border-accent/40 rounded-xl hover:border-accent/60 transition-all group cursor-help"
+                >
+                  <span className="text-2xl group-hover:scale-125 transition-transform">{badge?.emoji}</span>
+                  <div className="text-sm">
+                    <div className="font-bold text-accent">{badge?.name}</div>
+                    <div className="text-xs text-slate-400">{badge?.description}</div>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mt-6 p-6 bg-accent/5 border border-accent/20 rounded-xl text-center">
+            <div className="text-4xl mb-3">🧭</div>
+            <p className="text-slate-300 font-medium mb-1">Welcome to Your Integral Journey!</p>
+            <p className="text-slate-400 text-sm">Complete cards to earn badges and unlock new regions ↓</p>
+          </div>
+        )}
       </div>
 
       {/* Region Navigation */}

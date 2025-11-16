@@ -13,33 +13,44 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
   const [pollAnswers, setPollAnswers] = useState<Record<string, number>>({});
   const [dragState, setDragState] = useState<Record<string, string>>({});
   const [reflectionText, setReflectionText] = useState('');
+  const [justCompleted, setJustCompleted] = useState(false);
+
+  const triggerCompletion = () => {
+    setJustCompleted(true);
+    setTimeout(() => setJustCompleted(false), 600);
+    onComplete();
+  };
 
   const handleQuizAnswer = (index: number) => {
     setSelectedAnswer(index);
     if (card.quizQuestion && index === card.quizQuestion.correct) {
-      setTimeout(onComplete, 500);
+      setTimeout(triggerCompletion, 500);
     }
   };
 
   const handlePoll = (option: string) => {
     setPollAnswers({ ...pollAnswers, [card.id]: 1 });
-    onComplete();
+    triggerCompletion();
   };
 
   const handleReflectionSubmit = () => {
     if (reflectionText.trim()) {
       // Save reflection locally
       localStorage.setItem(`reflection-${card.id}`, reflectionText);
-      onComplete();
+      triggerCompletion();
     }
   };
 
   return (
     <div className="w-full max-w-3xl mx-auto animate-fadeIn">
       <div
-        className="bg-gradient-to-br from-neutral-800 via-neutral-850 to-neutral-900 rounded-2xl border border-accent/30 p-8 shadow-2xl overflow-hidden relative"
+        className={`bg-gradient-to-br from-neutral-800 via-neutral-850 to-neutral-900 rounded-2xl border p-8 shadow-2xl overflow-hidden relative transition-all duration-300 ${
+          justCompleted ? 'border-green-500 scale-[1.02]' : 'border-accent/30'
+        }`}
         style={{
-          boxShadow: '0 20px 60px rgba(217, 170, 239, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.08)',
+          boxShadow: justCompleted
+            ? '0 20px 60px rgba(34, 197, 94, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.1)'
+            : '0 20px 60px rgba(217, 170, 239, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.08)',
           background: 'linear-gradient(135deg, rgba(23, 23, 28, 1) 0%, rgba(30, 27, 38, 1) 50%, rgba(23, 23, 28, 1) 100%)',
         }}
       >
@@ -197,7 +208,7 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
                 ))}
               </div>
               <button
-                onClick={onComplete}
+                onClick={triggerCompletion}
                 className="mt-4 w-full px-4 py-2 bg-accent/20 border border-accent/40 rounded-lg hover:bg-accent/30 transition-all text-accent"
               >
                 Mark as Understood
@@ -209,7 +220,7 @@ export default function LearningCard({ card, isCompleted, onComplete }: Learning
         {/* Complete Button */}
         {!isCompleted && card.interactionType === 'text' && (
           <button
-            onClick={onComplete}
+            onClick={triggerCompletion}
             className="w-full px-4 py-3 bg-gradient-to-r from-accent/20 to-accent/10 border border-accent/40 rounded-lg hover:bg-accent/30 transition-all font-semibold text-accent hover:text-accent-light"
           >
             Continue Reading
