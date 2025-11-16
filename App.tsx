@@ -1662,7 +1662,25 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
         userId={userId}
       />;
       // FIX: Changed prop `setDraftIFSSession` to `setDraftIFS` to match the updated ShadowToolsTabProps interface.
-      case 'shadow-tools': return <ShadowToolsTab onStart321={(id) => setActiveWizardAndLink('321', id)} onStartIFS={(id) => setActiveWizardAndLink('ifs', id)} onStartMemoryRecon={(id) => setActiveWizardAndLink('memory-reconsolidation', id)} setActiveWizard={setActiveWizardAndLink} sessionHistory321={history321} sessionHistoryIFS={historyIFS} memoryReconHistory={memoryReconHistory} draft321Session={draft321} draftIFSSession={draftIFS} draftMemoryRecon={draftMemoryRecon} setDraft321Session={setDraft321} setDraftIFS={setDraftIFS} partsLibrary={partsLibrary} markInsightAsAddressed={markInsightAsAddressed} />;
+      case 'shadow-tools': return <ShadowToolsTab
+        onStart321={() => { setDraft321(null); setActiveWizardAndLink('321'); }}
+        onResume321={(id) => setActiveWizardAndLink('321', id)}
+        onStartIFS={() => { setDraftIFS(null); setActiveWizardAndLink('ifs'); }}
+        onResumeIFS={(id) => setActiveWizardAndLink('ifs', id)}
+        onStartMemoryRecon={() => { setDraftMemoryRecon(null); setActiveWizardAndLink('memory-reconsolidation'); }}
+        onResumeMemoryRecon={(id) => setActiveWizardAndLink('memory-reconsolidation', id)}
+        setActiveWizard={setActiveWizardAndLink}
+        sessionHistory321={history321}
+        sessionHistoryIFS={historyIFS}
+        memoryReconHistory={memoryReconHistory}
+        draft321Session={draft321}
+        draftIFSSession={draftIFS}
+        draftMemoryRecon={draftMemoryRecon}
+        setDraft321Session={setDraft321}
+        setDraftIFS={setDraftIFS}
+        partsLibrary={partsLibrary}
+        markInsightAsAddressed={markInsightAsAddressed}
+      />;
       case 'body-tools': return <BodyToolsTab
         setActiveWizard={setActiveWizardAndLink}
         integralBodyPlans={integralBodyPlans}
@@ -1718,6 +1736,7 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
             partsLibrary={partsLibrary}
             insightContext={insightContext}
             markInsightAsAddressed={markInsightAsAddressed}
+            userId={userId}
           />
         );
       case 'bias':

@@ -6,9 +6,12 @@ import { ChevronDown, ChevronUp, Shield, GitMerge, Users, MessageCircle, Brain }
 import { SectionDivider } from './SectionDivider.tsx';
 
 interface ShadowToolsTabProps {
-  onStart321: (linkedInsightId?: string) => void; // Modified to accept linkedInsightId
-  onStartIFS: (linkedInsightId?: string) => void; // Modified to accept linkedInsightId
-  onStartMemoryRecon: (linkedInsightId?: string) => void;
+  onStart321: () => void; // Start new 321 session
+  onResume321: (linkedInsightId?: string) => void; // Resume 321 draft
+  onStartIFS: () => void; // Start new IFS session
+  onResumeIFS: (linkedInsightId?: string) => void; // Resume IFS draft
+  onStartMemoryRecon: () => void; // Start new Memory Reconsolidation session
+  onResumeMemoryRecon: (linkedInsightId?: string) => void; // Resume Memory Reconsolidation draft
   setActiveWizard: (wizardName: string | null) => void;
   sessionHistory321: ThreeTwoOneSession[];
   sessionHistoryIFS: IFSSession[];
@@ -24,7 +27,7 @@ interface ShadowToolsTabProps {
   draftMemoryRecon?: MemoryReconsolidationSession | null;
 }
 
-const ToolCard = ({ icon, title, description, onStart, onResume, hasDraft }: { icon: React.ReactNode, title: string, description: string, onStart: (linkedInsightId?: string) => void, onResume: (linkedInsightId?: string) => void, hasDraft: boolean }) => (
+const ToolCard = ({ icon, title, description, onStart, onResume, hasDraft, draftLinkedInsightId }: { icon: React.ReactNode, title: string, description: string, onStart: () => void, onResume: (linkedInsightId?: string) => void, hasDraft: boolean, draftLinkedInsightId?: string }) => (
     <div className="bg-slate-800/50 border border-slate-700/80 rounded-lg p-6 flex flex-col">
         <div className="flex items-center gap-4 mb-3">
             {icon}
@@ -36,7 +39,7 @@ const ToolCard = ({ icon, title, description, onStart, onResume, hasDraft }: { i
             Start New
           </button>
           {hasDraft && (
-            <button onClick={() => onResume()} className="bg-slate-600/80 hover:bg-slate-700 text-white px-4 py-2 rounded-md font-medium transition text-sm">
+            <button onClick={() => onResume(draftLinkedInsightId)} className="bg-slate-600/80 hover:bg-slate-700 text-white px-4 py-2 rounded-md font-medium transition text-sm">
               Resume Draft
             </button>
           )}
@@ -46,8 +49,11 @@ const ToolCard = ({ icon, title, description, onStart, onResume, hasDraft }: { i
 
 export default function ShadowToolsTab({
   onStart321,
+  onResume321,
   onStartIFS,
+  onResumeIFS,
   onStartMemoryRecon,
+  onResumeMemoryRecon,
   setActiveWizard,
   sessionHistory321,
   sessionHistoryIFS,
@@ -76,24 +82,27 @@ export default function ShadowToolsTab({
           title="3-2-1 Process"
           description="Integrate parts of yourself you've projected onto others by facing them, talking to them, and being them."
           onStart={() => onStart321()}
-          onResume={() => onStart321(draft321Session?.linkedInsightId)} // Pass linkedInsightId if resuming
+          onResume={(linkedInsightId) => onResume321(linkedInsightId)}
           hasDraft={!!draft321Session}
+          draftLinkedInsightId={draft321Session?.linkedInsightId}
         />
         <ToolCard
           icon={<Users size={28} className="text-cyan-400"/>}
           title="Internal Family Systems"
           description="Connect with your internal 'parts' with curiosity and compassion to understand their positive intent."
           onStart={() => onStartIFS()}
-          onResume={() => onStartIFS(draftIFSSession?.linkedInsightId)} // Pass linkedInsightId if resuming
+          onResume={(linkedInsightId) => onResumeIFS(linkedInsightId)}
           hasDraft={!!draftIFSSession}
+          draftLinkedInsightId={draftIFSSession?.linkedInsightId}
         />
         <ToolCard
           icon={<Brain size={28} className="text-emerald-400"/>}
           title="Memory Reconsolidation"
           description="Unwind implicit beliefs by juxtaposing old truths with lived contradictions, then anchor the shift."
           onStart={() => onStartMemoryRecon()}
-          onResume={() => onStartMemoryRecon(draftMemoryRecon?.linkedInsightId)}
+          onResume={(linkedInsightId) => onResumeMemoryRecon(linkedInsightId)}
           hasDraft={!!draftMemoryRecon}
+          draftLinkedInsightId={draftMemoryRecon?.linkedInsightId}
         />
         <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6 flex flex-col lg:col-span-3">
           <div className="flex items-center gap-4 mb-3">

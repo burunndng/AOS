@@ -1,8 +1,11 @@
 // services/openRouterService.ts
 import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
+import { executeWithFallback, getFallbackModel, shouldUseFallback, logFallbackAttempt } from '../utils/modelFallback';
 
 // Lazy initialization to avoid crashes when API key is not set
 let openRouter: OpenAI | null = null;
+let geminiClient: GoogleGenAI | null = null;
 
 function getOpenRouterClient(): OpenAI {
   if (!openRouter) {
@@ -21,6 +24,17 @@ function getOpenRouterClient(): OpenAI {
     });
   }
   return openRouter;
+}
+
+function getGeminiClient(): GoogleGenAI {
+  if (!geminiClient) {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      throw new Error('API_KEY is not set. Please configure your Gemini API key.');
+    }
+    geminiClient = new GoogleGenAI({ apiKey });
+  }
+  return geminiClient;
 }
 
 // Default model for IntegralBodyArchitect
@@ -56,6 +70,35 @@ interface ChatResponse {
 }
 
 /**
+ * Helper function to call Gemini API for fallback from OpenRouter
+ */
+async function callGeminiFallback(
+  messages: OpenRouterMessage[],
+  maxTokens: number = 1000,
+  temperature: number = 0.7
+): Promise<string> {
+  try {
+    const geminiMessages = messages.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.content }]
+    }));
+
+    const response = await getGeminiClient().models.generateContent({
+      model: 'gemini-2.5-flash-lite',
+      contents: geminiMessages,
+      config: {
+        temperature,
+        maxOutputTokens: maxTokens,
+      }
+    });
+
+    return response.text || '';
+  } catch (error) {
+    throw new Error(`Gemini fallback failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
  * Generate a response using OpenRouter with streaming support
  */
 export async function generateOpenRouterResponse(
@@ -63,86 +106,109 @@ export async function generateOpenRouterResponse(
   onStreamChunk?: (chunk: string) => void,
   options: OpenRouterOptions = {}
 ): Promise<ChatResponse> {
-  try {
-    console.log('[OpenRouter] API call started');
-    console.log('[OpenRouter] Model:', options.model || DEEPSEEK_MODEL);
-    console.log('[OpenRouter] Messages:', messages.length);
-    console.log('[OpenRouter] Max tokens:', options.maxTokens || 1000);
+  const {
+    model = DEEPSEEK_MODEL,
+    maxTokens = 1000,
+    temperature = 0.7,
+    preset,
+    provider
+  } = options;
 
-    // Check if OpenRouter API key is available
-    if (!process.env.OPENROUTER_API_KEY) {
-      console.error('[OpenRouter] API key is missing!');
-      return {
-        success: false,
-        text: '',
-        error: 'OpenRouter API key is not configured.'
-      };
-    }
+  // Use executeWithFallback for automatic fallback handling
+  return await executeWithFallback(
+    'OpenRouter',
+    model,
+    async (primaryModel) => {
+      try {
+        console.log('[OpenRouter] API call started');
+        console.log('[OpenRouter] Model:', primaryModel);
+        console.log('[OpenRouter] Messages:', messages.length);
+        console.log('[OpenRouter] Max tokens:', maxTokens);
 
-    console.log('[OpenRouter] API key is configured');
-
-    const {
-      model = DEEPSEEK_MODEL,
-      maxTokens = 1000,
-      temperature = 0.7,
-      preset,
-      provider
-    } = options;
-
-    // Use streaming if callback provided
-    if (onStreamChunk) {
-      console.log('[OpenRouter] Using streaming mode');
-      console.log('[OpenRouter] Creating stream...');
-      const stream = await getOpenRouterClient().chat.completions.create({
-        model,
-        messages,
-        max_tokens: maxTokens,
-        temperature,
-        stream: true,
-        ...(preset ? { preset } : {}),
-        ...(provider ? { provider } : {}),
-      });
-
-      console.log('[OpenRouter] Stream created, reading chunks...');
-      let fullText = '';
-      let chunkCount = 0;
-      for await (const chunk of stream) {
-        const text = chunk.choices[0]?.delta?.content || '';
-        fullText += text;
-        chunkCount++;
-        if (text) {
-          onStreamChunk(text);
+        // Check if OpenRouter API key is available
+        if (!process.env.OPENROUTER_API_KEY) {
+          console.error('[OpenRouter] API key is missing!');
+          return {
+            success: false,
+            text: '',
+            error: 'OpenRouter API key is not configured.'
+          };
         }
+
+        console.log('[OpenRouter] API key is configured');
+
+        // Use streaming if callback provided
+        if (onStreamChunk) {
+          console.log('[OpenRouter] Using streaming mode');
+          console.log('[OpenRouter] Creating stream...');
+          const stream = await getOpenRouterClient().chat.completions.create({
+            model: primaryModel,
+            messages,
+            max_tokens: maxTokens,
+            temperature,
+            stream: true,
+            ...(preset ? { preset } : {}),
+            ...(provider ? { provider } : {}),
+          });
+
+          console.log('[OpenRouter] Stream created, reading chunks...');
+          let fullText = '';
+          let chunkCount = 0;
+          for await (const chunk of stream) {
+            const text = chunk.choices[0]?.delta?.content || '';
+            fullText += text;
+            chunkCount++;
+            if (text) {
+              onStreamChunk(text);
+            }
+          }
+          console.log('[OpenRouter] Stream completed. Chunks:', chunkCount, 'Total length:', fullText.length);
+          return { success: true, text: fullText };
+        } else {
+          // Fallback to non-streaming
+          console.log('[OpenRouter] Using non-streaming mode');
+          console.log('[OpenRouter] Making API call...');
+          const response = await getOpenRouterClient().chat.completions.create({
+            model: primaryModel,
+            messages,
+            max_tokens: maxTokens,
+            temperature,
+            ...(preset ? { preset } : {}),
+            ...(provider ? { provider } : {}),
+          });
+
+          const text = response.choices[0]?.message?.content || '';
+          console.log('[OpenRouter] Response received. Length:', text.length);
+          return { success: true, text };
+        }
+      } catch (error) {
+        console.error('OpenRouter API error:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        return {
+          success: false,
+          text: 'Unable to generate response. Please try again.',
+          error: errorMessage
+        };
       }
-      console.log('[OpenRouter] Stream completed. Chunks:', chunkCount, 'Total length:', fullText.length);
-      return { success: true, text: fullText };
-    } else {
-      // Fallback to non-streaming
-      console.log('[OpenRouter] Using non-streaming mode');
-      console.log('[OpenRouter] Making API call...');
-      const response = await getOpenRouterClient().chat.completions.create({
-        model,
-        messages,
-        max_tokens: maxTokens,
-        temperature,
-        ...(preset ? { preset } : {}),
-        ...(provider ? { provider } : {}),
-      });
-
-      const text = response.choices[0]?.message?.content || '';
-      console.log('[OpenRouter] Response received. Length:', text.length);
-      return { success: true, text };
+    },
+    async (fallbackModel) => {
+      try {
+        console.log('[OpenRouter] Attempting fallback to Gemini:', fallbackModel);
+        const text = await callGeminiFallback(messages, maxTokens, temperature);
+        console.log('[OpenRouter] Gemini fallback succeeded. Length:', text.length);
+        return { success: true, text };
+      } catch (error) {
+        console.error('OpenRouter Gemini fallback error:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return {
+          success: false,
+          text: 'Unable to generate response. Please try again.',
+          error: errorMessage
+        };
+      }
     }
-  } catch (error) {
-    console.error('OpenRouter API error:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
-    return {
-      success: false,
-      text: 'Unable to generate response. Please try again.',
-      error: errorMessage
-    };
-  }
+  );
 }
 
 /**
