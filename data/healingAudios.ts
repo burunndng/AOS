@@ -46,7 +46,7 @@ export const healingAudios: HealingAudio[] = [
   {
     id: 'self-hypnosis-home',
     title: 'Self-hypnosis: Coming Home to Yourself',
-    description: 'A transformative hypnotic experience to reconnect with your authentic self and inner sanctuary.',
+    description: 'A guided hypnotic practice to reconnect with yourself and your sense of safety.',
     url: 'https://files.catbox.moe/zkplz4.mp3',
     category: 'hypnosis',
     symbol: '🜌', // Alchemical integration/center symbol
@@ -64,7 +64,7 @@ export const healingAudios: HealingAudio[] = [
   {
     id: 'vast-perspective',
     title: 'The Vast Perspective (Awe Induction)',
-    description: 'An expansive journey to induce states of awe and transcendence, opening your perspective to the vastness of experience.',
+    description: 'A guided practice to experience awe and expand your perspective.',
     url: 'https://files.catbox.moe/ym0w5v.mp3',
     category: 'hypnosis',
     symbol: '🝮', // Alchemical expansion/infinity symbol
@@ -88,7 +88,7 @@ export const healingAudios: HealingAudio[] = [
   {
     id: 'emotional-update',
     title: 'The Emotional Update (Memory Reconsolidation)',
-    description: 'A transformative journey to update emotional memories and rewrite the narrative of your past experiences.',
+    description: 'A guided hypnotic practice to update emotional memories and shift your perspective on past experiences.',
     url: 'https://files.catbox.moe/xmh45t.mp3',
     category: 'hypnosis',
     symbol: '🝥', // Alchemical transformation/emotion symbol
@@ -108,7 +108,7 @@ export const healingAudios: HealingAudio[] = [
   {
     id: 'inner-ally',
     title: 'The Inner Ally (Self-Compassion for Stress)',
-    description: 'Cultivate self-compassion and activate your inner wisdom to navigate stress with kindness and resilience.',
+    description: 'Develop self-compassion and resilience for navigating stress with kindness.',
     url: 'https://files.catbox.moe/vcycla.mp3',
     category: 'hypnosis',
     symbol: '🜊', // Alchemical inner protection/compassion symbol

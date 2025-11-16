@@ -125,7 +125,7 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
             The Integral Journey
           </h1>
           <p className="text-slate-400 text-lg">
-            Explore the six regions of integral practice and unlock your wholeness
+            Explore the six regions of integral practice and develop your full potential
           </p>
         </div>
       </div>
