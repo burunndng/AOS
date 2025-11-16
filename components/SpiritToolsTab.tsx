@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Flame, Moon, Sun, GitCompare, Brain, Zap } from 'lucide-react';
+import { Sparkles, Flame, Moon, Sun, GitCompare, Brain } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 import { ActiveTab } from '../types.ts';
 
@@ -157,32 +157,6 @@ export default function SpiritToolsTab({ setActiveWizard, historyBigMind }: Spir
             className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
           >
             Explore the Graph
-          </button>
-        </div>
-      </section>
-
-      {/* SOTA Dashboard */}
-      <SectionDivider />
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-100 mb-1">Advanced Visualization</h2>
-          <p className="text-sm text-slate-400">Experience state-of-the-art 3D visualization with dynamic particles and lighting</p>
-        </div>
-        <div className="bg-gradient-to-br from-slate-900/50 via-purple-900/30 to-slate-900/50 border-2 border-purple-500/40 rounded-lg p-6">
-          <div className="flex items-center gap-4 mb-3">
-            <Zap size={32} className="text-cyan-400" />
-            <h3 className="text-2xl font-bold tracking-tight text-slate-100">SOTA Dashboard</h3>
-            <span className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full font-semibold">NEW</span>
-          </div>
-          <p className="text-slate-300 mb-4 leading-relaxed">
-            An immersive 3D visualization experience featuring advanced particle physics, dynamic lighting effects, and real-time rendering. Perfect for contemplative visualization practices and exploring consciousness through sophisticated visual metaphors.
-          </p>
-          <button
-            onClick={() => setActiveWizard('sota-dashboard')}
-            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
-          >
-            Launch Dashboard
           </button>
         </div>
       </section>
