@@ -11,6 +11,16 @@ interface DashboardTabProps {
 
 export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab }: DashboardTabProps) {
   const [showVideo] = useState(true);
+  const [videoMuted, setVideoMuted] = useState(true);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  const unmute = () => {
+    setVideoMuted(false);
+    if (videoRef.current) {
+      videoRef.current.muted = false;
+      videoRef.current.volume = 1;
+    }
+  };
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-full text-center overflow-y-auto pb-20">
@@ -112,7 +122,9 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
               boxShadow: '0 25px 50px -12px rgba(147, 51, 234, 0.5), 0 0 100px rgba(147, 51, 234, 0.3)'
             }}>
               <video
+                ref={videoRef}
                 autoPlay
+                muted={videoMuted}
                 loop
                 playsInline
                 controls
@@ -121,6 +133,23 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
                 <source src="https://files.catbox.moe/fpwjc2.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
+
+              {/* Unmute Button Overlay */}
+              {videoMuted && (
+                <button
+                  onClick={unmute}
+                  className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/20 transition-all duration-300 group cursor-pointer"
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                    <span className="text-white font-bold text-lg drop-shadow-lg">Click to Unmute</span>
+                  </div>
+                </button>
+              )}
             </div>
           </div>
         </div>
