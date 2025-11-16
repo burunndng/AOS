@@ -41,6 +41,9 @@ import {
 // Coach API handler (imported from serverless function)
 import coachHandler from './coach/generate-response';
 
+// Image generation handler
+import { generateImage } from './images/generate-image';
+
 // Import insights endpoints
 import explainRouter from './insights/explain';
 import insightsStubRouter from './insights/stub-router';
@@ -322,6 +325,16 @@ coachRouter.post('/generate-response', async (req: Request, res: Response) => {
 });
 
 app.use(`${API_BASE}/coach`, coachRouter);
+
+// ============================================
+// IMAGE GENERATION ENDPOINT
+// ============================================
+
+const imagesRouter = Router();
+
+imagesRouter.post('/generate', generateImage);
+
+app.use(`${API_BASE}/images`, imagesRouter);
 
 // ============================================
 // INSIGHTS ENDPOINTS (Stub + Transparency)
