@@ -666,7 +666,7 @@ export default function App() {
 
   const handleSaveAttachmentAssessment = async (session: AttachmentAssessmentSession) => {
     setHistoryAttachment(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setDraftRelational(null);
+    setDraftAttachment(null);
     navigateBack();
 
     const report = `# Attachment Assessment\n- Style: ${session.style}\n- Anxiety Score: ${session.scores.anxiety}\n- Avoidance Score: ${session.scores.avoidance}\n- Assessment Notes: ${session.notes || session.description}`;
@@ -1019,12 +1019,6 @@ ${session.integrationNote}
       const insight = createBigMindIntegratedInsight(session.id, session.summary);
       setIntegratedInsights(prev => [...prev, insight]);
     }
-  };
-
-  const handleSaveMemoryReconsolidationSession = (session: MemoryReconsolidationSession) => {
-    setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setDraftMemoryRecon(null);
-    navigateBack();
   };
 
   const handleSaveEightZonesSession = async (session: EightZonesSession) => {
@@ -1563,7 +1557,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
         return (
           <MemoryReconsolidationWizard
             onClose={() => navigateBack()}
-            onSave={handleSaveMemoryReconsolidationSession}
+            onSave={handleSaveMemoryReconSession}
             session={draftMemoryRecon}
             setDraft={setDraftMemoryRecon}
             userId={userId}
