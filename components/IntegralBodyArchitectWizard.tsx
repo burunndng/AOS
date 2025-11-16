@@ -241,11 +241,11 @@ export default function IntegralBodyArchitectWizard({
     downloadAsFile(text, 'integral-body-architect-shopping-list', 'txt');
   }, [generatedPlan]);
 
-  const handleCalendarSync = useCallback(() => {
-    if (!generatedPlan) return;
-    const ics = buildCalendarICS(generatedPlan);
-    downloadCalendarFile('integral-body-architect-week.ics', ics, 'text/calendar');
-  }, [generatedPlan]);
+  // const handleCalendarSync = useCallback(() => {
+  //   if (!generatedPlan) return;
+  //   const ics = buildCalendarICS(generatedPlan);
+  //   downloadCalendarFile('integral-body-architect-week.ics', ics, 'text/calendar');
+  // }, [generatedPlan]);
 
   const handleYinLaunch = (practice: YinPracticeDetail, dayName: string) => {
     if (!onLaunchYinPractice) return;
@@ -363,10 +363,11 @@ export default function IntegralBodyArchitectWizard({
             </div>
             <div className="space-y-3">
               <button
-                onClick={handleCalendarSync}
-                className="btn-luminous px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2 mx-auto"
+                onClick={() => console.log('Calendar sync is temporarily disabled.')}
+                disabled
+                className="btn-luminous px-6 py-3 rounded-md font-medium flex items-center justify-center gap-2 mx-auto opacity-50 cursor-not-allowed"
               >
-                <Share2 size={20} /> Sync to Calendar
+                <Share2 size={20} /> Sync to Calendar (Coming Soon)
               </button>
               <button
                 onClick={handleExportShoppingList}
@@ -469,13 +470,13 @@ export default function IntegralBodyArchitectWizard({
                   onClick={() => {
                     if (generatedPlan) {
                       const textContent = formatIntegralBodyPlanAsText(generatedPlan);
-                      downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'pdf');
+                      downloadAsFile(textContent, `Integral-Body-Plan-${new Date().toISOString().split('T')[0]}`, 'json');
                     }
                   }}
                   className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-md font-medium transition-colors"
                 >
                   <Download size={18} />
-                  Download as PDF
+                  Download as JSON
                 </button>
               </div>
               <div className="flex justify-center">

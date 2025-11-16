@@ -309,7 +309,7 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
         updateSession({ 
           integrationSelections: selections,
           completionSummary,
-          selectedGrounding: session.groundingOptions.find(g => selectedGrounding.includes(g.id))
+          selectedGrounding: session.groundingOptions.filter(g => selectedGrounding.includes(g.id))
         });
         
         // Set completion data for display
