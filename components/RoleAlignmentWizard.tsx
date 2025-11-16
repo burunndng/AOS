@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, ArrowRight, ArrowLeft, Check, Target, TrendingUp, BookOpen, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import {
   generateRoleActionSuggestion,
@@ -80,9 +80,20 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
     }
   }, [session?.id, lastLoadedSessionId]);
 
-  // Auto-save draft as user progresses
+  // Debounce timer for auto-save to prevent excessive re-renders
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-save draft as user progresses (debounced to prevent input issues)
   useEffect(() => {
-    if (setDraft) {
+    if (!setDraft) return;
+
+    // Clear existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Set new debounced save (500ms delay)
+    autoSaveTimerRef.current = setTimeout(() => {
       const draftSession: RoleAlignmentSession = {
         id: sessionId,
         date: new Date().toISOString(),
@@ -91,10 +102,15 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
         aiIntegralReflection: aiIntegralReflection || undefined
       };
       setDraft(draftSession);
-    }
-    // Note: Intentionally excluding setDraft from dependencies to prevent infinite loops
-    // setDraft is a stable function reference from parent (setState)
-  }, [roles, integralNote, aiIntegralReflection, sessionId]);
+    }, 500);
+
+    // Cleanup: clear timer on unmount
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [roles, integralNote, aiIntegralReflection, sessionId, setDraft]);
 
   const currentRole = roles[currentRoleIndex];
   const activeRoles = roles.filter(r => r.name.trim() !== '');
@@ -244,7 +260,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
         {roles.map((role, index) => (
           <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-lg p-5 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor={`role-name-${index}`} className="block text-sm font-medium text-slate-300 mb-2">
                 Role {index + 1} {index === 0 && <span className="text-red-400">*</span>}
               </label>
               <input
@@ -260,7 +276,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
 
             {role.name && (
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor={`role-why-${index}`} className="block text-sm font-medium text-slate-300 mb-2">
                   Why this role? (one sentence)
                 </label>
                 <input
@@ -310,8 +326,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
     const roleData = activeRoles[currentRoleIndex];
     if (!roleData) return null;
 
-    // Find the actual index of this role in the roles array
-    const actualRoleIndex = roles.findIndex(r => r.name === roleData.name && r.why === roleData.why);
+    // Find the actual index of this role in the roles array by matching name (unique identifier)
+    const actualRoleIndex = roles.findIndex(r => r.name === roleData.name);
 
     return (
       <div className="space-y-6">
@@ -337,7 +353,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
 
           {/* Core goal */}
           <div>
-            <label className="block text-lg font-semibold text-slate-100 mb-3">
+            <label htmlFor="role-goal" className="block text-lg font-semibold text-slate-100 mb-3">
               What's the core goal of this role?
             </label>
             <input
@@ -353,7 +369,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
 
           {/* Value alignment slider */}
           <div className="space-y-4">
-            <label className="block text-lg font-semibold text-slate-100">
+            <label htmlFor="role-value-score" className="block text-lg font-semibold text-slate-100">
               Value fit: How aligned is this with your deeper values?
             </label>
             <div className="space-y-4">
@@ -375,7 +391,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="role-value-note" className="block text-sm font-medium text-slate-300 mb-2">
                 Why that number?
               </label>
               <input
@@ -417,7 +433,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
                 </button>
               </div>
               <div>
-                <label className="block text-sm text-slate-300 mb-2">
+                <label htmlFor="role-shadow-nudge" className="block text-sm text-slate-300 mb-2">
                   What feels off? What small shift could help?
                 </label>
                 <input
@@ -436,7 +452,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
 
           {/* Suggested action */}
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-3">
-            <h4 className="font-semibold text-slate-100">Suggested Action</h4>
+            <label htmlFor="role-action" className="font-semibold text-slate-100">Suggested Action</label>
             <div>
               <input
                 id="role-action"
@@ -597,7 +613,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
 
       {/* User's Personal Reflection */}
       <div className="bg-neutral-900/20 border border-neutral-700/50 rounded-lg p-5 space-y-3">
-        <h3 className="text-lg font-bold text-slate-100">Your Personal Reflection</h3>
+        <label htmlFor="integral-note" className="text-lg font-bold text-slate-100">Your Personal Reflection</label>
         <p className="text-sm text-slate-400">
           How does this connect to your inner world (I) or relationships (We)? Add your own insights.
         </p>
