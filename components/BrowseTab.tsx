@@ -14,9 +14,11 @@ interface BrowseTabProps {
   onExplainClick: (practice: Practice) => void;
   onPersonalizeClick: (practice: Practice) => void;
   highlightPracticeId?: string;
+  linkedInsightId?: string;
+  markInsightAsAddressedByPractice?: (insightId: string, practiceId: string, practiceName: string) => void;
 }
 
-export default function BrowseTab({ practiceStack, addToStack, onExplainClick, onPersonalizeClick, highlightPracticeId }: BrowseTabProps) {
+export default function BrowseTab({ practiceStack, addToStack, onExplainClick, onPersonalizeClick, highlightPracticeId, linkedInsightId, markInsightAsAddressedByPractice }: BrowseTabProps) {
   const [selectedPractice, setSelectedPractice] = useState<Practice | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -116,6 +118,10 @@ export default function BrowseTab({ practiceStack, addToStack, onExplainClick, o
         onClose={() => setSelectedPractice(null)}
         onAdd={(p) => {
           addToStack(p);
+          // Mark insight as addressed if this practice came from an insight (Route B)
+          if (linkedInsightId && markInsightAsAddressedByPractice) {
+            markInsightAsAddressedByPractice(linkedInsightId, p.id, p.name);
+          }
           setSelectedPractice(null);
         }}
         isInStack={!!selectedPractice && stackIds.has(selectedPractice.id)}

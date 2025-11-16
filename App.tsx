@@ -152,15 +152,17 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<Re
 export default function App() {
   const [activeTab, setActiveTab] = useLocalStorage<ActiveTab>('activeTab', 'dashboard');
   const [highlightPracticeId, setHighlightPracticeId] = useState<string | null>(null);
+  const [linkedInsightIdForBrowse, setLinkedInsightIdForBrowse] = useState<string | null>(null);
 
   // User profile for adaptive personalization
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
 
-  // Clear highlight when changing tabs
+  // Clear highlight and insight context when changing tabs
   useEffect(() => {
     if (activeTab !== 'browse') {
       setHighlightPracticeId(null);
+      setLinkedInsightIdForBrowse(null);
     }
   }, [activeTab]);
 
@@ -1529,6 +1531,23 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
     }));
   };
 
+  // Mark insight as addressed when a Browse practice (Route B) is added to stack
+  const markInsightAsAddressedByPractice = (insightId: string, practiceId: string, practiceName: string) => {
+    setIntegratedInsights(prev => prev.map(insight => {
+        if (insight.id === insightId) {
+            return {
+                ...insight,
+                status: 'addressed',
+                relatedPracticeSessions: [
+                    ...(insight.relatedPracticeSessions || []),
+                    { practiceId, completionDates: [new Date().toISOString()], frequency: 1 }
+                ]
+            };
+        }
+        return insight;
+    }));
+  };
+
   const handleExport = () => {
     const data = {
         // Core practice data
@@ -1628,7 +1647,7 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
     switch (activeTab) {
       case 'dashboard': return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} />;
       case 'stack': return <StackTab practiceStack={practiceStack} removeFromStack={removeFromStack} practiceNotes={practiceNotes} updatePracticeNote={updatePracticeNote} openCustomPracticeModal={() => setIsCustomPracticeModalOpen(true)} openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} />;
-      case 'browse': return <BrowseTab practiceStack={practiceStack} addToStack={addToStack} onExplainClick={handleExplainPractice} onPersonalizeClick={setCustomizationModalPractice} highlightPracticeId={highlightPracticeId} />;
+      case 'browse': return <BrowseTab practiceStack={practiceStack} addToStack={addToStack} onExplainClick={handleExplainPractice} onPersonalizeClick={setCustomizationModalPractice} highlightPracticeId={highlightPracticeId} linkedInsightId={linkedInsightIdForBrowse} markInsightAsAddressedByPractice={markInsightAsAddressedByPractice} />;
       case 'tracker': return <TrackerTab practiceStack={practiceStack} completedPractices={completedToday} togglePracticeCompletion={togglePracticeCompletion} dailyNotes={dailyNotes} updateDailyNote={updateDailyNote} findModuleKey={findModuleKey} />;
       case 'streaks': return <StreaksTab practiceStack={practiceStack} completionHistory={completionHistory} findModuleKey={findModuleKey} />;
       case 'recommendations': return <RecommendationsTab starterStacks={starterStacks} applyStarterStack={applyStarterStack} isLoading={aiLoading} error={aiError} intelligentGuidance={intelligentGuidance} isGuidanceLoading={isGuidanceLoading} guidanceError={guidanceError} onGenerateGuidance={handleGenerateIntelligentGuidance} onClearGuidanceCache={handleClearGuidanceCache} integratedInsights={integratedInsights} allPractices={Object.values(corePractices).flat()} addToStack={addToStack} personalizationSummary={currentPersonalizationSummary} />;
@@ -1654,7 +1673,7 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
       />;
       case 'spirit-tools': return <SpiritToolsTab setActiveWizard={setActiveWizardAndLink} historyBigMind={historyBigMind} />;
       case 'library': return <LibraryTab />;
-      case 'journal': return <JournalTab integratedInsights={integratedInsights} setActiveWizard={setActiveWizardAndLink} setActiveTab={setActiveTab} setHighlightPracticeId={setHighlightPracticeId} />;
+      case 'journal': return <JournalTab integratedInsights={integratedInsights} setActiveWizard={setActiveWizardAndLink} setActiveTab={setActiveTab} setHighlightPracticeId={setHighlightPracticeId} setLinkedInsightIdForBrowse={setLinkedInsightIdForBrowse} />;
       case 'quiz': return <ILPGraphQuiz />;
       case 'journey': return <JourneyTab journeyProgress={journeyProgress} updateJourneyProgress={setJourneyProgress} />;
       default: return <DashboardTab openGuidedPracticeGenerator={() => setIsGuidedPracticeGeneratorOpen(true)} setActiveTab={setActiveTab} />;

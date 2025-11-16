@@ -19,9 +19,10 @@ interface JournalTabProps {
   setActiveWizard: (wizardName: string | null, linkedInsightId?: string) => void;
   setActiveTab: (tab: ActiveTab) => void;
   setHighlightPracticeId: (practiceId: string | null) => void;
+  setLinkedInsightIdForBrowse?: (insightId: string | null) => void;
 }
 
-export default function JournalTab({ integratedInsights, setActiveWizard, setActiveTab, setHighlightPracticeId }: JournalTabProps) {
+export default function JournalTab({ integratedInsights, setActiveWizard, setActiveTab, setHighlightPracticeId, setLinkedInsightIdForBrowse }: JournalTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'addressed'>('all');
   const [filterType, setFilterType] = useState<string>('all');
@@ -94,8 +95,9 @@ export default function JournalTab({ integratedInsights, setActiveWizard, setAct
             wizardName = 'eight-zones';
             break;
         default:
-            // Practice doesn't have a wizard - open Browse tab with this practice highlighted
+            // Practice doesn't have a wizard - open Browse tab with this practice highlighted (Route B)
             setHighlightPracticeId(practiceId);
+            setLinkedInsightIdForBrowse?.(insightId);
             setActiveTab('browse');
             return;
     }
