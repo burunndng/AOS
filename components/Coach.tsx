@@ -4,7 +4,7 @@ import { MessageCircle, Send, X, ChevronsDown, Sparkles } from 'lucide-react';
 import { CoachMessage, Practice, ModuleKey, ModuleInfo, AllPractice } from '../types.ts';
 import { practices } from '../constants.ts';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
-import { generateCoachResponse, CoachContext } from '../services/coachChatService.ts';
+import { generateCoachResponse, CoachContext, AppStructure } from '../services/coachChatService.ts';
 
 interface CoachProps {
   userId: string;
@@ -116,6 +116,34 @@ export default function Coach({
         practiceNotes,
         dailyNotes,
         userProfile,
+        appStructure: {
+          tabs: {
+            dashboard: 'Daily overview & quick access',
+            stack: 'Manage your practice list',
+            browse: 'Discover & add new practices',
+            tracker: 'Log daily completions',
+            streaks: 'Track consistency over time',
+            recommendations: 'Get AI-powered suggestions',
+            aqal: 'Understand your development across all dimensions',
+            mindTools: 'Deep dive into cognitive & mental practices',
+            bodyTools: 'Explore physical & somatic practices',
+            spiritTools: 'Access spiritual & transcendent practices',
+            shadowTools: 'Work with shadow self & inner darkness',
+            library: 'Search all available practices',
+            journal: 'Track insights & address them with practices',
+            quiz: 'Self-assess your experience level',
+          },
+          modules: {
+            body: 'Physical practices: exercise, nutrition, sleep, cold exposure',
+            mind: 'Cognitive practices: meditation, learning, decision-making',
+            spirit: 'Spiritual practices: consciousness work, transcendence, meaning',
+            shadow: 'Shadow work: trauma processing, bias detection, shadow integration',
+          },
+          frameworks: {
+            learyCircuits: '8 neurological circuits: Survival → Emotional-Territorial → Semantic → Bonding → Somatic → Metaprogramming → Archetypal → Non-Dual',
+            wilberStages: 'Developmental stages: Archaic → Magic/Power → Mythic/Rational → Pluralistic → Systemic → Integral',
+          },
+        },
       };
 
       // Stream the coach's response

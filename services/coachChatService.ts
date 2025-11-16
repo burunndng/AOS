@@ -13,6 +13,35 @@ export interface CoachMessage {
   text: string;
 }
 
+export interface AppStructure {
+  tabs: {
+    dashboard: string;
+    stack: string;
+    browse: string;
+    tracker: string;
+    streaks: string;
+    recommendations: string;
+    aqal: string;
+    mindTools: string;
+    bodyTools: string;
+    spiritTools: string;
+    shadowTools: string;
+    library: string;
+    journal: string;
+    quiz: string;
+  };
+  modules: {
+    body: string;
+    mind: string;
+    spirit: string;
+    shadow: string;
+  };
+  frameworks: {
+    learyCircuits: string;
+    wilberStages: string;
+  };
+}
+
 export interface CoachContext {
   practiceStack: Array<{ id: string; name: string; module?: string }>;
   completedCount: number;
@@ -29,6 +58,7 @@ export interface CoachContext {
     commonBlockers?: string[];
     practiceComplianceRate?: number;
   };
+  appStructure?: AppStructure;
 }
 
 interface ChatResponse {
@@ -98,21 +128,44 @@ User profile:
     }`;
   }
 
+  // Build app structure context
+  let appStructureContext = '';
+  if (context.appStructure) {
+    appStructureContext = `
+Available tools & features:
+- Dashboard: Daily overview & quick access
+- Stack: Manage your practice list
+- Browse: Discover & add new practices
+- Tracker: Log daily completions
+- Streaks: Track consistency over time
+- Recommendations: Get AI-powered suggestions
+- AQAL Map: Understand your development across all dimensions
+- Module Tools: Dive deep into Body, Mind, Spirit, Shadow work
+- Library: Search all available practices
+- Journal: Track insights & address them with practices
+- Quiz: Self-assess your experience level
+- Consciousness Map: Explore Leary's 8 Circuits & Wilber's stages of development`;
+  }
+
   // Build the complete prompt
   return `You are a concise ILP (Integrative Life Practices) coach helping someone with transformative practices.
+
+FRAMEWORKS: Grounded in Leary's 8 Neurological Circuits & Wilber's developmental stages. Reference these when relevant.
 
 User's context:
 - ${stackContext}
 - Modules: ${moduleBreakdown || 'None selected'}
 - ${completionContext}
-- ${timeContext}${profileContext}
+- ${timeContext}${profileContext}${appStructureContext}
 
 User asked: "${userMessage}"
 
 CRITICAL: Respond in 30-40 words MAX. Be direct, warm, and grounded.
-- Reference their profile/patterns when relevant
+- Reference their profile/patterns & available features when relevant
+- Guide them to specific tabs/tools when they need guidance
 - Suggest smaller changes if struggling, bigger if motivated
-- Be authentic and conversational`;
+- Be authentic and conversational
+- Mention relevant frameworks (Leary circuits, Wilber stages) when addressing consciousness/development`;
 }
 
 /**
