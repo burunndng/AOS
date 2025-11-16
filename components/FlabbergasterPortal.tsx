@@ -8,10 +8,11 @@ interface FlabbergasterPortalProps {
   hasUnlocked?: boolean;
   onHiddenModeDiscovered?: () => void;
   onStartGeometricGame?: () => void;
+  onStartVideoGame?: () => void;
   onGameComplete?: (data: { resonanceAchieved?: boolean }) => void;
 }
 
-export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHiddenModeDiscovered, onStartGeometricGame, onGameComplete }: FlabbergasterPortalProps) {
+export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHiddenModeDiscovered, onStartGeometricGame, onStartVideoGame, onGameComplete }: FlabbergasterPortalProps) {
   const [messages, setMessages] = useState<FlabbergasterMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -297,28 +298,43 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
             </button>
           </div>
 
-          {/* Game Launch Button */}
-          {onStartGeometricGame && (
-            <button
-              onClick={() => {
-                onStartGeometricGame();
-                // Set callback to handle game completion
-                (window as any).__handleGameCompletion = (data: { resonanceAchieved?: boolean }) => {
-                  if (data?.resonanceAchieved && onGameComplete) {
-                    setPendingResonanceNotification(true);
-                    onGameComplete(data);
-                  }
-                };
-              }}
-              className="w-full bg-gradient-to-r from-cyan-600/40 to-purple-600/40 hover:from-cyan-600/60 hover:to-purple-600/60 border border-cyan-500/30 rounded-lg px-4 py-2 text-cyan-200 text-sm font-medium transition-all flex items-center justify-center gap-2"
-              style={{
-                boxShadow: '0 4px 15px rgba(0, 217, 255, 0.2)'
-              }}
-            >
-              <span className="text-lg">🔮</span>
-              Enter the Geometric Resonance Game
-            </button>
-          )}
+          {/* Game Launch Buttons */}
+          <div className="space-y-2">
+            {onStartGeometricGame && (
+              <button
+                onClick={() => {
+                  onStartGeometricGame();
+                  // Set callback to handle game completion
+                  (window as any).__handleGameCompletion = (data: { resonanceAchieved?: boolean }) => {
+                    if (data?.resonanceAchieved && onGameComplete) {
+                      setPendingResonanceNotification(true);
+                      onGameComplete(data);
+                    }
+                  };
+                }}
+                className="w-full bg-gradient-to-r from-cyan-600/40 to-purple-600/40 hover:from-cyan-600/60 hover:to-purple-600/60 border border-cyan-500/30 rounded-lg px-4 py-2 text-cyan-200 text-sm font-medium transition-all flex items-center justify-center gap-2"
+                style={{
+                  boxShadow: '0 4px 15px rgba(0, 217, 255, 0.2)'
+                }}
+              >
+                <span className="text-lg">🔮</span>
+                Enter the Geometric Resonance Game
+              </button>
+            )}
+
+            {onStartVideoGame && (
+              <button
+                onClick={onStartVideoGame}
+                className="w-full bg-gradient-to-r from-pink-600/40 to-orange-600/40 hover:from-pink-600/60 hover:to-orange-600/60 border border-pink-500/30 rounded-lg px-4 py-2 text-pink-200 text-sm font-medium transition-all flex items-center justify-center gap-2"
+                style={{
+                  boxShadow: '0 4px 15px rgba(236, 72, 153, 0.2)'
+                }}
+              >
+                <span className="text-lg">🎮</span>
+                Enter the Second Minigame (Preview)
+              </button>
+            )}
+          </div>
 
           {/* Mystical hint text */}
           <p className="text-purple-400/60 text-xs italic mt-3 text-center">
