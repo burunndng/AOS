@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Sparkles, Zap, Send, Loader, Volume2, VolumeX } from 'lucide-react';
+import { X, Sparkles, Zap, Send, Loader, Volume2, VolumeX, Wand2 } from 'lucide-react';
 import { generateFlabbergasterResponse, getFlabbergasterGreeting, FlabbergasterMessage } from '../services/flabbergasterChatService.ts';
+import TarotCardGenerator from './TarotCardGenerator.tsx';
 
 interface FlabbergasterPortalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const [isTarotGeneratorOpen, setIsTarotGeneratorOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hiddenModeNotifiedRef = useRef(false);
@@ -488,6 +490,18 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
                 Enter the Second Minigame (Preview)
               </button>
             )}
+
+            {/* Tarot Card Generator */}
+            <button
+              onClick={() => setIsTarotGeneratorOpen(true)}
+              className="w-full bg-gradient-to-r from-amber-600/40 to-rose-600/40 hover:from-amber-600/60 hover:to-rose-600/60 border border-amber-500/30 rounded-lg px-4 py-2 text-amber-200 text-sm font-medium transition-all flex items-center justify-center gap-2"
+              style={{
+                boxShadow: '0 4px 15px rgba(217, 119, 6, 0.2)'
+              }}
+            >
+              <Wand2 size={18} />
+              Create Tarot Card
+            </button>
           </div>
 
           {/* Mystical hint text */}
@@ -496,6 +510,13 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
           </p>
         </div>
       </div>
+
+      {/* Tarot Card Generator Modal */}
+      <TarotCardGenerator
+        isOpen={isTarotGeneratorOpen}
+        onClose={() => setIsTarotGeneratorOpen(false)}
+        title="✨ Tarot Card Creator ✨"
+      />
     </div>
   );
 }
