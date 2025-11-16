@@ -70,8 +70,7 @@ export default async function handler(
 }
 
 /**
- * Generate image using Google's Imagen API
- * Requires Google Cloud credentials with Vertex AI enabled
+ * Generate image using Google's Imagen 4.0 Fast API
  */
 async function generateWithImagen(prompt: string): Promise<{ success: boolean; imageUrl?: string; base64Data?: string; error?: string }> {
   const googleApiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -80,17 +79,16 @@ async function generateWithImagen(prompt: string): Promise<{ success: boolean; i
     throw new Error('GOOGLE_GENERATIVE_AI_API_KEY not configured');
   }
 
-  console.log('[Imagen] Calling Imagen API...');
+  console.log('[Imagen] Calling Imagen 4.0 Fast API...');
 
   try {
-    // Try the Imagen REST API endpoint
-    // Note: This requires the API key to have access to Vertex AI
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:generateImages?key=${googleApiKey}`,
+      'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': googleApiKey,
         },
         body: JSON.stringify({
           instances: [
@@ -113,7 +111,7 @@ async function generateWithImagen(prompt: string): Promise<{ success: boolean; i
       throw new Error(`Imagen API error: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { predictions?: string[] };
 
     // Check if predictions exist
     if (data.predictions && data.predictions.length > 0) {
@@ -129,58 +127,6 @@ async function generateWithImagen(prompt: string): Promise<{ success: boolean; i
 
     throw new Error('No predictions in Imagen response');
   } catch (error) {
-    // If standard Imagen fails, try alternative endpoint
-    console.log('[Imagen] Trying alternative Gemini endpoint...');
-
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleApiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `Create an image: ${prompt}`,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              maxOutputTokens: 4096,
-            },
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-
-        // Gemini might return image data in various formats
-        if (data.candidates && data.candidates[0]) {
-          const content = data.candidates[0].content;
-          if (content && content.parts) {
-            for (const part of content.parts) {
-              if (part.inlineData && part.inlineData.data) {
-                const imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                return {
-                  success: true,
-                  imageUrl,
-                  base64Data: imageUrl,
-                };
-              }
-            }
-          }
-        }
-      }
-    } catch (altError) {
-      console.warn('[Imagen] Alternative endpoint also failed');
-    }
-
     throw new Error(
       `Imagen generation failed: ${error instanceof Error ? error.message : String(error)}`
     );

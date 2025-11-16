@@ -77,7 +77,7 @@ export async function generateImage(req: Request, res: Response): Promise<void> 
 }
 
 /**
- * Generate image using Google's Imagen API
+ * Generate image using Google's Imagen 4.0 API
  */
 async function generateWithImagen(prompt: string): Promise<GenerateImageResponse> {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -86,83 +86,47 @@ async function generateWithImagen(prompt: string): Promise<GenerateImageResponse
     throw new Error('GOOGLE_GENERATIVE_AI_API_KEY not configured');
   }
 
-  console.log('[Imagen] Calling Imagen API...');
-
-  // Note: Google's Imagen API requires special setup and is typically accessed through
-  // the Google Cloud Console with proper project configuration
-  // For now, we'll use the Gemini API endpoint with image generation via Google Cloud
+  console.log('[Imagen] Calling Imagen 4.0 API...');
 
   try {
-    // Using REST API directly without SDK (SDK doesn't export GoogleGenerativeAI properly)
-    try {
-      // Attempt to call the API
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:generateImages?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          instances: [{ prompt }],
+          parameters: {
+            sampleCount: 1,
+            height: 512,
+            width: 384, // 3:4 aspect ratio
           },
-          body: JSON.stringify({
-            instances: [{ prompt }],
-            parameters: {
-              sampleCount: 1,
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Imagen API error: ${response.status}`);
+        }),
       }
+    );
 
-      const data = await response.json();
-
-      if (data.predictions && data.predictions[0]) {
-        const base64Image = data.predictions[0];
-        const imageUrl = `data:image/png;base64,${base64Image}`;
-        return {
-          success: true,
-          imageUrl,
-          base64Data: imageUrl,
-        };
-      }
-
-      throw new Error('No valid response from Imagen API');
-    } catch (apiError) {
-      // If the specific Imagen endpoint fails, try the general generateContent endpoint
-      // which can also generate images
-      console.log('[Imagen] Trying generative endpoint for image generation...');
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `Generate an image: ${prompt}`,
-                  },
-                ],
-              },
-            ],
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
-      }
-
-      // Note: Gemini Flash doesn't generate images directly, so this will fail
-      // We use this as a transition to the fallback
-      throw new Error('Gemini API cannot generate images directly');
+    if (!response.ok) {
+      const error = await response.text();
+      console.warn(`[Imagen] API error ${response.status}:`, error.substring(0, 200));
+      throw new Error(`Imagen API error: ${response.status}`);
     }
+
+    const data = await response.json() as { predictions?: string[] };
+
+    if (data.predictions && data.predictions[0]) {
+      const base64Image = data.predictions[0];
+      const imageUrl = `data:image/png;base64,${base64Image}`;
+      return {
+        success: true,
+        imageUrl,
+        base64Data: imageUrl,
+      };
+    }
+
+    throw new Error('No valid response from Imagen API');
   } catch (error) {
     throw new Error(`Imagen generation failed: ${error instanceof Error ? error.message : String(error)}`);
   }
