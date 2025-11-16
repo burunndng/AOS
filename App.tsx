@@ -2109,7 +2109,11 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
       <VideoMinigame
         isOpen={isVideoGameOpen}
         onClose={() => setIsVideoGameOpen(false)}
-        videoUrl="https://files.catbox.moe/hw4tg3.mp4"
+        videoSources={[
+          { src: "https://files.catbox.moe/xl0g67.webp", type: "video/webp" },
+          { src: "https://files.catbox.moe/phesm3.avif", type: "image/avif" },
+          { src: "https://files.catbox.moe/hw4tg3.mp4", type: "video/mp4" }
+        ]}
         title="Second Minigame (Coming Soon)"
       />
       </div>
