@@ -166,6 +166,11 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const nebulaShaderRef = useRef<THREE.ShaderMaterial | null>(null);
   const instancedMeshRef = useRef<THREE.InstancedMesh | null>(null);
   const elapsedTimeRef = useRef(0);
+  const trailMeshRef = useRef<THREE.LineSegments | null>(null);
+  const gravityWellSphereRef = useRef<THREE.Mesh | null>(null);
+  const gravityWellFadeRef = useRef(0);
+  const playerRotationVelocityRef = useRef({ x: 0, y: 0 });
+  const rotationInputRef = useRef({ x: 0, y: 0 });
 
   const [gameMode, setGameMode] = useState<GameMode>('menu');
   const [score, setScore] = useState(0);
@@ -178,6 +183,8 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const [showResonanceFeedback, setShowResonanceFeedback] = useState(false);
   const resonanceAchievedRef = useRef(false);
   const [hasCrystallineCavern, setHasCrystallineCavern] = useState(false);
+  const [showCavernNotification, setShowCavernNotification] = useState(false);
+  const cavernNotificationShownRef = useRef(false);
   const cameraStartPosRef = useRef<THREE.Vector3 | null>(null);
   const shakeActiveRef = useRef(false);
   const gravityWellActiveRef = useRef(false);
@@ -189,7 +196,24 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   useEffect(() => {
     const unlocked = localStorage.getItem('geometricResonanceCavernUnlocked') === 'true';
     setHasCrystallineCavern(unlocked);
+    if (unlocked) {
+      cavernNotificationShownRef.current = true; // Already unlocked, don't show notification again
+    }
   }, []);
+
+  // Handle crystalline cavern unlock notification
+  useEffect(() => {
+    if (hasCrystallineCavern && !cavernNotificationShownRef.current) {
+      cavernNotificationShownRef.current = true;
+      setShowCavernNotification(true);
+
+      const timer = setTimeout(() => {
+        setShowCavernNotification(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [hasCrystallineCavern]);
 
   // Helper: Create sacred geometry shapes with enhanced visuals
   const createGeometricShape = (type: string, color: number): THREE.Group => {
@@ -468,6 +492,50 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     // Create particle system for fractal bursts
     createParticleSystem(sceneGroup);
 
+    // Create particle trails system
+    const trailSegmentsCount = 500; // One trail per particle
+    const trailPositions = new Float32Array(trailSegmentsCount * 2 * 3);
+    const trailGeometry = new THREE.BufferGeometry();
+    trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+
+    const trailMaterial = new THREE.LineBasicMaterial({
+      color: 0xffd700,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      opacity: 0.6,
+      depthWrite: false,
+      linewidth: 2,
+    });
+
+    const trailMesh = new THREE.LineSegments(trailGeometry, trailMaterial);
+    sceneGroup.add(trailMesh);
+    trailMeshRef.current = trailMesh;
+
+    // Create gravity well visual anchor (glowing sphere at center)
+    const gravityWellGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+    const gravityWellMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x00d9ff,
+      emissive: 0x00d9ff,
+      emissiveIntensity: 1.2,
+      metalness: 0.9,
+      roughness: 0.1,
+      clearcoat: 0.8,
+      clearcoatRoughness: 0.1,
+      transparent: true,
+      opacity: 0,
+      wireframe: false,
+    });
+
+    const gravityWellSphere = new THREE.Mesh(gravityWellGeometry, gravityWellMaterial);
+    gravityWellSphere.position.set(0, 0, 0);
+    sceneGroup.add(gravityWellSphere);
+    gravityWellSphereRef.current = gravityWellSphere;
+
+    // Add glow light for gravity well
+    const gravityWellLight = new THREE.PointLight(0x00d9ff, 0, 20);
+    gravityWellLight.position.set(0, 0, 0);
+    sceneGroup.add(gravityWellLight);
+
     // Handle resize
     const handleResize = () => {
       const width = window.innerWidth;
@@ -506,10 +574,26 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
       }
 
       if (gameMode !== 'menu' && gameActive) {
-        // Rotate player shape based on keyboard input (with time dilation)
+        // Apply rotational inertia to player shape
         if (playerShapeRef.current) {
-          playerShapeRef.current.rotation.x += 0.01 * timeScaleRef.current;
-          playerShapeRef.current.rotation.y += 0.015 * timeScaleRef.current;
+          // Apply input acceleration to velocity
+          const inputSensitivity = 0.0015;
+          playerRotationVelocityRef.current.x += rotationInputRef.current.x * inputSensitivity;
+          playerRotationVelocityRef.current.y += rotationInputRef.current.y * inputSensitivity;
+
+          // Apply friction to velocity (damping effect)
+          const friction = 0.88;
+          playerRotationVelocityRef.current.x *= friction;
+          playerRotationVelocityRef.current.y *= friction;
+
+          // Clamp velocity to prevent excessive rotation
+          const maxVelocity = 0.05;
+          playerRotationVelocityRef.current.x = Math.max(-maxVelocity, Math.min(maxVelocity, playerRotationVelocityRef.current.x));
+          playerRotationVelocityRef.current.y = Math.max(-maxVelocity, Math.min(maxVelocity, playerRotationVelocityRef.current.y));
+
+          // Apply velocity to rotation (with time dilation)
+          playerShapeRef.current.rotation.x += playerRotationVelocityRef.current.x * timeScaleRef.current;
+          playerShapeRef.current.rotation.y += playerRotationVelocityRef.current.y * timeScaleRef.current;
 
           // Update player shape color based on resonance
           updateShapeColors(playerShapeRef.current, resonanceLevel);
@@ -532,23 +616,72 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
 
         // Update particle system
         if (particleSystemRef.current) {
-          updateParticles();
-
           const positions = particleSystemRef.current.geometry.attributes.position.array as Float32Array;
           const velocities = particleSystemRef.current.geometry.attributes.velocity.array as Float32Array;
 
-          // Store previous positions for trail effects
+          // Store previous positions BEFORE updating particles
           if (!prevParticlePositionsRef.current) {
             prevParticlePositionsRef.current = new Float32Array(positions.length);
+            prevParticlePositionsRef.current.set(positions);
           }
-          prevParticlePositionsRef.current.set(positions);
+
+          const prevPositions = new Float32Array(prevParticlePositionsRef.current);
+
+          // Update particles
+          updateParticles();
 
           // Apply gravity well effect on perfect resonance (only within 5 seconds of burst for performance)
           const timeSinceBurst = Date.now() - lastBurstTimeRef.current;
-          if (resonanceLevel > 0.98 && timeSinceBurst < 5000) {
+          const gravityWellActive = resonanceLevel > 0.98 && timeSinceBurst < 5000;
+
+          if (gravityWellActive) {
             applyGravityWell(positions, velocities, resonanceLevel);
             particleSystemRef.current.geometry.attributes.velocity.needsUpdate = true;
           }
+
+          // Update gravity well visual anchor
+          if (gravityWellSphereRef.current) {
+            if (gravityWellActive) {
+              // Fade in when gravity well is active
+              gravityWellFadeRef.current = Math.min(gravityWellFadeRef.current + 0.08, 0.8);
+              gravityWellSphereRef.current.material.opacity = gravityWellFadeRef.current;
+            } else {
+              // Fade out when gravity well is no longer active
+              gravityWellFadeRef.current = Math.max(gravityWellFadeRef.current - 0.04, 0);
+              gravityWellSphereRef.current.material.opacity = gravityWellFadeRef.current;
+            }
+
+            // Animate the sphere with pulsing rotation when active
+            if (gravityWellActive) {
+              gravityWellSphereRef.current.rotation.x += 0.03;
+              gravityWellSphereRef.current.rotation.y += 0.04;
+              gravityWellSphereRef.current.rotation.z += 0.02;
+            }
+          }
+
+          // Update particle trails
+          if (trailMeshRef.current && prevParticlePositionsRef.current) {
+            const trailPositionsArray = trailMeshRef.current.geometry.attributes.position.array as Float32Array;
+            const particleCount = 500;
+
+            for (let i = 0; i < particleCount; i++) {
+              // Each particle gets 2 vertices for a line segment (prev→current)
+              // Vertex 1: Previous position
+              trailPositionsArray[i * 6 + 0] = prevPositions[i * 3 + 0];
+              trailPositionsArray[i * 6 + 1] = prevPositions[i * 3 + 1];
+              trailPositionsArray[i * 6 + 2] = prevPositions[i * 3 + 2];
+
+              // Vertex 2: Current position
+              trailPositionsArray[i * 6 + 3] = positions[i * 3 + 0];
+              trailPositionsArray[i * 6 + 4] = positions[i * 3 + 1];
+              trailPositionsArray[i * 6 + 5] = positions[i * 3 + 2];
+            }
+
+            trailMeshRef.current.geometry.attributes.position.needsUpdate = true;
+          }
+
+          // Store current positions for next frame
+          prevParticlePositionsRef.current.set(positions);
         }
 
         // Update dynamic lights (with time dilation)
@@ -668,6 +801,60 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     return () => clearInterval(oracleThink);
   }, [gameActive, score, oracleScore]);
 
+  // Keyboard input for player rotation
+  useEffect(() => {
+    const keys: { [key: string]: boolean } = {};
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      keys[e.key] = true;
+
+      // Update rotation input based on arrow keys
+      rotationInputRef.current.x = 0;
+      rotationInputRef.current.y = 0;
+
+      if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+        rotationInputRef.current.x -= 1; // Rotate up (around X axis)
+      }
+      if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+        rotationInputRef.current.x += 1; // Rotate down
+      }
+      if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+        rotationInputRef.current.y -= 1; // Rotate left (around Y axis)
+      }
+      if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+        rotationInputRef.current.y += 1; // Rotate right
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keys[e.key] = false;
+
+      // Update rotation input based on remaining pressed keys
+      rotationInputRef.current.x = 0;
+      rotationInputRef.current.y = 0;
+
+      if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+        rotationInputRef.current.x -= 1;
+      }
+      if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+        rotationInputRef.current.x += 1;
+      }
+      if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+        rotationInputRef.current.y -= 1;
+      }
+      if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+        rotationInputRef.current.y += 1;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   // Camera shake effect on resonance
   const triggerCameraShake = (camera: THREE.PerspectiveCamera, intensity: number = 0.15, duration: number = 400) => {
@@ -1074,6 +1261,70 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
               100% {
                 opacity: 0;
                 transform: scale(1.2) translateY(-20px);
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* Crystalline Cavern Unlock Notification */}
+      {showCavernNotification && (
+        <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-40">
+          <div
+            className="relative text-center font-bold text-3xl md:text-5xl"
+            style={{
+              background: 'linear-gradient(135deg, #00d9ff, #00ffff, #00d9ff)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              filter: 'drop-shadow(0 0 30px rgba(0, 217, 255, 0.8))',
+              animation: 'cavernUnlockPulse 3s ease-in-out forwards',
+            }}
+          >
+            🔮 CRYSTALLINE CAVERN UNLOCKED 🔮
+          </div>
+
+          {/* Animated glow background */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(0, 217, 255, 0.4) 0%, rgba(0, 217, 255, 0.2) 30%, transparent 70%)',
+              animation: 'cavernGlowFade 3s ease-in-out forwards',
+            }}
+          />
+
+          <style>{`
+            @keyframes cavernUnlockPulse {
+              0% {
+                opacity: 0;
+                transform: scale(0.5) translateY(20px);
+              }
+              20% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+              80% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+              100% {
+                opacity: 0;
+                transform: scale(1.1) translateY(-20px);
+              }
+            }
+
+            @keyframes cavernGlowFade {
+              0% {
+                opacity: 0;
+              }
+              20% {
+                opacity: 1;
+              }
+              80% {
+                opacity: 1;
+              }
+              100% {
+                opacity: 0;
               }
             }
           `}</style>
