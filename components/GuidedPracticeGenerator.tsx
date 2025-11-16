@@ -234,10 +234,21 @@ const TONE_OPTIONS = [
 const DURATION_OPTIONS = [5, 10, 15, 20, 30];
 
 const MODULE_INFO = {
-  body: { name: 'Body', color: 'bg-green-900', textColor: 'text-green-200', borderColor: 'border-green-700', icon: '▲' },
-  mind: { name: 'Mind', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '◇' },
-  shadow: { name: 'Shadow', color: 'bg-amber-900', textColor: 'text-amber-200', borderColor: 'border-amber-700', icon: '◆' },
-  spirit: { name: 'Spirit', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '◉' },
+  body: { name: 'Body', color: 'bg-green-900', textColor: 'text-green-200', borderColor: 'border-green-700', icon: '▲', iconColor: 'text-teal-400' },
+  mind: { name: 'Mind', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '◇', iconColor: 'text-blue-400' },
+  shadow: { name: 'Shadow', color: 'bg-amber-900', textColor: 'text-amber-200', borderColor: 'border-amber-700', icon: '◆', iconColor: 'text-purple-400' },
+  spirit: { name: 'Spirit', color: 'bg-neutral-900', textColor: 'text-neutral-200', borderColor: 'border-neutral-700', icon: '◉', iconColor: 'text-amber-400' },
+};
+
+// Color mapping for practice preset icons by module
+const getPresetIconColor = (module: 'body' | 'mind' | 'shadow' | 'spirit'): string => {
+  const colors: Record<string, string> = {
+    body: 'text-teal-400',
+    mind: 'text-blue-400',
+    shadow: 'text-purple-400',
+    spirit: 'text-amber-400',
+  };
+  return colors[module] || 'text-slate-300';
 };
 
 export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice }: GuidedPracticeGeneratorProps) {
@@ -543,7 +554,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
                       onClick={() => setSelectedModule(selectedModule === module ? null : module)}
                       className={`p-3 rounded-lg border-2 transition text-center ${ selectedModule === module ? `${MODULE_INFO[module].color} ${MODULE_INFO[module].borderColor}` : 'bg-slate-700/50 border-slate-600 hover:border-slate-500' }`}
                     >
-                      <div className="text-2xl mb-1">{MODULE_INFO[module].icon}</div>
+                      <div className={`text-2xl mb-1 ${MODULE_INFO[module].iconColor}`}>{MODULE_INFO[module].icon}</div>
                       <p className={`text-xs font-medium ${ selectedModule === module ? MODULE_INFO[module].textColor : 'text-slate-300' }`}>
                         {MODULE_INFO[module].name}
                       </p>
@@ -568,7 +579,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
                         onClick={() => handlePresetSelect(preset)}
                         className="p-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg border border-slate-600 hover:border-neutral-500 transition text-left"
                       >
-                        <div className="text-xl mb-1">{preset.icon}</div>
+                        <div className={`text-xl mb-1 ${getPresetIconColor(preset.module)}`}>{preset.icon}</div>
                         <p className="text-sm font-medium text-slate-200">{preset.name}</p>
                       </button>
                     ))}
@@ -663,7 +674,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
             <div className="space-y-6 animate-fade-in">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <span className="text-2xl">{MODULE_INFO[currentPractice.module as keyof typeof MODULE_INFO]?.icon || '🎯'}</span>
+                  <span className={`text-2xl ${MODULE_INFO[currentPractice.module as keyof typeof MODULE_INFO]?.iconColor}`}>{MODULE_INFO[currentPractice.module as keyof typeof MODULE_INFO]?.icon || '🎯'}</span>
                   <div>
                     <h3 className="text-xl font-bold text-slate-100">{currentPractice.title}</h3>
                     <p className="text-xs font-medium uppercase text-slate-400 tracking-wide">
@@ -731,7 +742,7 @@ export default function GuidedPracticeGenerator({ isOpen, onClose, onLogPractice
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-grow flex items-center gap-3">
-                        <span className="text-2xl">{MODULE_INFO[practice.module as keyof typeof MODULE_INFO]?.icon || '🎯'}</span>
+                        <span className={`text-2xl ${MODULE_INFO[practice.module as keyof typeof MODULE_INFO]?.iconColor}`}>{MODULE_INFO[practice.module as keyof typeof MODULE_INFO]?.icon || '🎯'}</span>
                         <div>
                           <p className="font-medium text-slate-100">{practice.title}</p>
                           <p className="text-xs text-slate-400 mt-1">
