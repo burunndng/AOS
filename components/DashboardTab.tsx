@@ -42,24 +42,35 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
         }}></div>
 
         <header className="mb-8 animate-fade-in relative">
-          {/* Subtle text glow effect */}
-          <div className="absolute inset-0 -z-10 blur-2xl opacity-30" style={{
-            background: `linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(34, 197, 233, 0.2))`,
+          {/* Enhanced text glow effect - radioactive */}
+          <div className="absolute inset-0 -z-10 blur-3xl opacity-50" style={{
+            background: `linear-gradient(135deg, rgba(168, 85, 247, 0.6), rgba(34, 197, 233, 0.4))`,
             borderRadius: '100%',
-            width: '600px',
-            height: '200px',
+            width: '700px',
+            height: '250px',
             left: '50%',
             top: '50%',
             transform: 'translate(-50%, -50%)'
           }}></div>
 
-          <h1 className={`text-6xl md:text-7xl font-bold font-mono ${getGradientText('spirit')} tracking-tighter drop-shadow-lg`} style={{
-            textShadow: '0 0 40px rgba(168, 85, 247, 0.3), 0 0 20px rgba(34, 197, 233, 0.2)'
+          {/* Darkening overlay to increase contrast */}
+          <div className="absolute inset-0 -z-20 opacity-40" style={{
+            background: 'radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3), transparent)',
+            borderRadius: '100%',
+            width: '800px',
+            height: '300px',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)'
+          }}></div>
+
+          <h1 className={`text-7xl md:text-8xl font-bold font-mono ${getGradientText('spirit')} tracking-tighter drop-shadow-2xl`} style={{
+            textShadow: '0 0 80px rgba(168, 85, 247, 0.8), 0 0 50px rgba(34, 197, 233, 0.6), 0 0 30px rgba(168, 85, 247, 0.4)'
           }}>Welcome to Aura OS</h1>
 
           <div className="relative mt-4 inline-block">
-            {/* Glowing underline effect */}
-            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-accent to-transparent blur-sm opacity-60"></div>
+            {/* Enhanced glowing underline effect */}
+            <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-3/4 h-2 bg-gradient-to-r from-transparent via-accent to-transparent blur-md opacity-90"></div>
             <p className="text-lg text-slate-300 mt-4 max-w-2xl mx-auto leading-relaxed font-light">
               Your operating system for personal transformation.
               <br />
