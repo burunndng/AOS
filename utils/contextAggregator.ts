@@ -11,7 +11,7 @@ import type {
   PlanHistoryEntry,
 } from '../types';
 import { extractWizardSessions } from './sessionSummarizer';
-import { generateText } from '../services/geminiService';
+import { generateOpenRouterResponse, buildMessagesWithSystem } from '../services/openRouterService';
 
 /**
  * User profile containing analyzed preferences, patterns, and experience
@@ -177,23 +177,52 @@ export async function analyzeDailyNotesSentiment(
   const sentiments: number[] = [];
   const keywordFrequency = new Map<string, number>();
 
-  for (const [_date, noteText] of recentNotes) {
-    try {
-      const prompt = `You are analyzing a user's daily self-reflection note. Respond with a strict JSON object following this schema:
+  const systemPrompt = `You are a sentiment analysis expert. Always respond with a strict JSON object containing:
 {
   "score": number // -1.0 (very negative) to 1.0 (very positive)
   "keywords": string[] // 1-3 concise mood descriptors
 }
+Return only the JSON object with no additional commentary.`;
 
-Daily note:
+  const parseSentimentResponse = (text: string) => {
+    const trimmed = text.trim();
+    try {
+      return JSON.parse(trimmed);
+    } catch (error) {
+      const match = trimmed.match(/\{[\s\S]*\}/);
+      if (!match) {
+        throw error;
+      }
+      return JSON.parse(match[0]);
+    }
+  };
+
+  for (const [_date, noteText] of recentNotes) {
+    try {
+      const prompt = `Daily note:
 """
 ${noteText}
 """
 
-Return ONLY the JSON object. Do not add commentary.`;
+Respond with the JSON object.`;
 
-      const response = await generateText(prompt);
-      const parsed = JSON.parse(response);
+      const messages = buildMessagesWithSystem(systemPrompt, [{ role: 'user', content: prompt }]);
+
+      const response = await generateOpenRouterResponse(
+        messages,
+        undefined, // no streaming
+        {
+          model: 'x-ai/grok-4-fast',
+          maxTokens: 200,
+          temperature: 0.2,
+        }
+      );
+
+      if (!response.success || !response.text) {
+        throw new Error('Failed to analyze sentiment');
+      }
+
+      const parsed = parseSentimentResponse(response.text);
 
       const rawScore = typeof parsed.score === 'number' ? parsed.score : 0;
       const clampedScore = Math.max(-1, Math.min(1, rawScore));
