@@ -66,6 +66,26 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     '8th Jhana',
   ];
 
+  // Helper function to create a proper spiral curve
+  function createSpiralCurve(): THREE.CatmullRomCurve3 {
+    const points: THREE.Vector3[] = [];
+    const numPoints = 200;
+    for (let i = 0; i <= numPoints; i++) {
+      const t = i / numPoints;
+      const height = t * 20;
+      const radius = 5 + t * 3;
+      const angle = t * Math.PI * 8;
+      points.push(
+        new THREE.Vector3(
+          radius * Math.cos(angle),
+          height,
+          radius * Math.sin(angle)
+        )
+      );
+    }
+    return new THREE.CatmullRomCurve3(points);
+  }
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -107,13 +127,9 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     spiralGroupRef.current = spiralGroup;
 
     // Create spiral helix geometry
-    const spiralCurve = new THREE.LineCurve3(
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(0, 20, 0)
-    );
-
+    const spiralCurve = createSpiralCurve();
     const spiralTubeGeometry = new THREE.TubeGeometry(
-      createSpiralCurve(),
+      spiralCurve,
       200,
       0.3,
       8,
@@ -302,35 +318,6 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       particleMaterial.dispose();
     };
   }, [selectedJhana, onSelectJhana]);
-
-  // Helper function to create spiral curve
-  function createSpiralCurve(): THREE.Curve<THREE.Vector3> {
-    return {
-      getPoint: (t: number) => {
-        const height = t * 20;
-        const radius = 5 + t * 3;
-        const angle = t * Math.PI * 8;
-        return new THREE.Vector3(
-          radius * Math.cos(angle),
-          height,
-          radius * Math.sin(angle)
-        );
-      },
-      getPointAt: (u: number) => {
-        return this.getPoint(u);
-      },
-      getPoints: (divisions: number = 5) => {
-        const points: THREE.Vector3[] = [];
-        for (let i = 0; i <= divisions; i++) {
-          points.push(this.getPoint(i / divisions));
-        }
-        return points;
-      },
-      getSpacedPoints: (divisions: number = 5) => {
-        return this.getPoints(divisions);
-      },
-    } as THREE.Curve<THREE.Vector3>;
-  }
 
   // Helper function to animate camera to clicked point
   function animateCameraToPoint(targetPosition: THREE.Vector3) {
