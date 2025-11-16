@@ -252,75 +252,24 @@ export default function SpiritToolsTab({ setActiveWizard, historyBigMind }: Spir
         </div>
       </section>
 
-      {/* Insight Practice Map Section */}
+      {/* Progress of Insight - 3D Ouroboros Visualizer */}
       <SectionDivider />
 
       <section className="space-y-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-100 mb-1">Progress of Insight</h2>
-          <p className="text-sm text-slate-400">Navigate the 16 stages of insight meditation</p>
+          <p className="text-sm text-slate-400">Navigate the 16 stages through an interactive 3D sacred cycle</p>
         </div>
         <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
           <div className="flex items-center gap-4 mb-3">
             <Moon size={32} className="text-neutral-400" />
-            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Insight Practice Map</h3>
-            <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full font-semibold">Powered by Grok</span>
-          </div>
-          <p className="text-slate-300 mb-4 leading-relaxed">
-            A comprehensive map of the 16 ñanas (stages of insight) in vipassana meditation, from Mind and Body
-            through the A&P event, Dark Night stages, and High Equanimity. Track your progress, learn about each
-            stage, and ask questions with our AI chatbot powered by Grok.
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-accent">16</div>
-              <div className="text-xs text-slate-400 mt-1">Stages</div>
-            </div>
-            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-accent">✓</div>
-              <div className="text-xs text-slate-400 mt-1">Track Progress</div>
-            </div>
-            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-accent">💬</div>
-              <div className="text-xs text-slate-400 mt-1">AI Chatbot</div>
-            </div>
-            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-accent">🗺️</div>
-              <div className="text-xs text-slate-400 mt-1">Reference Map</div>
-            </div>
-          </div>
-          <p className="text-sm text-slate-400 mb-5 italic">
-            Based on Mahasi Sayadaw's Progress of Insight. Includes detailed descriptions of all stages,
-            key markers, practice tips, and warnings for challenging phases. Ask Grok questions about your
-            experience, the Dark Night, A&P event, and more.
-          </p>
-          <button
-            onClick={() => setActiveWizard('insight-practice-map')}
-            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
-          >
-            Open Insight Map
-          </button>
-        </div>
-      </section>
-
-      {/* Insight Ouroboros Visualizer */}
-      <SectionDivider />
-
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-100 mb-1">Interactive 3D Visualization</h2>
-          <p className="text-sm text-slate-400">Explore the 16 stages of insight in an interactive 3D sacred cycle</p>
-        </div>
-        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
-          <div className="flex items-center gap-4 mb-3">
-            <Zap size={32} className="text-neutral-400" />
-            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Insight Ouroboros</h3>
+            <h3 className="text-2xl font-bold tracking-tight text-slate-100">The Insight Ouroboros</h3>
             <span className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full font-semibold">3D Interactive</span>
           </div>
           <p className="text-slate-300 mb-4 leading-relaxed">
-            Visualize the 16 ñanas as an ouroboros—the ancient symbol of a snake eating its tail. This 3D interactive map
-            shows the asymmetric narrative arc of insight: the sharp descent into the Dark Night stages and the gradual
-            ascent through High Equanimity. Click any stage node to explore its characteristics in the side panel.
+            Visualize the 16 ñanas as an ouroboros—the ancient symbol of a snake eating its tail. This 3D interactive visualization
+            shows the asymmetric narrative arc of insight meditation: the sharp descent into the Dark Night stages and the gradual
+            ascent through High Equanimity. Click any stage node to explore detailed characteristics in the info panel.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             <div className="bg-slate-900/50 rounded-lg p-3 text-center">
@@ -341,12 +290,12 @@ export default function SpiritToolsTab({ setActiveWizard, historyBigMind }: Spir
             </div>
           </div>
           <p className="text-sm text-slate-400 mb-5 italic">
-            Based on Mahasi Sayadaw's Progress of Insight. A stunning 3D visualization with particle flow,
-            asymmetric narrative arc, and interactive node selection. Perfect for practitioners wanting
-            to see the full journey through vipassana meditation at a glance.
+            Based on Mahasi Sayadaw's Progress of Insight framework. A stunning 3D visualization with particle flow,
+            asymmetric narrative arc, and interactive node selection. Side panel displays stage details: name, phase,
+            description, key markers, and duration. Perfect for practitioners exploring the full journey through vipassana meditation.
           </p>
           <button
-            onClick={() => setActiveWizard('insight-ouroboros')}
+            onClick={() => setActiveWizard('insight-practice-map')}
             className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
           >
             Open Ouroboros

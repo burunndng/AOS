@@ -57,7 +57,7 @@ const AdaptiveCycleWizard = lazy(() => import('./components/AdaptiveCycleWizard.
 const BigMindProcessWizard = lazy(() => import('./components/BigMindProcessWizard.tsx'));
 const IntegralBodyArchitectWizard = lazy(() => import('./components/IntegralBodyArchitectWizard.tsx'));
 const DynamicWorkoutArchitectWizard = lazy(() => import('./components/DynamicWorkoutArchitectWizard.tsx'));
-const InsightPracticeMapWizard = lazy(() => import('./components/InsightPracticeMapWizard.tsx'));
+// const InsightPracticeMapWizard = lazy(() => import('./components/InsightPracticeMapWizard.tsx')); // REPLACED by InsightOuroborosVisualizer
 const InsightOuroborosVisualizer = lazy(() => import('./components/InsightOuroborosVisualizer.tsx'));
 const MemoryReconsolidationWizard = lazy(() => import('./components/MemoryReconsolidationWizard.tsx'));
 
@@ -1917,16 +1917,10 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
         );
       case 'insight-practice-map':
         return (
-          <InsightPracticeMapWizard
-            onClose={() => navigateBack()}
-          />
-        );
-      case 'insight-ouroboros':
-        return (
           <div className="fixed inset-0 bg-neutral-950 z-50 flex flex-col">
             {/* Header with close button */}
             <div className="border-b border-neutral-800/50 px-8 py-4 flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-slate-100">Insight Ouroboros</h1>
+              <h1 className="text-2xl font-bold text-slate-100">Progress of Insight</h1>
               <button
                 onClick={() => navigateBack()}
                 className="text-neutral-600 hover:text-neutral-300 transition-colors"
@@ -1934,7 +1928,7 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
                 ✕
               </button>
             </div>
-            {/* Visualizer */}
+            {/* Ouroboros Visualizer */}
             <div className="flex-1 overflow-hidden p-8">
               <InsightOuroborosVisualizer />
             </div>
