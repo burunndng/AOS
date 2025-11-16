@@ -1,8 +1,43 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import OpenAI from 'openai';
+import { executeWithFallback } from '../utils/modelFallback';
 import { SomaticPacing, ValidationResult, ValidationWarning, WarningType, SomaticPracticeType } from "../types.ts";
 import { PRACTICE_TYPES } from "../constants.ts";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+
+// Initialize OpenRouter client for fallback
+let openRouter: OpenAI | null = null;
+
+function getOpenRouterClient(): OpenAI {
+  if (!openRouter) {
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterKey) {
+      throw new Error('OPENROUTER_API_KEY is not set. Please configure your API key.');
+    }
+    openRouter = new OpenAI({
+      apiKey: openRouterKey,
+      baseURL: 'https://openrouter.ai/api/v1',
+      dangerouslyAllowBrowser: true,
+    });
+  }
+  return openRouter;
+}
+
+async function callOpenRouterFallback(prompt: string, maxTokens: number = 2000): Promise<string> {
+  try {
+    const response = await getOpenRouterClient().chat.completions.create({
+      model: 'openai/gpt-oss-120b:exacto',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: maxTokens,
+      provider: { quantizations: ['bf16'] }
+    });
+    return response.choices[0]?.message?.content || '';
+  } catch (error) {
+    throw new Error(`OpenRouter fallback failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 interface SomaticScriptSegment {
     instruction: string;

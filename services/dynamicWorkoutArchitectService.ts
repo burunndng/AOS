@@ -1,7 +1,10 @@
 import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
+import { executeWithFallback, getFallbackModel, shouldUseFallback, logFallbackAttempt } from '../utils/modelFallback';
 
 // Lazy initialization to avoid crashes when API key is not set
 let openRouter: OpenAI | null = null;
+let geminiClient: GoogleGenAI | null = null;
 
 function getOpenRouterClient(): OpenAI {
   if (!openRouter) {
@@ -16,6 +19,17 @@ function getOpenRouterClient(): OpenAI {
     });
   }
   return openRouter;
+}
+
+function getGeminiClient(): GoogleGenAI {
+  if (!geminiClient) {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      throw new Error('API_KEY is not set. Please configure your Gemini API key.');
+    }
+    geminiClient = new GoogleGenAI({ apiKey });
+  }
+  return geminiClient;
 }
 
 export interface WorkoutExercise {
@@ -204,6 +218,26 @@ const WORKOUT_RESPONSE_SCHEMA = {
   required: ['title', 'summary', 'workouts']
 };
 
+/**
+ * Helper function to call Gemini API for fallback from OpenRouter (Grok models)
+ */
+async function callGeminiFallback(prompt: string): Promise<string> {
+  try {
+    const response = await getGeminiClient().models.generateContent({
+      model: 'gemini-2.5-flash-lite',
+      contents: prompt,
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 8000,
+      }
+    });
+
+    return response.text || '';
+  } catch (error) {
+    throw new Error(`Gemini fallback failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 export async function generateDynamicWorkout(input: GenerateWorkoutInput): Promise<WorkoutProgram> {
   const prompt = `You are the Dynamic Workout Architect—an expert at creating personalized, adaptive workout programs that align with both physical training principles and somatic body awareness.
 
@@ -266,35 +300,49 @@ Be specific, actionable, and emphasize the mind-body connection throughout.
 IMPORTANT: Return your response as valid JSON only, with no additional text or markdown formatting. Use this schema:
 ${JSON.stringify(WORKOUT_RESPONSE_SCHEMA, null, 2)}`;
 
-  const apiPromise = getOpenRouterClient().chat.completions.create({
-    model: 'x-ai/grok-4-fast',
-    messages: [
-      {
-        role: 'user',
-        content: prompt
+  // Use executeWithFallback for automatic fallback handling
+  const responseText = await executeWithFallback(
+    'DynamicWorkoutArchitect',
+    'x-ai/grok-4-fast',
+    async (primaryModel) => {
+      try {
+        const apiPromise = getOpenRouterClient().chat.completions.create({
+          model: primaryModel,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 8000
+        });
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Workout generation timed out after 60 seconds. Please try again.')), 60000)
+        );
+
+        const response = await Promise.race([apiPromise, timeoutPromise]);
+        return response.choices[0]?.message?.content || '';
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('timed out')) {
+          throw error;
+        }
+        throw new Error(`Failed to generate workout: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
-    ],
-    temperature: 0.7,
-    max_tokens: 8000
-  });
-
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Workout generation timed out after 60 seconds. Please try again.')), 60000)
-  );
-
-  let response;
-  try {
-    response = await Promise.race([apiPromise, timeoutPromise]);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('timed out')) {
-      throw error;
+    },
+    async (fallbackModel) => {
+      try {
+        console.log('[DynamicWorkoutArchitect] Attempting fallback to Gemini:', fallbackModel);
+        return await callGeminiFallback(prompt);
+      } catch (error) {
+        throw new Error(`Gemini fallback failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
-    throw new Error(`Failed to generate workout: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
+  );
 
   let workoutData: LLMWorkoutGenerationResponse;
   try {
-    const responseText = response.choices[0]?.message?.content || '';
     workoutData = JSON.parse(responseText);
   } catch (error) {
     throw new Error('Failed to parse workout response. Please try again.');

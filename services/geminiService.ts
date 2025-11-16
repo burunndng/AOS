@@ -4,9 +4,11 @@
 // services/geminiService.ts
 // FIX: Add `ThreeTwoOneSession` and `CustomPractice` to type imports.
 import { GoogleGenAI, Type, Modality, Blob, Content } from "@google/genai";
+import OpenAI from 'openai';
 import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey, IntegratedInsight, KeganResponse, KeganStage, KeganDomain, KeganAssessmentSession, KeganProbeExchange, RelationshipContext, RelationshipType, IntelligenceContext } from '../types.ts';
 import { practices as corePractaces } from '../constants.ts';
 import { AttachmentStyle, getRecommendedPracticesBySystem } from '../data/attachmentMappings.ts';
+import { executeWithFallback, getFallbackModel, shouldUseFallback, logFallbackAttempt } from '../utils/modelFallback';
 
 
 // Initialize the Google AI client
@@ -17,23 +19,105 @@ if (!apiKey) {
 }
 const ai = new GoogleGenAI({ apiKey });
 
+// Initialize OpenRouter client for fallback (lazy initialization)
+let openRouter: OpenAI | null = null;
+
+function getOpenRouterClient(): OpenAI {
+  if (!openRouter) {
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterKey) {
+      throw new Error('OPENROUTER_API_KEY is not set. Please configure your API key.');
+    }
+    openRouter = new OpenAI({
+      apiKey: openRouterKey,
+      baseURL: 'https://openrouter.ai/api/v1',
+      dangerouslyAllowBrowser: true,
+      defaultHeaders: {
+        "HTTP-Referer": process.env.SITE_URL || "https://auraos.app",
+        "X-Title": "Aura OS - Integral Life Practice"
+      }
+    });
+  }
+  return openRouter;
+}
+
+/**
+ * Helper function to call OpenRouter API for fallback from Gemini
+ */
+async function callOpenRouterFallback(prompt: string, maxTokens: number = 2000): Promise<string> {
+  try {
+    const response = await getOpenRouterClient().chat.completions.create({
+      model: 'openai/gpt-oss-120b:exacto',
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: maxTokens,
+      provider: {
+        quantizations: ['bf16']
+      }
+    });
+    return response.choices[0]?.message?.content || '';
+  } catch (error) {
+    throw new Error(`OpenRouter fallback failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Helper function for safe Gemini API calls with fallback
+ * Used for simpler text generation tasks
+ */
+async function safeGeminiCall(
+  wizardName: string,
+  model: string,
+  prompt: string,
+  maxTokens: number = 2000
+): Promise<string> {
+  return await executeWithFallback(
+    wizardName,
+    model,
+    async (primaryModel) => {
+      const response = await ai.models.generateContent({
+        model: primaryModel,
+        contents: prompt,
+      });
+      return response.text || '';
+    },
+    async (fallbackModel) => {
+      return await callOpenRouterFallback(prompt, maxTokens);
+    }
+  );
+}
+
 // Helper function to generate text
 export async function generateText(prompt: string): Promise<string> {
-  try {
-    // FIX: Use the correct API call `ai.models.generateContent` for text generation.
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: prompt,
-    });
-    // FIX: Access the generated text directly from the `text` property of the response.
-    if (!response.text) {
-      throw new Error('API response returned empty text');
+  return await executeWithFallback(
+    'GeminiService',
+    'gemini-2.5-flash-lite',
+    async (primaryModel) => {
+      try {
+        // FIX: Use the correct API call `ai.models.generateContent` for text generation.
+        const response = await ai.models.generateContent({
+          model: primaryModel,
+          contents: prompt,
+        });
+        // FIX: Access the generated text directly from the `text` property of the response.
+        if (!response.text) {
+          throw new Error('API response returned empty text');
+        }
+        return response.text;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to generate text: ${errorMessage}`);
+      }
+    },
+    async (fallbackModel) => {
+      return await callOpenRouterFallback(prompt);
     }
-    return response.text;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to generate text: ${errorMessage}`);
-  }
+  );
 }
 
 // FIX: Added missing `explainPractice` function called from `App.tsx`.
@@ -60,45 +144,61 @@ Return ONLY the explanation as a string.`;
 
 // FIX: Added missing `populateCustomPractice` function called from `CustomPracticeModal.tsx`.
 export async function populateCustomPractice(practiceName: string): Promise<{ description: string; why: string; how: string[]; }> {
-    try {
-        const prompt = `A user wants to create a custom practice called "${practiceName}".
+    const prompt = `A user wants to create a custom practice called "${practiceName}".
     Generate a concise description, a compelling "why" (the core benefit), and an array of 3-4 simple "how-to" steps.
     Return a JSON object with keys: "description" (string), "why" (string), and "how" (array of strings).
     Return ONLY the JSON object.`;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        description: { type: Type.STRING },
-                        why: { type: Type.STRING },
-                        how: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    },
-                    required: ['description', 'why', 'how']
+    return await executeWithFallback(
+        'PopulateCustomPractice',
+        'gemini-2.5-pro',
+        async (primaryModel) => {
+            try {
+                const response = await ai.models.generateContent({
+                    model: primaryModel,
+                    contents: prompt,
+                    config: {
+                        responseMimeType: 'application/json',
+                        responseSchema: {
+                            type: Type.OBJECT,
+                            properties: {
+                                description: { type: Type.STRING },
+                                why: { type: Type.STRING },
+                                how: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            },
+                            required: ['description', 'why', 'how']
+                        }
+                    }
+                });
+
+                if (!response.text) {
+                    throw new Error('API response returned empty text');
                 }
+
+                const cleanJson = response.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+                const parsed = JSON.parse(cleanJson);
+
+                if (!parsed || typeof parsed !== 'object') {
+                    throw new Error('Invalid response structure');
+                }
+
+                return parsed as { description: string; why: string; how: string[]; };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                throw new Error(`Failed to populate custom practice: ${errorMessage}`);
             }
-        });
-
-        if (!response.text) {
-            throw new Error('API response returned empty text');
+        },
+        async (fallbackModel) => {
+            try {
+                const responseText = await callOpenRouterFallback(prompt);
+                const cleanJson = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+                const parsed = JSON.parse(cleanJson);
+                return parsed as { description: string; why: string; how: string[]; };
+            } catch (error) {
+                throw new Error(`Fallback parsing failed: ${error instanceof Error ? error.message : String(error)}`);
+            }
         }
-
-        const cleanJson = response.text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const parsed = JSON.parse(cleanJson);
-
-        if (!parsed || typeof parsed !== 'object') {
-            throw new Error('Invalid response structure');
-        }
-
-        return parsed as { description: string; why: string; how: string[]; };
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        throw new Error(`Failed to populate custom practice: ${errorMessage}`);
-    }
+    );
 }
 
 // FIX: Added missing `getDailyReflection` function called from `TrackerTab.tsx`.

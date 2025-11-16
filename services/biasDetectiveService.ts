@@ -1,11 +1,46 @@
 // services/biasDetectiveService.ts
 import { GoogleGenAI, Type } from "@google/genai";
+import OpenAI from 'openai';
+import { executeWithFallback } from '../utils/modelFallback';
 
 const apiKey = process.env.API_KEY;
 if (!apiKey) {
   throw new Error('API_KEY environment variable is not set');
 }
 const ai = new GoogleGenAI({ apiKey });
+
+// Initialize OpenRouter client for fallback
+let openRouter: OpenAI | null = null;
+
+function getOpenRouterClient(): OpenAI {
+  if (!openRouter) {
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+    if (!openRouterKey) {
+      throw new Error('OPENROUTER_API_KEY is not set. Please configure your API key.');
+    }
+    openRouter = new OpenAI({
+      apiKey: openRouterKey,
+      baseURL: 'https://openrouter.ai/api/v1',
+      dangerouslyAllowBrowser: true,
+    });
+  }
+  return openRouter;
+}
+
+async function callOpenRouterFallback(prompt: string, maxTokens: number = 2000): Promise<string> {
+  try {
+    const response = await getOpenRouterClient().chat.completions.create({
+      model: 'openai/gpt-oss-120b:exacto',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: maxTokens,
+      provider: { quantizations: ['bf16'] }
+    });
+    return response.choices[0]?.message?.content || '';
+  } catch (error) {
+    throw new Error(`OpenRouter fallback failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 interface DiscoveryAnswers {
   alternativesConsidered: string;
@@ -31,8 +66,7 @@ export async function generateBiasedDecisionAnalysis(
   reasoning: string,
   discoveryAnswers: DiscoveryAnswers
 ): Promise<string> {
-  try {
-    const prompt = `
+  const prompt = `
     As a cognitive psychologist, analyze the user's decision-making process based on their own reflections.
     Your task is to provide a grounded, narrative diagnosis of potential cognitive biases at play.
     Reference their specific answers to make the analysis feel undeniable and personalized.
@@ -60,20 +94,30 @@ export async function generateBiasedDecisionAnalysis(
     Return ONLY the narrative analysis as a single string.
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-    });
+  return await executeWithFallback(
+    'BiasDetective',
+    'gemini-2.5-flash',
+    async (primaryModel) => {
+      try {
+        const response = await ai.models.generateContent({
+          model: primaryModel,
+          contents: prompt,
+        });
 
-    if (!response.text) {
-      throw new Error('API response returned empty text');
+        if (!response.text) {
+          throw new Error('API response returned empty text');
+        }
+
+        return response.text;
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to generate biased decision analysis: ${errorMessage}`);
+      }
+    },
+    async (fallbackModel) => {
+      return await callOpenRouterFallback(prompt);
     }
-
-    return response.text;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to generate biased decision analysis: ${errorMessage}`);
-  }
+  );
 }
 
 /**
