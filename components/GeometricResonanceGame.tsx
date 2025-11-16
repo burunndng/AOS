@@ -66,6 +66,7 @@ const nebulaVertexShader = `
 const nebulaFragmentShader = `
   uniform float uTime;
   uniform float uResonance;
+  uniform float uCrystalline;
   varying vec3 vPosition;
   varying vec3 vNormal;
 
@@ -110,6 +111,16 @@ const nebulaFragmentShader = `
     vec3 color1 = vec3(0.6, 0.2, 1.0); // Purple
     vec3 color2 = vec3(0.0, 0.8, 1.0); // Cyan
     vec3 color3 = vec3(0.2, 0.4, 0.8); // Deep blue (resonance peak)
+
+    // Crystalline cavern effect - adds geometric patterns when unlocked
+    if (uCrystalline > 0.5) {
+      vec3 crystalPos = vPosition * 0.05;
+      float crystal = abs(sin(crystalPos.x * 5.0) * sin(crystalPos.y * 5.0) * sin(crystalPos.z * 5.0));
+      intensity = mix(intensity, crystal, uCrystalline * 0.3);
+
+      // Add crystalline color tint
+      color2 = mix(color2, vec3(0.5, 0.9, 1.0), uCrystalline * 0.4);
+    }
 
     // Blend colors based on resonance level
     vec3 baseColor = mix(color1, color2, intensity);
@@ -166,6 +177,19 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const [perfectResonanceAchieved, setPerfectResonanceAchieved] = useState(false);
   const [showResonanceFeedback, setShowResonanceFeedback] = useState(false);
   const resonanceAchievedRef = useRef(false);
+  const [hasCrystallineCavern, setHasCrystallineCavern] = useState(false);
+  const cameraStartPosRef = useRef<THREE.Vector3 | null>(null);
+  const shakeActiveRef = useRef(false);
+  const gravityWellActiveRef = useRef(false);
+  const timeScaleRef = useRef(1.0);
+  const prevParticlePositionsRef = useRef<Float32Array | null>(null);
+  const lastBurstTimeRef = useRef(0);
+
+  // Load crystalline cavern unlock state
+  useEffect(() => {
+    const unlocked = localStorage.getItem('geometricResonanceCavernUnlocked') === 'true';
+    setHasCrystallineCavern(unlocked);
+  }, []);
 
   // Helper: Create sacred geometry shapes with enhanced visuals
   const createGeometricShape = (type: string, color: number): THREE.Group => {
@@ -283,6 +307,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
       uniforms: {
         uTime: { value: 0 },
         uResonance: { value: 0 },
+        uCrystalline: { value: 0 },
       },
       vertexShader: nebulaVertexShader,
       fragmentShader: nebulaFragmentShader,
@@ -324,7 +349,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     // Create base geometry (small tetrahedron)
     const geometry = new THREE.TetrahedronGeometry(0.15, 1);
 
-    // Use enhanced physical material for sacred glow
+    // Use enhanced physical material for sacred glow with additive blending for trails
     const material = new THREE.MeshPhysicalMaterial({
       color: 0xffd700,
       emissive: 0xffaa00,
@@ -334,6 +359,9 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
       clearcoat: 0.8,
       clearcoatRoughness: 0.1,
       wireframe: false,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
 
     // Create instanced mesh with many instances
@@ -369,6 +397,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
       1000
     );
     camera.position.z = 8;
+    cameraStartPosRef.current = camera.position.clone();
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({
@@ -459,25 +488,40 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     let animationId: number;
     const animate = () => {
       animationId = requestAnimationFrame(animate);
-      elapsedTimeRef.current += 0.016;
+
+      // Calculate time scale based on resonance level (time dilation effect)
+      timeScaleRef.current = resonanceLevel > 0.9
+        ? 0.3 + (1 - resonanceLevel) * 7  // Slows to 30% at 98% resonance
+        : 1.0;
+
+      elapsedTimeRef.current += 0.016 * timeScaleRef.current;
 
       // Update shader uniforms
       if (nebulaShaderRef.current) {
         nebulaShaderRef.current.uniforms.uTime.value = elapsedTimeRef.current;
         nebulaShaderRef.current.uniforms.uResonance.value = resonanceLevel;
+        // Crystalline cavern effect (fade in over 3 seconds when unlocked)
+        const targetCrystalline = hasCrystallineCavern ? 1.0 : 0.0;
+        nebulaShaderRef.current.uniforms.uCrystalline.value += (targetCrystalline - nebulaShaderRef.current.uniforms.uCrystalline.value) * 0.02;
       }
 
       if (gameMode !== 'menu' && gameActive) {
-        // Rotate player shape based on keyboard input
+        // Rotate player shape based on keyboard input (with time dilation)
         if (playerShapeRef.current) {
-          playerShapeRef.current.rotation.x += 0.01;
-          playerShapeRef.current.rotation.y += 0.015;
+          playerShapeRef.current.rotation.x += 0.01 * timeScaleRef.current;
+          playerShapeRef.current.rotation.y += 0.015 * timeScaleRef.current;
+
+          // Update player shape color based on resonance
+          updateShapeColors(playerShapeRef.current, resonanceLevel);
         }
 
-        // Oracle AI rotation - adaptive behavior
+        // Oracle AI rotation - adaptive behavior (with time dilation)
         if (oracleShapeRef.current) {
-          oracleShapeRef.current.rotation.x += 0.008 * (1 + resonanceLevel * 0.5);
-          oracleShapeRef.current.rotation.y += 0.012 * (1 + resonanceLevel * 0.5);
+          oracleShapeRef.current.rotation.x += 0.008 * (1 + resonanceLevel * 0.5) * timeScaleRef.current;
+          oracleShapeRef.current.rotation.y += 0.012 * (1 + resonanceLevel * 0.5) * timeScaleRef.current;
+
+          // Update oracle shape color based on resonance
+          updateShapeColors(oracleShapeRef.current, resonanceLevel);
         }
 
         // Update symmetry lines
@@ -489,12 +533,28 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
         // Update particle system
         if (particleSystemRef.current) {
           updateParticles();
+
+          const positions = particleSystemRef.current.geometry.attributes.position.array as Float32Array;
+          const velocities = particleSystemRef.current.geometry.attributes.velocity.array as Float32Array;
+
+          // Store previous positions for trail effects
+          if (!prevParticlePositionsRef.current) {
+            prevParticlePositionsRef.current = new Float32Array(positions.length);
+          }
+          prevParticlePositionsRef.current.set(positions);
+
+          // Apply gravity well effect on perfect resonance (only within 5 seconds of burst for performance)
+          const timeSinceBurst = Date.now() - lastBurstTimeRef.current;
+          if (resonanceLevel > 0.98 && timeSinceBurst < 5000) {
+            applyGravityWell(positions, velocities, resonanceLevel);
+            particleSystemRef.current.geometry.attributes.velocity.needsUpdate = true;
+          }
         }
 
-        // Update dynamic lights
-        goldenLight.intensity = 1.5 + Math.sin(Date.now() * 0.003) * 0.5;
-        purpleLight.intensity = 1.2 + Math.cos(Date.now() * 0.002) * 0.3;
-        cyanLight.intensity = 1.2 + Math.sin(Date.now() * 0.0025) * 0.3;
+        // Update dynamic lights (with time dilation)
+        goldenLight.intensity = 1.5 + Math.sin(Date.now() * 0.003 * timeScaleRef.current) * 0.5;
+        purpleLight.intensity = 1.2 + Math.cos(Date.now() * 0.002 * timeScaleRef.current) * 0.3;
+        cyanLight.intensity = 1.2 + Math.sin(Date.now() * 0.0025 * timeScaleRef.current) * 0.3;
       }
 
       // Handle burst animation with golden ratio spirals
@@ -608,6 +668,76 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     return () => clearInterval(oracleThink);
   }, [gameActive, score, oracleScore]);
 
+
+  // Camera shake effect on resonance
+  const triggerCameraShake = (camera: THREE.PerspectiveCamera, intensity: number = 0.15, duration: number = 400) => {
+    if (shakeActiveRef.current) return;
+    shakeActiveRef.current = true;
+
+    const startPos = cameraStartPosRef.current || camera.position.clone();
+    const startTime = Date.now();
+
+    const shake = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = elapsed / duration;
+
+      if (progress < 1) {
+        const strength = intensity * (1 - progress);
+        camera.position.x = startPos.x + (Math.random() - 0.5) * strength;
+        camera.position.y = startPos.y + (Math.random() - 0.5) * strength;
+        camera.position.z = startPos.z + (Math.random() - 0.5) * strength * 0.5;
+        requestAnimationFrame(shake);
+      } else {
+        camera.position.copy(startPos);
+        shakeActiveRef.current = false;
+      }
+    };
+    shake();
+  };
+
+  // Apply gravity well to particles
+  const applyGravityWell = (positions: Float32Array, velocities: Float32Array, resonance: number) => {
+    const center = new THREE.Vector3(0, 0, 0);
+    const strength = resonance > 0.98 ? 0.02 : 0;
+
+    if (strength === 0) return;
+
+    for (let i = 0; i < positions.length; i += 3) {
+      const pos = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]);
+      const toCenter = center.clone().sub(pos);
+      const distance = toCenter.length();
+
+      if (distance > 0.1) {
+        const force = strength / (distance * distance + 0.1);
+        const gravityForce = toCenter.normalize().multiplyScalar(force);
+
+        // Orbital velocity (perpendicular to direction)
+        const tangent = new THREE.Vector3(-toCenter.y, toCenter.x, 0)
+          .normalize()
+          .multiplyScalar(0.03 * resonance);
+
+        velocities[i] = gravityForce.x + tangent.x;
+        velocities[i + 1] = gravityForce.y + tangent.y;
+        velocities[i + 2] = gravityForce.z + tangent.z;
+      }
+    }
+  };
+
+  // Update shape colors based on resonance
+  const updateShapeColors = (shape: THREE.Group, resonance: number) => {
+    // Hue shifts from purple (0.6) toward gold (0.12) as resonance increases
+    const hue = 0.6 - resonance * 0.48;
+    const saturation = Math.min(1, 0.6 + resonance * 0.4);
+    const lightness = 0.5 + resonance * 0.1;
+
+    shape.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshPhysicalMaterial) {
+        const color = new THREE.Color().setHSL(hue, saturation, lightness);
+        child.material.emissive = color;
+        child.material.emissiveIntensity = 0.4 + resonance * 0.6;
+      }
+    });
+  };
 
   const createParticleSystem = (parentGroup: THREE.Group) => {
     const geometry = new THREE.BufferGeometry();
@@ -740,6 +870,17 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
         setPerfectResonanceAchieved(true);
         setShowResonanceFeedback(true);
 
+        // Trigger camera shake
+        if (cameraRef.current) {
+          triggerCameraShake(cameraRef.current as THREE.PerspectiveCamera, 0.15, 400);
+        }
+
+        // Unlock crystalline cavern on first achievement
+        if (!hasCrystallineCavern) {
+          setHasCrystallineCavern(true);
+          localStorage.setItem('geometricResonanceCavernUnlocked', 'true');
+        }
+
         // Auto-hide feedback after 2.5 seconds
         setTimeout(() => {
           setShowResonanceFeedback(false);
@@ -753,6 +894,9 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   };
 
   const triggerResonanceBurst = () => {
+    // Track burst time for optimized gravity well
+    lastBurstTimeRef.current = Date.now();
+
     // Trigger the spectacular cascading burst animation
     if ((window as any).__triggerBurst) {
       (window as any).__triggerBurst();
