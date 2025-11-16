@@ -183,6 +183,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const gravityWellActiveRef = useRef(false);
   const timeScaleRef = useRef(1.0);
   const prevParticlePositionsRef = useRef<Float32Array | null>(null);
+  const lastBurstTimeRef = useRef(0);
 
   // Load crystalline cavern unlock state
   useEffect(() => {
@@ -348,7 +349,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     // Create base geometry (small tetrahedron)
     const geometry = new THREE.TetrahedronGeometry(0.15, 1);
 
-    // Use enhanced physical material for sacred glow
+    // Use enhanced physical material for sacred glow with additive blending for trails
     const material = new THREE.MeshPhysicalMaterial({
       color: 0xffd700,
       emissive: 0xffaa00,
@@ -358,6 +359,9 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
       clearcoat: 0.8,
       clearcoatRoughness: 0.1,
       wireframe: false,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
 
     // Create instanced mesh with many instances
@@ -530,11 +534,18 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
         if (particleSystemRef.current) {
           updateParticles();
 
-          // Apply gravity well effect on perfect resonance
           const positions = particleSystemRef.current.geometry.attributes.position.array as Float32Array;
           const velocities = particleSystemRef.current.geometry.attributes.velocity.array as Float32Array;
 
-          if (resonanceLevel > 0.98) {
+          // Store previous positions for trail effects
+          if (!prevParticlePositionsRef.current) {
+            prevParticlePositionsRef.current = new Float32Array(positions.length);
+          }
+          prevParticlePositionsRef.current.set(positions);
+
+          // Apply gravity well effect on perfect resonance (only within 5 seconds of burst for performance)
+          const timeSinceBurst = Date.now() - lastBurstTimeRef.current;
+          if (resonanceLevel > 0.98 && timeSinceBurst < 5000) {
             applyGravityWell(positions, velocities, resonanceLevel);
             particleSystemRef.current.geometry.attributes.velocity.needsUpdate = true;
           }
@@ -883,6 +894,9 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   };
 
   const triggerResonanceBurst = () => {
+    // Track burst time for optimized gravity well
+    lastBurstTimeRef.current = Date.now();
+
     // Trigger the spectacular cascading burst animation
     if ((window as any).__triggerBurst) {
       (window as any).__triggerBurst();
