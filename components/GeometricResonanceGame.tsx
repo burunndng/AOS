@@ -1606,16 +1606,18 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
         </div>
       )}
 
-      {/* Game UI Overlay */}
-      <div className="absolute inset-0 flex flex-col justify-between p-8 pointer-events-none">
-        {/* Header */}
-        <div className="flex justify-between items-start">
-          <div className="text-left">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-300 via-pink-300 to-cyan-300 bg-clip-text text-transparent font-mono">
-              Geometric Resonance
-            </h1>
-            <p className="text-purple-300/60 text-sm mt-1 font-mono">Sacred Geometry Game</p>
-          </div>
+      {/* Game UI Overlay - Repositioned to sides */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Top-Left: Title */}
+        <div className="absolute top-8 left-8 z-20">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-300 via-pink-300 to-cyan-300 bg-clip-text text-transparent font-mono">
+            Geometric Resonance
+          </h1>
+          <p className="text-purple-300/60 text-sm mt-1 font-mono">Sacred Geometry Game</p>
+        </div>
+
+        {/* Top-Right: Close button */}
+        <div className="absolute top-8 right-8 z-20">
           <button
             onClick={() => onClose({ resonanceAchieved: perfectResonanceAchieved })}
             className="bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-full p-3 transition-all pointer-events-auto"
@@ -1625,10 +1627,10 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
           </button>
         </div>
 
-        {/* Game Content */}
-        <div className="flex flex-col items-center justify-center">
+        {/* Right-Side: Game Content Panel */}
+        <div className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20">
           {gameMode === 'menu' ? (
-            <div className="text-center space-y-6">
+            <div className="text-center space-y-6 w-96">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold text-purple-200 font-mono">Choose Your Path</h2>
                 <p className="text-purple-300/70 text-sm">Experience the harmony of sacred geometry</p>
@@ -1663,8 +1665,8 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
               </div>
             </div>
           ) : (
-            <div className="space-y-6 text-center">
-              <div className="bg-black/40 border border-purple-500/30 rounded-2xl p-6 backdrop-blur pointer-events-auto">
+            <div className="space-y-4 text-center w-96">
+              <div className="bg-black/40 border border-purple-500/30 rounded-2xl p-6 backdrop-blur pointer-events-auto max-h-[70vh] overflow-y-auto">
                 {gameMode === 'resonance-duel' && (
                   <div className="space-y-4">
                     <h2 className="text-2xl font-bold text-purple-200 font-mono">Resonance Duel</h2>
@@ -1700,7 +1702,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
                 )}
 
                 {gameMode === 'mandala-architect' && (
-                  <div className="space-y-4 max-w-md">
+                  <div className="space-y-4">
                     <h2 className="text-2xl font-bold text-cyan-200 font-mono">Mandala Architect</h2>
 
                     {/* Elements created counter */}
@@ -1721,7 +1723,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
                     </div>
 
                     {/* Shape selection buttons */}
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
                       {mandalaShapeSuggestions.map((shape) => (
                         <button
                           key={shape.type}
@@ -1768,7 +1770,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
 
                 <button
                   onClick={resetGame}
-                  className="mt-6 flex items-center justify-center gap-2 px-6 py-2 bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/30 rounded-lg text-purple-200 text-sm font-mono transition-all pointer-events-auto"
+                  className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-2 bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/30 rounded-lg text-purple-200 text-sm font-mono transition-all pointer-events-auto"
                 >
                   <RotateCw size={16} />
                   Back to Menu
@@ -1777,7 +1779,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
 
               <button
                 onClick={() => setIsSoundEnabled(!isSoundEnabled)}
-                className="pointer-events-auto bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-full p-3 transition-all"
+                className="pointer-events-auto mx-auto bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-full p-3 transition-all"
                 aria-label="Toggle sound"
               >
                 {isSoundEnabled ? (
@@ -1790,8 +1792,8 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
           )}
         </div>
 
-        {/* Footer Instructions */}
-        <div className="text-center text-purple-400/60 text-xs font-mono max-w-md">
+        {/* Bottom-Left: Footer Instructions */}
+        <div className="absolute bottom-8 left-8 text-purple-400/60 text-xs font-mono max-w-md">
           <p>Rotate your shape to align with the Oracle's geometry</p>
           <p className="mt-2">Perfect alignment creates harmonic resonance</p>
         </div>

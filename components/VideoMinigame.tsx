@@ -33,56 +33,52 @@ export default function VideoMinigame({ isOpen, onClose, videoUrl, videoSources,
 
   return (
     <div
-      className="fixed inset-0 bg-black/95 backdrop-blur-md flex justify-center items-center z-50 p-4"
+      className="fixed inset-0 bg-black/95 z-50 overflow-hidden"
       onClick={onClose}
     >
-      <div
-        className="relative w-full max-w-6xl max-h-[90vh] flex flex-col bg-gradient-to-br from-gray-900 via-black to-gray-900 border border-purple-500/30 rounded-2xl overflow-hidden shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          boxShadow: '0 25px 50px -12px rgba(147, 51, 234, 0.5), 0 0 100px rgba(147, 51, 234, 0.3)',
-        }}
+      {/* Full-screen video canvas */}
+      <video
+        ref={videoRef}
+        controls
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-contain"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border-b border-purple-500/30 flex-shrink-0">
-          <h2 className="text-xl font-bold font-mono tracking-tight bg-gradient-to-r from-purple-200 to-violet-200 bg-clip-text text-transparent">
+        {sources.map((source, index) => (
+          <source key={index} src={source.src} type={source.type} />
+        ))}
+        Your browser does not support the video tag.
+      </video>
+
+      {/* UI Overlay - Positioned to sides */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Top-Left: Title */}
+        <div className="absolute top-8 left-8 z-20">
+          <h2 className="text-3xl font-bold font-mono tracking-tight bg-gradient-to-r from-purple-200 to-violet-200 bg-clip-text text-transparent">
             {title}
           </h2>
+        </div>
+
+        {/* Top-Right: Close button */}
+        <div className="absolute top-8 right-8 z-20">
           <button
             onClick={onClose}
-            className="text-purple-300 hover:text-purple-100 p-2 rounded-full hover:bg-purple-800/30 transition-all duration-200"
+            className="text-purple-300 hover:text-purple-100 p-2 rounded-full hover:bg-purple-800/30 bg-purple-900/40 border border-purple-500/30 transition-all duration-200 pointer-events-auto"
             aria-label="Close"
           >
             <X size={24} />
           </button>
         </div>
 
-        {/* Video Container */}
-        <div className="flex-1 flex items-center justify-center bg-black p-4">
-          <video
-            ref={videoRef}
-            controls
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="max-w-full max-h-full rounded-lg shadow-2xl"
-            style={{
-              boxShadow: '0 0 50px rgba(147, 51, 234, 0.5)',
-            }}
-          >
-            {sources.map((source, index) => (
-              <source key={index} src={source.src} type={source.type} />
-            ))}
-            Your browser does not support the video tag.
-          </video>
-        </div>
-
-        {/* Footer hint */}
-        <div className="p-4 bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border-t border-purple-500/30 text-center">
-          <p className="text-purple-400/60 text-sm italic">
-            This experience is coming soon...
-          </p>
+        {/* Bottom-Left: Footer hint */}
+        <div className="absolute bottom-8 left-8 max-w-xs z-20 pointer-events-auto">
+          <div className="bg-black/60 backdrop-blur border border-purple-500/30 rounded-lg p-4">
+            <p className="text-purple-400 text-sm italic font-mono">
+              This experience is coming soon...
+            </p>
+          </div>
         </div>
       </div>
     </div>
