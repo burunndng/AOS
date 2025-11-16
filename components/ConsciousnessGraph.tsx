@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Info, Brain, Layers, GitCompare, Lightbulb, AlertTriangle } from 'lucide-react';
+import { X, Info, Brain, Layers, GitCompare, Lightbulb, AlertTriangle, ChevronDown } from 'lucide-react';
 
 interface ConsciousnessGraphProps {
   onClose: () => void;
@@ -276,103 +276,271 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
   const selectedData = selectedLevel !== null ? CONSCIOUSNESS_DATA[selectedLevel - 1] : null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-gradient-to-br from-black/96 via-slate-950/94 to-black/96 backdrop-blur-xl z-50 overflow-y-auto perspective">
+      <style>{`
+        @keyframes fadeInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes shimmer {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.7;
+          }
+        }
+
+        @keyframes expandBorder {
+          from {
+            box-shadow: 0 0 0 0px currentColor;
+          }
+          to {
+            box-shadow: 0 0 0 2px currentColor;
+          }
+        }
+
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-4px);
+          }
+        }
+
+        .animate-fade-in-down {
+          animation: fadeInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .animate-slide-up {
+          animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .consciousness-card {
+          position: relative;
+          overflow: hidden;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .consciousness-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.1), transparent 50%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .consciousness-card:hover::before {
+          opacity: 1;
+        }
+
+        .consciousness-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(168, 85, 247, 0.4);
+          box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4), 0 0 32px rgba(168, 85, 247, 0.1);
+        }
+
+        .consciousness-card.selected {
+          animation: expandBorder 0.3s ease-out forwards;
+          background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(96, 165, 250, 0.05));
+        }
+
+        .consciousness-card.selected::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          padding: 1px;
+          background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(96, 165, 250, 0.1));
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          pointer-events: none;
+        }
+
+        .level-circle {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .consciousness-card:hover .level-circle {
+          transform: scale(1.08);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .chevron-icon {
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .consciousness-card.selected .chevron-icon {
+          transform: rotate(180deg);
+        }
+
+        .detail-content {
+          animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-backdrop {
+          animation: fadeInDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-toggle {
+          position: relative;
+          overflow: hidden;
+        }
+
+        .btn-toggle::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transform: translateX(-100%);
+          transition: transform 0.5s ease;
+        }
+
+        .btn-toggle:hover::before {
+          transform: translateX(100%);
+        }
+
+        /* Stagger animations */
+        .consciousness-card:nth-child(1) {
+          animation-delay: 0.05s;
+        }
+        .consciousness-card:nth-child(2) {
+          animation-delay: 0.1s;
+        }
+        .consciousness-card:nth-child(3) {
+          animation-delay: 0.15s;
+        }
+        .consciousness-card:nth-child(4) {
+          animation-delay: 0.2s;
+        }
+        .consciousness-card:nth-child(5) {
+          animation-delay: 0.25s;
+        }
+        .consciousness-card:nth-child(6) {
+          animation-delay: 0.3s;
+        }
+        .consciousness-card:nth-child(7) {
+          animation-delay: 0.35s;
+        }
+        .consciousness-card:nth-child(8) {
+          animation-delay: 0.4s;
+        }
+      `}</style>
+
       <div className="min-h-screen p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex justify-between items-start mb-6">
+          {/* Header with Gradient */}
+          <div className="flex justify-between items-start mb-8 animate-fade-in-down">
             <div>
-              <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter mb-2">
-                Interactive Consciousness Graph
+              <h1 className="text-5xl md:text-6xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-br from-violet-200 via-slate-100 to-cyan-200 tracking-tighter mb-3 leading-tight">
+                Consciousness Graph
               </h1>
-              <p className="text-slate-400 text-lg">
-                Comparing Leary's 8 Circuits with Wilber's Integral Theory
-              </p>
+              <p className="text-slate-400 text-lg font-light">Explore Leary's 8 Circuits and Wilber's Developmental Stages</p>
             </div>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-200 transition p-2"
+              className="btn-toggle text-slate-400 hover:text-violet-300 transition-colors p-3 rounded-xl hover:bg-slate-800/50 backdrop-blur-sm"
               aria-label="Close"
             >
-              <X size={28} />
+              <X size={32} />
             </button>
           </div>
 
           {/* Introduction Modal */}
           {showIntro && (
-            <div className="bg-gradient-to-br from-neutral-900/40 to-neutral-900/40 border-2 border-neutral-500/50 rounded-lg p-6 mb-6">
+            <div className="bg-gradient-to-br from-slate-800/40 via-slate-800/30 to-slate-900/40 border border-slate-700/60 rounded-2xl p-6 md:p-8 mb-8 backdrop-blur-sm animate-slide-up">
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Lightbulb size={32} className="text-neutral-400" />
-                  <h2 className="text-2xl font-bold text-slate-100">Two Maps, One Territory</h2>
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-violet-600/20 rounded-xl">
+                    <Lightbulb size={32} className="text-violet-300" />
+                  </div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-slate-100">Two Maps, One Territory</h2>
                 </div>
                 <button
                   onClick={() => setShowIntro(false)}
-                  className="text-slate-400 hover:text-slate-200"
+                  className="text-slate-400 hover:text-slate-200 transition-colors p-2 rounded-lg"
                 >
-                  <X size={20} />
+                  <X size={24} />
                 </button>
               </div>
-              <div className="space-y-4 text-slate-300">
+              <div className="space-y-4 text-slate-300 leading-relaxed">
                 <p>
-                  <strong className="text-neutral-300">Timothy Leary's 8 Circuits</strong> map the different{' '}
+                  <strong className="text-violet-300 text-lg">Timothy Leary's 8 Circuits</strong> map the different{' '}
                   <em>functions</em> of consciousness - from survival to mystical union. Think of these as
                   different territories you can visit.
                 </p>
                 <p>
-                  <strong className="text-neutral-300">Ken Wilber's Integral Stages</strong> map how you{' '}
+                  <strong className="text-violet-300 text-lg">Ken Wilber's Integral Stages</strong> map how you{' '}
                   <em>develop</em> through life - how your capacity to understand, include, and integrate
                   grows over time.
                 </p>
-                <div className="bg-neutral-950/50 border border-neutral-500/30 rounded-lg p-4 mt-4">
-                  <p className="text-neutral-200 font-semibold mb-2">The Key Insight:</p>
-                  <p>
+                <div className="bg-gradient-to-r from-violet-950/40 to-slate-950/40 border border-violet-500/30 rounded-xl p-4 mt-4">
+                  <p className="text-violet-200 font-semibold mb-2">✨ The Key Insight:</p>
+                  <p className="text-slate-300">
                     You can visit advanced territories (Leary's higher circuits) from any level of
                     development (Wilber's stages). But where you're developed determines how you navigate
                     and integrate what you find there.
                   </p>
                 </div>
-                <p className="text-sm text-slate-400 mt-4">
-                  Click any level below to explore in detail, or use the view toggles to focus on one model
-                  at a time.
-                </p>
               </div>
             </div>
           )}
 
           {/* View Mode Toggles */}
-          <div className="flex gap-3 mb-6 flex-wrap">
+          <div className="flex gap-3 mb-8 flex-wrap animate-fade-in-down" style={{ animationDelay: '0.1s' }}>
             <button
               onClick={() => setViewMode('both')}
-              className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+              className={`btn-toggle px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 backdrop-blur-sm border ${
                 viewMode === 'both'
-                  ? 'bg-neutral-600 text-white'
-                  : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-gradient-to-r from-violet-600 to-violet-500 text-white border-violet-400/50 shadow-lg shadow-violet-500/20'
+                  : 'bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100 border-slate-700/50'
               }`}
             >
-              <GitCompare size={18} />
+              <GitCompare size={20} />
               Compare Both
             </button>
             <button
               onClick={() => setViewMode('leary')}
-              className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+              className={`btn-toggle px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 backdrop-blur-sm border ${
                 viewMode === 'leary'
-                  ? 'bg-neutral-600 text-white'
-                  : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-gradient-to-r from-violet-600 to-violet-500 text-white border-violet-400/50 shadow-lg shadow-violet-500/20'
+                  : 'bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100 border-slate-700/50'
               }`}
             >
-              <Brain size={18} />
+              <Brain size={20} />
               Leary Only
             </button>
             <button
               onClick={() => setViewMode('wilber')}
-              className={`px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 ${
+              className={`btn-toggle px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 backdrop-blur-sm border ${
                 viewMode === 'wilber'
-                  ? 'bg-neutral-600 text-white'
-                  : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-gradient-to-r from-violet-600 to-violet-500 text-white border-violet-400/50 shadow-lg shadow-violet-500/20'
+                  : 'bg-slate-700/30 text-slate-300 hover:bg-slate-700/50 hover:text-slate-100 border-slate-700/50'
               }`}
             >
-              <Layers size={18} />
+              <Layers size={20} />
               Wilber Only
             </button>
           </div>
@@ -382,19 +550,24 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
             {CONSCIOUSNESS_DATA.map((level) => (
               <div
                 key={level.number}
-                className={`cursor-pointer transition-all ${
-                  selectedLevel === level.number ? 'ring-2 ring-violet-400' : ''
-                }`}
-                onClick={() => setSelectedLevel(selectedLevel === level.number ? null : level.number)}
+                className="consciousness-card animate-slide-up"
               >
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-neutral-500/50">
-                  <div className="flex items-center gap-4">
-                    {/* Level Number */}
+                <button
+                  onClick={() => setSelectedLevel(selectedLevel === level.number ? null : level.number)}
+                  className="w-full text-left p-5 rounded-2xl border border-slate-700/60 backdrop-blur-sm hover:backdrop-blur-md"
+                  style={{
+                    background: selectedLevel === level.number
+                      ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(96, 165, 250, 0.05))'
+                      : 'linear-gradient(135deg, rgba(51, 65, 85, 0.2), rgba(30, 41, 59, 0.2))'
+                  }}
+                >
+                  <div className="flex items-center gap-5">
+                    {/* Level Circle */}
                     <div
-                      className="text-2xl font-bold w-12 h-12 rounded-full flex items-center justify-center text-white"
+                      className="level-circle text-2xl font-bold w-16 h-16 rounded-2xl flex items-center justify-center text-white font-mono flex-shrink-0"
                       style={{
-                        backgroundColor: level.color,
-                        opacity: viewMode === 'wilber' ? 0.3 : 1
+                        background: `linear-gradient(135deg, ${level.color}, ${level.wilberColor})`,
+                        opacity: viewMode === 'wilber' ? 0.7 : 1
                       }}
                     >
                       {level.number}
@@ -402,8 +575,8 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
 
                     {/* Leary Column */}
                     {(viewMode === 'both' || viewMode === 'leary') && (
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-slate-100 mb-1">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-bold text-slate-100 mb-1 truncate">
                           {level.leary.shortName}
                         </h3>
                         <p className="text-sm text-slate-400 line-clamp-2">
@@ -414,26 +587,23 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
 
                     {/* Divider */}
                     {viewMode === 'both' && (
-                      <div className="w-px h-16 bg-slate-600" />
+                      <div className="w-px h-20 bg-gradient-to-b from-slate-600/40 via-slate-600/20 to-transparent" />
                     )}
 
                     {/* Wilber Column */}
                     {(viewMode === 'both' || viewMode === 'wilber') && (
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-slate-100">
+                          <h3 className="text-lg font-bold text-slate-100 truncate">
                             {level.wilber.name}
                           </h3>
-                          {level.wilber.isState && (
-                            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-0.5 rounded-full">
-                              STATE
-                            </span>
-                          )}
-                          {!level.wilber.isState && (
-                            <span className="text-xs bg-neutral-500/20 text-neutral-300 px-2 py-0.5 rounded-full">
-                              STAGE
-                            </span>
-                          )}
+                          <span className={`text-xs px-2.5 py-1 rounded-full whitespace-nowrap font-medium ${
+                            level.wilber.isState
+                              ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                              : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                          }`}>
+                            {level.wilber.isState ? 'STATE' : 'STAGE'}
+                          </span>
                         </div>
                         <p className="text-sm text-slate-400 line-clamp-2">
                           {level.wilber.description}
@@ -441,185 +611,155 @@ export default function ConsciousnessGraph({ onClose }: ConsciousnessGraphProps)
                       </div>
                     )}
 
-                    {/* Expand Icon */}
-                    <Info size={20} className="text-slate-500" />
+                    {/* Chevron */}
+                    <ChevronDown
+                      size={24}
+                      className="chevron-icon text-slate-500 flex-shrink-0 transition-transform"
+                    />
                   </div>
-                </div>
+                </button>
               </div>
             ))}
           </div>
 
-          {/* Detailed View */}
+          {/* Detailed View Modal */}
           {selectedData && (
-            <div className="bg-slate-900/70 border-2 border-neutral-500/50 rounded-lg p-6 mb-8">
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-3xl font-bold text-slate-100">
-                  Level {selectedData.number} — Deep Dive
-                </h2>
-                <button
-                  onClick={() => setSelectedLevel(null)}
-                  className="text-slate-400 hover:text-slate-200"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Leary Detail */}
-                <div className="space-y-4">
-                  <div
-                    className="border-l-4 pl-4"
-                    style={{ borderColor: selectedData.color }}
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4 modal-backdrop" onClick={() => setSelectedLevel(null)}>
+              <div
+                className="bg-gradient-to-b from-slate-800/95 to-slate-900/95 border border-slate-700/80 rounded-3xl max-h-[90vh] overflow-y-auto w-full max-w-4xl backdrop-blur-xl shadow-2xl"
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="sticky top-0 bg-gradient-to-r from-slate-800/80 to-slate-900/80 border-b border-slate-700/50 px-8 py-6 flex justify-between items-start backdrop-blur-xl z-10">
+                  <h2 className="text-4xl font-bold text-slate-100">
+                    Level {selectedData.number} — Deep Dive
+                  </h2>
+                  <button
+                    onClick={() => setSelectedLevel(null)}
+                    className="text-slate-400 hover:text-slate-200 transition-colors p-2 rounded-xl hover:bg-slate-700/50"
                   >
-                    <h3 className="text-xl font-bold text-slate-100 mb-2">
-                      {selectedData.leary.name}
-                    </h3>
-                    <p className="text-slate-300 mb-3">{selectedData.leary.description}</p>
-
-                    <div className="bg-neutral-900/20 border border-neutral-500/30 rounded p-3 mb-3">
-                      <p className="text-sm text-slate-400 mb-1 font-semibold">When Active:</p>
-                      <p className="text-sm text-slate-300">{selectedData.leary.when_active}</p>
-                    </div>
-
-                    <div className="bg-violet-900/20 border border-violet-500/30 rounded p-3 mb-3">
-                      <p className="text-sm text-violet-300 mb-1 font-semibold">Key Questions:</p>
-                      <p className="text-sm text-violet-200 italic">"{selectedData.leary.quote}"</p>
-                    </div>
-
-                    <div className="bg-slate-800/50 rounded p-3">
-                      <p className="text-sm text-slate-400 mb-1 font-semibold">Leary's Insight:</p>
-                      <p className="text-sm text-slate-300">{selectedData.leary.insight}</p>
-                    </div>
-                  </div>
+                    <X size={28} />
+                  </button>
                 </div>
 
-                {/* Wilber Detail */}
-                <div className="space-y-4">
-                  <div
-                    className="border-l-4 pl-4"
-                    style={{ borderColor: selectedData.wilberColor }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-slate-100">
-                        {selectedData.wilber.name}
-                      </h3>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          selectedData.wilber.isState
-                            ? 'bg-neutral-500/20 text-neutral-300'
-                            : 'bg-neutral-500/20 text-neutral-300'
-                        }`}
+                <div className="detail-content p-8 space-y-8">
+                  {/* Two Column Layout */}
+                  <div className="grid md:grid-cols-2 gap-8">
+                    {/* Leary Detail */}
+                    <div className="space-y-4">
+                      <div
+                        className="border-l-4 pl-5"
+                        style={{ borderColor: selectedData.color }}
                       >
-                        {selectedData.wilber.isState ? 'STATE' : 'STAGE'}
-                      </span>
-                    </div>
-                    <p className="text-slate-300 mb-3">{selectedData.wilber.description}</p>
+                        <h3 className="text-2xl font-bold text-slate-100 mb-3">
+                          {selectedData.leary.name}
+                        </h3>
+                        <p className="text-slate-300 mb-4 leading-relaxed">{selectedData.leary.description}</p>
 
-                    <div className="bg-slate-800/50 rounded p-3 mb-3">
-                      <p className="text-sm text-slate-400 mb-1 font-semibold">Characteristics:</p>
-                      <p className="text-sm text-slate-300">{selectedData.wilber.characteristics}</p>
+                        <div className="bg-neutral-900/50 border border-neutral-500/30 rounded-xl p-4 mb-4">
+                          <p className="text-sm text-slate-400 mb-2 font-semibold">When Active:</p>
+                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.leary.when_active}</p>
+                        </div>
+
+                        <div className="bg-violet-900/20 border border-violet-500/30 rounded-xl p-4 mb-4">
+                          <p className="text-sm text-violet-300 mb-2 font-semibold">Key Questions:</p>
+                          <p className="text-sm text-violet-200 italic">"{selectedData.leary.quote}"</p>
+                        </div>
+
+                        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                          <p className="text-sm text-slate-400 mb-2 font-semibold">Leary's Insight:</p>
+                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.leary.insight}</p>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="bg-slate-800/50 rounded p-3 mb-3">
-                      <p className="text-sm text-slate-400 mb-1 font-semibold">Wilber's Insight:</p>
-                      <p className="text-sm text-slate-300">{selectedData.wilber.insight}</p>
+                    {/* Wilber Detail */}
+                    <div className="space-y-4">
+                      <div
+                        className="border-l-4 pl-5"
+                        style={{ borderColor: selectedData.wilberColor }}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <h3 className="text-2xl font-bold text-slate-100">
+                            {selectedData.wilber.name}
+                          </h3>
+                          <span className={`text-xs px-3 py-1 rounded-full font-medium border ${
+                            selectedData.wilber.isState
+                              ? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+                              : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                          }`}>
+                            {selectedData.wilber.isState ? 'STATE' : 'STAGE'}
+                          </span>
+                        </div>
+                        <p className="text-slate-300 mb-4 leading-relaxed">{selectedData.wilber.description}</p>
+
+                        <div className="bg-slate-800/50 rounded-xl p-4 mb-4 border border-slate-700/50">
+                          <p className="text-sm text-slate-400 mb-2 font-semibold">Characteristics:</p>
+                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.wilber.characteristics}</p>
+                        </div>
+
+                        <div className="bg-slate-800/50 rounded-xl p-4 mb-4 border border-slate-700/50">
+                          <p className="text-sm text-slate-400 mb-2 font-semibold">Wilber's Insight:</p>
+                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.wilber.insight}</p>
+                        </div>
+
+                        {/* Stage Interpretations */}
+                        {selectedData.wilber.stageInterpretations && (
+                          <div className="bg-neutral-900/40 border border-neutral-500/30 rounded-xl p-4">
+                            <p className="text-sm text-neutral-300 mb-3 font-semibold">
+                              How Different Stages Experience This:
+                            </p>
+                            <div className="space-y-2.5">
+                              {Object.entries(selectedData.wilber.stageInterpretations).map(
+                                ([stage, interpretation]) => (
+                                  <div key={stage} className="text-sm">
+                                    <span className="text-neutral-400 font-semibold">{stage}:</span>{' '}
+                                    <span className="text-slate-300">{interpretation}</span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Relationship Section */}
+                  <div className="pt-8 border-t border-slate-700/50">
+                    <h3 className="text-2xl font-bold text-slate-100 mb-6">How They Relate</h3>
+
+                    <div className="grid md:grid-cols-3 gap-6 mb-6">
+                      <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-5">
+                        <p className="text-sm text-emerald-300 mb-3 font-semibold">Similarity</p>
+                        <p className="text-sm text-slate-300 leading-relaxed">{selectedData.relationship.similarity}</p>
+                      </div>
+
+                      <div className="bg-orange-900/20 border border-orange-500/30 rounded-xl p-5">
+                        <p className="text-sm text-orange-300 mb-3 font-semibold">Difference</p>
+                        <p className="text-sm text-slate-300 leading-relaxed">{selectedData.relationship.difference}</p>
+                      </div>
+
+                      <div className="bg-violet-900/20 border border-violet-500/30 rounded-xl p-5">
+                        <p className="text-sm text-violet-300 mb-3 font-semibold">Key Insight</p>
+                        <p className="text-sm text-slate-300 leading-relaxed">{selectedData.relationship.keyInsight}</p>
+                      </div>
                     </div>
 
-                    {/* Stage Interpretations */}
-                    {selectedData.wilber.stageInterpretations && (
-                      <div className="bg-neutral-900/20 border border-neutral-500/30 rounded p-3">
-                        <p className="text-sm text-neutral-300 mb-2 font-semibold">
-                          How Different Stages Experience This:
-                        </p>
-                        <div className="space-y-2">
-                          {Object.entries(selectedData.wilber.stageInterpretations).map(
-                            ([stage, interpretation]) => (
-                              <div key={stage} className="text-sm">
-                                <span className="text-neutral-400 font-semibold">{stage}:</span>{' '}
-                                <span className="text-slate-300">{interpretation}</span>
-                              </div>
-                            )
-                          )}
+                    {selectedData.relationship.warning && (
+                      <div className="bg-red-900/20 border-2 border-red-500/40 rounded-xl p-5 flex items-start gap-4">
+                        <AlertTriangle size={28} className="text-red-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm text-red-300 font-semibold mb-1">Important Warning</p>
+                          <p className="text-sm text-slate-300 leading-relaxed">{selectedData.relationship.warning}</p>
                         </div>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
-
-              {/* Relationship Section */}
-              <div className="mt-6 pt-6 border-t border-slate-700">
-                <h3 className="text-xl font-bold text-slate-100 mb-4">How They Relate</h3>
-
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="bg-green-900/20 border border-green-500/30 rounded p-4">
-                    <p className="text-sm text-green-300 mb-2 font-semibold">Similarity</p>
-                    <p className="text-sm text-slate-300">{selectedData.relationship.similarity}</p>
-                  </div>
-
-                  <div className="bg-orange-900/20 border border-orange-500/30 rounded p-4">
-                    <p className="text-sm text-orange-300 mb-2 font-semibold">Difference</p>
-                    <p className="text-sm text-slate-300">{selectedData.relationship.difference}</p>
-                  </div>
-
-                  <div className="bg-violet-900/20 border border-violet-500/30 rounded p-4">
-                    <p className="text-sm text-violet-300 mb-2 font-semibold">Key Insight</p>
-                    <p className="text-sm text-slate-300">{selectedData.relationship.keyInsight}</p>
-                  </div>
-                </div>
-
-                {selectedData.relationship.warning && (
-                  <div className="mt-4 bg-red-900/20 border-2 border-red-500/40 rounded p-4 flex items-start gap-3">
-                    <AlertTriangle size={24} className="text-red-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm text-red-300 font-semibold mb-1">Important Warning</p>
-                      <p className="text-sm text-slate-300">{selectedData.relationship.warning}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
           )}
-
-          {/* Summary Section */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <h2 className="text-2xl font-bold text-slate-100 mb-4">The Integrated View</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-bold text-slate-100 mb-2 flex items-center gap-2">
-                  <Brain size={20} className="text-violet-400" />
-                  Leary's Contribution
-                </h3>
-                <ul className="space-y-2 text-sm text-slate-300">
-                  <li>✅ Maps distinct territories of consciousness</li>
-                  <li>✅ Shows these can be activated through practices</li>
-                  <li>✅ Emphasizes imprinting - critical periods</li>
-                  <li>✅ Provides practical tools for exploration</li>
-                  <li>⚠️ Limitation: Conflates states and stages</li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-100 mb-2 flex items-center gap-2">
-                  <Layers size={20} className="text-violet-400" />
-                  Wilber's Contribution
-                </h3>
-                <ul className="space-y-2 text-sm text-slate-300">
-                  <li>✅ Distinguishes STATES from STAGES</li>
-                  <li>✅ Maps how stages interpret same state</li>
-                  <li>✅ Shows stage development is sequential</li>
-                  <li>✅ Warns against spiritual bypassing</li>
-                  <li>⚠️ Limitation: Can feel overly complex</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-6 bg-violet-900/20 border border-violet-500/30 rounded p-4">
-              <p className="text-sm text-violet-200 font-semibold mb-2">Best Practice:</p>
-              <p className="text-sm text-slate-300">
-                <strong>Explore states wisely</strong> (Leary) + <strong>Do your developmental work</strong>{' '}
-                (Wilber) = <strong>Genuine Transformation</strong>. Peak experiences + Plateau development = Integration.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
