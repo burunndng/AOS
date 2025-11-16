@@ -226,8 +226,8 @@ export default function MindToolsTab({
         />
         <ToolCard
           icon={<RefreshCw size={28} className="text-cyan-400"/>}
-          title="Adaptive Cycle Mapper"
-          description="Map any challenge or life situation onto a powerful systems-thinking framework to understand where you are, what's next, and how to navigate change."
+          title="Adaptive Cycle Lens"
+          description="Generate a living map of your system across growth, conservation, release, and renewal to reveal the dynamics shaping your next move."
           onStart={() => setActiveWizard('adaptive-cycle')}
         />
         </div>

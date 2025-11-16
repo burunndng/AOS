@@ -32,6 +32,7 @@ interface InsightGenerationInput {
     | 'Memory Reconsolidation'
     | 'Eight Zones'
     | 'Adaptive Cycle Mapper'
+    | 'Adaptive Cycle Lens'
     | 'Somatic Practice'
     | 'Jhana Guide'
     | 'Attachment Assessment'

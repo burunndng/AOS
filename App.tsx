@@ -205,6 +205,7 @@ export default function App() {
   const [memoryReconHistory, setMemoryReconHistory] = useLocalStorage<MemoryReconsolidationSession[]>('memoryReconHistory', []);
   const [eightZonesHistory, setEightZonesHistory] = useLocalStorage<EightZonesSession[]>('eightZonesHistory', []);
   const [adaptiveCycleHistory, setAdaptiveCycleHistory] = useLocalStorage<AdaptiveCycleSession[]>('adaptiveCycleHistory', []);
+  const [_draftAdaptiveCycle, setDraftAdaptiveCycle] = useLocalStorage<AdaptiveCycleSession | null>('draftAdaptiveCycle', null);
   const [partsLibrary, setPartsLibrary] = useLocalStorage<IFSPart[]>('partsLibrary', []);
   const [somaticPracticeHistory, setSomaticPracticeHistory] = useLocalStorage<SomaticPracticeSession[]>('somaticPracticeHistory', []);
   const [historyAttachment, setHistoryAttachment] = useLocalStorage<AttachmentAssessmentSession[]>('historyAttachment', []);
@@ -1088,87 +1089,104 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
 
   const handleSaveAdaptiveCycleSession = async (session: AdaptiveCycleSession) => {
     console.log('🔄 [Adaptive Cycle] handleSaveAdaptiveCycleSession called with session:', session);
-    setAdaptiveCycleHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+
+    const formatPoints = (points: string[]) =>
+      points.length > 0 ? points.map((point) => `- ${point}`).join('\n') : '- No insights captured yet';
+
+    const reportSections: string[] = [
+      `# Adaptive Cycle Map: ${session.systemToAnalyze}`,
+      '',
+      '## 1. Growth / Exploitation (r)',
+      formatPoints(session.cycleMap.r.points),
+      '',
+      '## 2. Conservation (K)',
+      formatPoints(session.cycleMap.K.points),
+      '',
+      '## 3. Release / Collapse (Ω)',
+      formatPoints(session.cycleMap.Ω.points),
+      '',
+      '## 4. Reorganization (α)',
+      formatPoints(session.cycleMap.α.points),
+    ];
+
+    if (session.userHint) {
+      reportSections.push(
+        '',
+        '## Self-Assessment Signals',
+        `- Potential for innovation: ${session.userHint.potential}/10`,
+        `- Structural connectedness: ${session.userHint.connectedness}/10`,
+        `- Resilience & redundancy: ${session.userHint.resilience}/10`
+      );
+    }
+
+    const sessionReport = reportSections.join('\n');
+
+    const sessionWithReport: AdaptiveCycleSession = {
+      ...session,
+      fullReport: sessionReport,
+    };
+
+    setAdaptiveCycleHistory((prev) => [...prev.filter((s) => s.id !== sessionWithReport.id), sessionWithReport]);
+    setDraftAdaptiveCycle(null);
     console.log('✅ [Adaptive Cycle] Session saved to history');
 
-    // Build rich report showing the full four-quadrant landscape
-    const selfAssessmentSection = session.userHint
-      ? `\n## Self-Assessment Scores (1-10 scale)
-- **Potential for growth/change:** ${session.userHint.potential}/10
-- **Connectedness/rigidity of structure:** ${session.userHint.connectedness}/10
-- **Resilience/capacity to absorb disruption:** ${session.userHint.resilience}/10\n`
-      : '';
+    const deriveDominantQuadrant = (): { key: keyof AdaptiveCycleSession['cycleMap']; label: string } | null => {
+      if (!session.userHint) return null;
 
-    const sessionReport = `# Adaptive Cycle Landscape: ${session.systemToAnalyze}
-${selfAssessmentSection}
-## Four-Quadrant Map
+      const { potential, connectedness, resilience } = session.userHint;
+      const quadrantScores: Array<{ key: keyof AdaptiveCycleSession['cycleMap']; label: string; score: number }> = [
+        { key: 'r', label: 'Growth / Exploitation (r)', score: potential },
+        { key: 'K', label: 'Conservation (K)', score: connectedness },
+        { key: 'Ω', label: 'Release / Collapse (Ω)', score: 10 - resilience },
+        { key: 'α', label: 'Reorganization (α)', score: resilience },
+      ];
 
-### ${session.cycleMap.r.title}
-${session.cycleMap.r.points.map(p => `- ${p}`).join('\n')}
+      return quadrantScores.reduce(
+        (highest, current) => (current.score > highest.score ? current : highest),
+        quadrantScores[0]
+      );
+    };
 
-### ${session.cycleMap.K.title}
-${session.cycleMap.K.points.map(p => `- ${p}`).join('\n')}
+    const buildSessionSummary = (): string => {
+      const dominant = deriveDominantQuadrant();
+      if (dominant) {
+        const keyPoint = session.cycleMap[dominant.key].points[0];
+        const emphasis = keyPoint ? `, spotlighting "${keyPoint}"` : '';
+        return `The map for "${session.systemToAnalyze}" shows the most energy in the ${dominant.label}${emphasis}.`;
+      }
 
-### ${session.cycleMap.Ω.title}
-${session.cycleMap.Ω.points.map(p => `- ${p}`).join('\n')}
+      const fallbackPoint =
+        session.cycleMap.r.points[0] ||
+        session.cycleMap.K.points[0] ||
+        session.cycleMap.Ω.points[0] ||
+        session.cycleMap.α.points[0];
 
-### ${session.cycleMap.α.title}
-${session.cycleMap.α.points.map(p => `- ${p}`).join('\n')}
+      return fallbackPoint
+        ? `Mapped "${session.systemToAnalyze}" across all Adaptive Cycle phases, noting "${fallbackPoint}".`
+        : `Mapped "${session.systemToAnalyze}" across the full Adaptive Cycle to surface system dynamics.`;
+    };
 
-## Systems Thinking Context
-The Adaptive Cycle is a framework from resilience theory that describes how all complex systems move through cycles of growth, stability, release, and renewal. This landscape map shows how all four phases are present in "${session.systemToAnalyze}", providing a holistic view of the current dynamics and possibilities.`;
+    const sessionSummary = buildSessionSummary();
 
-    // Generate integrated insight for Journal
+    navigateBack();
+
     try {
-      // Determine the most energized quadrant for the pattern
-      const getHighlightedQuadrant = (): string => {
-        if (!session.userHint) return 'all phases of the Adaptive Cycle';
-
-        const { potential, connectedness } = session.userHint;
-        const isPotentialHigh = potential > 5.5;
-        const isConnectednessHigh = connectedness > 5.5;
-
-        if (isPotentialHigh && !isConnectednessHigh) return 'Growth/Exploitation (r) phase';
-        if (isPotentialHigh && isConnectednessHigh) return 'Conservation (K) phase';
-        if (!isPotentialHigh && isConnectednessHigh) return 'Release/Collapse (Ω) phase';
-        return 'Reorganization (α) phase';
-      };
-
-      const detectedPattern = `Mapped ${session.systemToAnalyze} across the Adaptive Cycle, with emphasis on ${getHighlightedQuadrant()}`;
-
-      // Create a concise summary for the insight
-      const allPoints = [
-        ...session.cycleMap.r.points.slice(0, 1),
-        ...session.cycleMap.K.points.slice(0, 1),
-        ...session.cycleMap.Ω.points.slice(0, 1),
-        ...session.cycleMap.α.points.slice(0, 1),
-      ].join(' | ');
-
-      console.log('🤖 [Adaptive Cycle] Calling generateInsightFromSession with:', {
-        wizardType: 'Adaptive Cycle Mapper',
-        sessionId: session.id,
-        sessionName: session.systemToAnalyze
-      });
-
       const insight = await generateInsightFromSession({
-        wizardType: 'Adaptive Cycle Mapper',
-        sessionId: session.id,
-        sessionName: session.systemToAnalyze,
-        sessionReport: sessionReport,
-        sessionSummary: allPoints.substring(0, 200),
-        userId: userId,
+        wizardType: 'Adaptive Cycle Lens',
+        sessionId: sessionWithReport.id,
+        sessionName: sessionWithReport.systemToAnalyze,
+        sessionReport,
+        sessionSummary,
+        userId,
         availablePractices: Object.values(corePractices).flat(),
         userProfile,
       });
 
       console.log('✅ [Adaptive Cycle] Insight generated:', insight);
-      setIntegratedInsights(prev => [...prev, insight]);
+      setIntegratedInsights((prev) => [...prev, insight]);
       console.log('✅ [Adaptive Cycle] Insight saved to state. Total insights:', integratedInsights.length + 1);
     } catch (error) {
       console.error('❌ [Adaptive Cycle] Failed to generate insight:', error);
-    } finally {
-      // Navigate back after insight generation is complete
-      navigateBack();
     }
   };
 
