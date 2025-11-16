@@ -17,7 +17,7 @@ interface PracticeInfoModalProps {
 export default function PracticeInfoModal({ practice, onClose, onAdd, isInStack, onExplainClick, onPersonalizeClick }: PracticeInfoModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Scroll page to top and lock body scroll when modal opens
+  // Lock body scroll when modal opens
   useEffect(() => {
     if (practice) {
       // Save original overflow state
@@ -26,16 +26,9 @@ export default function PracticeInfoModal({ practice, onClose, onAdd, isInStack,
       // Lock background scroll
       document.body.style.overflow = 'hidden';
 
-      // Scroll page to top IMMEDIATELY (not smooth)
-      window.scrollTo(0, 0);
-
-      // Also scroll modal content to top
+      // Scroll modal content to top
       if (contentRef.current) {
-        setTimeout(() => {
-          if (contentRef.current) {
-            contentRef.current.scrollTop = 0;
-          }
-        }, 0);
+        contentRef.current.scrollTop = 0;
       }
 
       // Close sidebar on mobile when modal opens
