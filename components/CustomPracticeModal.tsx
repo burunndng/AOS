@@ -189,9 +189,9 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
 
   const renderModuleSelection = () => (
     <>
-      <h3 className="text-lg font-semibold text-slate-100 mb-4">Which module are you creating for?</h3>
+      <h3 className="text-base sm:text-lg font-semibold text-slate-100 mb-4">Which module are you creating for?</h3>
       <p className="text-sm text-slate-400 mb-6">Each module has a different approach:</p>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {Object.entries(modules).map(([key, info]) => (
           <button key={key} onClick={() => handleModuleSelect(key as ModuleKey)}
             className={`p-4 rounded-lg border-2 transition text-left ${module === key ? `${info.borderColor} border-opacity-100` : `bg-slate-700/50 border-slate-600 hover:border-slate-500`}`}>
@@ -257,11 +257,11 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
     const renderStructureStep = () => {
     const ringColor = module === 'shadow' ? 'focus:ring-amber-500' : module === 'spirit' ? 'focus:ring-neutral-500' : 'focus:ring-neutral-500';
     return <>
-        <h3 className="text-lg font-semibold text-slate-100 mb-4">{module === 'shadow' ? 'Shadow Work Structure' : module === 'spirit' ? 'Contemplative Practice Structure' : 'Practice Structure'}</h3>
+        <h3 className="text-base sm:text-lg font-semibold text-slate-100 mb-4">{module === 'shadow' ? 'Shadow Work Structure' : module === 'spirit' ? 'Contemplative Practice Structure' : 'Practice Structure'}</h3>
         <div className="space-y-4">
             <div><label className="block text-sm font-medium text-slate-300 mb-2">Practice Name</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} className={`w-full text-sm bg-slate-700/50 border border-slate-600 rounded-md p-2 focus:outline-none focus:ring-2 ${ringColor}`} /></div>
             <div><label className="block text-sm font-medium text-slate-300 mb-2">1-line Description</label><input type="text" value={description} onChange={(e) => setDescription(e.target.value)} className={`w-full text-sm bg-slate-700/50 border border-slate-600 rounded-md p-2 focus:outline-none focus:ring-2 ${ringColor}`} /></div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                 <div><label className="block text-sm font-medium text-slate-300 mb-2">{module==='shadow'||module==='spirit' ? 'Duration (mins)' : 'Time/Week (hrs)'}</label><input type="number" value={module==='shadow'||module==='spirit' ? Math.round(timePerWeek * 60) : timePerWeek} onChange={(e) => setTimePerWeek(module==='shadow'||module==='spirit' ? parseInt(e.target.value)/60 : parseFloat(e.target.value))} step="0.25" min="0" className={`w-full text-sm bg-slate-700/50 border border-slate-600 rounded-md p-2 focus:outline-none focus:ring-2 ${ringColor}`} /></div>
                 <div><label className="block text-sm font-medium text-slate-300 mb-2">Difficulty</label><select value={difficulty} onChange={(e) => setDifficulty(e.target.value as any)} className={`w-full text-sm bg-slate-700/50 border border-slate-600 rounded-md p-2 focus:outline-none focus:ring-2 ${ringColor}`}><option>Low</option><option>Medium</option><option>High</option></select></div>
                 <div><label className="block text-sm font-medium text-slate-300 mb-2">Module</label><select value={module} onChange={(e) => setModule(e.target.value as ModuleKey)} className={`w-full text-sm bg-slate-700/50 border border-slate-600 rounded-md p-2 focus:outline-none focus:ring-2 ${ringColor}`}>{Object.entries(modules).map(([key, info]) => <option key={key} value={key}>{info.name}</option>)}</select></div>
@@ -288,14 +288,14 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
 
   const renderReviewStep = () => (
     <>
-      <h3 className="text-lg font-semibold text-slate-100 mb-4">Review Your Practice</h3>
-      <div className="space-y-3 text-sm max-h-96 overflow-y-auto bg-slate-900/40 p-4 rounded-md border border-slate-700">
-        <div><p className="text-slate-400">Name</p><p className="text-slate-100 font-mono">{name}</p></div>
-        <div><p className="text-slate-400">Description</p><p className="text-slate-100">{description}</p></div>
-        <div><p className="text-slate-400">{module === 'shadow' ? 'Pattern Origin & Framework' : module === 'spirit' ? 'Tradition & Teachings' : 'Why'}</p><p className="text-slate-100">{why}</p></div>
-        <div><p className="text-slate-400">{module === 'shadow' ? 'Frameworks' : module === 'spirit' ? 'Key Teachings' : 'Evidence'}</p><p className="text-slate-100">{evidence}</p></div>
-        <div><p className="text-slate-400">{module === 'shadow' ? 'Inquiry Questions' : module === 'spirit' ? 'Stages / Movements' : 'How to Do It'}</p><ol className="text-slate-100 list-decimal list-inside space-y-1">{howSteps.map((step, i) => <li key={i}>{step}</li>)}</ol></div>
-        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-700"><div className="text-xs"><p className="text-slate-400">ROI</p><p className="text-slate-100 font-mono">{roi}</p></div><div className="text-xs"><p className="text-slate-400">Difficulty</p><p className="text-slate-100 font-mono">{difficulty}</p></div><div className="text-xs"><p className="text-slate-400">{module === 'shadow' || module === 'spirit' ? 'Duration' : 'Time/Week'}</p><p className="text-slate-100 font-mono">{module === 'shadow' || module === 'spirit' ? `${Math.round(timePerWeek * 60)} min` : `${timePerWeek}h`}</p></div><div className="text-xs"><p className="text-slate-400">Module</p><p className="text-slate-100 font-mono capitalize">{module}</p></div></div>
+      <h3 className="text-base sm:text-lg font-semibold text-slate-100 mb-4">Review Your Practice</h3>
+      <div className="space-y-3 text-sm max-h-96 overflow-y-auto bg-slate-900/40 p-3 sm:p-4 rounded-md border border-slate-700">
+        <div><p className="text-slate-400 text-xs sm:text-sm">Name</p><p className="text-slate-100 font-mono text-sm">{name}</p></div>
+        <div><p className="text-slate-400 text-xs sm:text-sm">Description</p><p className="text-slate-100 text-sm">{description}</p></div>
+        <div><p className="text-slate-400 text-xs sm:text-sm">{module === 'shadow' ? 'Pattern Origin & Framework' : module === 'spirit' ? 'Tradition & Teachings' : 'Why'}</p><p className="text-slate-100 text-sm">{why}</p></div>
+        <div><p className="text-slate-400 text-xs sm:text-sm">{module === 'shadow' ? 'Frameworks' : module === 'spirit' ? 'Key Teachings' : 'Evidence'}</p><p className="text-slate-100 text-sm">{evidence}</p></div>
+        <div><p className="text-slate-400 text-xs sm:text-sm">{module === 'shadow' ? 'Inquiry Questions' : module === 'spirit' ? 'Stages / Movements' : 'How to Do It'}</p><ol className="text-slate-100 list-decimal list-inside space-y-1 text-sm">{howSteps.map((step, i) => <li key={i}>{step}</li>)}</ol></div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-3 border-t border-slate-700"><div className="text-xs"><p className="text-slate-400">ROI</p><p className="text-slate-100 font-mono text-xs">{roi}</p></div><div className="text-xs"><p className="text-slate-400">Difficulty</p><p className="text-slate-100 font-mono text-xs">{difficulty}</p></div><div className="text-xs"><p className="text-slate-400">{module === 'shadow' || module === 'spirit' ? 'Duration' : 'Time/Week'}</p><p className="text-slate-100 font-mono text-xs">{module === 'shadow' || module === 'spirit' ? `${Math.round(timePerWeek * 60)} min` : `${timePerWeek}h`}</p></div><div className="text-xs"><p className="text-slate-400">Module</p><p className="text-slate-100 font-mono capitalize text-xs">{module}</p></div></div>
         <div><p className="text-slate-400">{module === 'shadow' ? 'Psychological Systems' : module === 'spirit' ? 'Consciousness Aspects' : 'Affects Systems'}</p><div className="flex flex-wrap gap-1 mt-1">{affectsSystem.map((sys, i) => <span key={i} className="bg-slate-700 text-slate-200 text-xs px-2 py-1 rounded">{sys}</span>)}</div></div>
         {refinementNotes && <div><p className="text-slate-400">Refinement Notes</p><p className="text-slate-100 text-xs whitespace-pre-wrap">{refinementNotes}</p></div>}
       </div>
@@ -333,14 +333,14 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
-      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-        <header className="p-4 border-b border-slate-700"><div className="flex justify-between items-start mb-3"><div><h2 className="text-2xl font-bold text-slate-50">Practice Builder</h2><p className="text-xs text-slate-400 mt-1">{getStepLabel()}</p></div><button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={24}/></button></div><div className="w-full bg-slate-700 h-1 rounded-full overflow-hidden"><div className="bg-neutral-500 h-full transition-all" style={{ width: `${((currentStepIndex + 1) / 6) * 100}%` }}/></div></header>
-        <main className="p-6 flex-grow overflow-y-auto">{error && <p className="text-red-400 text-sm mb-4 bg-red-900/30 p-2 rounded-md">{error}</p>}{renderStep()}</main>
-        <footer className="p-4 border-t border-slate-700 flex justify-between items-center">
-          <button onClick={onClose} className="text-sm text-slate-400 hover:text-white transition">Close</button>
-          <div className="flex gap-3">
-            {step !== 'MODULE' && <button onClick={handleGoBack} className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-md font-medium flex items-center gap-2"><ArrowLeft size={16}/> Back</button>}
-            {step !== 'MODULE' && <button onClick={handleNext} disabled={isLoading || (step === 'GOAL' && !goal.trim()) || (step === 'RESEARCH' && (!why.trim() || !evidence.trim())) || (step === 'STRUCTURE' && (!name.trim() || !description.trim() || howSteps.length === 0 || howSteps.some(s => !s.trim())))} className={`${step === 'REVIEW' ? 'bg-green-600 hover:bg-green-700' : 'btn-luminous'} disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md font-medium flex items-center gap-2`}>{step === 'REVIEW' ? <><Save size={16}/> Save Practice</> : <>Next <ArrowRight size={16}/></>}</button>}
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[70vh] sm:max-h-[80vh] md:max-h-[90vh]">
+        <header className="p-3 sm:p-4 border-b border-slate-700"><div className="flex justify-between items-start mb-3 gap-2"><div className="min-w-0 flex-1"><h2 className="text-xl sm:text-2xl font-bold text-slate-50 break-words">Practice Builder</h2><p className="text-xs text-slate-400 mt-1">{getStepLabel()}</p></div><button onClick={onClose} className="text-slate-500 hover:text-slate-300 p-1.5 flex-shrink-0 rounded hover:bg-slate-700/50 transition"><X size={20}/></button></div><div className="w-full bg-slate-700 h-1 rounded-full overflow-hidden"><div className="bg-neutral-500 h-full transition-all" style={{ width: `${((currentStepIndex + 1) / 6) * 100}%` }}/></div></header>
+        <main className="p-4 sm:p-6 flex-grow overflow-y-auto">{error && <p className="text-red-400 text-sm mb-4 bg-red-900/30 p-2 rounded-md">{error}</p>}{renderStep()}</main>
+        <footer className="p-3 sm:p-4 border-t border-slate-700 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+          <button onClick={onClose} className="text-sm text-slate-400 hover:text-white transition order-2 sm:order-1">Close</button>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 order-1 sm:order-2">
+            {step !== 'MODULE' && <button onClick={handleGoBack} className="bg-slate-700 hover:bg-slate-600 text-white px-3 sm:px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 text-sm sm:text-base"><ArrowLeft size={16}/> <span className="hidden sm:inline">Back</span></button>}
+            {step !== 'MODULE' && <button onClick={handleNext} disabled={isLoading || (step === 'GOAL' && !goal.trim()) || (step === 'RESEARCH' && (!why.trim() || !evidence.trim())) || (step === 'STRUCTURE' && (!name.trim() || !description.trim() || howSteps.length === 0 || howSteps.some(s => !s.trim())))} className={`${step === 'REVIEW' ? 'bg-green-600 hover:bg-green-700' : 'btn-luminous'} disabled:opacity-50 disabled:cursor-not-allowed text-white px-3 sm:px-4 py-2 rounded-md font-medium flex items-center justify-center gap-2 flex-1 sm:flex-none text-sm sm:text-base`}>{step === 'REVIEW' ? <><Save size={16}/> <span className="hidden sm:inline">Save Practice</span><span className="sm:hidden">Save</span></> : <><span className="hidden sm:inline">Next</span><span className="sm:hidden">→</span> <ArrowRight size={16}/></>}</button>}
           </div>
         </footer>
       </div>

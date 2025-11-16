@@ -55,10 +55,10 @@ export default function BrowseTab({ practiceStack, addToStack, onExplainClick, o
   }, {} as typeof practices);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <header>
-        <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter">Browse Practices</h1>
-        <p className="text-slate-400 mt-2">Explore the core practices of the Integral Life Practice system. Click on any practice to learn more and add it to your stack.</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold font-mono text-slate-100 tracking-tighter">Browse Practices</h1>
+        <p className="text-sm sm:text-base text-slate-400 mt-2">Explore the core practices of the Integral Life Practice system. Click on any practice to learn more and add it to your stack.</p>
         <div className="mt-6 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
           <input
@@ -79,7 +79,7 @@ export default function BrowseTab({ practiceStack, addToStack, onExplainClick, o
         )}
         {(Object.entries(filteredPractices) as [ModuleKey, Practice[]][]).map(([moduleKey, modulePractices]) => (
           <div key={moduleKey}>
-            <h2 className={`text-3xl font-bold tracking-tight mb-4 ${modules[moduleKey].textColor}`}>
+            <h2 className={`text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-4 ${modules[moduleKey].textColor}`}>
               {modules[moduleKey].name}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
