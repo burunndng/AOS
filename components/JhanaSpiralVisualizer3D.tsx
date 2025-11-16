@@ -8,17 +8,18 @@ interface JhanaSpiralVisualizer3DProps {
   onSelectJhana: (jhana: JhanaLevel) => void;
 }
 
+// Elegant metallic colors - desaturated, sophisticated
 const JHANA_COLORS: Record<JhanaLevel, number> = {
-  'Access Concentration': 0xa78bfa,
-  'Momentary Concentration': 0xc4b5fd,
-  '1st Jhana': 0xf87171,
-  '2nd Jhana': 0xfb923c,
-  '3rd Jhana': 0xfbbf24,
-  '4th Jhana': 0x10b981,
-  '5th Jhana': 0x14b8a6,
-  '6th Jhana': 0x06b6d4,
-  '7th Jhana': 0x3b82f6,
-  '8th Jhana': 0x8b5cf6,
+  'Access Concentration': 0x9d8fc7,    // Muted purple
+  'Momentary Concentration': 0xb5a8d9, // Soft lavender
+  '1st Jhana': 0xd4a5a5,               // Muted rose
+  '2nd Jhana': 0xe0b8a0,               // Soft copper
+  '3rd Jhana': 0xe8d4a0,               // Warm gold
+  '4th Jhana': 0xa8d4b8,               // Muted jade
+  '5th Jhana': 0xa0d4d0,               // Soft teal
+  '6th Jhana': 0xa8c8e1,               // Cool silver-blue
+  '7th Jhana': 0xb8c8e1,               // Muted periwinkle
+  '8th Jhana': 0xb8a8d9,               // Elegant mauve
 };
 
 const JHANA_DESCRIPTIONS: Record<JhanaLevel, string> = {
@@ -89,37 +90,54 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Scene setup
+    // Scene setup with dark, sophisticated background
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0f172a);
+    scene.background = new THREE.Color(0x0a0e27);
+    scene.fog = new THREE.Fog(0x0a0e27, 100, 200);
     sceneRef.current = scene;
 
-    // Camera setup
+    // Camera setup - positioned to view entire spiral
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.position.set(15, 8, 15);
-    camera.lookAt(0, 0, 0);
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    camera.position.set(0, 10, 25);
+    camera.lookAt(0, 10, 0);
     cameraRef.current = camera;
 
-    // Renderer setup
+    // Renderer setup with high quality
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // Elegant multi-source lighting
+    // Soft ambient light
+    const ambientLight = new THREE.AmbientLight(0xc9b9e8, 0.5);
     scene.add(ambientLight);
 
-    const pointLight = new THREE.PointLight(0xffffff, 0.8);
-    pointLight.position.set(20, 20, 20);
-    pointLight.castShadow = true;
-    pointLight.shadow.mapSize.width = 2048;
-    pointLight.shadow.mapSize.height = 2048;
-    scene.add(pointLight);
+    // Key light - warm glow from above
+    const keyLight = new THREE.DirectionalLight(0xe8d4b8, 0.6);
+    keyLight.position.set(30, 40, 30);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.camera.far = 200;
+    scene.add(keyLight);
+
+    // Fill light - cool accent light
+    const fillLight = new THREE.DirectionalLight(0x8ab8e1, 0.3);
+    fillLight.position.set(-20, 20, -30);
+    scene.add(fillLight);
+
+    // Rim light - subtle highlight
+    const rimLight = new THREE.PointLight(0xa8c8e1, 0.2);
+    rimLight.position.set(0, 30, 0);
+    scene.add(rimLight);
 
     // Create spiral group
     const spiralGroup = new THREE.Group();
@@ -130,17 +148,21 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     const spiralCurve = createSpiralCurve();
     const spiralTubeGeometry = new THREE.TubeGeometry(
       spiralCurve,
-      200,
-      0.3,
-      8,
+      240,
+      0.35,
+      10,
       false
     );
+
+    // Elegant metallic material for the spiral
     const spiralMaterial = new THREE.MeshStandardMaterial({
-      color: 0x6b4ce1,
-      emissive: 0x4c3aa0,
-      metalness: 0.6,
-      roughness: 0.4,
+      color: 0x8b8b9f,           // Sophisticated gunmetal
+      emissive: 0x3a3a4a,        // Subtle emission
+      metalness: 0.8,             // Highly metallic
+      roughness: 0.25,            // Smooth, polished
+      envMapIntensity: 1.2,
     });
+
     const spiralMesh = new THREE.Mesh(spiralTubeGeometry, spiralMaterial);
     spiralMesh.castShadow = true;
     spiralMesh.receiveShadow = true;
@@ -151,14 +173,15 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       const t = i / (jhanasInOrder.length - 1);
       const position = createSpiralCurve().getPointAt(t);
 
-      // Create sphere for jhana point
-      const geometry = new THREE.IcosahedronGeometry(0.8, 4);
+      // Create sphere for jhana point - elegant metallic
+      const geometry = new THREE.IcosahedronGeometry(0.7, 5);
       const material = new THREE.MeshStandardMaterial({
         color: JHANA_COLORS[jhana],
         emissive: JHANA_COLORS[jhana],
-        emissiveIntensity: 0.5,
-        metalness: 0.7,
-        roughness: 0.2,
+        emissiveIntensity: 0.3,
+        metalness: 0.9,            // Highly metallic
+        roughness: 0.15,           // Very smooth, polished
+        envMapIntensity: 1.5,
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.copy(position);
@@ -166,16 +189,16 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       mesh.receiveShadow = true;
       spiralGroup.add(mesh);
 
-      // Add glow effect with larger sphere
-      const glowGeometry = new THREE.IcosahedronGeometry(1.2, 4);
-      const glowMaterial = new THREE.MeshBasicMaterial({
+      // Add subtle aura effect with larger sphere
+      const auraGeometry = new THREE.IcosahedronGeometry(1.0, 4);
+      const auraMaterial = new THREE.MeshBasicMaterial({
         color: JHANA_COLORS[jhana],
         transparent: true,
-        opacity: 0.2,
+        opacity: 0.15,
       });
-      const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
-      glowMesh.position.copy(position);
-      spiralGroup.add(glowMesh);
+      const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
+      auraMesh.position.copy(position);
+      spiralGroup.add(auraMesh);
 
       jhanaPointsRef.current.push({
         jhana,
@@ -205,10 +228,11 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
 
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMaterial = new THREE.PointsMaterial({
-      color: 0x22d3ee,
-      size: 0.15,
+      color: 0xa8c8e1,    // Elegant cool silver-blue
+      size: 0.1,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.4,
+      sizeAttenuation: true,
     });
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     spiralGroup.add(particles);
@@ -235,8 +259,7 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
         const selectedPoint = jhanaPointsRef.current.find((p) => p.mesh === clickedMesh);
         if (selectedPoint) {
           onSelectJhana(selectedPoint.jhana);
-          // Animate camera to jhana point
-          animateCameraToPoint(selectedPoint.position);
+          // Camera continues smooth orbiting - no interruption
         }
       }
     };
@@ -249,8 +272,15 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       animationIdRef.current = requestAnimationFrame(animate);
       animationTime += 0.002;
 
-      // Rotate spiral
-      spiralGroup.rotation.y += 0.0005;
+      // Orbit camera around spiral - smooth, continuous rotation
+      const orbitRadius = 25;
+      const orbitHeight = 10;
+      const orbitSpeed = 0.0003;
+
+      camera.position.x = Math.cos(animationTime * orbitSpeed) * orbitRadius;
+      camera.position.y = orbitHeight;
+      camera.position.z = Math.sin(animationTime * orbitSpeed) * orbitRadius;
+      camera.lookAt(0, orbitHeight, 0);
 
       // Update particles
       if (particlesRef.current) {
@@ -319,49 +349,12 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     };
   }, [selectedJhana, onSelectJhana]);
 
-  // Helper function to animate camera to clicked point
-  function animateCameraToPoint(targetPosition: THREE.Vector3) {
-    if (!cameraRef.current) return;
-
-    const startPos = cameraRef.current.position.clone();
-    const endPos = new THREE.Vector3(
-      targetPosition.x + 8,
-      targetPosition.y + 5,
-      targetPosition.z + 8
-    );
-
-    let progress = 0;
-    const duration = 1000;
-    const startTime = Date.now();
-
-    const animateCamera = () => {
-      progress = (Date.now() - startTime) / duration;
-      if (progress >= 1) {
-        cameraRef.current?.position.copy(endPos);
-        cameraRef.current?.lookAt(targetPosition);
-        return;
-      }
-
-      const easeProgress = easeInOutCubic(progress);
-      cameraRef.current?.position.lerpVectors(startPos, endPos, easeProgress);
-      cameraRef.current?.lookAt(targetPosition);
-
-      requestAnimationFrame(animateCamera);
-    };
-
-    animateCamera();
-  }
-
-  function easeInOutCubic(t: number): number {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  }
-
   return (
     <div className="w-full space-y-6">
       {/* Title */}
       <div className="text-center space-y-2">
         <h3 className="text-3xl font-bold text-slate-100">The Jhana Spiral</h3>
-        <p className="text-sm text-slate-400">Click on any point to explore that jhana state and navigate the 3D spiral</p>
+        <p className="text-sm text-slate-400">Click on any point to explore that jhana state. The spiral continuously orbits for a mesmerizing view of all eight absorption states.</p>
       </div>
 
       {/* 3D Canvas Container */}
