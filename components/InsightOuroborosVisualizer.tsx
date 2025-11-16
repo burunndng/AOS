@@ -50,35 +50,46 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
   const isOrbitingStageRef = useRef(false);
   const orbitingStageRef = useRef<number | null>(null);
 
-  // Helper function to create asymmetric narrative arc curve
+  // Helper function to create serpent biting its tail (ouroboros)
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
-    const numPoints = 200;
+    const numPoints = 300;
+
     for (let i = 0; i <= numPoints; i++) {
       const t = i / numPoints;
-      const angle = t * Math.PI * 2;
-      const radius = 10;
-      const x = Math.cos(angle) * radius;
-      const z = Math.sin(angle) * radius;
+      const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
+
+      // Create a coiling spiral that loops back on itself (serpent biting tail)
+      // The snake coils around itself with increasing complexity
+      const coils = 2.5; // Number of complete loops
+      const angle = t * Math.PI * 2 * coils;
+
+      // Spiral outward and back inward - serpent curves
+      const spiralRadius = 10 * Math.sin(t * Math.PI); // Expands then contracts
+      const x = Math.cos(angle) * spiralRadius;
+      const z = Math.sin(angle) * spiralRadius;
 
       // Asymmetric narrative arc: sharp descent into Dark Night, gradual ascent to High Equanimity
-      const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
       let y = 0;
 
       if (stageIndex >= 4 && stageIndex < 10) {
-        // Dark Night (stages 5-10): steep, sharp descent - uses squared sine for steeper drop
+        // Dark Night (stages 5-10): steep, sharp descent
         const darkNightProgress = (stageIndex - 4) / 6;
         const descent = Math.sin(darkNightProgress * Math.PI);
-        y = -Math.pow(descent, 1.5) * 3; // Steeper descent than simple sine
+        y = -Math.pow(descent, 1.5) * 4; // Deeper descent
       } else if (stageIndex >= 10 && stageIndex < 16) {
-        // High Equanimity (stages 11-16): gradual, gentle ascent - uses square root for softer curve
+        // High Equanimity (stages 11-16): gradual, gentle ascent
         const equanimityProgress = (stageIndex - 10) / 6;
         const ascent = Math.sin(equanimityProgress * Math.PI);
-        y = Math.pow(ascent, 0.8) * 2.5; // More gradual, smoother ascent
+        y = Math.pow(ascent, 0.8) * 3; // Higher ascent
       }
 
-      points.push(new THREE.Vector3(x, y, z));
+      // Add subtle wave to make it more serpent-like
+      const waveAmount = Math.sin(t * Math.PI * 4) * 0.5;
+
+      points.push(new THREE.Vector3(x, y + waveAmount, z));
     }
+
     return new THREE.CatmullRomCurve3(points);
   }
 
@@ -152,20 +163,20 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     // Create ouroboros path curve (used for both tube geometry and particles)
     const ouroborosPath = createOuroborosPath();
 
-    // Create ouroboros using TubeGeometry following the narrative arc path
+    // Create ouroboros using TubeGeometry following the serpent's path
     const tubeGeometry = new THREE.TubeGeometry(
       ouroborosPath,
-      200,  // segments along path
-      0.5,  // tube radius
-      16,   // segments around circumference
+      250,  // more segments for smoother curves
+      0.7,  // thicker tube radius for more prominent serpent
+      20,   // more segments around circumference for smoother look
       true  // closed
     );
     const tubeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x8b8b9f,
-      emissive: 0x3a3a4a,
-      metalness: 0.8,
-      roughness: 0.25,
-      envMapIntensity: 1.2,
+      color: 0x4a6b6b,        // Dark teal-green like serpent scales
+      emissive: 0x2a3a3a,     // Subtle green glow
+      metalness: 0.7,         // Slightly metallic for scale effect
+      roughness: 0.3,         // A bit more texture for scale appearance
+      envMapIntensity: 1.4,
     });
     const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
     tubeMesh.castShadow = true;
@@ -173,28 +184,11 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     ouroborosGroup.add(tubeMesh);
     tubeMeshRef.current = tubeMesh;
 
-    // Create stage nodes around the circle with asymmetric narrative arc
+    // Create stage nodes positioned along the serpent's body
     INSIGHT_OUROBOROS_STAGES.forEach((stage, index) => {
-      const angle = (index / INSIGHT_OUROBOROS_STAGES.length) * Math.PI * 2;
-      const radius = 10;
-      const x = Math.cos(angle) * radius;
-      const z = Math.sin(angle) * radius;
-
-      // Asymmetric narrative arc: sharp descent, gradual ascent
-      let y = 0;
-      if (index >= 4 && index < 10) {
-        // Dark Night (stages 5-10): steep descent
-        const darkNightProgress = (index - 4) / 6;
-        const descent = Math.sin(darkNightProgress * Math.PI);
-        y = -Math.pow(descent, 1.5) * 3;
-      } else if (index >= 10 && index < 16) {
-        // High Equanimity (stages 11-16): gradual ascent
-        const equanimityProgress = (index - 10) / 6;
-        const ascent = Math.sin(equanimityProgress * Math.PI);
-        y = Math.pow(ascent, 0.8) * 2.5;
-      }
-
-      const position = new THREE.Vector3(x, y, z);
+      // Position nodes along the ouroborosPath at equal intervals
+      const t = index / (INSIGHT_OUROBOROS_STAGES.length - 1);
+      const position = ouroborosPath.getPointAt(t);
 
       // Stage sphere
       const phaseColor = PHASE_COLORS[stage.phase] || 0x888888; // Default gray if phase not found
