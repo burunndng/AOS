@@ -456,7 +456,7 @@ export default function App() {
         integratedInsights,
         completedToday
       );
-      const guidance = await getIntelligentGuidance(context);
+      const guidance = await getIntelligentGuidance(context, userProfile);
       setIntelligentGuidance(guidance);
     } catch (e) {
       setGuidanceError(e instanceof Error ? e.message : "Failed to generate intelligent guidance.");
@@ -547,7 +547,7 @@ export default function App() {
             [...integratedInsights, insight], // Include new insight
             completedToday
           );
-          const guidance = await getIntelligentGuidance(context);
+          const guidance = await getIntelligentGuidance(context, userProfile);
           setIntelligentGuidance(guidance);
           console.log('[Wizard Integration] Intelligence Hub refreshed after insight generation');
         } catch (err) {

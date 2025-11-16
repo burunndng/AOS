@@ -6,7 +6,7 @@
 import type { IntelligenceContext, IntelligentGuidance, CachedGuidance, AllPractice } from '../types';
 import { practices as allPractices } from '../constants';
 import { summarizeWizardSessionsForAI } from '../utils/sessionSummarizer';
-import { hashContext } from '../utils/contextAggregator';
+import { hashContext, type UserProfile } from '../utils/contextAggregator';
 import { generateOpenRouterResponse, buildMessagesWithSystem } from './openRouterService';
 
 const CACHE_KEY = 'intelligentGuidanceCache';
@@ -16,7 +16,8 @@ const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
  * Get intelligent guidance with caching
  */
 export async function getIntelligentGuidance(
-  context: IntelligenceContext
+  context: IntelligenceContext,
+  userProfile?: UserProfile
 ): Promise<IntelligentGuidance> {
   // Check cache first
   const cached = getCachedGuidance(context);
@@ -27,7 +28,7 @@ export async function getIntelligentGuidance(
 
   // Generate new guidance
   console.log('[IntelligenceHub] Generating new guidance with Grok-4-Fast');
-  const guidance = await generateGuidance(context);
+  const guidance = await generateGuidance(context, userProfile);
 
   // Cache the result
   cacheGuidance(context, guidance);
@@ -38,9 +39,9 @@ export async function getIntelligentGuidance(
 /**
  * Generate guidance using Grok-4-Fast
  */
-async function generateGuidance(context: IntelligenceContext): Promise<IntelligentGuidance> {
+async function generateGuidance(context: IntelligenceContext, userProfile?: UserProfile): Promise<IntelligentGuidance> {
   const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(context);
+  const userPrompt = buildUserPrompt(context, userProfile);
 
   try {
     // Build messages array with system prompt
@@ -225,6 +226,32 @@ Route to **Insight Practice Map** if: Advanced meditation practitioner tracking 
 - Consider readiness (don't overload, don't under-challenge)
 - Suggest removing practices if stack is overwhelming or misaligned
 
+## EMOTIONAL TONE & MOOD-AWARE GUIDANCE
+
+When user profile includes mood/sentiment data, adapt recommendations based on emotional state:
+
+**If mood is declining or score < -0.3:**
+- Prioritize gentle, restorative practices that build capacity without adding pressure
+- Recommend grounding, embodiment, and self-compassion practices
+- Avoid high-intensity or challenging practices that might deplete resources
+- Focus on supportive practices that help process or transform difficult emotions
+- Consider their mood keywords - avoid practices that might trigger those emotions
+
+**If mood is improving or score > 0.3:**
+- Can suggest momentum-building practices that leverage current positive energy
+- Recommend practices that sustain momentum and deepen engagement
+- Growth-oriented or expansion practices are appropriate
+- Can suggest more challenging developmental work
+
+**If mood is stable or neutral:**
+- Balanced approach - mix of supportive and growth practices
+- Follow standard developmental recommendations
+
+**General emotional guidance:**
+- Always acknowledge the user's emotional context in your recommendations
+- Explain how recommended practices respect their current mood state
+- If suggesting a practice that might be emotionally challenging, explain why it's worth it and how to approach gently
+
 ## SEQUENCING & INTEGRATION REQUIREMENTS
 
 For each recommended practice, include ALL of these fields:
@@ -254,7 +281,7 @@ If any is missing, revise.`;
 /**
  * Build user-specific prompt from context
  */
-function buildUserPrompt(context: IntelligenceContext): string {
+function buildUserPrompt(context: IntelligenceContext, userProfile?: UserProfile): string {
   const parts: string[] = [];
 
   // Current practice stack
@@ -320,6 +347,35 @@ function buildUserPrompt(context: IntelligenceContext): string {
     parts.push(`Completed ${completedCount} of ${totalCount} practices today.`);
   }
   parts.push('');
+
+  // User Profile Context (if available)
+  if (userProfile) {
+    parts.push('## User Profile & Personalization Context');
+    parts.push(`- Experience Level: ${userProfile.experienceLevel}`);
+    parts.push(`- Practice Compliance: ${(userProfile.practiceComplianceRate * 100).toFixed(0)}%`);
+    parts.push(`- Preferred Modalities: Mind (${(userProfile.preferredModalities.mind * 100).toFixed(0)}%), Body (${(userProfile.preferredModalities.body * 100).toFixed(0)}%), Spirit (${(userProfile.preferredModalities.spirit * 100).toFixed(0)}%), Shadow (${(userProfile.preferredModalities.shadow * 100).toFixed(0)}%)`);
+    parts.push(`- Preferred Intensity: ${userProfile.preferredIntensity}`);
+    parts.push(`- Average Energy Level: ${userProfile.energyResponseToPractice.averageEnergyLevel}/10`);
+
+    if (userProfile.recurringPatterns.length > 0) {
+      parts.push(`- Recurring Patterns: ${userProfile.recurringPatterns.join(', ')}`);
+    }
+    if (userProfile.commonBlockers.length > 0) {
+      parts.push(`- Common Blockers: ${userProfile.commonBlockers.join(', ')}`);
+    }
+
+    // Mood & Emotional Context
+    if (userProfile.sentimentSummary) {
+      parts.push('');
+      parts.push('### Mood & Emotional Context');
+      parts.push(`- Current Mood Score: ${userProfile.sentimentSummary.averageMoodScore.toFixed(2)} (scale: -1.0 very negative to 1.0 very positive)`);
+      parts.push(`- Mood Trend: ${userProfile.sentimentSummary.moodTrend}`);
+      if (userProfile.sentimentSummary.recentMoodKeywords.length > 0) {
+        parts.push(`- Recent Mood Keywords: ${userProfile.sentimentSummary.recentMoodKeywords.join(', ')}`);
+      }
+    }
+    parts.push('');
+  }
 
   // Request
   parts.push('---');
