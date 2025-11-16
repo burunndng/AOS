@@ -26,7 +26,18 @@ export default function InsightPracticeMapWizard({ onClose }: Props) {
   const [session, setSession] = useState<InsightPracticeMapSession>(() => {
     const saved = localStorage.getItem('insightPracticeMapSession');
     if (saved) {
-      return JSON.parse(saved);
+      try {
+        const parsed = JSON.parse(saved);
+        // Ensure required arrays exist and are arrays
+        return {
+          ...parsed,
+          stageHistory: Array.isArray(parsed.stageHistory) ? parsed.stageHistory : [],
+          chatHistory: Array.isArray(parsed.chatHistory) ? parsed.chatHistory : []
+        };
+      } catch (error) {
+        console.error('Failed to parse session from localStorage:', error);
+        // Fall back to default session if parsing fails
+      }
     }
     return {
       id: Date.now().toString(),
