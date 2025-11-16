@@ -57,8 +57,11 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
   const isCameraFocusingRef = useRef(false);
   const cameraFocusTargetRef = useRef(new THREE.Vector3());
   const controlsRef = useRef<OrbitControls | null>(null);
+  const particleDataRef = useRef<{ t: number; speed: number }[]>([]);
+  const isOrbitingStageRef = useRef(false);
+  const orbitingStageRef = useRef<number | null>(null);
 
-  // Helper function to create ouroboros path curve (torus-like path with narrative arc)
+  // Helper function to create asymmetric narrative arc curve
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
     const numPoints = 200;
@@ -69,18 +72,20 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
 
-      // Narrative arc: descent into Dark Night (stages 5-10), ascent to High Equanimity (stages 11-16)
-      // Stage indices: 0-3 (Pre-Vipassana), 4-9 (Dark Night), 10-15 (High Equanimity)
+      // Asymmetric narrative arc: sharp descent into Dark Night, gradual ascent to High Equanimity
       const stageIndex = t * INSIGHT_STAGES.length;
       let y = 0;
+
       if (stageIndex >= 4 && stageIndex < 10) {
-        // Dark Night descent: smooth valley
+        // Dark Night (stages 5-10): steep, sharp descent - uses squared sine for steeper drop
         const darkNightProgress = (stageIndex - 4) / 6;
-        y = -Math.sin(darkNightProgress * Math.PI) * 2.5;
+        const descent = Math.sin(darkNightProgress * Math.PI);
+        y = -Math.pow(descent, 1.5) * 3; // Steeper descent than simple sine
       } else if (stageIndex >= 10 && stageIndex < 16) {
-        // High Equanimity ascent: smooth peak
+        // High Equanimity (stages 11-16): gradual, gentle ascent - uses square root for softer curve
         const equanimityProgress = (stageIndex - 10) / 6;
-        y = Math.sin(equanimityProgress * Math.PI) * 2.5;
+        const ascent = Math.sin(equanimityProgress * Math.PI);
+        y = Math.pow(ascent, 0.8) * 2.5; // More gradual, smoother ascent
       }
 
       points.push(new THREE.Vector3(x, y, z));
@@ -171,23 +176,25 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
     ouroborosGroup.add(tubeMesh);
     tubeMeshRef.current = tubeMesh;
 
-    // Create stage nodes around the circle with narrative arc
+    // Create stage nodes around the circle with asymmetric narrative arc
     INSIGHT_STAGES.forEach((stage, index) => {
       const angle = (index / INSIGHT_STAGES.length) * Math.PI * 2;
       const radius = 10;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
 
-      // Apply narrative arc: descent into Dark Night, ascent to High Equanimity
+      // Asymmetric narrative arc: sharp descent, gradual ascent
       let y = 0;
       if (index >= 4 && index < 10) {
-        // Dark Night (stages 5-10): descent into valley
+        // Dark Night (stages 5-10): steep descent
         const darkNightProgress = (index - 4) / 6;
-        y = -Math.sin(darkNightProgress * Math.PI) * 2.5;
+        const descent = Math.sin(darkNightProgress * Math.PI);
+        y = -Math.pow(descent, 1.5) * 3;
       } else if (index >= 10 && index < 16) {
-        // High Equanimity (stages 11-16): ascent to peak
+        // High Equanimity (stages 11-16): gradual ascent
         const equanimityProgress = (index - 10) / 6;
-        y = Math.sin(equanimityProgress * Math.PI) * 2.5;
+        const ascent = Math.sin(equanimityProgress * Math.PI);
+        y = Math.pow(ascent, 0.8) * 2.5;
       }
 
       const position = new THREE.Vector3(x, y, z);
@@ -248,45 +255,56 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       });
     });
 
-    // Create particle system for dynamic flow along ouroboros
+    // Create particle system for dynamic flow along ouroboros with phase-aware behavior
     const particleCount = 800;
     const particleGeometry = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
-    const particleVelocities = new Float32Array(particleCount * 3);
+    const particleData: { t: number; speed: number }[] = [];
 
     for (let i = 0; i < particleCount; i++) {
       const t = Math.random();
       const pos = ouroborosPath.getPointAt(t);
-      const tangent = ouroborosPath.getTangentAt(t).normalize();
-      const speed = 0.04 + Math.random() * 0.04;
 
-      // Position particles near the path with slight randomness
-      particlePositions[i * 3] = pos.x + (Math.random() - 0.5) * 1.5;
-      particlePositions[i * 3 + 1] = pos.y + (Math.random() - 0.5) * 1.5;
-      particlePositions[i * 3 + 2] = pos.z + (Math.random() - 0.5) * 1.5;
+      // Phase-aware speed: Dark Night (t: 0.25-0.625) flows faster/turbulent, High Equanimity (t: 0.625-1.0) flows slower/smooth
+      const stageIndex = t * INSIGHT_STAGES.length;
+      let speed = 0;
+      if (stageIndex >= 4 && stageIndex < 10) {
+        // Dark Night: faster, turbulent flow (0.008-0.012)
+        speed = 0.008 + Math.random() * 0.004;
+      } else if (stageIndex >= 10) {
+        // High Equanimity: slower, smooth flow (0.003-0.005)
+        speed = 0.003 + Math.random() * 0.002;
+      } else {
+        // Pre-Vipassana: neutral flow (0.005-0.007)
+        speed = 0.005 + Math.random() * 0.002;
+      }
 
-      // Velocity aligned with ouroboros path tangent
-      particleVelocities[i * 3] = tangent.x * speed;
-      particleVelocities[i * 3 + 1] = tangent.y * speed;
-      particleVelocities[i * 3 + 2] = tangent.z * speed;
+      // Position particles exactly on the path
+      particlePositions[i * 3] = pos.x;
+      particlePositions[i * 3 + 1] = pos.y;
+      particlePositions[i * 3 + 2] = pos.z;
+
+      // Store particle data for animation
+      particleData.push({ t, speed });
     }
 
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMaterial = new THREE.PointsMaterial({
       color: 0xa8c8e1,
-      size: 0.08,
+      size: 0.12,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.5,
       sizeAttenuation: true,
+      blending: THREE.AdditiveBlending, // Additive blending for glow effect
     });
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     ouroborosGroup.add(particles);
     particlesRef.current = particles;
 
-    // Store velocities for animation
-    (particles as any).userData.velocities = particleVelocities;
+    // Store particle data for animation
+    particleDataRef.current = particleData;
 
-    // Mouse click handler - triggers camera focus transition
+    // Mouse click handler - stage selection or return to overview
     const onMouseClick = (event: MouseEvent) => {
       if (!containerRef.current) return;
 
@@ -303,15 +321,29 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
         const clickedMesh = intersects[0].object;
         const selectedPoint = stagePointsRef.current.find((p) => p.mesh === clickedMesh);
         if (selectedPoint) {
-          onSelectStage(selectedPoint.number);
+          // If already focusing this stage, return to overview
+          if (isOrbitingStageRef.current && orbitingStageRef.current === selectedPoint.number) {
+            isOrbitingStageRef.current = false;
+            orbitingStageRef.current = null;
+            // Camera will revert to OrbitControls which handles free exploration
+          } else {
+            // Focus on the selected stage
+            onSelectStage(selectedPoint.number);
 
-          // Calculate focus target: positioned to view the stage from a good angle
-          const targetPos = selectedPoint.position.clone();
-          targetPos.y += 2.5;
-          targetPos.z += 4;
-          cameraFocusTargetRef.current.copy(targetPos);
-          isCameraFocusingRef.current = true;
+            // Calculate focus target: positioned to view the stage from a good angle
+            // Position camera outside the circle, slightly above the stage
+            const outwardDir = selectedPoint.position.clone().normalize();
+            const targetPos = outwardDir.multiplyScalar(18).add(new THREE.Vector3(0, 3, 0));
+            cameraFocusTargetRef.current.copy(targetPos);
+            isCameraFocusingRef.current = true;
+            isOrbitingStageRef.current = false;
+            orbitingStageRef.current = selectedPoint.number;
+          }
         }
+      } else {
+        // Click on background: return to overview
+        isOrbitingStageRef.current = false;
+        orbitingStageRef.current = null;
       }
     };
 
@@ -329,7 +361,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
         controlsRef.current.update();
       }
 
-      // Smooth focus transition when clicking a stage (overrides user input momentarily)
+      // Smooth focus transition and orbit behavior when clicking a stage
       if (isCameraFocusingRef.current) {
         const currentPos = camera.position;
         const targetPos = cameraFocusTargetRef.current;
@@ -343,58 +375,47 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
           camera.lookAt(selectedPoint.position);
         }
 
-        // Resume user control when close enough
+        // Enter orbit mode when close enough to target
         if (currentPos.distanceTo(targetPos) < 0.2) {
           isCameraFocusingRef.current = false;
+          isOrbitingStageRef.current = true;
+        }
+      } else if (isOrbitingStageRef.current && orbitingStageRef.current !== null) {
+        // Gentle slow orbit around the selected stage during focus mode
+        const selectedPoint = stagePointsRef.current.find(p => p.number === orbitingStageRef.current);
+        if (selectedPoint) {
+          const orbitCenter = selectedPoint.position;
+          const currentPos = camera.position;
+          const toCenter = orbitCenter.clone().sub(currentPos).normalize();
+          const right = new THREE.Vector3(0, 1, 0).cross(toCenter).normalize();
+          const orbitAxis = new THREE.Vector3(0, 1, 0);
+
+          // Slow orbit around the stage (0.01 radians per frame ≈ 5 degrees per second)
+          const orbitSpeed = 0.01;
+          const radius = currentPos.distanceTo(orbitCenter);
+
+          // Apply rotation to camera position
+          const offset = currentPos.clone().sub(orbitCenter);
+          offset.applyAxisAngle(orbitAxis, orbitSpeed);
+          camera.position.copy(orbitCenter.clone().add(offset));
+          camera.lookAt(orbitCenter);
         }
       }
 
-      // --- PARTICLE SYSTEM: Dynamic flow along ouroboros ---
-      if (particlesRef.current) {
+      // --- PARTICLE SYSTEM: Phase-aware dynamic flow along ouroboros ---
+      if (particlesRef.current && particleDataRef.current.length > 0) {
         const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
-        const velocities = (particlesRef.current.userData as any).velocities as Float32Array;
-
+        const particleData = particleDataRef.current;
         const ouroborosPath = createOuroborosPath();
 
-        for (let i = 0; i < particleCount; i++) {
-          // Update position based on velocity
-          positions[i * 3] += velocities[i * 3] * 0.5;
-          positions[i * 3 + 1] += velocities[i * 3 + 1] * 0.5;
-          positions[i * 3 + 2] += velocities[i * 3 + 2] * 0.5;
+        for (let i = 0; i < particleData.length; i++) {
+          // Move particle along curve based on its phase-aware speed
+          particleData[i].t = (particleData[i].t + particleData[i].speed) % 1.0;
+          const pos = ouroborosPath.getPointAt(particleData[i].t);
 
-          // Smooth wrap-around: find closest point on path and reset if too far
-          let closestT = 0;
-          let minDist = Infinity;
-
-          // Sample 20 points along the path to find closest
-          for (let j = 0; j < 20; j++) {
-            const sampleT = j / 20;
-            const samplePos = ouroborosPath.getPointAt(sampleT);
-            const dx = positions[i * 3] - samplePos.x;
-            const dy = positions[i * 3 + 1] - samplePos.y;
-            const dz = positions[i * 3 + 2] - samplePos.z;
-            const dist = dx * dx + dy * dy + dz * dz;
-            if (dist < minDist) {
-              minDist = dist;
-              closestT = sampleT;
-            }
-          }
-
-          // If particle drifts too far (>8 units), reset it to path
-          if (Math.sqrt(minDist) > 8) {
-            const resetT = (closestT + 0.05) % 1.0;
-            const resetPos = ouroborosPath.getPointAt(resetT);
-            const resetTangent = ouroborosPath.getTangentAt(resetT).normalize();
-            const resetSpeed = 0.04 + Math.random() * 0.04;
-
-            positions[i * 3] = resetPos.x + (Math.random() - 0.5) * 1.5;
-            positions[i * 3 + 1] = resetPos.y + (Math.random() - 0.5) * 1.5;
-            positions[i * 3 + 2] = resetPos.z + (Math.random() - 0.5) * 1.5;
-
-            velocities[i * 3] = resetTangent.x * resetSpeed;
-            velocities[i * 3 + 1] = resetTangent.y * resetSpeed;
-            velocities[i * 3 + 2] = resetTangent.z * resetSpeed;
-          }
+          positions[i * 3] = pos.x;
+          positions[i * 3 + 1] = pos.y;
+          positions[i * 3 + 2] = pos.z;
         }
         particlesRef.current.geometry.attributes.position.needsUpdate = true;
       }
