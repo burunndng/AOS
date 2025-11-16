@@ -616,10 +616,45 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
           updateShapeColors(playerShapeRef.current, resonanceLevel);
         }
 
-        // Oracle AI rotation - adaptive behavior (with time dilation) - DRAMATIC SPEED INCREASE
-        if (oracleShapeRef.current) {
-          oracleShapeRef.current.rotation.x += 0.035 * (1 + resonanceLevel * 0.5) * timeScaleRef.current; // ~4x increase
-          oracleShapeRef.current.rotation.y += 0.052 * (1 + resonanceLevel * 0.5) * timeScaleRef.current; // ~4x increase
+        // Oracle AI rotation - adaptive behavior based on player proximity (true duel)
+        if (oracleShapeRef.current && playerShapeRef.current) {
+          // Calculate angular distance between player and oracle (Y axis is primary resonance axis)
+          const playerYaw = playerShapeRef.current.rotation.y;
+          const oracleYaw = oracleShapeRef.current.rotation.y;
+          const angleDiff = playerYaw - oracleYaw;
+
+          // Normalize angle difference to [-PI, PI] range
+          let normalizedDiff = angleDiff;
+          while (normalizedDiff > Math.PI) normalizedDiff -= Math.PI * 2;
+          while (normalizedDiff < -Math.PI) normalizedDiff += Math.PI * 2;
+
+          const angularDistance = Math.abs(normalizedDiff);
+
+          // Define AI behavior parameters
+          const baseSpeedY = 0.052; // Oracle's natural Y-axis rotation speed
+          const baseSpeedX = 0.035; // Oracle's natural X-axis rotation speed
+          const resonanceThreshold = 0.5; // Start adapting when within 0.5 radians (~28.6°)
+
+          // AI evasion logic: Oracle tries to avoid player alignment (competitive mode)
+          // When player gets close, oracle increases speed to stay away
+          let adaptiveSpeedMultiplier = 1.0;
+
+          if (angularDistance < resonanceThreshold) {
+            // Player is getting close to resonance - Oracle accelerates to escape
+            // Scale: full speed at threshold, 1.8x speed at 0 distance
+            const proximityRatio = 1.0 - (angularDistance / resonanceThreshold);
+            adaptiveSpeedMultiplier = 1.0 + proximityRatio * 0.8; // 1.0x to 1.8x
+
+            // Oracle also tries to move AWAY from player direction
+            const evasionDirection = normalizedDiff > 0 ? 1 : -1;
+            oracleShapeRef.current.rotation.y += baseSpeedY * evasionDirection * adaptiveSpeedMultiplier * (1 + resonanceLevel * 0.5) * timeScaleRef.current;
+          } else {
+            // Normal mode - oracle rotates steadily
+            oracleShapeRef.current.rotation.y += baseSpeedY * (1 + resonanceLevel * 0.5) * timeScaleRef.current;
+          }
+
+          // X rotation is independent - continues normally
+          oracleShapeRef.current.rotation.x += baseSpeedX * (1 + resonanceLevel * 0.5) * timeScaleRef.current;
 
           // Update oracle shape color based on resonance
           updateShapeColors(oracleShapeRef.current, resonanceLevel);
