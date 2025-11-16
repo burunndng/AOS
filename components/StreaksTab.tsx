@@ -86,35 +86,113 @@ const calculateStreaks = (dates: string[]): { current: number, longest: number }
   return { current: currentStreak, longest: longestStreak };
 };
 
+const MilestoneBadge = ({ days }: { days: number }) => {
+  let icon = '';
+  let color = 'bg-slate-700 text-slate-300';
+  let label = '';
+
+  if (days >= 100) {
+    icon = '🏆';
+    color = 'bg-yellow-600/40 border border-yellow-500/50 text-yellow-300';
+    label = 'Legendary';
+  } else if (days >= 30) {
+    icon = '⭐';
+    color = 'bg-purple-600/40 border border-purple-500/50 text-purple-300';
+    label = 'Master';
+  } else if (days >= 7) {
+    icon = '🔥';
+    color = 'bg-orange-600/40 border border-orange-500/50 text-orange-300';
+    label = 'Committed';
+  }
+
+  if (!label) return null;
+
+  return (
+    <div className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${color}`}>
+      <span>{icon}</span>
+      <span>{label}</span>
+    </div>
+  );
+};
+
 export default function StreaksTab({ practiceStack, completionHistory, findModuleKey }: StreaksTabProps) {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-bold font-mono text-slate-100 tracking-tighter">Practice Streaks</h1>
-        <p className="text-slate-400 mt-2">Consistency is key. Here's a look at your current and longest streaks for each practice.</p>
+        <h1 className="text-4xl font-bold font-mono text-slate-100 tracking-tighter">Practice Streaks</h1>
+        <p className="text-slate-400 mt-2">Consistency is key. Build streaks, unlock achievements, and celebrate your commitment.</p>
       </header>
 
       {practiceStack.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {practiceStack.map(practice => {
             const streaks = calculateStreaks(completionHistory[practice.id] || []);
             const moduleInfo = modules[findModuleKey(practice.id)];
+
+            // Visual scaling based on streak length
+            const currentScale = Math.min(1.2, 1 + (streaks.current * 0.02));
+            const longestScale = Math.min(1.2, 1 + (streaks.longest * 0.02));
+
+            // Color gradient based on streak progress
+            const getCurrentColor = () => {
+              if (streaks.current >= 30) return 'text-yellow-300';
+              if (streaks.current >= 7) return 'text-orange-400';
+              if (streaks.current > 0) return 'text-green-400';
+              return 'text-slate-400';
+            };
+
+            const getLongestColor = () => {
+              if (streaks.longest >= 100) return 'text-yellow-300';
+              if (streaks.longest >= 30) return 'text-orange-400';
+              if (streaks.longest >= 7) return 'text-green-400';
+              return 'text-slate-400';
+            };
+
             return (
-              <div key={practice.id} className={`bg-slate-800/50 border-l-4 ${moduleInfo.borderColor} rounded-r-lg p-4 flex items-center justify-between`}>
-                <div>
-                  <h3 className="font-medium text-slate-100">{practice.name}</h3>
-                  <p className="text-sm text-slate-400">{moduleInfo.name} Practice</p>
-                </div>
-                <div className="flex items-center gap-6 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-orange-400 flex items-center gap-1">
-                      <Zap size={20} /> {streaks.current}
-                    </p>
-                    <p className="text-xs text-slate-500">Current</p>
+              <div
+                key={practice.id}
+                className={`relative group bg-gradient-to-r border-l-4 ${moduleInfo.borderColor} rounded-xl overflow-hidden transition-all duration-300 ${streaks.current > 0 ? 'from-orange-900/30 to-orange-900/10 hover:from-orange-900/50 hover:to-orange-900/20' : 'from-slate-800/60 to-slate-800/30 hover:from-slate-800/80 hover:to-slate-800/50'}`}
+              >
+                {/* Active streak glow */}
+                {streaks.current > 0 && (
+                  <div className="absolute inset-0 -z-10 opacity-40 group-hover:opacity-60 transition-opacity" style={{
+                    background: 'radial-gradient(circle at right, rgba(249, 115, 22, 0.2), transparent)',
+                    filter: 'blur(30px)'
+                  }}></div>
+                )}
+
+                <div className="p-5 flex items-center justify-between relative z-10">
+                  <div className="flex-grow">
+                    <h3 className="font-semibold text-base text-slate-100 group-hover:text-white transition-colors">{practice.name}</h3>
+                    <p className="text-sm text-slate-400 mt-1">{moduleInfo.name} Practice</p>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-300">{streaks.longest}</p>
-                    <p className="text-xs text-slate-500">Longest</p>
+
+                  <div className="flex items-center gap-8 text-center">
+                    {/* Current Streak */}
+                    <div className="flex flex-col items-center">
+                      <div style={{ transform: `scale(${currentScale})` }} className="transition-transform duration-300">
+                        <p className={`text-4xl font-black flex items-center gap-2 ${getCurrentColor()}`}>
+                          <Zap size={24} className={streaks.current > 0 ? 'animate-pulse' : ''} />
+                          {streaks.current}
+                        </p>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-2 font-semibold">CURRENT</p>
+                      {streaks.current > 0 && <p className="text-xs text-orange-400 font-bold mt-1">🔥 Active</p>}
+                    </div>
+
+                    {/* Divider */}
+                    <div className="w-px h-12 bg-slate-700/50"></div>
+
+                    {/* Longest Streak */}
+                    <div className="flex flex-col items-center">
+                      <div style={{ transform: `scale(${longestScale})` }} className="transition-transform duration-300">
+                        <p className={`text-4xl font-black ${getLongestColor()}`}>
+                          {streaks.longest}
+                        </p>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-2 font-semibold">LONGEST</p>
+                      <MilestoneBadge days={streaks.longest} />
+                    </div>
                   </div>
                 </div>
               </div>
