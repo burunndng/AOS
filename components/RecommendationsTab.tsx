@@ -168,7 +168,7 @@ export default function RecommendationsTab({
                           <div className="flex items-center gap-2">
                             {rec.practice && (
                               <TransparencyButton
-                                recommendationId={`${rec.practice.id}-${idx}`}
+                                recommendationId={`practice-${idx}-${rec.practice.name.toLowerCase().replace(/\s+/g, '-')}`}
                                 practiceName={rec.practice.name}
                                 variant="inline"
                                 size="sm"
@@ -414,7 +414,7 @@ export default function RecommendationsTab({
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                                   <TransparencyButton
-                                    recommendationId={`${insight.id}-shadow-${swIdx}`}
+                                    recommendationId={`insight-${insight.id}-shadow-${swIdx}`}
                                     practiceName={sw.practiceName}
                                     variant="icon"
                                     size="sm"
@@ -449,7 +449,7 @@ export default function RecommendationsTab({
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                                   <TransparencyButton
-                                    recommendationId={`${insight.id}-next-${nsIdx}`}
+                                    recommendationId={`insight-${insight.id}-next-${nsIdx}`}
                                     practiceName={ns.practiceName}
                                     variant="icon"
                                     size="sm"
