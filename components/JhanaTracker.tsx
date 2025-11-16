@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { JhanaSession, JhanaLevel, JhanaFactor, NimittaType } from '../types.ts';
 import { X, ArrowRight, Info, Sparkles, Book, Target, Lightbulb, CheckCircle } from 'lucide-react';
-import JhanaSpiralVisualizer from './JhanaSpiralVisualizer.tsx';
+import JhanaSpiralVisualizer3D from './JhanaSpiralVisualizer3D.tsx';
 
 interface JhanaTrackerProps {
   onClose: () => void;
@@ -240,8 +240,8 @@ export default function JhanaTracker({ onClose, onSave }: JhanaTrackerProps) {
     return (
       <div className="space-y-6">
 
-        {/* Jhana Spiral Visualizer */}
-        <JhanaSpiralVisualizer
+        {/* Jhana Spiral Visualizer - 3D */}
+        <JhanaSpiralVisualizer3D
           selectedJhana={selectedJhana}
           onSelectJhana={setSelectedJhana}
         />
