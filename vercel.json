@@ -12,9 +12,17 @@
     "api/coach/generate-response.ts": {
       "memory": 1024,
       "maxDuration": 30
+    },
+    "api/generate-image.ts": {
+      "memory": 1024,
+      "maxDuration": 60
     }
   },
   "rewrites": [
+    {
+      "source": "/api/generate-image",
+      "destination": "/api/generate-image.ts"
+    },
     {
       "source": "/api/practices/:path*",
       "destination": "/api/server.ts"
