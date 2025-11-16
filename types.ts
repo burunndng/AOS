@@ -386,6 +386,11 @@ export interface IntegratedInsight {
     notes?: string;
   }[];
   patternEvolutionNotes?: string;
+
+  // Transparency & Lineage Tracking
+  lineageId?: string; // Reference to synthesisLineageService lineage record
+  generatedBy?: 'grok' | 'gemini'; // Which AI model generated this insight
+  confidenceScore?: number; // 0-1 confidence in the insight
 }
 
 export interface SomaticScriptSegment {

@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { IntegratedInsight } from '../types.ts';
 import { generateText } from './geminiService.ts';
 import { generateOpenRouterResponse, buildMessagesWithSystem } from './openRouterService.ts';
+import { createInsightLineage } from './synthesisLineageService.ts';
 import type { UserProfile } from '../utils/contextAggregator.ts';
 
 interface InsightGenerationInput {
@@ -121,8 +122,9 @@ export async function generateInsightFromSession(
     const { pattern, shadowWork, nextSteps } = parseInsightResponse(response, availablePractices);
 
     // Create insight
+    const insightId = uuidv4();
     const insight: IntegratedInsight = {
-      id: uuidv4(),
+      id: insightId,
       mindToolType: wizardType,
       mindToolSessionId: sessionId,
       mindToolName: sessionName,
@@ -133,7 +135,18 @@ export async function generateInsightFromSession(
       suggestedNextSteps: nextSteps,
       dateCreated: new Date().toISOString(),
       status: 'pending',
+      generatedBy: usedGrok ? 'grok' : 'gemini',
+      confidenceScore: 0.8, // Default confidence; can be adjusted based on response quality
     };
+
+    // Track lineage for transparency
+    try {
+      createInsightLineage(insight, insight.generatedBy as 'grok' | 'gemini');
+      insight.lineageId = insightId; // Use insight ID as lineage ID
+    } catch (lineageError) {
+      console.warn('[InsightGenerator] Failed to create lineage record:', lineageError);
+      // Continue even if lineage tracking fails - it's not critical
+    }
 
     console.log(
       `[InsightGenerator] Successfully generated insight with ${shadowWork.length} shadow work and ${nextSteps.length} next steps (${usedGrok ? 'Grok' : 'Gemini'})`
