@@ -89,22 +89,39 @@ const nebulaFragmentShader = `
   }
 
   void main() {
-    vec3 pos = vPosition + uTime * 0.1;
-    float n = noise(pos);
+    // Enhanced time-based animation with multiple layers
+    vec3 pos = vPosition * 0.1;
 
-    // Create swirling nebula effect
-    float swirl = sin(length(vPosition) * 2.0 - uTime) * 0.5 + 0.5;
-    float intensity = mix(n, swirl, 0.5);
+    // Layer 1: Slow primary noise
+    float n1 = noise(pos + uTime * 0.05);
 
-    // Color gradient from purple to cyan
+    // Layer 2: Medium speed secondary noise
+    float n2 = noise(pos * 2.0 + uTime * 0.08);
+
+    // Layer 3: Swirling vortex
+    float dist = length(vPosition);
+    float swirl = sin(atan(vPosition.y, vPosition.x) * 3.0 - uTime * 0.3) * 0.5 + 0.5;
+    float vortex = sin(dist * 0.5 - uTime * 0.2) * 0.5 + 0.5;
+
+    // Combine noise layers
+    float intensity = mix(mix(n1, n2, 0.4), mix(swirl, vortex, 0.3), 0.5);
+
+    // Resonance-reactive color gradient
     vec3 color1 = vec3(0.6, 0.2, 1.0); // Purple
     vec3 color2 = vec3(0.0, 0.8, 1.0); // Cyan
-    vec3 color = mix(color1, color2, intensity);
+    vec3 color3 = vec3(0.2, 0.4, 0.8); // Deep blue (resonance peak)
 
-    // Resonance affects the glow
-    color *= (1.0 + uResonance * 0.5);
+    // Blend colors based on resonance level
+    vec3 baseColor = mix(color1, color2, intensity);
+    vec3 color = mix(baseColor, color3, uResonance * 0.6);
 
-    gl_FragColor = vec4(color, intensity * 0.6);
+    // Intensity modulation with resonance
+    float finalIntensity = intensity * (0.8 + uResonance * 0.4);
+
+    // Resonance causes brightening and color saturation
+    color *= (1.0 + uResonance * 0.7);
+
+    gl_FragColor = vec4(color, finalIntensity * 0.7);
   }
 `;
 
@@ -186,15 +203,20 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
     group.add(wireframe);
 
-    // Create solid with glow
-    const material = new THREE.MeshPhongMaterial({
+    // Create solid with enhanced physical material for sacred glow
+    const material = new THREE.MeshPhysicalMaterial({
       color: color,
       emissive: color,
-      emissiveIntensity: 0.5,
+      emissiveIntensity: 0.6,
       transparent: true,
-      opacity: 0.15,
+      opacity: 0.12,
       wireframe: false,
       side: THREE.DoubleSide,
+      roughness: 0.2,
+      metalness: 0.7,
+      clearcoat: 0.9,
+      clearcoatRoughness: 0.15,
+      envMapIntensity: 0.5,
     });
     const mesh = new THREE.Mesh(geometry, material);
     group.add(mesh);
@@ -298,10 +320,17 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const createInstancedGeometryBurst = (parentGroup: THREE.Group) => {
     // Create base geometry (small tetrahedron)
     const geometry = new THREE.TetrahedronGeometry(0.15, 1);
-    const material = new THREE.MeshPhongMaterial({
+
+    // Use enhanced physical material for sacred glow
+    const material = new THREE.MeshPhysicalMaterial({
       color: 0xffd700,
       emissive: 0xffaa00,
-      emissiveIntensity: 0.8,
+      emissiveIntensity: 0.9,
+      roughness: 0.15,
+      metalness: 0.85,
+      clearcoat: 0.8,
+      clearcoatRoughness: 0.1,
+      wireframe: false,
     });
 
     // Create instanced mesh with many instances
@@ -348,6 +377,9 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
 
     // Lighting setup
@@ -462,7 +494,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
         cyanLight.intensity = 1.2 + Math.sin(Date.now() * 0.0025) * 0.3;
       }
 
-      // Handle burst animation
+      // Handle burst animation with golden ratio spirals
       if (burstActive && instancedMeshRef.current) {
         const elapsed = Date.now() - burstStartTime;
         const progress = Math.min(elapsed / burstDuration, 1);
@@ -470,33 +502,51 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
         if (progress < 1) {
           const dummy = new THREE.Object3D();
           const count = 500;
+
+          // Golden ratio constants
           const goldenRatio = (1 + Math.sqrt(5)) / 2;
+          const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ≈ 137.5°
 
           for (let i = 0; i < count; i++) {
-            const t = (i / count + progress) % 1;
-            const angle = t * Math.PI * 12; // Spiral rotation
-            const radius = Math.pow(t, 1.5) * 8; // Expanding spiral
+            // Use golden ratio for spiral distribution
+            const t = i / count;
+            const cascadeT = (t + progress) % 1; // Cascading effect
 
+            // Golden spiral angle
+            const angle = i * goldenAngle;
+
+            // Exponential radius growth (logarithmic spiral property)
+            const radiusGrowth = Math.pow(cascadeT, 1.2);
+            const baseRadius = 8;
+            const radius = radiusGrowth * baseRadius;
+
+            // Position along golden spiral
             const x = Math.cos(angle) * radius;
             const y = Math.sin(angle) * radius;
-            const z = (t - 0.5) * 6;
+            const z = Math.sin(i * 0.05) * 3 * Math.sin(progress * Math.PI);
 
             dummy.position.set(x, y, z);
-            dummy.scale.set(1 - progress * 0.5, 1 - progress * 0.5, 1 - progress * 0.5);
-            dummy.rotation.x = t * Math.PI * 4;
-            dummy.rotation.y = t * Math.PI * 6;
-            dummy.updateMatrix();
 
+            // Scaling: particles fade out as they expand
+            const scale = 1 - progress * 0.6;
+            dummy.scale.set(scale, scale, scale);
+
+            // Rotation: spinning motion follows spiral
+            dummy.rotation.x = angle + progress * Math.PI * 2;
+            dummy.rotation.y = i * 0.01 + progress * Math.PI;
+            dummy.rotation.z = cascadeT * Math.PI * 4;
+
+            dummy.updateMatrix();
             instancedMeshRef.current.setMatrixAt(i, dummy.matrix);
           }
           instancedMeshRef.current.instanceMatrix.needsUpdate = true;
         } else {
-          // Reset burst
+          // Reset burst - move all instances off-screen
           burstActive = false;
           const dummy = new THREE.Object3D();
           dummy.position.set(1000, 1000, 1000);
+          dummy.updateMatrix();
           for (let i = 0; i < 500; i++) {
-            dummy.updateMatrix();
             instancedMeshRef.current.setMatrixAt(i, dummy.matrix);
           }
           instancedMeshRef.current.instanceMatrix.needsUpdate = true;
@@ -728,19 +778,48 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const now = audioContext.currentTime;
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
 
-      osc.type = 'sine';
-      osc.frequency.value = 432; // Healing frequency
-      osc.connect(gain);
-      gain.connect(audioContext.destination);
+      // Primary oscillator - 432Hz healing frequency
+      const osc1 = audioContext.createOscillator();
+      const osc2 = audioContext.createOscillator();
+      const gain1 = audioContext.createGain();
+      const gain2 = audioContext.createGain();
+      const masterGain = audioContext.createGain();
 
-      gain.gain.setValueAtTime(0.1, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      // Primary tone - modulate frequency with resonance level
+      const baseFreq = 432; // Healing frequency
+      const freqVariation = resonanceLevel * 50; // Up to 50Hz variation at perfect resonance
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(baseFreq + freqVariation, now);
+      osc1.connect(gain1);
 
-      osc.start(now);
-      osc.stop(now + 0.2);
+      // Secondary harmonic - perfect fifth (1.5x frequency)
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime((baseFreq + freqVariation) * 1.5, now);
+      osc2.connect(gain2);
+
+      // Route both to master gain
+      gain1.connect(masterGain);
+      gain2.connect(masterGain);
+      masterGain.connect(audioContext.destination);
+
+      // Volume modulation - louder at perfect resonance
+      const peakVolume = 0.15 * (0.5 + resonanceLevel * 0.5);
+      gain1.gain.setValueAtTime(peakVolume * 0.7, now);
+      gain2.gain.setValueAtTime(peakVolume * 0.3, now);
+      masterGain.gain.setValueAtTime(peakVolume, now);
+
+      // Resonance envelope
+      const duration = 0.5 + resonanceLevel * 0.2; // Longer burst at perfect resonance
+      masterGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      // Start oscillators
+      osc1.start(now);
+      osc2.start(now);
+
+      // Stop oscillators
+      osc1.stop(now + duration);
+      osc2.stop(now + duration);
     } catch (e) {
       // Audio context not available
     }
