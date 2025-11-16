@@ -593,18 +593,18 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
       if (gameMode !== 'menu' && gameActive) {
         // Apply rotational inertia to player shape
         if (playerShapeRef.current) {
-          // Apply input acceleration to velocity
-          const inputSensitivity = 0.0015;
+          // Apply input acceleration to velocity (DRAMATIC INCREASE for visual punch)
+          const inputSensitivity = 0.012; // 8x increase for responsive, energetic control
           playerRotationVelocityRef.current.x += rotationInputRef.current.x * inputSensitivity;
           playerRotationVelocityRef.current.y += rotationInputRef.current.y * inputSensitivity;
 
-          // Apply friction to velocity (damping effect)
-          const friction = 0.88;
+          // Apply friction to velocity (damping effect - reduced for longer momentum)
+          const friction = 0.92; // Reduced friction allows shapes to spin longer
           playerRotationVelocityRef.current.x *= friction;
           playerRotationVelocityRef.current.y *= friction;
 
-          // Clamp velocity to prevent excessive rotation
-          const maxVelocity = 0.05;
+          // Clamp velocity to prevent excessive rotation (DRAMATIC INCREASE)
+          const maxVelocity = 0.25; // 5x increase for fast, dynamic spinning
           playerRotationVelocityRef.current.x = Math.max(-maxVelocity, Math.min(maxVelocity, playerRotationVelocityRef.current.x));
           playerRotationVelocityRef.current.y = Math.max(-maxVelocity, Math.min(maxVelocity, playerRotationVelocityRef.current.y));
 
@@ -616,10 +616,10 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
           updateShapeColors(playerShapeRef.current, resonanceLevel);
         }
 
-        // Oracle AI rotation - adaptive behavior (with time dilation)
+        // Oracle AI rotation - adaptive behavior (with time dilation) - DRAMATIC SPEED INCREASE
         if (oracleShapeRef.current) {
-          oracleShapeRef.current.rotation.x += 0.008 * (1 + resonanceLevel * 0.5) * timeScaleRef.current;
-          oracleShapeRef.current.rotation.y += 0.012 * (1 + resonanceLevel * 0.5) * timeScaleRef.current;
+          oracleShapeRef.current.rotation.x += 0.035 * (1 + resonanceLevel * 0.5) * timeScaleRef.current; // ~4x increase
+          oracleShapeRef.current.rotation.y += 0.052 * (1 + resonanceLevel * 0.5) * timeScaleRef.current; // ~4x increase
 
           // Update oracle shape color based on resonance
           updateShapeColors(oracleShapeRef.current, resonanceLevel);

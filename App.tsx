@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react';
 import NavSidebar from './components/NavSidebar.tsx';
 import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
 import GeometricResonanceGame from './components/GeometricResonanceGame.tsx';
+import VideoMinigame from './components/VideoMinigame.tsx';
 import LoadingFallback, { TabLoadingFallback, WizardLoadingFallback, ModalLoadingFallback } from './components/LoadingFallback.tsx';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 
@@ -262,6 +263,9 @@ export default function App() {
 
   // Geometric Resonance Game (Secret Easter Egg)
   const [isGeometricGameOpen, setIsGeometricGameOpen] = useState(false);
+
+  // Video Minigame (Second minigame placeholder)
+  const [isVideoGameOpen, setIsVideoGameOpen] = useState(false);
 
   // Navigation Stack (Phase 3: Back button functionality)
   const [navigationStack, setNavigationStack] = useState<NavigationEntry[]>([]);
@@ -2078,6 +2082,10 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
           setIsFlabbergasterPortalOpen(false);
           setIsGeometricGameOpen(true);
         }}
+        onStartVideoGame={() => {
+          setIsFlabbergasterPortalOpen(false);
+          setIsVideoGameOpen(true);
+        }}
         onGameComplete={(data) => {
           if (data?.resonanceAchieved) {
             // Reopen the portal so user can see the Oracle's response
@@ -2097,6 +2105,12 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
         onGameEvent={(event, data) => {
           console.log(`🎮 Game Event: ${event}`, data);
         }}
+      />
+      <VideoMinigame
+        isOpen={isVideoGameOpen}
+        onClose={() => setIsVideoGameOpen(false)}
+        videoUrl="https://files.catbox.moe/hw4tg3.mp4"
+        title="Second Minigame (Coming Soon)"
       />
       </div>
     </ErrorBoundary>
