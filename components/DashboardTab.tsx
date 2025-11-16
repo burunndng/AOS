@@ -106,14 +106,13 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
       {/* Autoplay Video Section - positioned well below the Body • Mind • Spirit • Shadow */}
       {showVideo && (
         <div className="w-full mt-32 px-6 mb-20 animate-fade-in" style={{ animationDelay: '400ms' }}>
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-2xl mx-auto">
             {/* Video container */}
             <div className="relative bg-black/40 border border-purple-500/30 rounded-2xl overflow-hidden backdrop-blur shadow-2xl" style={{
               boxShadow: '0 25px 50px -12px rgba(147, 51, 234, 0.5), 0 0 100px rgba(147, 51, 234, 0.3)'
             }}>
               <video
                 autoPlay
-                muted
                 loop
                 playsInline
                 controls
