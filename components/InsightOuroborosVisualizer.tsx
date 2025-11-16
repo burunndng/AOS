@@ -118,6 +118,13 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
+
+    // Style the canvas to fill the container and prevent layout issues
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.position = 'relative';
+
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
