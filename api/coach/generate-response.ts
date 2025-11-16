@@ -146,14 +146,11 @@ CRITICAL: Respond in 30-40 words MAX. Be direct, warm, and grounded.
 
     console.log('[Coach API] Calling OpenRouter API with streaming...');
 
-    try {
-      const apiKey = process.env.OPENROUTER_API_KEY;
-      if (!apiKey) {
-        throw new Error('OPENROUTER_API_KEY environment variable is not set');
-      }
+    // Helper function to call OpenRouter with a specific model
+    async function callOpenRouter(model: string, apiKey: string) {
+      console.log(`[Coach API] Attempting with model: ${model}`);
 
-      // Call OpenRouter API with streaming
-      const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +159,7 @@ CRITICAL: Respond in 30-40 words MAX. Be direct, warm, and grounded.
           'X-Title': 'ILP Coach',
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-v3.2-exp',
+          model: model,
           messages: [
             {
               role: 'user',
@@ -175,9 +172,40 @@ CRITICAL: Respond in 30-40 words MAX. Be direct, warm, and grounded.
         }),
       });
 
-      if (!openrouterResponse.ok) {
-        const errorData = await openrouterResponse.json();
-        throw new Error(`OpenRouter API error: ${errorData.error?.message || openrouterResponse.statusText}`);
+      console.log(`[Coach API] OpenRouter response status (${model}):`, response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Coach API] OpenRouter error response (${model}):`, errorText);
+        let errorMessage = response.statusText;
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch (e) {
+          // If it's not JSON, use the text as is
+        }
+        throw new Error(`OpenRouter API error (${response.status}): ${errorMessage}`);
+      }
+
+      return response;
+    }
+
+    try {
+      const apiKey = process.env.OPENROUTER_API_KEY;
+      if (!apiKey) {
+        console.error('[Coach API] OPENROUTER_API_KEY is not set!');
+        console.error('[Coach API] Available env vars:', Object.keys(process.env).filter(k => k.includes('API') || k.includes('KEY')).join(', '));
+        throw new Error('OPENROUTER_API_KEY environment variable is not set');
+      }
+
+      // Try primary model first, fallback to grok-4-fast if it fails
+      let openrouterResponse: Response;
+      try {
+        openrouterResponse = await callOpenRouter('deepseek/deepseek-v3.2-exp', apiKey);
+      } catch (primaryError) {
+        console.warn('[Coach API] Primary model failed, trying fallback:', primaryError);
+        console.log('[Coach API] Falling back to grok-4-fast');
+        openrouterResponse = await callOpenRouter('grok-4-fast', apiKey);
       }
 
       if (!openrouterResponse.body) {

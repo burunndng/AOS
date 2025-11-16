@@ -54,8 +54,8 @@ export default function CustomPracticeModal({ isOpen, onClose, onSave }: CustomP
       // Lock background scroll
       document.body.style.overflow = 'hidden';
 
-      // Scroll page to top smoothly
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Scroll page to top IMMEDIATELY (not smooth)
+      window.scrollTo(0, 0);
 
       // Restore overflow when modal closes
       return () => {
