@@ -47,9 +47,6 @@ export default function AdaptiveCycleWizard({ onClose, onSave }: AdaptiveCycleWi
         }
         break;
       case 'LANDSCAPE':
-        setStep('COMPLETE');
-        break;
-      case 'COMPLETE':
         // Save the session
         if (cycleMap) {
           const session: AdaptiveCycleSession = {
@@ -59,8 +56,15 @@ export default function AdaptiveCycleWizard({ onClose, onSave }: AdaptiveCycleWi
             userHint: skipSelfAssessment ? undefined : userHint,
             cycleMap,
           };
+          console.log('🔄 [AdaptiveCycle Wizard] Saving session:', session);
           onSave(session);
+          console.log('✅ [AdaptiveCycle Wizard] onSave called');
         }
+        onClose();
+        break;
+      case 'COMPLETE':
+        // This case is never reached (no button on COMPLETE step)
+        // Saving happens in LANDSCAPE case now
         onClose();
         break;
     }
