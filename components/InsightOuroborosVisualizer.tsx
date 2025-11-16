@@ -191,10 +191,11 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       const position = new THREE.Vector3(x, y, z);
 
       // Stage sphere
+      const phaseColor = PHASE_COLORS[stage.phase] || 0x888888; // Default gray if phase not found
       const geometry = new THREE.IcosahedronGeometry(0.6, 5);
       const material = new THREE.MeshStandardMaterial({
-        color: PHASE_COLORS[stage.phase],
-        emissive: PHASE_COLORS[stage.phase],
+        color: phaseColor,
+        emissive: phaseColor,
         emissiveIntensity: 0.3,
         metalness: 0.9,
         roughness: 0.15,
@@ -209,7 +210,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       // Subtle aura
       const auraGeometry = new THREE.IcosahedronGeometry(0.9, 4);
       const auraMaterial = new THREE.MeshBasicMaterial({
-        color: PHASE_COLORS[stage.phase],
+        color: phaseColor,
         transparent: true,
         opacity: 0.15,
       });
@@ -494,10 +495,16 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
                   <div className="space-y-3">
                     {/* Header */}
                     <div>
-                      <div
-                        className="inline-block w-3 h-3 rounded-full mb-2"
-                        style={{ backgroundColor: `#${PHASE_COLORS[stage.phase].toString(16).padStart(6, '0')}` }}
-                      />
+                      {(() => {
+                        const phaseColor = PHASE_COLORS[stage.phase];
+                        const colorHex = phaseColor ? (typeof phaseColor === 'number' ? phaseColor.toString(16).padStart(6, '0') : phaseColor) : '666666';
+                        return (
+                          <div
+                            className="inline-block w-3 h-3 rounded-full mb-2"
+                            style={{ backgroundColor: `#${colorHex}` }}
+                          />
+                        );
+                      })()}
                       <h4 className="text-lg font-bold text-slate-100">Stage {stage.stage}</h4>
                       <p className="text-sm font-semibold text-slate-300">{stage.name}</p>
                       <p className="text-xs text-slate-400 mt-1">{stage.phase}</p>
@@ -549,15 +556,19 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
 
       {/* Phase Legend */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {Object.entries(PHASE_COLORS).map(([phase, color]) => (
-          <div key={phase} className="flex items-center gap-2 text-xs p-2 rounded bg-slate-800/50">
-            <div
-              className="w-3 h-3 rounded-full flex-shrink-0"
-              style={{ backgroundColor: `#${color.toString(16).padStart(6, '0')}` }}
-            />
-            <span className="text-slate-300 truncate">{phase}</span>
-          </div>
-        ))}
+        {Object.entries(PHASE_COLORS).map(([phase, color]) => {
+          if (!color) return null;
+          const colorHex = typeof color === 'number' ? color.toString(16).padStart(6, '0') : color;
+          return (
+            <div key={phase} className="flex items-center gap-2 text-xs p-2 rounded bg-slate-800/50">
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: `#${colorHex}` }}
+              />
+              <span className="text-slate-300 truncate">{phase}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
