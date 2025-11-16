@@ -749,9 +749,45 @@ export default function App() {
     }
   };
 
-  const handleSaveJhanaSession = (session: JhanaSession) => {
+  const handleSaveJhanaSession = async (session: JhanaSession) => {
     setHistoryJhana(prev => [...prev.filter(s => s.id !== session.id), session]);
     navigateBack();
+
+    const report = `# Jhana Guide: ${session.practice}
+- Duration: ${session.duration} minutes
+- Jhana Level Reached: ${session.jhanaLevel}
+- Time in Absorption: ${session.timeInState} minutes
+
+## Jhana Factors
+- Applied Attention: ${session.factors.appliedAttention.presence} (${session.factors.appliedAttention.intensity}/10)
+- Sustained Attention: ${session.factors.sustainedAttention.presence} (${session.factors.sustainedAttention.intensity}/10)
+- Joy (Piti): ${session.factors.joy.presence} (${session.factors.joy.intensity}/10)
+- Happiness (Sukha): ${session.factors.happiness.presence} (${session.factors.happiness.intensity}/10)
+- Unification (Ekaggata): ${session.factors.unification.presence} (${session.factors.unification.intensity}/10)
+
+## Experience
+- Body Experience: ${session.bodyExperience}
+- Mind Quality: ${session.mindQuality}
+- Hindrances: ${session.hindrances?.join(', ') || 'None noted'}
+${session.comparison ? `\n- Progress: ${session.comparison}` : ''}`;
+
+    const summary = `Meditated on ${session.practice} for ${session.duration}min, reached ${session.jhanaLevel} jhana`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Jhana Guide',
+        sessionId: session.id,
+        sessionName: 'Jhana Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Jhana Guide] Failed to generate insight:', err);
+    }
   };
 
   const handleSave321Session = async (session: ThreeTwoOneSession) => {
@@ -880,13 +916,42 @@ ${session.integrationNote}
     }
   };
 
-  const handleSaveSomaticPractice = (session: SomaticPracticeSession) => {
+  const handleSaveSomaticPractice = async (session: SomaticPracticeSession) => {
     setSomaticPracticeHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+
+    const report = `# Somatic Generator: ${session.title}
+- Practice Type: ${session.practiceType}
+- Duration: ${session.duration} minutes
+- Focus Area: ${session.focusArea || 'Whole body'}
+- Pacing: ${session.pacing || 'Moderate'}
+- Intention: ${session.intention}
+${session.safetyNotes ? `\n## Safety Notes\n${session.safetyNotes.map(n => `- ${n}`).join('\n')}` : ''}
+
+## Practice Segments: ${session.script.length} components`;
+
+    const summary = `Generated somatic practice: ${session.title} (${session.duration}min, ${session.practiceType})`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Somatic Practice',
+        sessionId: session.id,
+        sessionName: session.title,
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Somatic Generator] Failed to generate insight:', err);
+    }
+
     alert(`Practice "${session.title}" saved! You can find it in your Library.`);
     setActiveTab('library');
   };
 
-  const handleSaveIntegralBodyPlan = (plan: IntegralBodyPlan) => {
+  const handleSaveIntegralBodyPlan = async (plan: IntegralBodyPlan) => {
     setIntegralBodyPlans(prev => [...prev.filter(p => p.id !== plan.id), plan]);
 
     // Initialize history entry if it doesn't exist
@@ -922,6 +987,45 @@ ${session.integrationNote}
       ...prev,
       [plan.id]: prev[plan.id] || {},
     }));
+
+    // Generate insight from embodied development plan
+    const report = `# Integral Body Plan: ${plan.goalStatement}
+- Week Starting: ${plan.weekStartDate}
+- Daily Targets:
+  - Protein: ${plan.dailyTargets.proteinGrams}g
+  - Sleep: ${plan.dailyTargets.sleepHours}h
+  - Workouts: ${plan.dailyTargets.workoutDays} days
+  - Yin Practice: ${plan.dailyTargets.yinPracticeMinutes} min
+
+## Yang Constraints
+- Strength Focus: ${plan.yangConstraints.strengthFocus || 'N/A'}
+- Cardio Preference: ${plan.yangConstraints.cardioPreference || 'N/A'}
+- Available Days: ${plan.yangConstraints.availableDays}/week
+
+## Yin Preferences
+- Primary: ${plan.yinPreferences.primary || 'N/A'}
+- Secondary: ${plan.yinPreferences.secondary || 'N/A'}
+
+## Weekly Summary
+${plan.weekSummary}`;
+
+    const summary = `Created ${plan.dailyTargets.workoutDays}-day embodied development plan: ${plan.goalStatement}`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Integral Body Plan',
+        sessionId: plan.id,
+        sessionName: plan.goalStatement,
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Integral Body Architect] Failed to generate insight:', err);
+    }
 
     alert(`Your Integral Week has been saved! Access it from your Library.`);
   };
@@ -1234,11 +1338,43 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     // For now, just keep this handler available for future expansion
   };
 
-  const handleSaveWorkoutProgram = (program: WorkoutProgram) => {
+  const handleSaveWorkoutProgram = async (program: WorkoutProgram) => {
     setWorkoutPrograms(prev => [...prev.filter(p => p.id !== program.id), program]);
     // Clear handoff source after saving
     setWorkoutHandoffSource(null);
     navigateBack();
+
+    const report = `# Workout Program: ${program.title}
+- Generated: ${program.date}
+- Workouts: ${program.workouts.length} sessions
+
+## Program Summary
+${program.summary}
+
+## Progression Recommendations
+${program.progressionRecommendations?.map(r => `- ${r}`).join('\n') || '- Standard progression applied'}
+
+## Personalization Notes
+${program.personalizationNotes || 'Standard customization applied'}`;
+
+    const summary = `Created ${program.workouts.length}-workout personalized program: ${program.title}`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Workout Program',
+        sessionId: program.id,
+        sessionName: program.title,
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Dynamic Workout Architect] Failed to generate insight:', err);
+    }
+
     alert(`Your personalized workout program has been saved!`);
   };
 
