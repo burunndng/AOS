@@ -90,7 +90,9 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
       };
       setDraft(draftSession);
     }
-  }, [roles, integralNote, aiIntegralReflection, setDraft, sessionId]);
+    // Note: Intentionally excluding setDraft from dependencies to prevent infinite loops
+    // setDraft is a stable function reference from parent (setState)
+  }, [roles, integralNote, aiIntegralReflection, sessionId]);
 
   const currentRole = roles[currentRoleIndex];
   const activeRoles = roles.filter(r => r.name.trim() !== '');
@@ -244,6 +246,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
                 Role {index + 1} {index === 0 && <span className="text-red-400">*</span>}
               </label>
               <input
+                id={`role-name-${index}`}
+                name={`role-name-${index}`}
                 type="text"
                 value={role.name}
                 onChange={(e) => handleRoleUpdate(index, 'name', e.target.value)}
@@ -258,6 +262,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
                   Why this role? (one sentence)
                 </label>
                 <input
+                  id={`role-why-${index}`}
+                  name={`role-why-${index}`}
                   type="text"
                   value={role.why}
                   onChange={(e) => handleRoleUpdate(index, 'why', e.target.value)}
@@ -330,6 +336,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
               What's the core goal of this role?
             </label>
             <input
+              id="role-goal"
+              name="role-goal"
               type="text"
               value={roleData.goal}
               onChange={(e) => handleRoleUpdate(currentRoleIndex, 'goal', e.target.value)}
@@ -345,6 +353,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
             </label>
             <div className="space-y-4">
               <input
+                id="role-value-score"
+                name="role-value-score"
                 type="range"
                 min="1"
                 max="10"
@@ -364,6 +374,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
                 Why that number?
               </label>
               <input
+                id="role-value-note"
+                name="role-value-note"
                 type="text"
                 value={roleData.valueNote}
                 onChange={(e) => handleRoleUpdate(currentRoleIndex, 'valueNote', e.target.value)}
@@ -404,6 +416,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
                   What feels off? What small shift could help?
                 </label>
                 <input
+                  id="role-shadow-nudge"
+                  name="role-shadow-nudge"
                   type="text"
                   value={roleData.shadowNudge || ''}
                   onChange={(e) => handleRoleUpdate(currentRoleIndex, 'shadowNudge', e.target.value)}
@@ -420,6 +434,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
             <h4 className="font-semibold text-slate-100">Suggested Action</h4>
             <div>
               <input
+                id="role-action"
+                name="role-action"
                 type="text"
                 value={roleData.action || getSuggestion(roleData.valueScore)}
                 onChange={(e) => handleRoleUpdate(currentRoleIndex, 'action', e.target.value)}
@@ -581,6 +597,8 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
           How does this connect to your inner world (I) or relationships (We)? Add your own insights.
         </p>
         <textarea
+          id="integral-note"
+          name="integral-note"
           value={integralNote}
           onChange={(e) => setIntegralNote(e.target.value)}
           placeholder="e.g., My Parent role connects to my inner need for nurturing (I) and deepens my family bonds (We)..."
