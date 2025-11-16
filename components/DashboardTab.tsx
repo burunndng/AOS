@@ -10,6 +10,21 @@ interface DashboardTabProps {
 }
 
 export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab }: DashboardTabProps) {
+  const audioRef = React.useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
   return (
     <div className="relative flex flex-col items-center justify-center min-h-full text-center overflow-y-auto pb-20">
       {/* Subtle background effect - background icon */}
@@ -102,9 +117,17 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
       </div>
 
       {/* Background Audio - plays automatically on dashboard load */}
-      <audio autoPlay loop>
-        <source src="https://files.catbox.moe/fpwjc2.mp4" type="audio/mpeg" />
+      <audio ref={audioRef} autoPlay loop>
+        <source src="https://files.catbox.moe/kbn0ap.mp3" type="audio/mpeg" />
       </audio>
+
+      {/* Pause Control Line - thin horizontal line at bottom */}
+      <button
+        onClick={togglePlayPause}
+        className="fixed bottom-0 left-0 right-0 h-1 bg-black hover:bg-gray-800 transition-colors cursor-pointer z-40"
+        title={isPlaying ? "Click to pause" : "Click to play"}
+        aria-label={isPlaying ? "Pause audio" : "Play audio"}
+      />
     </div>
   );
 }
