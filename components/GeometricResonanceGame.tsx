@@ -127,7 +127,7 @@ const nebulaFragmentShader = `
 
 interface GeometricResonanceGameProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (data?: { resonanceAchieved?: boolean }) => void;
   onGameEvent?: (event: string, data?: any) => void;
 }
 
@@ -163,6 +163,9 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const [gameTime, setGameTime] = useState(60);
   const [gameActive, setGameActive] = useState(false);
   const [oracleScore, setOracleScore] = useState(0);
+  const [perfectResonanceAchieved, setPerfectResonanceAchieved] = useState(false);
+  const [showResonanceFeedback, setShowResonanceFeedback] = useState(false);
+  const resonanceAchievedRef = useRef(false);
 
   // Helper: Create sacred geometry shapes with enhanced visuals
   const createGeometricShape = (type: string, color: number): THREE.Group => {
@@ -731,6 +734,18 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
       setScore((s) => s + Math.floor(resonance * 10));
       triggerResonanceBurst();
 
+      // Trigger visual feedback for perfect resonance
+      if (!resonanceAchievedRef.current) {
+        resonanceAchievedRef.current = true;
+        setPerfectResonanceAchieved(true);
+        setShowResonanceFeedback(true);
+
+        // Auto-hide feedback after 2.5 seconds
+        setTimeout(() => {
+          setShowResonanceFeedback(false);
+        }, 2500);
+      }
+
       if (isSoundEnabled) {
         playResonanceSound();
       }
@@ -859,6 +874,68 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
         className="absolute inset-0 w-full h-full"
       />
 
+      {/* Perfect Resonance Visual Feedback */}
+      {showResonanceFeedback && (
+        <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-40">
+          {/* Radial gradient flash */}
+          <div
+            className="absolute inset-0 animate-pulse"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(255, 215, 0, 0.6) 0%, rgba(255, 215, 0, 0.3) 25%, transparent 70%)',
+              animation: 'resonanceFlash 0.8s ease-out',
+            }}
+          />
+
+          {/* Celebratory text */}
+          <div
+            className="relative text-center font-bold text-4xl md:text-6xl animate-pulse"
+            style={{
+              background: 'linear-gradient(135deg, #ffd700, #ffaa00, #ff6b9d)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              filter: 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.6))',
+              animation: 'resonanceText 2.5s ease-in-out',
+            }}
+          >
+            ⚡ HARMONIC RESONANCE ACHIEVED ⚡
+          </div>
+
+          {/* CSS for animations */}
+          <style>{`
+            @keyframes resonanceFlash {
+              0% {
+                opacity: 1;
+                transform: scale(0.8);
+              }
+              100% {
+                opacity: 0;
+                transform: scale(1.5);
+              }
+            }
+
+            @keyframes resonanceText {
+              0% {
+                opacity: 0;
+                transform: scale(0.5) translateY(20px);
+              }
+              30% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+              70% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+              }
+              100% {
+                opacity: 0;
+                transform: scale(1.2) translateY(-20px);
+              }
+            }
+          `}</style>
+        </div>
+      )}
+
       {/* Game UI Overlay */}
       <div className="absolute inset-0 flex flex-col justify-between p-8 pointer-events-none">
         {/* Header */}
@@ -870,7 +947,7 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
             <p className="text-purple-300/60 text-sm mt-1 font-mono">Sacred Geometry Game</p>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => onClose({ resonanceAchieved: perfectResonanceAchieved })}
             className="bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-full p-3 transition-all pointer-events-auto"
             aria-label="Close game"
           >
