@@ -308,6 +308,9 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
     const roleData = activeRoles[currentRoleIndex];
     if (!roleData) return null;
 
+    // Find the actual index of this role in the roles array
+    const actualRoleIndex = roles.findIndex(r => r.name === roleData.name && r.why === roleData.why);
+
     return (
       <div className="space-y-6">
         {/* Progress */}
@@ -340,7 +343,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
               name="role-goal"
               type="text"
               value={roleData.goal}
-              onChange={(e) => handleRoleUpdate(currentRoleIndex, 'goal', e.target.value)}
+              onChange={(e) => handleRoleUpdate(actualRoleIndex, 'goal', e.target.value)}
               placeholder="e.g., Support family growth, Contribute to team success..."
               className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent"
             />
@@ -359,7 +362,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
                 min="1"
                 max="10"
                 value={roleData.valueScore}
-                onChange={(e) => handleRoleUpdate(currentRoleIndex, 'valueScore', parseInt(e.target.value))}
+                onChange={(e) => handleRoleUpdate(actualRoleIndex, 'valueScore', parseInt(e.target.value))}
                 className="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-accent"
               />
               <div className="flex justify-between text-sm">
@@ -378,7 +381,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
                 name="role-value-note"
                 type="text"
                 value={roleData.valueNote}
-                onChange={(e) => handleRoleUpdate(currentRoleIndex, 'valueNote', e.target.value)}
+                onChange={(e) => handleRoleUpdate(actualRoleIndex, 'valueNote', e.target.value)}
                 placeholder="One sentence about this score..."
                 className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent"
               />
@@ -420,7 +423,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
                   name="role-shadow-nudge"
                   type="text"
                   value={roleData.shadowNudge || ''}
-                  onChange={(e) => handleRoleUpdate(currentRoleIndex, 'shadowNudge', e.target.value)}
+                  onChange={(e) => handleRoleUpdate(actualRoleIndex, 'shadowNudge', e.target.value)}
                   placeholder="e.g., It drains my energy. Try setting clearer boundaries."
                   className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-accent"
                 />
@@ -438,7 +441,7 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
                 name="role-action"
                 type="text"
                 value={roleData.action || getSuggestion(roleData.valueScore)}
-                onChange={(e) => handleRoleUpdate(currentRoleIndex, 'action', e.target.value)}
+                onChange={(e) => handleRoleUpdate(actualRoleIndex, 'action', e.target.value)}
                 className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-slate-100 focus:outline-none focus:border-accent"
               />
               <p className="text-xs text-slate-500 mt-2">Feel free to edit this action to make it your own</p>
