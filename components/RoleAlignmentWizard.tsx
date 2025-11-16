@@ -66,17 +66,19 @@ export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft
     quadrantConnections: string;
     recommendations: string[];
   } | null>(null);
+  const [lastLoadedSessionId, setLastLoadedSessionId] = useState<string | null>(null);
 
-  // Load draft session if it exists
+  // Load draft session if it exists (only load once per session ID to prevent infinite loops)
   useEffect(() => {
-    if (session) {
+    if (session && session.id !== lastLoadedSessionId) {
       setRoles(session.roles);
       setIntegralNote(session.integralNote || '');
       if (session.aiIntegralReflection) {
         setAiIntegralReflection(session.aiIntegralReflection);
       }
+      setLastLoadedSessionId(session.id);
     }
-  }, [session]);
+  }, [session?.id, lastLoadedSessionId]);
 
   // Auto-save draft as user progresses
   useEffect(() => {
