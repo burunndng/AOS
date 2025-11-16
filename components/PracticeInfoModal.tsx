@@ -26,12 +26,16 @@ export default function PracticeInfoModal({ practice, onClose, onAdd, isInStack,
       // Lock background scroll
       document.body.style.overflow = 'hidden';
 
-      // Scroll page to top smoothly
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Scroll page to top IMMEDIATELY (not smooth)
+      window.scrollTo(0, 0);
 
-      // Scroll modal content to top
+      // Also scroll modal content to top
       if (contentRef.current) {
-        contentRef.current.scrollTop = 0;
+        setTimeout(() => {
+          if (contentRef.current) {
+            contentRef.current.scrollTop = 0;
+          }
+        }, 0);
       }
 
       // Close sidebar on mobile when modal opens
