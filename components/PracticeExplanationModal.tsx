@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface PracticeExplanationModalProps {
@@ -25,6 +25,25 @@ const renderMarkdown = (markdown: string) => {
 };
 
 export default function PracticeExplanationModal({ isOpen, onClose, title, explanation }: PracticeExplanationModalProps) {
+  // Scroll page to top and lock body scroll when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Save original overflow state
+      const originalOverflow = document.body.style.overflow;
+
+      // Lock background scroll
+      document.body.style.overflow = 'hidden';
+
+      // Scroll page to top smoothly
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Restore overflow when modal closes
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const formattedExplanation = renderMarkdown(explanation);

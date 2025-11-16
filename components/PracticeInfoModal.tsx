@@ -17,21 +17,39 @@ interface PracticeInfoModalProps {
 export default function PracticeInfoModal({ practice, onClose, onAdd, isInStack, onExplainClick, onPersonalizeClick }: PracticeInfoModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Scroll content to top when modal opens
+  // Scroll page to top and lock body scroll when modal opens
   useEffect(() => {
-    if (contentRef.current) {
-      contentRef.current.scrollTop = 0;
-    }
-    // Close sidebar on mobile when modal opens
-    if (window.innerWidth < 768) {
-      const sidebarToggle = document.querySelector('[aria-label="Toggle menu"]') as HTMLButtonElement;
-      if (sidebarToggle) {
-        // Trigger sidebar close by clicking the button if sidebar is open
-        const sidebar = document.querySelector('[style*="translateX"]');
-        if (sidebar && getComputedStyle(sidebar).transform !== 'matrix(1, 0, 0, 1, 0, 0)') {
-          sidebarToggle.click();
+    if (practice) {
+      // Save original overflow state
+      const originalOverflow = document.body.style.overflow;
+
+      // Lock background scroll
+      document.body.style.overflow = 'hidden';
+
+      // Scroll page to top smoothly
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Scroll modal content to top
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0;
+      }
+
+      // Close sidebar on mobile when modal opens
+      if (window.innerWidth < 768) {
+        const sidebarToggle = document.querySelector('[aria-label="Toggle menu"]') as HTMLButtonElement;
+        if (sidebarToggle) {
+          // Trigger sidebar close by clicking the button if sidebar is open
+          const sidebar = document.querySelector('[style*="translateX"]');
+          if (sidebar && getComputedStyle(sidebar).transform !== 'matrix(1, 0, 0, 1, 0, 0)') {
+            sidebarToggle.click();
+          }
         }
       }
+
+      // Restore overflow when modal closes
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
     }
   }, [practice]);
 
