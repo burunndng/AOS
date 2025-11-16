@@ -2,7 +2,6 @@ import React from 'react';
 import { Sparkles, Search } from 'lucide-react';
 import { ActiveTab } from '../types.ts';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
-import { getGradientText } from '../theme.ts';
 
 interface DashboardTabProps {
   openGuidedPracticeGenerator: () => void;
@@ -13,128 +12,91 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
 
   return (
     <div className="relative flex flex-col items-center justify-center h-full text-center overflow-hidden">
-      {/* Multiple layered background effects for depth */}
+      {/* Subtle background effect - background icon */}
+      <MerkabaIcon className="absolute inset-0 w-full h-full text-slate-700/30 opacity-5" style={{ transform: 'scale(2.5)' }}/>
 
-      {/* Animated radial gradient orbs */}
-      <div className="absolute inset-0">
-        {/* Primary glow orb - top right */}
-        <div className="absolute top-0 -right-1/3 w-full h-96 bg-gradient-to-b from-purple-500/20 via-purple-500/5 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }}></div>
-
-        {/* Secondary glow orb - bottom left */}
-        <div className="absolute bottom-0 -left-1/4 w-full h-80 bg-gradient-to-t from-cyan-500/15 via-cyan-500/5 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }}></div>
-
-        {/* Tertiary glow - center */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-purple-500/10 via-transparent to-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s', animationDelay: '1s' }}></div>
-
-        {/* Fine grain texture overlay */}
-        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent)]"></div>
+      {/* Refined ambient glow - single, subtle layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 w-96 h-96 bg-gradient-to-r from-purple-500/8 via-transparent to-cyan-500/8 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }}></div>
       </div>
 
-      {/* Background Icon */}
-      <MerkabaIcon className="absolute inset-0 w-full h-full text-slate-700/40 opacity-5" style={{ transform: 'scale(2.5)' }}/>
-
-      {/* Content container with depth effect */}
-      <div className="relative z-10">
-        {/* Ambient glow rectangle behind header */}
-        <div className="absolute inset-0 -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{
-          background: 'radial-gradient(ellipse 40% 30% at 50% 20%, rgba(168, 85, 247, 0.15), transparent)',
-          filter: 'blur(60px)'
-        }}></div>
-
-        <header className="mb-8 animate-fade-in relative">
-          {/* Enhanced text glow effect - radioactive */}
-          <div className="absolute inset-0 -z-10 blur-3xl opacity-50" style={{
-            background: `linear-gradient(135deg, rgba(168, 85, 247, 0.6), rgba(34, 197, 233, 0.4))`,
-            borderRadius: '100%',
-            width: '700px',
-            height: '250px',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)'
-          }}></div>
-
-          {/* Darkening overlay to increase contrast */}
-          <div className="absolute inset-0 -z-20 opacity-40" style={{
-            background: 'radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3), transparent)',
-            borderRadius: '100%',
-            width: '800px',
-            height: '300px',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)'
-          }}></div>
-
-          <h1 className={`text-8xl md:text-9xl font-black font-mono ${getGradientText('spirit')} tracking-tight`} style={{
-            textShadow: '0 4px 12px rgba(0, 0, 0, 1), 0 0 10px rgba(168, 85, 247, 0.4)',
-            fontWeight: 900,
-            letterSpacing: '-0.03em',
-            paintOrder: 'stroke fill'
-          }}>Welcome to Aura OS</h1>
-
-          <div className="relative mt-4 inline-block">
-            {/* Enhanced glowing underline effect */}
-            <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-3/4 h-2 bg-gradient-to-r from-transparent via-accent to-transparent blur-md opacity-90"></div>
-            <p className="text-lg text-slate-300 mt-4 max-w-2xl mx-auto leading-relaxed font-light">
-              Your operating system for personal transformation.
-              <br />
-              <span className="text-accent/80">Begin your journey</span> by exploring practices or generating a custom one.
-            </p>
+      {/* Content container */}
+      <div className="relative z-10 max-w-4xl px-6">
+        {/* Header Section */}
+        <header className="mb-12 animate-fade-in">
+          {/* Subtle accent line above title */}
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-accent/50"></div>
+            <span className="text-xs font-mono text-accent/70 tracking-wider uppercase">Integral Life Practice</span>
+            <div className="h-px w-12 bg-gradient-to-l from-transparent to-accent/50"></div>
           </div>
+
+          {/* Main heading - refined, readable, elegant */}
+          <h1 className="text-5xl md:text-6xl font-bold font-mono text-slate-100 tracking-tight mb-4 leading-tight">
+            Welcome to <span className="bg-gradient-to-r from-purple-400 via-accent to-cyan-400 bg-clip-text text-transparent">Aura OS</span>
+          </h1>
+
+          {/* Subtitle with better spacing and hierarchy */}
+          <p className="text-lg text-slate-400 mt-6 max-w-2xl mx-auto leading-relaxed font-light">
+            Your operating system for conscious development. Choose from evidence-based practices, or generate a custom journey tailored to your goals.
+          </p>
         </header>
 
-        {/* Central icon with enhanced glow */}
-        <div className="animate-fade-in-up relative py-8" style={{ animationDelay: '200ms' }}>
-          {/* Icon glow halo */}
+        {/* Central icon with subtle glow */}
+        <div className="animate-fade-in-up relative py-8 mb-8" style={{ animationDelay: '100ms' }}>
+          {/* Subtle icon halo */}
           <div className="absolute inset-0 flex items-center justify-center -z-10">
-            <div className="w-64 h-64 bg-gradient-to-r from-purple-500/20 to-cyan-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s' }}></div>
+            <div className="w-48 h-48 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '6s' }}></div>
           </div>
 
-          {/* Icon with glow */}
-          <div className="relative drop-shadow-2xl">
-            <MerkabaIcon size={224} className="text-accent mx-auto filter drop-shadow-lg" style={{
-              filter: 'drop-shadow(0 0 30px rgba(34, 197, 233, 0.5)) drop-shadow(0 0 60px rgba(168, 85, 247, 0.3))'
+          {/* Icon */}
+          <div className="relative">
+            <MerkabaIcon size={180} className="text-accent mx-auto opacity-90" style={{
+              filter: 'drop-shadow(0 0 20px rgba(34, 197, 233, 0.3))'
             }} />
           </div>
         </div>
 
-        {/* Action buttons with enhanced styling */}
-        <div className="mt-16 flex flex-col sm:flex-row gap-6 animate-fade-in-up justify-center" style={{ animationDelay: '400ms' }}>
+        {/* Action buttons - refined styling */}
+        <div className="mt-12 flex flex-col sm:flex-row gap-4 animate-fade-in-up justify-center" style={{ animationDelay: '200ms' }}>
           {/* Primary action button */}
           <button
             onClick={openGuidedPracticeGenerator}
-            className="group relative btn-luminous font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 shadow-glow-sm hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 overflow-hidden"
+            className="group relative btn-luminous font-bold py-3 px-8 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-105 overflow-hidden"
             style={{
-              boxShadow: '0 0 30px rgba(168, 85, 247, 0.3), 0 0 60px rgba(34, 197, 233, 0.1)'
+              boxShadow: '0 0 20px rgba(168, 85, 247, 0.2), 0 0 40px rgba(34, 197, 233, 0.1)'
             }}
           >
-            {/* Animated background shine */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500"></div>
-            <Sparkles size={20} />
-            <span>Generate a Practice</span>
+            {/* Subtle shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+            <Sparkles size={18} />
+            <span>Generate Custom Practice</span>
           </button>
 
           {/* Secondary action button */}
           <button
             onClick={() => setActiveTab('browse')}
-            className="group relative card-glass bg-gradient-to-br from-slate-700/40 via-slate-800/30 to-slate-900/40 hover:from-slate-600/60 hover:to-slate-700/50 text-slate-100 font-bold py-4 px-8 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-105 shadow-card border border-accent/30 hover:border-accent/50 backdrop-blur-md"
+            className="group relative font-semibold py-3 px-8 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-105"
             style={{
-              boxShadow: '0 0 20px rgba(34, 197, 233, 0.15), inset 0 0 20px rgba(255, 255, 255, 0.05)'
+              background: 'rgba(51, 65, 85, 0.4)',
+              border: '1px solid rgba(34, 197, 233, 0.3)',
+              boxShadow: '0 0 15px rgba(34, 197, 233, 0.1), inset 0 0 15px rgba(255, 255, 255, 0.03)'
             }}
           >
-            {/* Animated border glow */}
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none" style={{
-              background: `radial-gradient(circle at 50% 50%, rgba(34, 197, 233, 0.1), transparent)`,
-              filter: 'blur(20px)'
+            {/* Subtle border glow on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg pointer-events-none" style={{
+              background: `radial-gradient(circle at 50% 50%, rgba(34, 197, 233, 0.08), transparent)`,
+              filter: 'blur(15px)'
             }}></div>
-            <Search size={20} />
-            <span>Browse Practices</span>
+            <Search size={18} />
+            <span>Browse All Practices</span>
           </button>
         </div>
 
-        {/* Bottom ambient text */}
-        <div className="mt-16 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
-          <p className="text-xs text-slate-500 tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity">
-            ✨ Powered by Integral Consciousness ✨
+        {/* Bottom text - signature */}
+        <div className="mt-16 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+          <p className="text-xs text-slate-500 tracking-widest uppercase opacity-50 hover:opacity-70 transition-opacity cursor-default">
+            Body • Mind • Spirit • Shadow
           </p>
         </div>
       </div>
