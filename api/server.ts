@@ -41,8 +41,12 @@ import {
 // Coach API handler (imported from serverless function)
 import coachHandler from './coach/generate-response';
 
-// Import insights/explain endpoint
+// Import insights endpoints
 import explainRouter from './insights/explain';
+import insightsStubRouter from './insights/stub-router';
+
+// Import user stub endpoints
+import userStubRouter from './user/stub-router';
 
 // ============================================
 // SERVER SETUP
@@ -320,10 +324,20 @@ coachRouter.post('/generate-response', async (req: Request, res: Response) => {
 app.use(`${API_BASE}/coach`, coachRouter);
 
 // ============================================
-// INSIGHTS EXPLAIN ENDPOINT (Transparency & Lineage)
+// INSIGHTS ENDPOINTS (Stub + Transparency)
 // ============================================
 
+// Mount stub router first for /generate and /patterns
+app.use(`${API_BASE}/insights`, insightsStubRouter);
+
+// Mount explain router for /explain/*
 app.use(`${API_BASE}/insights`, explainRouter);
+
+// ============================================
+// USER ENDPOINTS (Stub)
+// ============================================
+
+app.use(`${API_BASE}/user`, userStubRouter);
 
 // ============================================
 // HEALTH CHECK ENDPOINT
