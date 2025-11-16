@@ -119,11 +119,12 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
 
-    // Style the canvas to fill the container and prevent layout issues
+    // Style the canvas to absolutely fill the container (prevents layout overflow)
     renderer.domElement.style.display = 'block';
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.inset = '0';
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
-    renderer.domElement.style.position = 'relative';
 
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
@@ -494,7 +495,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       </div>
 
       {/* 3D Canvas Container */}
-      <div ref={containerRef} className="w-full h-96 rounded-lg overflow-hidden border border-slate-700 bg-slate-950" />
+      <div ref={containerRef} className="relative w-full h-96 rounded-lg overflow-hidden border border-slate-700 bg-slate-950" />
 
       {/* Selected Stage Details Panel */}
       {selectedStage && (() => {

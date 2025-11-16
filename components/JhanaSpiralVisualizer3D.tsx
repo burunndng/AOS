@@ -119,6 +119,14 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
     renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
+
+    // Style the canvas to absolutely fill the container (prevents layout overflow)
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.inset = '0';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
@@ -431,7 +439,7 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       </div>
 
       {/* 3D Canvas Container */}
-      <div ref={containerRef} className="w-full h-96 rounded-lg overflow-hidden border border-slate-700 bg-slate-950" />
+      <div ref={containerRef} className="relative w-full h-96 rounded-lg overflow-hidden border border-slate-700 bg-slate-950" />
 
       {/* Selected Jhana Details Panel */}
       {selectedJhana && (
