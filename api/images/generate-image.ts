@@ -93,21 +93,7 @@ async function generateWithImagen(prompt: string): Promise<GenerateImageResponse
   // For now, we'll use the Gemini API endpoint with image generation via Google Cloud
 
   try {
-    // First, let's try to use the google genai SDK directly
-    const { GoogleGenerativeAI } = await import('@google/genai');
-
-    const client = new GoogleGenerativeAI({
-      apiKey: apiKey,
-    });
-
-    // Try to use imagen-3.0-generate-001 model if available
-    // This requires proper setup in Google Cloud Console
-    const request = {
-      model: 'imagen-3.0-generate-001',
-      prompt: prompt,
-      number_of_images: 1,
-    };
-
+    // Using REST API directly without SDK (SDK doesn't export GoogleGenerativeAI properly)
     try {
       // Attempt to call the API
       const response = await fetch(
