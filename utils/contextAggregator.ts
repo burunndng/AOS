@@ -152,87 +152,103 @@ function extractPrimaryChallenges(
 /**
  * Analyze daily notes for sentiment and mood trends
  * Returns mood score, trend, and keywords for use in personalized recommendations
+ * Returns null if fewer than 3 notes available
  */
-async function analyzeDailyNotesSentiment(
+export async function analyzeDailyNotesSentiment(
   dailyNotes: Record<string, string>
 ): Promise<{
   averageMoodScore: number;
   moodTrend: 'improving' | 'declining' | 'stable' | 'variable';
   recentMoodKeywords: string[];
-}> {
-  if (!dailyNotes || Object.keys(dailyNotes).length === 0) {
-    return {
-      averageMoodScore: 0,
-      moodTrend: 'stable',
-      recentMoodKeywords: [],
-    };
+} | null> {
+  if (!dailyNotes) {
+    return null;
+  }
+
+  const recentNotes = Object.entries(dailyNotes)
+    .filter(([, text]) => typeof text === 'string' && text.trim().length > 0)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 14);
+
+  if (recentNotes.length < 3) {
+    return null;
   }
 
   const sentiments: number[] = [];
-  const allKeywords = new Map<string, number>();
-
-  // Analyze the last 7 notes for sentiment
-  const recentNotes = Object.entries(dailyNotes)
-    .sort((a, b) => (b[0] > a[0] ? 1 : -1))
-    .slice(0, 7);
+  const keywordFrequency = new Map<string, number>();
 
   for (const [_date, noteText] of recentNotes) {
     try {
-      const prompt = `Analyze the following daily note for emotional sentiment and extract up to 3 key mood-related keywords. Return a JSON object with:
+      const prompt = `You are analyzing a user's daily self-reflection note. Respond with a strict JSON object following this schema:
 {
-  "sentimentScore": number from -1.0 (very negative) to 1.0 (very positive),
-  "keywords": string[] of mood-related keywords (e.g., "stressed", "hopeful", "energized")
+  "score": number // -1.0 (very negative) to 1.0 (very positive)
+  "keywords": string[] // 1-3 concise mood descriptors
 }
 
-Daily note: "${noteText}"
+Daily note:
+"""
+${noteText}
+"""
 
-Return ONLY the JSON object.`;
+Return ONLY the JSON object. Do not add commentary.`;
 
       const response = await generateText(prompt);
       const parsed = JSON.parse(response);
 
-      sentiments.push(parsed.sentimentScore || 0);
+      const rawScore = typeof parsed.score === 'number' ? parsed.score : 0;
+      const clampedScore = Math.max(-1, Math.min(1, rawScore));
+      sentiments.push(clampedScore);
 
-      // Aggregate keywords
-      for (const keyword of parsed.keywords || []) {
-        allKeywords.set(keyword, (allKeywords.get(keyword) || 0) + 1);
+      const keywords = Array.isArray(parsed.keywords) ? parsed.keywords : [];
+      for (const keyword of keywords) {
+        if (typeof keyword === 'string') {
+          const normalized = keyword.trim();
+          if (normalized) {
+            keywordFrequency.set(normalized, (keywordFrequency.get(normalized) || 0) + 1);
+          }
+        }
       }
-    } catch (e) {
-      console.warn('Error analyzing note sentiment:', e);
+    } catch (error) {
+      console.warn('[SentimentAnalysis] Error analyzing note sentiment:', error);
       sentiments.push(0); // Neutral fallback
     }
   }
 
-  // Calculate average mood score
+  if (sentiments.length === 0) {
+    return null;
+  }
+
   const averageMoodScore =
-    sentiments.length > 0
-      ? sentiments.reduce((a, b) => a + b, 0) / sentiments.length
-      : 0;
+    sentiments.reduce((sum, score) => sum + score, 0) / sentiments.length;
 
-  // Determine mood trend by comparing recent (last 3) to older (previous 3-7)
   let moodTrend: 'improving' | 'declining' | 'stable' | 'variable' = 'stable';
-  if (sentiments.length >= 3) {
-    const recentAvg =
-      sentiments.slice(0, 3).reduce((a, b) => a + b, 0) / Math.min(3, sentiments.length);
-    const olderAvg =
-      sentiments.length > 3
-        ? sentiments.slice(3).reduce((a, b) => a + b, 0) / (sentiments.length - 3)
-        : recentAvg;
 
-    const difference = recentAvg - olderAvg;
-    if (difference > 0.2) {
-      moodTrend = 'improving';
-    } else if (difference < -0.2) {
-      moodTrend = 'declining';
-    } else if (Math.abs(difference) > 0.1) {
-      moodTrend = 'variable';
+  if (sentiments.length >= 3) {
+    const midpoint = Math.floor(sentiments.length / 2);
+    const recentHalf = sentiments.slice(0, midpoint);
+    const olderHalf = sentiments.slice(midpoint);
+
+    if (recentHalf.length > 0 && olderHalf.length > 0) {
+      const average = (values: number[]) =>
+        values.reduce((sum, value) => sum + value, 0) / values.length;
+
+      const recentAvg = average(recentHalf);
+      const olderAvg = average(olderHalf);
+      const delta = recentAvg - olderAvg;
+
+      if (delta > 0.15) {
+        moodTrend = 'improving';
+      } else if (delta < -0.15) {
+        moodTrend = 'declining';
+      } else {
+        const sentimentRange = Math.max(...sentiments) - Math.min(...sentiments);
+        moodTrend = sentimentRange >= 0.35 ? 'variable' : 'stable';
+      }
     }
   }
 
-  // Get top 3 keywords
-  const recentMoodKeywords = Array.from(allKeywords.entries())
+  const recentMoodKeywords = Array.from(keywordFrequency.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
     .map(([keyword]) => keyword);
 
   return {
@@ -396,12 +412,12 @@ export async function buildUserProfile(
     primaryFocusArea,
     developmentalStage,
     attachmentStyle,
-    sentimentSummary: {
+    sentimentSummary: sentimentAnalysis ? {
       averageMoodScore: sentimentAnalysis.averageMoodScore,
       moodTrend: sentimentAnalysis.moodTrend,
       recentMoodKeywords: sentimentAnalysis.recentMoodKeywords,
       lastAnalyzedDate: new Date().toISOString(),
-    },
+    } : undefined,
   };
 }
 
