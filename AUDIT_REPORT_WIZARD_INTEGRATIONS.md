@@ -800,20 +800,48 @@ These wizards save sessions but **do NOT generate IntegratedInsights**, missing 
 
 These wizards are implemented but have **NO save handlers** in App.tsx, resulting in **lost user work**.
 
-#### 4.1 **Meditation Wizard** ❌ CRITICAL - NO SAVE HANDLER
+#### 4.1 **Meditation Wizard** ❌ CRITICAL - NOT INTEGRATED INTO SAVE FLOW
 
 **File:** `/home/user/AOS/components/MeditationWizard.tsx`
-**Render Location:** Not found in `renderActiveWizard` switch statement
+**Render Location:** App.tsx line 1510 (case 'meditation')
 
 **Issue:**
+- ✅ Component EXISTS
+- ❌ Not passed `onSave` prop
+- ❌ No draft state management (`draftMeditation`, `setDraftMeditation`)
 - ❌ No `handleSaveMeditationSession` function in App.tsx
-- ❌ Sessions are not persisted anywhere
+- ❌ Sessions are not persisted
 - ❌ No IntegratedInsights generated
 - ❌ User work is lost when navigating away
 
+**Current Rendering (Line 1510-1515):**
+```typescript
+case 'meditation':
+  return (
+    <MeditationWizard
+      onClose={() => navigateBack()}
+    />
+  );
+```
+
+**Needed Integration Pattern:**
+```typescript
+case 'meditation':
+  return (
+    <MeditationWizard
+      onClose={() => navigateBack()}
+      onSave={handleSaveMeditationSession}      // ✨ MISSING
+      session={draftMeditation}                 // ✨ MISSING
+      setDraft={setDraftMeditation}             // ✨ MISSING
+    />
+  );
+```
+
 **Data Flow (Broken):**
 ```
-MeditationWizard (type, duration, guidance)
+MeditationWizard (practice type, duration, findings)
+  ↓
+onClose() → navigateBack() only
   ↓
 ❌ NO SAVE HANDLER
   ↓
@@ -828,7 +856,7 @@ Lost data when user navigates away
 - Users cannot track meditation practice progress
 - No insight generation for meditation patterns
 - No cross-wizard intelligence about meditation engagement
-- **Critical Recommendation:** Implement save handler immediately
+- **Critical Recommendation:** Integrate into save flow (similar to other wizards)
 
 ---
 

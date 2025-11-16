@@ -51,13 +51,15 @@ Data saved but NO IntegratedInsights generated:
 
 ---
 
-## Missing Save Handlers (3) ❌ CRITICAL
+## Missing Save Integration (3) ❌ CRITICAL
 
-Data is NOT persisted - user work is LOST:
+Components EXIST but NOT integrated into save/persistence flow:
 
-1. **Meditation Wizard** - No handler found
-2. **Role Alignment Wizard** - No handler found
-3. **Insight Practice Map Wizard** - No handler found
+1. **Meditation Wizard** - Rendered (line 1510) but no onSave prop or draft state
+2. **Role Alignment Wizard** - Rendered (line 1522) but no onSave prop or draft state
+3. **Insight Practice Map Wizard** - Rendered (line 1589) but no onSave prop or draft state
+
+**Result:** User work is NOT persisted - data is LOST when users navigate away
 
 ---
 
