@@ -378,6 +378,8 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
       }
       setIsAnalyzingPartProfile(false);
       setPhaseSuggestion(null);
+      setSummaryData(null);
+      setError(null);
     } else {
       const newSessionId = `ifs-${Date.now()}`;
       const initialSession: IFSSession = {
@@ -395,6 +397,12 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
       setIsPartProfileAnalyzed(false);
       setIsAnalyzingPartProfile(false);
       setPhaseSuggestion(null);
+      setSummaryData(null);
+      setUserSpeechInput('');
+      setError(null);
+      setConnectionState('idle');
+      setRagSyncing(false);
+      setIsPlaying(false);
     }
   }, [draft, insightContext]);
 
@@ -725,6 +733,22 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
     // FIX: Use setIsPlaying hook to update isPlaying state
     setIsPlaying(false);
   };
+
+  const handleClose = (draftSession: IFSSession | null) => {
+    // Stop audio first before closing
+    if (connectionState !== 'idle') {
+      stopMicrophone();
+    }
+    onClose(draftSession);
+  };
+
+  const handleCloseAndSave = (finalSession: IFSSession) => {
+    // Stop audio first before saving and closing
+    if (connectionState !== 'idle') {
+      stopMicrophone();
+    }
+    handleSaveAndClose(finalSession);
+  };
   
   const getPartInfo = async () => {
       if (!session || isAnalyzingPartProfile) return;
@@ -818,7 +842,7 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
             </h2>
             <p className="text-xs text-slate-400 mt-1">Phase: {currentPhase.replace('_', ' ')}</p>
           </div>
-          <button onClick={() => onClose(session)} className="text-slate-500 hover:text-slate-300">
+          <button onClick={() => handleClose(session)} className="text-slate-500 hover:text-slate-300">
             <X size={24} />
           </button>
         </header>
@@ -942,7 +966,7 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
               </div>
             </div>
           )}
-          <button onClick={() => onClose(session)} className="text-sm text-slate-400 hover:text-white transition" disabled={isSaving}>
+          <button onClick={() => handleClose(session)} className="text-sm text-slate-400 hover:text-white transition" disabled={isSaving || connectionState !== 'idle'}>
             Save Draft & Exit
           </button>
           <div className="flex gap-3">
@@ -952,7 +976,7 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
                  </button>
             )}
             {currentPhase === 'CLOSING' && summaryData && (
-                <button onClick={() => session && handleSaveAndClose(session)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium flex items-center gap-2 transition" disabled={isSaving}>
+                <button onClick={() => session && handleCloseAndSave(session)} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium flex items-center gap-2 transition" disabled={isSaving}>
                     <Save size={16} /> Finish Session
                 </button>
             )}
