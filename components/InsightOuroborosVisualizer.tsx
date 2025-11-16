@@ -494,37 +494,46 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
         <p className="text-sm text-slate-400">The 16 stages of insight meditation in a sacred cycle. Click on any stage to explore.</p>
       </div>
 
-      {/* 3D Canvas Container */}
-      <div ref={containerRef} className="relative w-full h-96 rounded-lg overflow-hidden border border-slate-700 bg-slate-950" />
+      {/* Main Content: Canvas and Info Panel Side-by-Side */}
+      <div className="flex md:flex-row flex-col gap-6">
+        {/* Canvas Column */}
+        <div ref={containerRef} className="relative w-full md:w-2/3 h-96 md:h-[500px] rounded-lg overflow-hidden border border-slate-700 bg-slate-950" />
 
-      {/* Selected Stage Details Panel */}
-      {selectedStage && (() => {
-        const stage = INSIGHT_STAGES.find((s) => s.number === selectedStage);
-        return stage ? (
-          <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-2 border-slate-700 rounded-2xl p-8 animate-fade-in">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div
-                    className="inline-block w-4 h-4 rounded-full mb-3"
-                    style={{ backgroundColor: `#${PHASE_COLORS[stage.phase].toString(16).padStart(6, '0')}` }}
-                  />
-                  <h4 className="text-2xl font-bold text-slate-100">Stage {stage.number}: {stage.name}</h4>
-                  <p className="text-sm text-slate-400 mt-1">{stage.phase}</p>
+        {/* Info Panel Column */}
+        {selectedStage ? (
+          (() => {
+            const stage = INSIGHT_STAGES.find((s) => s.number === selectedStage);
+            return stage ? (
+              <div className="w-full md:w-1/3 bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-2 border-slate-700 rounded-2xl p-8 animate-fade-in">
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div
+                        className="inline-block w-4 h-4 rounded-full mb-3"
+                        style={{ backgroundColor: `#${PHASE_COLORS[stage.phase].toString(16).padStart(6, '0')}` }}
+                      />
+                      <h4 className="text-2xl font-bold text-slate-100">Stage {stage.number}: {stage.name}</h4>
+                      <p className="text-sm text-slate-400 mt-1">{stage.phase}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-slate-300 leading-relaxed">
+                    Click on other stages around the ouroboros to explore the journey of insight meditation. Each stage represents a distinct phase in the practitioner's unfolding awareness.
+                  </p>
+
+                  <p className="text-sm text-slate-400 italic border-l-2 border-accent/50 pl-4">
+                    The ouroboros symbolizes the cyclic nature of practice: stages spiral back, wisdom deepens, and the journey continues eternally.
+                  </p>
                 </div>
               </div>
-
-              <p className="text-slate-300 leading-relaxed">
-                Click on other stages around the ouroboros to explore the journey of insight meditation. Each stage represents a distinct phase in the practitioner's unfolding awareness.
-              </p>
-
-              <p className="text-sm text-slate-400 italic border-l-2 border-accent/50 pl-4">
-                The ouroboros symbolizes the cyclic nature of practice: stages spiral back, wisdom deepens, and the journey continues eternally.
-              </p>
-            </div>
+            ) : null;
+          })()
+        ) : (
+          <div className="w-full md:w-1/3 flex items-center justify-center text-slate-500 text-center p-8 border-2 border-dashed border-slate-700 rounded-2xl">
+            <p>Click on a stage in the Ouroboros to view its details.</p>
           </div>
-        ) : null;
-      })()}
+        )}
+      </div>
 
       {/* Phase Legend */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
