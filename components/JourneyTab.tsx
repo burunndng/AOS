@@ -48,6 +48,19 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
     });
   }, [selectedRegion, selectedCardIndex]);
 
+  useEffect(() => {
+    // Keyboard navigation
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && selectedCardIndex > 0) {
+        setSelectedCardIndex(selectedCardIndex - 1);
+      } else if (e.key === 'ArrowRight' && currentRegion && selectedCardIndex < currentRegion.cards.length - 1) {
+        setSelectedCardIndex(selectedCardIndex + 1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [selectedCardIndex, currentRegion]);
+
   const handleCardComplete = () => {
     if (currentCard && !journeyProgress.completedCards.includes(currentCard.id)) {
       const newCompleted = [...journeyProgress.completedCards, currentCard.id];
@@ -248,6 +261,26 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
             </div>
           </div>
 
+          {/* Card Progress Dots */}
+          {currentRegion && currentRegion.cards.length > 1 && (
+            <div className="flex items-center justify-center gap-2 mb-6">
+              {currentRegion.cards.map((card, idx) => (
+                <button
+                  key={card.id}
+                  onClick={() => setSelectedCardIndex(idx)}
+                  className={`h-2 rounded-full transition-all ${
+                    idx === selectedCardIndex
+                      ? 'w-8 bg-accent'
+                      : journeyProgress.completedCards.includes(card.id)
+                      ? 'w-2 bg-green-500/60'
+                      : 'w-2 bg-slate-600'
+                  }`}
+                  title={`${card.title}${journeyProgress.completedCards.includes(card.id) ? ' (completed)' : ''}`}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Learning Card */}
           {currentCard && (
             <div key={currentCard.id} className="animate-fadeIn">
@@ -269,8 +302,28 @@ export default function JourneyTab({ journeyProgress, updateJourneyProgress }: J
               <ChevronLeft size={18} /> Previous Region
             </button>
 
-            <div className="text-slate-400">
-              Card {selectedCardIndex + 1} of {currentRegion.cards.length}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSelectedCardIndex(Math.max(0, selectedCardIndex - 1))}
+                disabled={selectedCardIndex === 0}
+                className="p-2 hover:bg-accent/10 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed text-slate-400 hover:text-accent"
+                title="Previous card"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div className="text-center px-4 py-2 bg-accent/10 border border-accent/30 rounded-lg">
+                <span className="text-accent font-semibold">{selectedCardIndex + 1}</span>
+                <span className="text-slate-500 mx-1">/</span>
+                <span className="text-slate-400">{currentRegion.cards.length}</span>
+              </div>
+              <button
+                onClick={() => setSelectedCardIndex(Math.min(currentRegion.cards.length - 1, selectedCardIndex + 1))}
+                disabled={selectedCardIndex === currentRegion.cards.length - 1}
+                className="p-2 hover:bg-accent/10 rounded-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed text-slate-400 hover:text-accent"
+                title="Next card"
+              >
+                <ChevronRight size={20} />
+              </button>
             </div>
 
             {selectedCardIndex < currentRegion.cards.length - 1 ? (
