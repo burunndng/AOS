@@ -227,7 +227,6 @@ export {
   calculateConfidenceFromDataVolume,
   detectConfidenceLanguage,
   validateConfidence,
-  determineTone,
 } from './confidenceValidator';
 
-export { shiftTone, buildToneInstructions, type ToneType } from './tonalShifter';
+export { shiftTone, buildToneInstructions, determineTone, type ToneType } from './tonalShifter';
