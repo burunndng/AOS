@@ -144,6 +144,25 @@ interface GeometricResonanceGameProps {
 
 type GameMode = 'resonance-duel' | 'mandala-architect' | 'menu';
 
+interface MandalaElement {
+  id: string;
+  type: 'tetrahedron' | 'cube' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'sphere';
+  color: number;
+  scale: number;
+  rotationSpeed: number;
+  addedBy: 'player' | 'oracle';
+  timestamp: number;
+}
+
+const mandalaShapeSuggestions = [
+  { type: 'tetrahedron', name: 'Tetrahedron', description: 'Foundation & balance', color: 0xff00ff },
+  { type: 'cube', name: 'Cube', description: 'Stability & structure', color: 0x00ffff },
+  { type: 'octahedron', name: 'Octahedron', description: 'Harmony & symmetry', color: 0xffaa00 },
+  { type: 'icosahedron', name: 'Icosahedron', description: 'Completeness & wholeness', color: 0x00ff00 },
+  { type: 'dodecahedron', name: 'Dodecahedron', description: 'Unity & cosmos', color: 0xff0099 },
+  { type: 'sphere', name: 'Sphere', description: 'Infinity & wholeness', color: 0xffff00 },
+];
+
 const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   isOpen,
   onClose,
@@ -187,6 +206,13 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const [hasCrystallineCavern, setHasCrystallineCavern] = useState(false);
   const [showCavernNotification, setShowCavernNotification] = useState(false);
   const cavernNotificationShownRef = useRef(false);
+
+  // Mandala Architect mode state
+  const [mandalaElements, setMandalaElements] = useState<MandalaElement[]>([]);
+  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  const [oracleSuggestion, setOracleSuggestion] = useState<string>('');
+  const mandalaGroupRef = useRef<THREE.Group | null>(null);
+  const mandalaShapesRef = useRef<Map<string, THREE.Group>>(new Map());
   const cameraStartPosRef = useRef<THREE.Vector3 | null>(null);
   const shakeActiveRef = useRef(false);
   const gravityWellActiveRef = useRef(false);
@@ -658,6 +684,22 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
 
           // Update oracle shape color based on resonance
           updateShapeColors(oracleShapeRef.current, resonanceLevel);
+        }
+
+        // Mandala Architect mode - update element rotations
+        if (gameMode === 'mandala-architect' && mandalaGroupRef.current) {
+          // Rotate the entire mandala group slowly
+          mandalaGroupRef.current.rotation.z += 0.0005 * timeScaleRef.current;
+
+          // Rotate each element individually
+          mandalaShapesRef.current.forEach((elementGroup) => {
+            const children = elementGroup.children;
+            children.forEach((child) => {
+              child.rotation.x += 0.002 * timeScaleRef.current;
+              child.rotation.y += 0.003 * timeScaleRef.current;
+              child.rotation.z += 0.001 * timeScaleRef.current;
+            });
+          });
         }
 
         // Update symmetry lines
@@ -1282,6 +1324,151 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     setOracleScore(0);
     setGameTime(60);
     setResonanceLevel(0);
+    setMandalaElements([]);
+    mandalaShapesRef.current.clear();
+    if (mandalaGroupRef.current && sceneRef.current) {
+      sceneRef.current.remove(mandalaGroupRef.current);
+      mandalaGroupRef.current = null;
+    }
+  };
+
+  // Generate Oracle suggestion based on current mandala state
+  const generateOracleSuggestion = () => {
+    const suggestions = [
+      "I sense a need for balance. Add the Tetrahedron.",
+      "The structure seeks stability. Consider the Cube.",
+      "Harmony calls. The Octahedron completes the pattern.",
+      "Wholeness approaches. The Icosahedron awakens.",
+      "Unity resonates through the Dodecahedron.",
+      "Infinity flows. Add the Sphere of eternity.",
+      "Your creation speaks of order. Let harmony guide the next step.",
+      "The geometry aligns. What complements this beauty?",
+    ];
+    return suggestions[Math.floor(Math.random() * suggestions.length)];
+  };
+
+  // Add element to mandala
+  const addMandalaElement = (type: string, addedBy: 'player' | 'oracle') => {
+    if (!sceneRef.current) return;
+
+    const suggestion = mandalaShapeSuggestions.find(s => s.type === type);
+    if (!suggestion) return;
+
+    const element: MandalaElement = {
+      id: `${type}-${Date.now()}`,
+      type: type as any,
+      color: suggestion.color,
+      scale: 0.5 + Math.random() * 0.3,
+      rotationSpeed: 0.002 + Math.random() * 0.003,
+      addedBy,
+      timestamp: Date.now()
+    };
+
+    setMandalaElements(prev => [...prev, element]);
+
+    // Initialize mandala group if not exists
+    if (!mandalaGroupRef.current) {
+      mandalaGroupRef.current = new THREE.Group();
+      mandalaGroupRef.current.position.z = -5;
+      sceneRef.current.add(mandalaGroupRef.current);
+    }
+
+    // Create shape mesh
+    const shapeGeometry = (() => {
+      switch (type) {
+        case 'tetrahedron': return new THREE.TetrahedronGeometry(0.4, 2);
+        case 'cube': return new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        case 'octahedron': return new THREE.OctahedronGeometry(0.4, 2);
+        case 'icosahedron': return new THREE.IcosahedronGeometry(0.4, 2);
+        case 'dodecahedron': return new THREE.DodecahedronGeometry(0.4, 0);
+        case 'sphere': return new THREE.SphereGeometry(0.4, 16, 16);
+        default: return new THREE.BoxGeometry(0.5, 0.5, 0.5);
+      }
+    })();
+
+    // Create wireframe
+    const wireframeGeometry = new THREE.EdgesGeometry(shapeGeometry);
+    const wireframeMaterial = new THREE.LineBasicMaterial({
+      color: suggestion.color,
+      linewidth: 1,
+      transparent: true,
+      opacity: 0.8,
+    });
+    const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+
+    // Create solid mesh
+    const material = new THREE.MeshPhysicalMaterial({
+      color: suggestion.color,
+      emissive: suggestion.color,
+      emissiveIntensity: 0.3,
+      transparent: true,
+      opacity: 0.15,
+      wireframe: false,
+      side: THREE.DoubleSide,
+      roughness: 0.3,
+      metalness: 0.6,
+    });
+    const mesh = new THREE.Mesh(shapeGeometry, material);
+
+    // Create group for this element with rotational symmetry
+    const elementGroup = new THREE.Group();
+    const centerGroup = new THREE.Group();
+    centerGroup.add(wireframe);
+    centerGroup.add(mesh);
+
+    // Position in a circular pattern based on element count
+    const elementCount = mandalaElements.length;
+    const angle = (elementCount * 60) * Math.PI / 180; // 60 degrees per element for 6-fold symmetry
+    const radius = 2 + elementCount * 0.3;
+
+    centerGroup.position.x = Math.cos(angle) * radius;
+    centerGroup.position.y = Math.sin(angle) * radius;
+
+    elementGroup.add(centerGroup);
+    mandalaGroupRef.current.add(elementGroup);
+
+    // Store reference
+    mandalaShapesRef.current.set(element.id, elementGroup);
+
+    // Play sound effect
+    if (isSoundEnabled) {
+      playMandalaSound(suggestion.color);
+    }
+
+    // Generate next suggestion and toggle turn
+    setOracleSuggestion(generateOracleSuggestion());
+    setIsPlayerTurn(!isPlayerTurn);
+  };
+
+  // Play harmonic sound for mandala creation
+  const playMandalaSound = (color: number) => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const now = audioContext.currentTime;
+
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      // Map color to frequency
+      const hue = color.toString(16).padStart(6, '0');
+      const colorValue = parseInt(hue, 16) % 12;
+      const frequencies = [432, 486, 540, 594, 648, 720, 810, 864, 972, 1080, 1200, 1296];
+      const frequency = frequencies[colorValue];
+
+      osc.frequency.setValueAtTime(frequency, now);
+      osc.type = 'sine';
+
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.5);
+    } catch (e) {
+      // Audio not available
+    }
   };
 
   if (!isOpen) return null;
@@ -1513,10 +1700,69 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
                 )}
 
                 {gameMode === 'mandala-architect' && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-w-md">
                     <h2 className="text-2xl font-bold text-cyan-200 font-mono">Mandala Architect</h2>
-                    <p className="text-cyan-300/70 text-sm">Collaborate with the Oracle to create sacred patterns...</p>
-                    <p className="text-cyan-400 text-xs font-mono uppercase mt-4">Coming soon - Meditative creativity</p>
+
+                    {/* Elements created counter */}
+                    <div className="text-center py-2 bg-purple-900/30 rounded-lg border border-cyan-500/30">
+                      <p className="text-cyan-300 text-sm font-mono">Elements Added</p>
+                      <p className="text-3xl font-bold text-cyan-400">{mandalaElements.length}</p>
+                    </div>
+
+                    {/* Oracle suggestion */}
+                    <div className="bg-indigo-900/40 border border-indigo-500/30 rounded-lg p-3 text-indigo-200 text-sm italic">
+                      <p className="text-indigo-400 text-xs uppercase font-mono mb-2">Oracle Says</p>
+                      {oracleSuggestion || "Begin your creation. Which shape calls to you?"}
+                    </div>
+
+                    {/* Turn indicator */}
+                    <div className="text-xs text-purple-400 text-center py-1">
+                      {isPlayerTurn ? "✨ Your turn - Choose an element ✨" : "⟳ Oracle is contemplating..."}
+                    </div>
+
+                    {/* Shape selection buttons */}
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {mandalaShapeSuggestions.map((shape) => (
+                        <button
+                          key={shape.type}
+                          onClick={() => {
+                            addMandalaElement(shape.type, 'player');
+                          }}
+                          disabled={!isPlayerTurn}
+                          className={`w-full p-2 rounded-lg text-sm font-mono transition-all flex items-center justify-between ${
+                            isPlayerTurn
+                              ? 'bg-cyan-900/40 hover:bg-cyan-800/60 border border-cyan-500/30 text-cyan-200 cursor-pointer'
+                              : 'bg-gray-900/40 border border-gray-600/30 text-gray-400 cursor-not-allowed opacity-50'
+                          }`}
+                          style={
+                            isPlayerTurn
+                              ? {
+                                  boxShadow: `0 0 20px rgba(${Math.floor((shape.color >> 16) & 255)}, ${Math.floor((shape.color >> 8) & 255)}, ${Math.floor(shape.color & 255)}, 0.3)`,
+                                }
+                              : {}
+                          }
+                        >
+                          <div>
+                            <span className="block text-left">{shape.name}</span>
+                            <span className="text-xs text-cyan-300/60 block text-left">{shape.description}</span>
+                          </div>
+                          <span className="text-lg">✦</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Also add Oracle's random choice */}
+                    {!isPlayerTurn && (
+                      <button
+                        onClick={() => {
+                          const randomShape = mandalaShapeSuggestions[Math.floor(Math.random() * mandalaShapeSuggestions.length)];
+                          addMandalaElement(randomShape.type, 'oracle');
+                        }}
+                        className="w-full p-3 rounded-lg text-indigo-200 font-mono transition-all bg-indigo-900/40 hover:bg-indigo-800/60 border border-indigo-500/30 text-sm"
+                      >
+                        ⟳ Oracle Adds Element
+                      </button>
+                    )}
                   </div>
                 )}
 
