@@ -1627,16 +1627,16 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
           </button>
         </div>
 
-        {/* Right-Side: Game Content Panel */}
-        <div className="absolute right-8 top-1/2 transform -translate-y-1/2 z-20">
-          {gameMode === 'menu' ? (
-            <div className="text-center space-y-6 w-96">
+        {/* Game UI - Positioned in corners */}
+        {gameMode === 'menu' ? (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-center space-y-6 pointer-events-auto">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold text-purple-200 font-mono">Choose Your Path</h2>
                 <p className="text-purple-300/70 text-sm">Experience the harmony of sacred geometry</p>
               </div>
 
-              <div className="space-y-4 pointer-events-auto">
+              <div className="space-y-4">
                 <button
                   onClick={startResonanceDuel}
                   className="group relative px-8 py-4 rounded-lg bg-gradient-to-r from-purple-600/40 to-pink-600/40 hover:from-purple-600/60 hover:to-pink-600/60 border border-purple-500/50 transition-all"
@@ -1664,133 +1664,151 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="space-y-4 text-center w-96">
-              <div className="bg-black/40 border border-purple-500/30 rounded-2xl p-6 backdrop-blur pointer-events-auto max-h-[70vh] overflow-y-auto">
-                {gameMode === 'resonance-duel' && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-purple-200 font-mono">Resonance Duel</h2>
+          </div>
+        ) : gameMode === 'resonance-duel' ? (
+          // RESONANCE DUEL - Compact corner UI
+          <div className="absolute bottom-8 right-8 z-20 pointer-events-auto">
+            <div className="bg-black/60 border border-purple-500/30 rounded-xl p-4 backdrop-blur space-y-3 w-64">
+              <h3 className="text-sm font-bold text-purple-200 font-mono">Resonance Duel</h3>
 
-                    <div className="flex justify-around items-center">
-                      <div className="text-left">
-                        <p className="text-purple-400 text-xs font-mono uppercase">You</p>
-                        <p className="text-3xl font-bold text-pink-300">{score}</p>
-                      </div>
-
-                      <div className="flex flex-col items-center">
-                        <p className="text-purple-400 text-xs font-mono uppercase">Resonance</p>
-                        <div className="w-24 h-2 bg-purple-900/50 rounded-full border border-purple-600/50 overflow-hidden mt-2">
-                          <div
-                            className="h-full bg-gradient-to-r from-pink-500 to-cyan-500 transition-all duration-100"
-                            style={{ width: `${resonanceLevel * 100}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-purple-400 mt-2">{Math.floor(resonanceLevel * 100)}%</p>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-cyan-400 text-xs font-mono uppercase">Oracle</p>
-                        <p className="text-3xl font-bold text-cyan-300">{oracleScore}</p>
-                      </div>
-                    </div>
-
-                    <div className="border-t border-purple-500/30 pt-4 mt-4">
-                      <p className="text-purple-400 text-xs font-mono uppercase">Time Remaining</p>
-                      <p className="text-2xl font-bold text-yellow-300">{gameTime}s</p>
-                    </div>
+              {/* Score row */}
+              <div className="flex justify-between items-center text-sm">
+                <div>
+                  <p className="text-purple-400 text-xs uppercase">You</p>
+                  <p className="text-2xl font-bold text-pink-300">{score}</p>
+                </div>
+                <div className="text-center flex-1">
+                  <p className="text-purple-400 text-xs uppercase">Resonance</p>
+                  <div className="w-16 h-1 bg-purple-900/50 rounded-full border border-purple-600/50 overflow-hidden mt-1">
+                    <div
+                      className="h-full bg-gradient-to-r from-pink-500 to-cyan-500 transition-all duration-100"
+                      style={{ width: `${resonanceLevel * 100}%` }}
+                    />
                   </div>
-                )}
-
-                {gameMode === 'mandala-architect' && (
-                  <div className="space-y-4">
-                    <h2 className="text-2xl font-bold text-cyan-200 font-mono">Mandala Architect</h2>
-
-                    {/* Elements created counter */}
-                    <div className="text-center py-2 bg-purple-900/30 rounded-lg border border-cyan-500/30">
-                      <p className="text-cyan-300 text-sm font-mono">Elements Added</p>
-                      <p className="text-3xl font-bold text-cyan-400">{mandalaElements.length}</p>
-                    </div>
-
-                    {/* Oracle suggestion */}
-                    <div className="bg-indigo-900/40 border border-indigo-500/30 rounded-lg p-3 text-indigo-200 text-sm italic">
-                      <p className="text-indigo-400 text-xs uppercase font-mono mb-2">Oracle Says</p>
-                      {oracleSuggestion || "Begin your creation. Which shape calls to you?"}
-                    </div>
-
-                    {/* Turn indicator */}
-                    <div className="text-xs text-purple-400 text-center py-1">
-                      {isPlayerTurn ? "✨ Your turn - Choose an element ✨" : "⟳ Oracle is contemplating..."}
-                    </div>
-
-                    {/* Shape selection buttons */}
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {mandalaShapeSuggestions.map((shape) => (
-                        <button
-                          key={shape.type}
-                          onClick={() => {
-                            addMandalaElement(shape.type, 'player');
-                          }}
-                          disabled={!isPlayerTurn}
-                          className={`w-full p-2 rounded-lg text-sm font-mono transition-all flex items-center justify-between ${
-                            isPlayerTurn
-                              ? 'bg-cyan-900/40 hover:bg-cyan-800/60 border border-cyan-500/30 text-cyan-200 cursor-pointer'
-                              : 'bg-gray-900/40 border border-gray-600/30 text-gray-400 cursor-not-allowed opacity-50'
-                          }`}
-                          style={
-                            isPlayerTurn
-                              ? {
-                                  boxShadow: `0 0 20px rgba(${Math.floor((shape.color >> 16) & 255)}, ${Math.floor((shape.color >> 8) & 255)}, ${Math.floor(shape.color & 255)}, 0.3)`,
-                                }
-                              : {}
-                          }
-                        >
-                          <div>
-                            <span className="block text-left">{shape.name}</span>
-                            <span className="text-xs text-cyan-300/60 block text-left">{shape.description}</span>
-                          </div>
-                          <span className="text-lg">✦</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Also add Oracle's random choice */}
-                    {!isPlayerTurn && (
-                      <button
-                        onClick={() => {
-                          const randomShape = mandalaShapeSuggestions[Math.floor(Math.random() * mandalaShapeSuggestions.length)];
-                          addMandalaElement(randomShape.type, 'oracle');
-                        }}
-                        className="w-full p-3 rounded-lg text-indigo-200 font-mono transition-all bg-indigo-900/40 hover:bg-indigo-800/60 border border-indigo-500/30 text-sm"
-                      >
-                        ⟳ Oracle Adds Element
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <button
-                  onClick={resetGame}
-                  className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-2 bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/30 rounded-lg text-purple-200 text-sm font-mono transition-all pointer-events-auto"
-                >
-                  <RotateCw size={16} />
-                  Back to Menu
-                </button>
+                  <p className="text-xs text-purple-400 mt-1">{Math.floor(resonanceLevel * 100)}%</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-cyan-400 text-xs uppercase">Oracle</p>
+                  <p className="text-2xl font-bold text-cyan-300">{oracleScore}</p>
+                </div>
               </div>
 
-              <button
-                onClick={() => setIsSoundEnabled(!isSoundEnabled)}
-                className="pointer-events-auto mx-auto bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-full p-3 transition-all"
-                aria-label="Toggle sound"
-              >
-                {isSoundEnabled ? (
-                  <Volume2 className="text-purple-200" size={20} />
-                ) : (
-                  <VolumeX className="text-purple-200" size={20} />
-                )}
-              </button>
+              {/* Time */}
+              <div className="border-t border-purple-500/30 pt-3">
+                <p className="text-purple-400 text-xs uppercase">Time</p>
+                <p className="text-xl font-bold text-yellow-300">{gameTime}s</p>
+              </div>
+
+              {/* Controls */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={resetGame}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/30 rounded text-purple-200 text-xs font-mono transition-all"
+                >
+                  <RotateCw size={14} />
+                  Menu
+                </button>
+                <button
+                  onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+                  className="px-3 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-full transition-all"
+                  aria-label="Toggle sound"
+                >
+                  {isSoundEnabled ? (
+                    <Volume2 className="text-purple-200" size={16} />
+                  ) : (
+                    <VolumeX className="text-purple-200" size={16} />
+                  )}
+                </button>
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          // MANDALA ARCHITECT - Right sidebar with shape buttons
+          <div className="absolute bottom-8 right-8 z-20 pointer-events-auto max-h-[75vh] flex flex-col">
+            <div className="bg-black/60 border border-cyan-500/30 rounded-xl p-4 backdrop-blur space-y-3 overflow-y-auto" style={{ maxWidth: '280px' }}>
+              <h3 className="text-sm font-bold text-cyan-200 font-mono sticky top-0 bg-black/60">Mandala Architect</h3>
+
+              {/* Elements counter */}
+              <div className="text-center py-2 bg-purple-900/30 rounded border border-cyan-500/30">
+                <p className="text-cyan-300 text-xs font-mono">Elements</p>
+                <p className="text-xl font-bold text-cyan-400">{mandalaElements.length}</p>
+              </div>
+
+              {/* Oracle suggestion - compact */}
+              <div className="bg-indigo-900/40 border border-indigo-500/30 rounded p-2 text-indigo-200 text-xs italic max-h-16 overflow-y-auto">
+                {oracleSuggestion || "Choose a shape..."}
+              </div>
+
+              {/* Turn indicator */}
+              <div className="text-xs text-purple-400 text-center py-1">
+                {isPlayerTurn ? "✨ Your turn ✨" : "⟳ Oracle..."}
+              </div>
+
+              {/* Shape buttons - scrollable */}
+              <div className="space-y-1 max-h-56 overflow-y-auto">
+                {mandalaShapeSuggestions.map((shape) => (
+                  <button
+                    key={shape.type}
+                    onClick={() => {
+                      addMandalaElement(shape.type, 'player');
+                    }}
+                    disabled={!isPlayerTurn}
+                    className={`w-full p-2 rounded text-xs font-mono transition-all ${
+                      isPlayerTurn
+                        ? 'bg-cyan-900/40 hover:bg-cyan-800/60 border border-cyan-500/30 text-cyan-200 cursor-pointer'
+                        : 'bg-gray-900/40 border border-gray-600/30 text-gray-400 cursor-not-allowed opacity-50'
+                    }`}
+                    style={
+                      isPlayerTurn
+                        ? {
+                            boxShadow: `0 0 12px rgba(${Math.floor((shape.color >> 16) & 255)}, ${Math.floor((shape.color >> 8) & 255)}, ${Math.floor(shape.color & 255)}, 0.25)`,
+                          }
+                        : {}
+                    }
+                    title={shape.description}
+                  >
+                    <span className="text-xs">{shape.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Oracle button */}
+              {!isPlayerTurn && (
+                <button
+                  onClick={() => {
+                    const randomShape = mandalaShapeSuggestions[Math.floor(Math.random() * mandalaShapeSuggestions.length)];
+                    addMandalaElement(randomShape.type, 'oracle');
+                  }}
+                  className="w-full p-2 rounded text-indigo-200 font-mono transition-all bg-indigo-900/40 hover:bg-indigo-800/60 border border-indigo-500/30 text-xs"
+                >
+                  ⟳ Oracle Adds
+                </button>
+              )}
+
+              {/* Bottom controls */}
+              <div className="flex gap-2 pt-2 border-t border-purple-500/30">
+                <button
+                  onClick={resetGame}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/30 rounded text-purple-200 text-xs font-mono transition-all"
+                >
+                  <RotateCw size={14} />
+                  Menu
+                </button>
+                <button
+                  onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+                  className="px-3 py-2 bg-purple-900/40 hover:bg-purple-800/60 border border-purple-500/30 rounded-full transition-all"
+                  aria-label="Toggle sound"
+                >
+                  {isSoundEnabled ? (
+                    <Volume2 className="text-purple-200" size={16} />
+                  ) : (
+                    <VolumeX className="text-purple-200" size={16} />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Bottom-Left: Footer Instructions */}
         <div className="absolute bottom-8 left-8 text-purple-400/60 text-xs font-mono max-w-md">
