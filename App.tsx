@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react';
 // Core Components (always loaded)
 import NavSidebar from './components/NavSidebar.tsx';
 import FlabbergasterPortal from './components/FlabbergasterPortal.tsx';
+import GeometricResonanceGame from './components/GeometricResonanceGame.tsx';
 import LoadingFallback, { TabLoadingFallback, WizardLoadingFallback, ModalLoadingFallback } from './components/LoadingFallback.tsx';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 
@@ -258,6 +259,9 @@ export default function App() {
   // Flabbergaster Easter Egg
   const [isFlabbergasterPortalOpen, setIsFlabbergasterPortalOpen] = useLocalStorage<boolean>('isFlabbergasterPortalOpen', false);
   const [hasUnlockedFlabbergaster, setHasUnlockedFlabbergaster] = useLocalStorage<boolean>('hasUnlockedFlabbergaster', false);
+
+  // Geometric Resonance Game (Secret Easter Egg)
+  const [isGeometricGameOpen, setIsGeometricGameOpen] = useState(false);
 
   // Navigation Stack (Phase 3: Back button functionality)
   const [navigationStack, setNavigationStack] = useState<NavigationEntry[]>([]);
@@ -2070,6 +2074,17 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
         onClose={() => setIsFlabbergasterPortalOpen(false)}
         hasUnlocked={hasUnlockedFlabbergaster}
         onHiddenModeDiscovered={onHiddenModeDiscovered}
+        onStartGeometricGame={() => {
+          setIsFlabbergasterPortalOpen(false);
+          setIsGeometricGameOpen(true);
+        }}
+      />
+      <GeometricResonanceGame
+        isOpen={isGeometricGameOpen}
+        onClose={() => setIsGeometricGameOpen(false)}
+        onGameEvent={(event, data) => {
+          console.log(`🎮 Game Event: ${event}`, data);
+        }}
       />
       </div>
     </ErrorBoundary>
