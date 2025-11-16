@@ -11,7 +11,25 @@ interface DashboardTabProps {
 
 export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab }: DashboardTabProps) {
   const audioRef = React.useRef<HTMLAudioElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+
+  // Start playing on first interaction
+  React.useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!hasStarted && audioRef.current) {
+        audioRef.current.play().catch(() => {
+          // Autoplay blocked, will try again on next interaction
+        });
+        setIsPlaying(true);
+        setHasStarted(true);
+        document.removeEventListener('click', handleFirstInteraction);
+      }
+    };
+
+    document.addEventListener('click', handleFirstInteraction);
+    return () => document.removeEventListener('click', handleFirstInteraction);
+  }, [hasStarted]);
 
   const togglePlayPause = () => {
     if (audioRef.current) {
@@ -116,8 +134,8 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
         </div>
       </div>
 
-      {/* Background Audio - plays automatically on dashboard load */}
-      <audio ref={audioRef} autoPlay loop>
+      {/* Background Audio - starts on first interaction */}
+      <audio ref={audioRef} loop>
         <source src="https://files.catbox.moe/kbn0ap.mp3" type="audio/mpeg" />
       </audio>
 
