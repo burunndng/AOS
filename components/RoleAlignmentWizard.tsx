@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ArrowRight, ArrowLeft, Check, Target, TrendingUp, BookOpen, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import {
   generateRoleActionSuggestion,
@@ -6,8 +6,14 @@ import {
   generateIntegralReflection
 } from '../services/geminiService';
 
+import type { RoleAlignmentSession } from '../types.ts';
+
 interface RoleAlignmentWizardProps {
   onClose: () => void;
+  onSave?: (session: RoleAlignmentSession) => void | Promise<void>;
+  session?: RoleAlignmentSession | null;
+  setDraft?: (session: RoleAlignmentSession | null) => void;
+  userId?: string;
 }
 
 type WizardStep = 'welcome' | 'profile' | 'alignment' | 'summary';
@@ -40,8 +46,9 @@ const ACTION_TEMPLATES = {
   ]
 };
 
-export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProps) {
+export default function RoleAlignmentWizard({ onClose, onSave, session, setDraft, userId }: RoleAlignmentWizardProps) {
   const [step, setStep] = useState<WizardStep>('welcome');
+  const [sessionId] = useState(() => session?.id || `role-alignment-${Date.now()}`);
   const [roles, setRoles] = useState<Role[]>([
     { name: '', why: '', goal: '', valueScore: 5, valueNote: '' },
     { name: '', why: '', goal: '', valueScore: 5, valueNote: '' },
@@ -53,11 +60,37 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
   const [isGeneratingAction, setIsGeneratingAction] = useState(false);
   const [isGeneratingShadow, setIsGeneratingShadow] = useState(false);
   const [isGeneratingIntegral, setIsGeneratingIntegral] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [aiIntegralReflection, setAiIntegralReflection] = useState<{
     integralInsight: string;
     quadrantConnections: string;
     recommendations: string[];
   } | null>(null);
+
+  // Load draft session if it exists
+  useEffect(() => {
+    if (session) {
+      setRoles(session.roles);
+      setIntegralNote(session.integralNote || '');
+      if (session.aiIntegralReflection) {
+        setAiIntegralReflection(session.aiIntegralReflection);
+      }
+    }
+  }, [session]);
+
+  // Auto-save draft as user progresses
+  useEffect(() => {
+    if (setDraft) {
+      const draftSession: RoleAlignmentSession = {
+        id: sessionId,
+        date: new Date().toISOString(),
+        roles,
+        integralNote,
+        aiIntegralReflection: aiIntegralReflection || undefined
+      };
+      setDraft(draftSession);
+    }
+  }, [roles, integralNote, aiIntegralReflection, setDraft, sessionId]);
 
   const currentRole = roles[currentRoleIndex];
   const activeRoles = roles.filter(r => r.name.trim() !== '');
@@ -559,19 +592,45 @@ export default function RoleAlignmentWizard({ onClose }: RoleAlignmentWizardProp
       {/* Action buttons */}
       <div className="flex gap-3">
         <button
-          onClick={() => {
-            // TODO: Export to journal
-            alert('Journal export feature coming soon! For now, your insights have been saved to your session.');
+          onClick={async () => {
+            setIsSaving(true);
+            try {
+              const completedSession: RoleAlignmentSession = {
+                id: sessionId,
+                date: new Date().toISOString(),
+                roles: activeRoles,
+                integralNote,
+                aiIntegralReflection: aiIntegralReflection || undefined
+              };
+
+              if (onSave) {
+                await onSave(completedSession);
+              }
+              onClose();
+            } catch (error) {
+              console.error('Error saving Role Alignment session:', error);
+              alert('Failed to save session. Please try again.');
+            } finally {
+              setIsSaving(false);
+            }
           }}
-          className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-100 px-6 py-3 rounded-lg font-semibold transition"
+          disabled={isSaving}
+          className="flex-1 btn-luminous px-6 py-3 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
         >
-          Save to Journal
+          {isSaving ? (
+            <>
+              <Loader2 size={20} className="animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save & Complete'
+          )}
         </button>
         <button
           onClick={onClose}
-          className="flex-1 btn-luminous px-6 py-3 rounded-lg font-semibold transition"
+          className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-100 px-6 py-3 rounded-lg font-semibold transition"
         >
-          Complete Session
+          Cancel
         </button>
       </div>
 

@@ -103,7 +103,6 @@ import { practices as corePractices, starterStacks, modules } from './constants.
 import * as geminiService from './services/geminiService.ts';
 import * as ragService from './services/ragService.ts';
 import { generateInsightFromSession } from './services/insightGenerator.ts';
-import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 import { getWizardSequenceContext } from './services/wizardSequenceContext.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
@@ -187,6 +186,7 @@ export default function App() {
   const [draftPM, setDraftPM] = useLocalStorage<PolarityMapDraft | null>('draftPM', null);
   const [draftKegan, setDraftKegan] = useLocalStorage<KeganAssessmentSession | null>('draftKegan', null);
   const [draftRelational, setDraftRelational] = useLocalStorage<RelationalPatternSession | null>('draftRelational', null);
+  const [draftRoleAlignment, setDraftRoleAlignment] = useLocalStorage<RoleAlignmentSession | null>('draftRoleAlignment', null);
   const [draftBigMind, setDraftBigMind] = useLocalStorage<Partial<BigMindSession> | null>('draftBigMind', null);
   const [draftMemoryRecon, setDraftMemoryRecon] = useLocalStorage<MemoryReconsolidationDraft | null>('memoryReconDraft', null);
   const [draftEightZones, setDraftEightZones] = useLocalStorage<EightZonesDraft | null>('draftEightZones', null);
@@ -201,6 +201,7 @@ export default function App() {
   const [historyPM, setHistoryPM] = useLocalStorage<PolarityMap[]>('historyPM', []);
   const [historyKegan, setHistoryKegan] = useLocalStorage<KeganAssessmentSession[]>('historyKegan', []);
   const [historyRelational, setHistoryRelational] = useLocalStorage<RelationalPatternSession[]>('historyRelational', []);
+  const [historyRoleAlignment, setHistoryRoleAlignment] = useLocalStorage<RoleAlignmentSession[]>('historyRoleAlignment', []);
   const [historyJhana, setHistoryJhana] = useLocalStorage<JhanaSession[]>('historyJhana', []);
   const [memoryReconHistory, setMemoryReconHistory] = useLocalStorage<MemoryReconsolidationSession[]>('memoryReconHistory', []);
   const [eightZonesHistory, setEightZonesHistory] = useLocalStorage<EightZonesSession[]>('eightZonesHistory', []);
@@ -749,6 +750,61 @@ export default function App() {
     }
   };
 
+  const handleSaveRoleAlignmentSession = async (session: RoleAlignmentSession) => {
+    setHistoryRoleAlignment(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftRoleAlignment(null);
+    navigateBack();
+
+    const rolesText = session.roles
+      .filter(r => r.name.trim())
+      .map(r => `### ${r.name}
+- Why: ${r.why}
+- Goal: ${r.goal}
+- Alignment Score: ${r.valueScore}/10
+- Values Note: ${r.valueNote}
+${r.action ? `- Action Plan: ${r.action}` : ''}`)
+      .join('\n\n');
+
+    const report = `# Role Alignment Analysis
+- Session Date: ${session.date}
+- Roles Analyzed: ${session.roles.filter(r => r.name.trim()).length}
+
+## Role Assessments
+${rolesText}
+
+${session.integralNote ? `## Integral Reflection
+${session.integralNote}` : ''}
+
+${session.aiIntegralReflection ? `## AI-Generated Integral Insights
+${session.aiIntegralReflection.integralInsight}
+
+### Quadrant Connections
+${session.aiIntegralReflection.quadrantConnections}
+
+### Recommendations
+${session.aiIntegralReflection.recommendations.map(r => `- ${r}`).join('\n')}` : ''}`;
+
+    const avgScore = session.roles.filter(r => r.name.trim()).reduce((sum, r) => sum + r.valueScore, 0) /
+                     Math.max(1, session.roles.filter(r => r.name.trim()).length);
+    const summary = `Assessed role alignment across ${session.roles.filter(r => r.name.trim()).length} life roles (avg alignment: ${avgScore.toFixed(1)}/10)`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Role Alignment',
+        sessionId: session.id,
+        sessionName: 'Role Alignment Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Role Alignment] Failed to generate insight:', err);
+    }
+  };
+
   const handleSaveJhanaSession = async (session: JhanaSession) => {
     setHistoryJhana(prev => [...prev.filter(s => s.id !== session.id), session]);
     navigateBack();
@@ -1150,15 +1206,53 @@ ${plan.weekSummary}`;
     }
   }, [activeWizard, integralBodyPlanHistory, generatePersonalizationSummary]);
 
-  const handleSaveBigMindSession = (session: BigMindSession) => {
+  const handleSaveBigMindSession = async (session: BigMindSession) => {
     setHistoryBigMind(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftBigMind(null);
     navigateBack();
 
-    // Create integrated insight from the session
+    // Generate comprehensive report from Big Mind session
     if (session.summary) {
-      const insight = createBigMindIntegratedInsight(session.id, session.summary);
-      setIntegratedInsights(prev => [...prev, insight]);
+      const voicesText = session.voices.map(v => `- **${v.name}** (${v.archetype}): "${v.quality}"`).join('\n');
+      const messagesText = session.messages.slice(-10).map(m => `- **${m.voiceName}:** ${m.text}`).join('\n');
+
+      const report = `# Big Mind Process Session
+- Stage: ${session.currentStage}
+- Voices Explored: ${session.voices.length}
+- Dialogue Messages: ${session.messages.length}
+
+## Voices Channeled
+${voicesText}
+
+## Witness Perspective
+${session.summary.witnessPerspective}
+
+## Integration Commitments
+${session.summary.integrationCommitments.map(c => `- ${c}`).join('\n')}
+
+## Key Dialogue (Last 10 messages)
+${messagesText}
+
+## Recommended Practices
+${session.summary.recommendedPractices.map(p => `- **${p.practiceName}**: ${p.rationale}`).join('\n')}`;
+
+      const summary = `Explored ${session.voices.length} voices through Big Mind process, reached witness consciousness`;
+
+      try {
+        const insight = await generateInsightAndRefreshGuidance({
+          wizardType: 'Big Mind Process',
+          sessionId: session.id,
+          sessionName: 'Big Mind Session',
+          sessionReport: report,
+          sessionSummary: summary,
+          userId,
+          availablePractices: Object.values(corePractices).flat(),
+          userProfile
+        });
+        setIntegratedInsights(prev => [...prev, insight]);
+      } catch (err) {
+        console.error('[Big Mind Process] Failed to generate insight:', err);
+      }
     }
   };
 
@@ -1690,6 +1784,10 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
         return (
           <RoleAlignmentWizard
             onClose={() => navigateBack()}
+            onSave={handleSaveRoleAlignmentSession}
+            session={draftRoleAlignment}
+            setDraft={setDraftRoleAlignment}
+            userId={userId}
           />
         );
       case 'eight-zones':

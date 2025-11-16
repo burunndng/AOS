@@ -190,6 +190,7 @@ Route to **Relational Pattern Tracker** if: Relationship struggles across multip
 Route to **Big Mind Process** if: Ready for perspective expansion, witnessing work, exploring inner voices
 Route to **Polarity Mapper** if: Either/or thinking, stuck between extremes, need both-and integration
 Route to **Eight Zones (AQAL)** if: Need integral analysis of situation, multiple perspective exploration
+Route to **Adaptive Cycle Lens** if: System in transition, need to understand resilience dynamics, assess change readiness
 Route to **Perspective Shifter** if: Fixed narrative about situation, empathy building needed
 Route to **Role Alignment** if: Role overwhelm, misalignment between values and responsibilities
 Route to **Attachment Assessment** if: Relational patterns unclear, need attachment style understanding
