@@ -47,8 +47,13 @@ const SOTADashboard: React.FC<SOTADashboardProps> = ({ onClose }) => {
 
     // Initialize Camera
     const canvas = canvasRef.current;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
+    const width = canvas.clientWidth || 800;
+    const height = canvas.clientHeight || 600;
+
+    if (width === 0 || height === 0) {
+      console.warn('Canvas has zero dimensions, using fallback');
+    }
+
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 10000);
     camera.position.set(0, 15, 40);
     camera.lookAt(0, 0, 0);
@@ -338,7 +343,7 @@ const SOTADashboard: React.FC<SOTADashboardProps> = ({ onClose }) => {
       }
       renderer.dispose();
     };
-  }, [isRotating, lightIntensity, bloomStrength]);
+  }, [isRotating, lightIntensity, bloomStrength, particleCount]);
 
   const handleParticleCountChange = (newCount: number) => {
     setParticleCount(newCount);
