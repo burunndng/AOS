@@ -4,7 +4,7 @@ export const journeyRegions: JourneyRegion[] = [
   {
     id: 'core',
     name: 'The Trailhead',
-    emoji: '🥾',
+    emoji: '✦',
     description: 'Begin exploring Integral Life Practice',
     cards: [
       {
@@ -47,7 +47,7 @@ export const journeyRegions: JourneyRegion[] = [
   {
     id: 'body',
     name: 'The Living Temple',
-    emoji: '🏃',
+    emoji: '◈',
     description: 'Awaken your physical presence and embodied awareness',
     cards: [
       {
@@ -79,7 +79,7 @@ export const journeyRegions: JourneyRegion[] = [
   {
     id: 'mind',
     name: 'The Vista Point',
-    emoji: '🧠',
+    emoji: '◇',
     description: 'Expand your mental flexibility and perspective-taking capacity',
     cards: [
       {
@@ -112,7 +112,7 @@ export const journeyRegions: JourneyRegion[] = [
   {
     id: 'spirit',
     name: 'The Inner Sanctum',
-    emoji: '✨',
+    emoji: '✡',
     description: 'Access deeper states of consciousness and spiritual insight',
     cards: [
       {
@@ -145,7 +145,7 @@ export const journeyRegions: JourneyRegion[] = [
   {
     id: 'shadow',
     name: 'The Cave of Mirrors',
-    emoji: '🪞',
+    emoji: '◆',
     description: 'Integrate disowned parts and transform reactivity',
     cards: [
       {
@@ -188,7 +188,7 @@ export const journeyRegions: JourneyRegion[] = [
   {
     id: 'integral',
     name: 'The Architect\'s Office',
-    emoji: '🏗️',
+    emoji: '⬡',
     description: 'Integrate all dimensions into a holistic framework',
     cards: [
       {
@@ -233,31 +233,31 @@ export const journeyBadges = {
   'core-complete': {
     name: 'Trailhead Navigator',
     description: 'You understand the foundations of ILP',
-    emoji: '🥾',
+    emoji: '✦',
   },
   'body-complete': {
     name: 'Body Awakened',
     description: 'You\'ve explored embodied awareness',
-    emoji: '🏃',
+    emoji: '◈',
   },
   'mind-complete': {
     name: 'Mind Expander',
     description: 'You\'ve expanded your perspective',
-    emoji: '🧠',
+    emoji: '◇',
   },
   'spirit-complete': {
     name: 'Spirit Seeker',
     description: 'You\'ve explored contemplative practice',
-    emoji: '✨',
+    emoji: '✡',
   },
   'shadow-complete': {
     name: 'Shadow Integrator',
     description: 'You\'ve begun shadow work',
-    emoji: '🪞',
+    emoji: '◆',
   },
   'integral-complete': {
     name: 'Integral Master',
     description: 'You\'ve mastered the integral framework',
-    emoji: '🏗️',
+    emoji: '⬡',
   },
 };
