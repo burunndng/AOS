@@ -5,6 +5,7 @@ import { StarterStack, IntegratedInsight, AllPractice, IntelligentGuidance, Pers
 import { Sparkles, CheckCircle, Lightbulb, ArrowRight, Clock, Target, Brain, AlertTriangle, TrendingUp, RefreshCw } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 import { getPendingInsights, getHighImpactPractices } from '../services/insightContext.ts';
+import TransparencyButton from './TransparencyButton.tsx';
 
 interface RecommendationsTabProps {
   starterStacks: Record<string, StarterStack>;
@@ -164,13 +165,23 @@ export default function RecommendationsTab({
                               {rec.practice?.name || 'Practice'}
                             </h5>
                           </div>
-                          <span className={`text-xs font-mono px-2 py-1 rounded ${
-                            rec.priority === 'high' ? 'bg-red-500/20 text-red-300' :
-                            rec.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
-                            'bg-blue-500/20 text-blue-300'
-                          }`}>
-                            {rec.priority}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            {rec.practice && (
+                              <TransparencyButton
+                                recommendationId={`${rec.practice.id}-${idx}`}
+                                practiceName={rec.practice.name}
+                                variant="inline"
+                                size="sm"
+                              />
+                            )}
+                            <span className={`text-xs font-mono px-2 py-1 rounded ${
+                              rec.priority === 'high' ? 'bg-red-500/20 text-red-300' :
+                              rec.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-300' :
+                              'bg-blue-500/20 text-blue-300'
+                            }`}>
+                              {rec.priority}
+                            </span>
+                          </div>
                         </div>
 
                         {/* Reason */}
@@ -388,7 +399,7 @@ export default function RecommendationsTab({
                     <div>
                       <h4 className="text-xs font-semibold text-slate-400 mb-3 uppercase">Reflect (Shadow Work)</h4>
                       <div className="space-y-2">
-                        {insight.suggestedShadowWork.map((sw) => {
+                        {insight.suggestedShadowWork.map((sw, swIdx) => {
                           const practice = allPractices.find(p => p.id === sw.practiceId);
                           return practice ? (
                             <button
@@ -401,7 +412,15 @@ export default function RecommendationsTab({
                                   <p className="font-medium text-slate-200 group-hover:text-blue-300">{sw.practiceName}</p>
                                   <p className="text-xs text-slate-400 mt-1">{sw.rationale}</p>
                                 </div>
-                                <ArrowRight size={16} className="text-slate-500 group-hover:text-blue-400 mt-1 flex-shrink-0" />
+                                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                  <TransparencyButton
+                                    recommendationId={`${insight.id}-shadow-${swIdx}`}
+                                    practiceName={sw.practiceName}
+                                    variant="icon"
+                                    size="sm"
+                                  />
+                                  <ArrowRight size={16} className="text-slate-500 group-hover:text-blue-400" />
+                                </div>
                               </div>
                             </button>
                           ) : null;
@@ -415,7 +434,7 @@ export default function RecommendationsTab({
                     <div>
                       <h4 className="text-xs font-semibold text-slate-400 mb-3 uppercase">Act (Next Steps)</h4>
                       <div className="space-y-2">
-                        {insight.suggestedNextSteps.map((ns) => {
+                        {insight.suggestedNextSteps.map((ns, nsIdx) => {
                           const practice = allPractices.find(p => p.id === ns.practiceId);
                           return practice ? (
                             <button
@@ -428,7 +447,15 @@ export default function RecommendationsTab({
                                   <p className="font-medium text-slate-200 group-hover:text-green-300">{ns.practiceName}</p>
                                   <p className="text-xs text-slate-400 mt-1">{ns.rationale}</p>
                                 </div>
-                                <ArrowRight size={16} className="text-slate-500 group-hover:text-green-400 mt-1 flex-shrink-0" />
+                                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                  <TransparencyButton
+                                    recommendationId={`${insight.id}-next-${nsIdx}`}
+                                    practiceName={ns.practiceName}
+                                    variant="icon"
+                                    size="sm"
+                                  />
+                                  <ArrowRight size={16} className="text-slate-500 group-hover:text-green-400" />
+                                </div>
                               </div>
                             </button>
                           ) : null;
