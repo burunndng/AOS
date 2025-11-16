@@ -63,6 +63,39 @@ export default function ExplanationModal({
     summary?: string;
   } | null>(null);
 
+  // Determine confidence message based on explanation confidence string
+  const getConfidenceMessage = (confidenceStr: string) => {
+    if (!confidenceStr) return null;
+
+    const lowerConf = confidenceStr.toLowerCase();
+
+    if (lowerConf.includes('exploratory') || lowerConf.includes('lower')) {
+      return {
+        title: 'Language matches the data',
+        message: 'The app is exploring early patterns from a few sessions. This is a suggestion to try—not a definitive diagnosis. More sessions will strengthen confidence.',
+        color: 'bg-blue-900/20 border-blue-700/30 text-blue-300'
+      };
+    }
+
+    if (lowerConf.includes('moderate') || lowerConf.includes('medium')) {
+      return {
+        title: 'Language matches the data',
+        message: 'You\'ve done several sessions, revealing consistent patterns. This recommendation is based on solid observations, though more data strengthens it further.',
+        color: 'bg-amber-900/20 border-amber-700/30 text-amber-300'
+      };
+    }
+
+    if (lowerConf.includes('high')) {
+      return {
+        title: 'Language matches the data',
+        message: 'You have strong evidence across many sessions. This recommendation is well-supported and can be trusted as a clear direction.',
+        color: 'bg-emerald-900/20 border-emerald-700/30 text-emerald-300'
+      };
+    }
+
+    return null;
+  };
+
   useEffect(() => {
     if (isOpen && explanation) {
       // Verify lineage when modal opens
@@ -199,6 +232,31 @@ export default function ExplanationModal({
                 <p className="text-xs font-semibold text-slate-400 uppercase mb-1">App Confidence</p>
                 <p className="text-slate-200">{explanation.confidence}</p>
               </div>
+
+              {/* Confidence Language Check - User Friendly */}
+              {(() => {
+                const confMsg = getConfidenceMessage(explanation.confidence);
+                if (!confMsg) return null;
+
+                const colorClass = confMsg.color;
+                const textColor = colorClass.includes('blue-900')
+                  ? 'text-blue-400'
+                  : colorClass.includes('amber-900')
+                    ? 'text-amber-400'
+                    : 'text-emerald-400';
+
+                return (
+                  <div className={`${colorClass} border rounded-lg p-4`}>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className={`${textColor} flex-shrink-0 mt-0.5`} size={20} />
+                      <div>
+                        <p className={`font-semibold ${textColor.replace('400', '300')} mb-1`}>{confMsg.title}</p>
+                        <p className="text-sm opacity-90">{confMsg.message}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Verification Status */}
               {verificationStatus && (
