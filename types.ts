@@ -586,6 +586,29 @@ export interface RelationalPatternSession {
   notes?: string;
 }
 
+// Role Alignment Session
+export interface RoleAlignmentRole {
+  name: string;
+  why: string;
+  goal: string;
+  valueScore: number; // 1-10 alignment score
+  valueNote: string;
+  shadowNudge?: string;
+  action?: string;
+}
+
+export interface RoleAlignmentSession {
+  id: string;
+  date: string;
+  roles: RoleAlignmentRole[];
+  integralNote?: string;
+  aiIntegralReflection?: {
+    integralInsight: string;
+    quadrantConnections: string;
+    recommendations: string[];
+  };
+}
+
 // Jhana/Samadhi Tracking Types
 export type JhanaLevel = '1st Jhana' | '2nd Jhana' | '3rd Jhana' | '4th Jhana' | '5th Jhana' | '6th Jhana' | '7th Jhana' | '8th Jhana' | 'Access Concentration' | 'Momentary Concentration';
 

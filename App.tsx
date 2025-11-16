@@ -103,7 +103,6 @@ import { practices as corePractices, starterStacks, modules } from './constants.
 import * as geminiService from './services/geminiService.ts';
 import * as ragService from './services/ragService.ts';
 import { generateInsightFromSession } from './services/insightGenerator.ts';
-import { createBigMindIntegratedInsight } from './services/bigMindService.ts';
 import { getWizardSequenceContext } from './services/wizardSequenceContext.ts';
 import { logPlanDayFeedback, calculatePlanAggregates, mergePlanWithTracker } from './utils/planHistoryUtils.ts';
 import { analyzeHistoryAndPersonalize } from './services/integralBodyPersonalization.ts';
@@ -187,6 +186,7 @@ export default function App() {
   const [draftPM, setDraftPM] = useLocalStorage<PolarityMapDraft | null>('draftPM', null);
   const [draftKegan, setDraftKegan] = useLocalStorage<KeganAssessmentSession | null>('draftKegan', null);
   const [draftRelational, setDraftRelational] = useLocalStorage<RelationalPatternSession | null>('draftRelational', null);
+  const [draftRoleAlignment, setDraftRoleAlignment] = useLocalStorage<RoleAlignmentSession | null>('draftRoleAlignment', null);
   const [draftBigMind, setDraftBigMind] = useLocalStorage<Partial<BigMindSession> | null>('draftBigMind', null);
   const [draftMemoryRecon, setDraftMemoryRecon] = useLocalStorage<MemoryReconsolidationDraft | null>('memoryReconDraft', null);
   const [draftEightZones, setDraftEightZones] = useLocalStorage<EightZonesDraft | null>('draftEightZones', null);
@@ -201,6 +201,7 @@ export default function App() {
   const [historyPM, setHistoryPM] = useLocalStorage<PolarityMap[]>('historyPM', []);
   const [historyKegan, setHistoryKegan] = useLocalStorage<KeganAssessmentSession[]>('historyKegan', []);
   const [historyRelational, setHistoryRelational] = useLocalStorage<RelationalPatternSession[]>('historyRelational', []);
+  const [historyRoleAlignment, setHistoryRoleAlignment] = useLocalStorage<RoleAlignmentSession[]>('historyRoleAlignment', []);
   const [historyJhana, setHistoryJhana] = useLocalStorage<JhanaSession[]>('historyJhana', []);
   const [memoryReconHistory, setMemoryReconHistory] = useLocalStorage<MemoryReconsolidationSession[]>('memoryReconHistory', []);
   const [eightZonesHistory, setEightZonesHistory] = useLocalStorage<EightZonesSession[]>('eightZonesHistory', []);
@@ -524,7 +525,44 @@ export default function App() {
       }
       return streak;
   }
-  
+
+  /**
+   * Utility to generate an insight and auto-refresh Intelligence Hub
+   * Ensures wizards automatically trigger guidance updates after completion
+   * Returns the insight immediately, refreshes guidance in background
+   */
+  const generateInsightAndRefreshGuidance = async (
+    input: Parameters<typeof generateInsightFromSession>[0]
+  ): Promise<IntegratedInsight> => {
+    try {
+      const insight = await generateInsightFromSession(input);
+
+      // Auto-refresh Intelligence Hub with updated context
+      // Do this in the background without blocking wizard completion
+      (async () => {
+        try {
+          const context = aggregateUserContext(
+            practiceStack,
+            practiceNotes,
+            [...integratedInsights, insight], // Include new insight
+            completedToday
+          );
+          const guidance = await getIntelligentGuidance(context);
+          setIntelligentGuidance(guidance);
+          console.log('[Wizard Integration] Intelligence Hub refreshed after insight generation');
+        } catch (err) {
+          console.warn('[Wizard Integration] Failed to refresh Intelligence Hub:', err);
+          // Graceful degradation - insight was still generated
+        }
+      })();
+
+      return insight;
+    } catch (err) {
+      console.error('[generateInsightAndRefreshGuidance] Error:', err);
+      throw err;
+    }
+  };
+
   const handleSaveBiasSession = async (session: BiasDetectiveSession) => {
     setHistoryBias(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftBias(null);
@@ -532,7 +570,7 @@ export default function App() {
     const report = `# Bias Detective: ${session.decisionText}\n- Diagnosis: ${session.diagnosis}\n- Takeaway: ${session.oneThingToRemember}`;
     const summary = `Identified bias in decision: ${session.decisionText}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Bias Detective',
         sessionId: session.id,
         sessionName: 'Bias Detective Session',
@@ -556,7 +594,7 @@ export default function App() {
     const report = `# Bias Finder: ${session.targetDecision}\n- Biases Identified: ${biasesSummary}\n- Recommendations: ${session.diagnosticReport?.recommendations.join('; ') || 'N/A'}`;
     const summary = `Found ${session.hypotheses.filter(h => h.confidence).length} biases in decision`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Bias Finder',
         sessionId: session.id,
         sessionName: 'Bias Finder Session',
@@ -579,7 +617,7 @@ export default function App() {
     const report = `# S-O Explorer: ${session.pattern}\n- Subject to: ${session.subjectToStatement}\n- Insight: ${session.integrationShift}`;
     const summary = `Pattern identified: ${session.pattern}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Subject-Object Explorer',
         sessionId: session.id,
         sessionName: 'Subject-Object Session',
@@ -602,7 +640,7 @@ export default function App() {
     const report = `# P-S Shifter: ${session.stuckSituation}\n- Synthesis: ${session.synthesis}\n- Action Plan: ${session.realityCheckRefinement}`;
     const summary = `Shifted perspective on: ${session.stuckSituation}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Perspective-Shifter',
         sessionId: session.id,
         sessionName: 'Perspective-Shifter Session',
@@ -617,7 +655,7 @@ export default function App() {
       console.error('[Perspective-Shifter] Failed to generate insight:', err);
     }
   };
-  
+
   const handleSavePMSession = async (map: PolarityMap) => {
     setHistoryPM(prev => [...prev.filter(m => m.id !== map.id), map]);
     setDraftPM(null);
@@ -625,7 +663,7 @@ export default function App() {
     const report = `# Polarity Map: ${map.dilemma}\n- Pole A: ${map.poleA_name}\n- Pole B: ${map.poleB_name}`;
     const summary = `Mapped dilemma: ${map.dilemma}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Polarity Mapper',
         sessionId: map.id,
         sessionName: 'Polarity Mapper Session',
@@ -648,7 +686,7 @@ export default function App() {
     const report = `# Kegan Assessment\n- Stage: ${session.overallInterpretation?.centerOfGravity || 'Pending'}\n- Key Insights: ${JSON.stringify(session.responses).substring(0, 200)}`;
     const summary = `Development stage assessed: ${session.overallInterpretation?.centerOfGravity || 'Assessment completed'}`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Kegan Assessment',
         sessionId: session.id,
         sessionName: 'Kegan Assessment Session',
@@ -673,7 +711,7 @@ export default function App() {
     const summary = `Attachment style assessed: ${session.style} (anxiety: ${session.scores.anxiety}, avoidance: ${session.scores.avoidance})`;
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Attachment Assessment',
         sessionId: session.id,
         sessionName: 'Attachment Assessment Session',
@@ -696,7 +734,7 @@ export default function App() {
     const report = `# Relational Pattern\n- Context: ${session.conversation.slice(-3).map(m => m.text).join(' ')}`;
     const summary = `Relational pattern explored through dialogue`;
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Relational Pattern',
         sessionId: session.id,
         sessionName: 'Relational Pattern Session',
@@ -712,9 +750,100 @@ export default function App() {
     }
   };
 
-  const handleSaveJhanaSession = (session: JhanaSession) => {
+  const handleSaveRoleAlignmentSession = async (session: RoleAlignmentSession) => {
+    setHistoryRoleAlignment(prev => [...prev.filter(s => s.id !== session.id), session]);
+    setDraftRoleAlignment(null);
+    navigateBack();
+
+    const rolesText = session.roles
+      .filter(r => r.name.trim())
+      .map(r => `### ${r.name}
+- Why: ${r.why}
+- Goal: ${r.goal}
+- Alignment Score: ${r.valueScore}/10
+- Values Note: ${r.valueNote}
+${r.action ? `- Action Plan: ${r.action}` : ''}`)
+      .join('\n\n');
+
+    const report = `# Role Alignment Analysis
+- Session Date: ${session.date}
+- Roles Analyzed: ${session.roles.filter(r => r.name.trim()).length}
+
+## Role Assessments
+${rolesText}
+
+${session.integralNote ? `## Integral Reflection
+${session.integralNote}` : ''}
+
+${session.aiIntegralReflection ? `## AI-Generated Integral Insights
+${session.aiIntegralReflection.integralInsight}
+
+### Quadrant Connections
+${session.aiIntegralReflection.quadrantConnections}
+
+### Recommendations
+${session.aiIntegralReflection.recommendations.map(r => `- ${r}`).join('\n')}` : ''}`;
+
+    const avgScore = session.roles.filter(r => r.name.trim()).reduce((sum, r) => sum + r.valueScore, 0) /
+                     Math.max(1, session.roles.filter(r => r.name.trim()).length);
+    const summary = `Assessed role alignment across ${session.roles.filter(r => r.name.trim()).length} life roles (avg alignment: ${avgScore.toFixed(1)}/10)`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Role Alignment',
+        sessionId: session.id,
+        sessionName: 'Role Alignment Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Role Alignment] Failed to generate insight:', err);
+    }
+  };
+
+  const handleSaveJhanaSession = async (session: JhanaSession) => {
     setHistoryJhana(prev => [...prev.filter(s => s.id !== session.id), session]);
     navigateBack();
+
+    const report = `# Jhana Guide: ${session.practice}
+- Duration: ${session.duration} minutes
+- Jhana Level Reached: ${session.jhanaLevel}
+- Time in Absorption: ${session.timeInState} minutes
+
+## Jhana Factors
+- Applied Attention: ${session.factors.appliedAttention.presence} (${session.factors.appliedAttention.intensity}/10)
+- Sustained Attention: ${session.factors.sustainedAttention.presence} (${session.factors.sustainedAttention.intensity}/10)
+- Joy (Piti): ${session.factors.joy.presence} (${session.factors.joy.intensity}/10)
+- Happiness (Sukha): ${session.factors.happiness.presence} (${session.factors.happiness.intensity}/10)
+- Unification (Ekaggata): ${session.factors.unification.presence} (${session.factors.unification.intensity}/10)
+
+## Experience
+- Body Experience: ${session.bodyExperience}
+- Mind Quality: ${session.mindQuality}
+- Hindrances: ${session.hindrances?.join(', ') || 'None noted'}
+${session.comparison ? `\n- Progress: ${session.comparison}` : ''}`;
+
+    const summary = `Meditated on ${session.practice} for ${session.duration}min, reached ${session.jhanaLevel} jhana`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Jhana Guide',
+        sessionId: session.id,
+        sessionName: 'Jhana Session',
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Jhana Guide] Failed to generate insight:', err);
+    }
   };
 
   const handleSave321Session = async (session: ThreeTwoOneSession) => {
@@ -752,7 +881,7 @@ ${session.integrationPlan.relatedPracticeId ? `- **Related Practice:** ${session
     const summary = `Reflected on trigger: ${session.trigger}${session.aiSummary ? ` - ${session.aiSummary}` : ''}`;
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: '3-2-1 Reflection',
         sessionId: session.id,
         sessionName: '3-2-1 Reflection Session',
@@ -767,7 +896,7 @@ ${session.integrationPlan.relatedPracticeId ? `- **Related Practice:** ${session
       console.error('[3-2-1 Reflection] Failed to generate insight:', err);
     }
   };
-  
+
   const handleSaveIFSSession = async (session: IFSSession) => {
     setHistoryIFS(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftIFS(null);
@@ -827,7 +956,7 @@ ${session.integrationNote}
     const summary = `Worked with part "${session.partName || 'Unnamed Part'}"${session.partRole ? ` (${session.partRole})` : ''} - reached ${session.currentPhase} phase${session.summary ? ` - ${session.summary}` : ''}`;
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'IFS Session',
         sessionId: session.id,
         sessionName: 'IFS Session',
@@ -842,14 +971,43 @@ ${session.integrationNote}
       console.error('[IFS Session] Failed to generate insight:', err);
     }
   };
-  
-  const handleSaveSomaticPractice = (session: SomaticPracticeSession) => {
+
+  const handleSaveSomaticPractice = async (session: SomaticPracticeSession) => {
     setSomaticPracticeHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
+
+    const report = `# Somatic Generator: ${session.title}
+- Practice Type: ${session.practiceType}
+- Duration: ${session.duration} minutes
+- Focus Area: ${session.focusArea || 'Whole body'}
+- Pacing: ${session.pacing || 'Moderate'}
+- Intention: ${session.intention}
+${session.safetyNotes ? `\n## Safety Notes\n${session.safetyNotes.map(n => `- ${n}`).join('\n')}` : ''}
+
+## Practice Segments: ${session.script.length} components`;
+
+    const summary = `Generated somatic practice: ${session.title} (${session.duration}min, ${session.practiceType})`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Somatic Practice',
+        sessionId: session.id,
+        sessionName: session.title,
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Somatic Generator] Failed to generate insight:', err);
+    }
+
     alert(`Practice "${session.title}" saved! You can find it in your Library.`);
     setActiveTab('library');
   };
 
-  const handleSaveIntegralBodyPlan = (plan: IntegralBodyPlan) => {
+  const handleSaveIntegralBodyPlan = async (plan: IntegralBodyPlan) => {
     setIntegralBodyPlans(prev => [...prev.filter(p => p.id !== plan.id), plan]);
 
     // Initialize history entry if it doesn't exist
@@ -885,6 +1043,45 @@ ${session.integrationNote}
       ...prev,
       [plan.id]: prev[plan.id] || {},
     }));
+
+    // Generate insight from embodied development plan
+    const report = `# Integral Body Plan: ${plan.goalStatement}
+- Week Starting: ${plan.weekStartDate}
+- Daily Targets:
+  - Protein: ${plan.dailyTargets.proteinGrams}g
+  - Sleep: ${plan.dailyTargets.sleepHours}h
+  - Workouts: ${plan.dailyTargets.workoutDays} days
+  - Yin Practice: ${plan.dailyTargets.yinPracticeMinutes} min
+
+## Yang Constraints
+- Strength Focus: ${plan.yangConstraints.strengthFocus || 'N/A'}
+- Cardio Preference: ${plan.yangConstraints.cardioPreference || 'N/A'}
+- Available Days: ${plan.yangConstraints.availableDays}/week
+
+## Yin Preferences
+- Primary: ${plan.yinPreferences.primary || 'N/A'}
+- Secondary: ${plan.yinPreferences.secondary || 'N/A'}
+
+## Weekly Summary
+${plan.weekSummary}`;
+
+    const summary = `Created ${plan.dailyTargets.workoutDays}-day embodied development plan: ${plan.goalStatement}`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Integral Body Plan',
+        sessionId: plan.id,
+        sessionName: plan.goalStatement,
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Integral Body Architect] Failed to generate insight:', err);
+    }
 
     alert(`Your Integral Week has been saved! Access it from your Library.`);
   };
@@ -1009,15 +1206,53 @@ ${session.integrationNote}
     }
   }, [activeWizard, integralBodyPlanHistory, generatePersonalizationSummary]);
 
-  const handleSaveBigMindSession = (session: BigMindSession) => {
+  const handleSaveBigMindSession = async (session: BigMindSession) => {
     setHistoryBigMind(prev => [...prev.filter(s => s.id !== session.id), session]);
     setDraftBigMind(null);
     navigateBack();
 
-    // Create integrated insight from the session
+    // Generate comprehensive report from Big Mind session
     if (session.summary) {
-      const insight = createBigMindIntegratedInsight(session.id, session.summary);
-      setIntegratedInsights(prev => [...prev, insight]);
+      const voicesText = session.voices.map(v => `- **${v.name}** (${v.archetype}): "${v.quality}"`).join('\n');
+      const messagesText = session.messages.slice(-10).map(m => `- **${m.voiceName}:** ${m.text}`).join('\n');
+
+      const report = `# Big Mind Process Session
+- Stage: ${session.currentStage}
+- Voices Explored: ${session.voices.length}
+- Dialogue Messages: ${session.messages.length}
+
+## Voices Channeled
+${voicesText}
+
+## Witness Perspective
+${session.summary.witnessPerspective}
+
+## Integration Commitments
+${session.summary.integrationCommitments.map(c => `- ${c}`).join('\n')}
+
+## Key Dialogue (Last 10 messages)
+${messagesText}
+
+## Recommended Practices
+${session.summary.recommendedPractices.map(p => `- **${p.practiceName}**: ${p.rationale}`).join('\n')}`;
+
+      const summary = `Explored ${session.voices.length} voices through Big Mind process, reached witness consciousness`;
+
+      try {
+        const insight = await generateInsightAndRefreshGuidance({
+          wizardType: 'Big Mind Process',
+          sessionId: session.id,
+          sessionName: 'Big Mind Session',
+          sessionReport: report,
+          sessionSummary: summary,
+          userId,
+          availablePractices: Object.values(corePractices).flat(),
+          userProfile
+        });
+        setIntegratedInsights(prev => [...prev, insight]);
+      } catch (err) {
+        console.error('[Big Mind Process] Failed to generate insight:', err);
+      }
     }
   };
 
@@ -1063,7 +1298,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     // Generate integrated insight for Journal
     if (session.synthesisReport) {
       try {
-        const insight = await generateInsightFromSession({
+        const insight = await generateInsightAndRefreshGuidance({
           wizardType: 'Eight Zones',
           sessionId: session.id,
           sessionName: session.focalQuestion,
@@ -1165,7 +1400,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     navigateBack();
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Adaptive Cycle Lens',
         sessionId: sessionWithReport.id,
         sessionName: sessionWithReport.systemToAnalyze,
@@ -1197,11 +1432,43 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     // For now, just keep this handler available for future expansion
   };
 
-  const handleSaveWorkoutProgram = (program: WorkoutProgram) => {
+  const handleSaveWorkoutProgram = async (program: WorkoutProgram) => {
     setWorkoutPrograms(prev => [...prev.filter(p => p.id !== program.id), program]);
     // Clear handoff source after saving
     setWorkoutHandoffSource(null);
     navigateBack();
+
+    const report = `# Workout Program: ${program.title}
+- Generated: ${program.date}
+- Workouts: ${program.workouts.length} sessions
+
+## Program Summary
+${program.summary}
+
+## Progression Recommendations
+${program.progressionRecommendations?.map(r => `- ${r}`).join('\n') || '- Standard progression applied'}
+
+## Personalization Notes
+${program.personalizationNotes || 'Standard customization applied'}`;
+
+    const summary = `Created ${program.workouts.length}-workout personalized program: ${program.title}`;
+
+    try {
+      const insight = await generateInsightAndRefreshGuidance({
+        wizardType: 'Workout Program',
+        sessionId: program.id,
+        sessionName: program.title,
+        sessionReport: report,
+        sessionSummary: summary,
+        userId,
+        availablePractices: Object.values(corePractices).flat(),
+        userProfile
+      });
+      setIntegratedInsights(prev => [...prev, insight]);
+    } catch (err) {
+      console.error('[Dynamic Workout Architect] Failed to generate insight:', err);
+    }
+
     alert(`Your personalized workout program has been saved!`);
   };
 
@@ -1219,7 +1486,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     const summary = `Reconsolidated belief shift: ${shiftPercentage}%`;
 
     try {
-      const insight = await generateInsightFromSession({
+      const insight = await generateInsightAndRefreshGuidance({
         wizardType: 'Memory Reconsolidation',
         sessionId: session.id,
         sessionName: 'Memory Reconsolidation Session',
@@ -1517,6 +1784,10 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
         return (
           <RoleAlignmentWizard
             onClose={() => navigateBack()}
+            onSave={handleSaveRoleAlignmentSession}
+            session={draftRoleAlignment}
+            setDraft={setDraftRoleAlignment}
+            userId={userId}
           />
         );
       case 'eight-zones':
