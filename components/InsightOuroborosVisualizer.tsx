@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 interface InsightOuroborosVisualizerProps {
   selectedStage: number | null;
@@ -52,9 +53,10 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
   const animationIdRef = useRef<number>();
   const ouroborosGroupRef = useRef<THREE.Group | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
-  const torusMeshRef = useRef<THREE.Mesh | null>(null);
+  const tubeMeshRef = useRef<THREE.Mesh | null>(null);
   const isCameraFocusingRef = useRef(false);
   const cameraFocusTargetRef = useRef(new THREE.Vector3());
+  const controlsRef = useRef<OrbitControls | null>(null);
 
   // Helper function to create ouroboros path curve (torus-like path with narrative arc)
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
@@ -95,11 +97,11 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
     scene.fog = new THREE.Fog(0x0a0e27, 100, 200);
     sceneRef.current = scene;
 
-    // Camera setup - fixed position with subtle tilt
+    // Camera setup - positioned for interactive exploration
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 8, 18);
+    camera.position.set(20, 8, 20);
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
@@ -113,6 +115,16 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
     renderer.toneMappingExposure = 1.2;
     containerRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
+
+    // Initialize OrbitControls for interactive camera control
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false;
+    controls.minDistance = 15;
+    controls.maxDistance = 100;
+    controls.autoRotate = false; // User controls rotation
+    controlsRef.current = controls;
 
     // Elegant lighting
     const ambientLight = new THREE.AmbientLight(0xc9b9e8, 0.5);
@@ -135,20 +147,29 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
     scene.add(ouroborosGroup);
     ouroborosGroupRef.current = ouroborosGroup;
 
-    // Create ouroboros (torus) - the serpent eating its tail
-    const torusGeometry = new THREE.TorusGeometry(10, 0.5, 16, 100);
-    const torusMaterial = new THREE.MeshStandardMaterial({
+    // Create ouroboros path curve (used for both tube geometry and particles)
+    const ouroborosPath = createOuroborosPath();
+
+    // Create ouroboros using TubeGeometry following the narrative arc path
+    const tubeGeometry = new THREE.TubeGeometry(
+      ouroborosPath,
+      200,  // segments along path
+      0.5,  // tube radius
+      16,   // segments around circumference
+      true  // closed
+    );
+    const tubeMaterial = new THREE.MeshStandardMaterial({
       color: 0x8b8b9f,
       emissive: 0x3a3a4a,
       metalness: 0.8,
       roughness: 0.25,
       envMapIntensity: 1.2,
     });
-    const torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
-    torusMesh.castShadow = true;
-    torusMesh.receiveShadow = true;
-    ouroborosGroup.add(torusMesh);
-    torusMeshRef.current = torusMesh;
+    const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+    tubeMesh.castShadow = true;
+    tubeMesh.receiveShadow = true;
+    ouroborosGroup.add(tubeMesh);
+    tubeMeshRef.current = tubeMesh;
 
     // Create stage nodes around the circle with narrative arc
     INSIGHT_STAGES.forEach((stage, index) => {
@@ -233,7 +254,6 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
     const particlePositions = new Float32Array(particleCount * 3);
     const particleVelocities = new Float32Array(particleCount * 3);
 
-    const ouroborosPath = createOuroborosPath();
     for (let i = 0; i < particleCount; i++) {
       const t = Math.random();
       const pos = ouroborosPath.getPointAt(t);
@@ -303,7 +323,13 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       animationIdRef.current = requestAnimationFrame(animate);
       animationTime += 0.002;
 
-      // --- CAMERA LOGIC: Focused transition or quasi-static ---
+      // --- CAMERA LOGIC: OrbitControls with optional focus transition ---
+      // Update OrbitControls (handles damping and smooth rotation)
+      if (controlsRef.current) {
+        controlsRef.current.update();
+      }
+
+      // Smooth focus transition when clicking a stage (overrides user input momentarily)
       if (isCameraFocusingRef.current) {
         const currentPos = camera.position;
         const targetPos = cameraFocusTargetRef.current;
@@ -317,16 +343,10 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
           camera.lookAt(selectedPoint.position);
         }
 
-        // Resume quasi-static when close enough
+        // Resume user control when close enough
         if (currentPos.distanceTo(targetPos) < 0.2) {
           isCameraFocusingRef.current = false;
         }
-      } else {
-        // Quasi-static camera with very subtle orientation shift
-        const subtle = Math.sin(animationTime * 0.15) * 0.02;
-        camera.position.y = 8 + subtle;
-        camera.position.z = 18 + subtle * 0.5;
-        camera.lookAt(0, 0, 0);
       }
 
       // --- PARTICLE SYSTEM: Dynamic flow along ouroboros ---
@@ -379,15 +399,14 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
         particlesRef.current.geometry.attributes.position.needsUpdate = true;
       }
 
-      // --- TORUS BREATHING EFFECT ---
-      if (torusMeshRef.current && ouroborosGroupRef.current) {
+      // --- TUBE BREATHING EFFECT ---
+      if (tubeMeshRef.current && ouroborosGroupRef.current) {
         // Subtle pulsing
         const breathePulse = 1.0 + Math.sin(animationTime * 1.5) * 0.015;
-        torusMeshRef.current.scale.set(breathePulse, breathePulse, breathePulse);
+        tubeMeshRef.current.scale.set(breathePulse, breathePulse, breathePulse);
 
-        // Rotation for dynamic feel
-        ouroborosGroupRef.current.rotation.y = Math.sin(animationTime * 0.3) * 0.08;
-        ouroborosGroupRef.current.rotation.z = Math.cos(animationTime * 0.2) * 0.04;
+        // Subtle rotation for dynamic feel
+        ouroborosGroupRef.current.rotation.y = Math.sin(animationTime * 0.3) * 0.03;
       }
 
       // Highlight selected stage
@@ -426,10 +445,13 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
       }
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
+      }
       containerRef.current?.removeChild(renderer.domElement);
       renderer.dispose();
-      torusGeometry.dispose();
-      torusMaterial.dispose();
+      tubeGeometry.dispose();
+      tubeMaterial.dispose();
       particleGeometry.dispose();
       particleMaterial.dispose();
     };
