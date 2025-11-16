@@ -38,6 +38,9 @@ import {
   submitSessionCompletion,
 } from './mind/eight-zones';
 
+// Coach API handler (imported from serverless function)
+import coachHandler from './coach/generate-response';
+
 // ============================================
 // SERVER SETUP
 // ============================================
@@ -290,6 +293,30 @@ mindRouter.post('/eight-zones/submit', async (req: Request, res: Response) => {
 app.use(`${API_BASE}/mind`, mindRouter);
 
 // ============================================
+// COACH API ENDPOINT
+// ============================================
+
+const coachRouter = Router();
+
+coachRouter.post('/generate-response', async (req: Request, res: Response) => {
+  try {
+    console.log('[Coach API] Handling request via Express server');
+    // Call the Vercel handler directly - it's compatible with Express req/res
+    await coachHandler(req as any, res as any);
+  } catch (error) {
+    console.error('[Coach API] Error in Express handler:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: 'Failed to generate coach response',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+});
+
+app.use(`${API_BASE}/coach`, coachRouter);
+
+// ============================================
 // HEALTH CHECK ENDPOINT
 // ============================================
 
@@ -381,6 +408,7 @@ async function startServer() {
       console.log(`  • POST ${API_BASE}/mind/eight-zones/enhance-zone`);
       console.log(`  • POST ${API_BASE}/mind/eight-zones/synthesize`);
       console.log(`  • POST ${API_BASE}/mind/eight-zones/submit`);
+      console.log(`  • POST ${API_BASE}/coach/generate-response (Streaming)`);
       console.log(`\n🌐 CORS enabled for: http://localhost:3000, http://localhost:5173`);
       console.log('\n💡 To test health: curl http://localhost:3001/api/health\n');
     });
