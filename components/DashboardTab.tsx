@@ -64,8 +64,9 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
             transform: 'translate(-50%, -50%)'
           }}></div>
 
-          <h1 className={`text-7xl md:text-8xl font-bold font-mono ${getGradientText('spirit')} tracking-tighter drop-shadow-2xl`} style={{
-            textShadow: '0 0 80px rgba(168, 85, 247, 0.8), 0 0 50px rgba(34, 197, 233, 0.6), 0 0 30px rgba(168, 85, 247, 0.4)'
+          <h1 className={`text-7xl md:text-8xl font-bold font-mono ${getGradientText('spirit')} tracking-tighter`} style={{
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.8), 0 0 30px rgba(168, 85, 247, 0.6), 0 0 20px rgba(34, 197, 233, 0.4)',
+            filter: 'drop-shadow(0 0 20px rgba(168, 85, 247, 0.4))'
           }}>Welcome to Aura OS</h1>
 
           <div className="relative mt-4 inline-block">
