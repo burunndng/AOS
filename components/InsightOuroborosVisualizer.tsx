@@ -495,45 +495,36 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       </div>
 
       {/* Two-column layout: Canvas (left) and Info Panel (right) */}
-      <div className="flex gap-6 h-96">
+      <div className="flex gap-4 h-72">
         {/* Left Column: 3D Canvas */}
-        <div className="w-1/2">
+        <div className="w-2/3">
           <div ref={containerRef} className="relative w-full h-full rounded-lg overflow-hidden border border-slate-700 bg-slate-950" />
         </div>
 
-        {/* Right Column: Info Panel */}
-        <div className="w-1/2">
+        {/* Right Column: Info Panel - Compact */}
+        <div className="w-1/3">
           {selectedStage ? (
             (() => {
               const stage = INSIGHT_STAGES.find((s) => s.number === selectedStage);
               return stage ? (
-                <div className="h-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-2 border-slate-700 rounded-2xl p-8 animate-fade-in overflow-y-auto">
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div
-                          className="inline-block w-4 h-4 rounded-full mb-3"
-                          style={{ backgroundColor: `#${PHASE_COLORS[stage.phase].toString(16).padStart(6, '0')}` }}
-                        />
-                        <h4 className="text-2xl font-bold text-slate-100">Stage {stage.number}: {stage.name}</h4>
-                        <p className="text-sm text-slate-400 mt-1">{stage.phase}</p>
-                      </div>
+                <div className="h-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-2 border-slate-700 rounded-2xl p-4 animate-fade-in overflow-y-auto">
+                  <div className="space-y-3">
+                    <div>
+                      <div
+                        className="inline-block w-3 h-3 rounded-full mb-2"
+                        style={{ backgroundColor: `#${PHASE_COLORS[stage.phase].toString(16).padStart(6, '0')}` }}
+                      />
+                      <h4 className="text-lg font-bold text-slate-100">Stage {stage.number}</h4>
+                      <p className="text-sm font-semibold text-slate-300">{stage.name}</p>
+                      <p className="text-xs text-slate-400 mt-1">{stage.phase}</p>
                     </div>
-
-                    <p className="text-slate-300 leading-relaxed">
-                      Click on other stages around the ouroboros to explore the journey of insight meditation. Each stage represents a distinct phase in the practitioner's unfolding awareness.
-                    </p>
-
-                    <p className="text-sm text-slate-400 italic border-l-2 border-accent/50 pl-4">
-                      The ouroboros symbolizes the cyclic nature of practice: stages spiral back, wisdom deepens, and the journey continues eternally.
-                    </p>
                   </div>
                 </div>
               ) : null;
             })()
           ) : (
-            <div className="h-full border-2 border-dashed border-slate-700 rounded-2xl p-8 flex items-center justify-center text-slate-500 text-center">
-              <p>Click on a stage in the Ouroboros to view its details.</p>
+            <div className="h-full border-2 border-dashed border-slate-700 rounded-2xl p-4 flex items-center justify-center text-slate-500 text-center text-sm">
+              <p>Click a stage</p>
             </div>
           )}
         </div>

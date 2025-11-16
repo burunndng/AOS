@@ -439,39 +439,32 @@ export default function JhanaSpiralVisualizer3D({ selectedJhana, onSelectJhana }
       </div>
 
       {/* Two-column layout: Canvas (left) and Info Panel (right) */}
-      <div className="flex gap-6 h-96">
+      <div className="flex gap-4 h-72">
         {/* Left Column: 3D Canvas */}
-        <div className="w-1/2">
+        <div className="w-2/3">
           <div ref={containerRef} className="relative w-full h-full rounded-lg overflow-hidden border border-slate-700 bg-slate-950" />
         </div>
 
-        {/* Right Column: Info Panel */}
-        <div className="w-1/2">
+        {/* Right Column: Info Panel - Compact */}
+        <div className="w-1/3">
           {selectedJhana ? (
-            <div className="h-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-2 border-slate-700 rounded-2xl p-8 animate-fade-in overflow-y-auto">
-              <div className="space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div
-                      className="inline-block w-4 h-4 rounded-full mb-3"
-                      style={{ backgroundColor: `#${JHANA_COLORS[selectedJhana].toString(16).padStart(6, '0')}` }}
-                    />
-                    <h4 className="text-2xl font-bold text-slate-100">{selectedJhana}</h4>
-                  </div>
+            <div className="h-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-2 border-slate-700 rounded-2xl p-4 animate-fade-in overflow-y-auto">
+              <div className="space-y-3">
+                <div>
+                  <div
+                    className="inline-block w-3 h-3 rounded-full mb-2"
+                    style={{ backgroundColor: `#${JHANA_COLORS[selectedJhana].toString(16).padStart(6, '0')}` }}
+                  />
+                  <h4 className="text-lg font-bold text-slate-100">{selectedJhana}</h4>
+                  <p className="text-xs text-slate-400 mt-2 line-clamp-4">
+                    {JHANA_DESCRIPTIONS[selectedJhana]}
+                  </p>
                 </div>
-
-                <p className="text-slate-300 leading-relaxed">
-                  {JHANA_DESCRIPTIONS[selectedJhana]}
-                </p>
-
-                <p className="text-sm text-slate-400 italic border-l-2 border-accent/50 pl-4">
-                  Click on other points in the spiral to explore different jhana states.
-                </p>
               </div>
             </div>
           ) : (
-            <div className="h-full border-2 border-dashed border-slate-700 rounded-2xl p-8 flex items-center justify-center text-slate-500 text-center">
-              <p>Click on a point in the spiral to view its details.</p>
+            <div className="h-full border-2 border-dashed border-slate-700 rounded-2xl p-4 flex items-center justify-center text-slate-500 text-center text-sm">
+              <p>Click a point</p>
             </div>
           )}
         </div>
