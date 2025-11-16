@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { INSIGHT_STAGES, getStageByNumber } from '../services/insightPracticeMapService';
+import { INSIGHT_OUROBOROS_STAGES, getOuroborosStageByNumber } from '../services/insightOuroborosService';
 import { Zap } from 'lucide-react';
 
 interface InsightOuroborosVisualizerProps {
@@ -56,7 +56,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       const z = Math.sin(angle) * radius;
 
       // Asymmetric narrative arc: sharp descent into Dark Night, gradual ascent to High Equanimity
-      const stageIndex = t * INSIGHT_STAGES.length;
+      const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
       let y = 0;
 
       if (stageIndex >= 4 && stageIndex < 10) {
@@ -168,8 +168,8 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
     tubeMeshRef.current = tubeMesh;
 
     // Create stage nodes around the circle with asymmetric narrative arc
-    INSIGHT_STAGES.forEach((stage, index) => {
-      const angle = (index / INSIGHT_STAGES.length) * Math.PI * 2;
+    INSIGHT_OUROBOROS_STAGES.forEach((stage, index) => {
+      const angle = (index / INSIGHT_OUROBOROS_STAGES.length) * Math.PI * 2;
       const radius = 10;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
@@ -258,7 +258,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       const pos = ouroborosPath.getPointAt(t);
 
       // Phase-aware speed: Dark Night (t: 0.25-0.625) flows faster/turbulent, High Equanimity (t: 0.625-1.0) flows slower/smooth
-      const stageIndex = t * INSIGHT_STAGES.length;
+      const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
       let speed = 0;
       if (stageIndex >= 4 && stageIndex < 10) {
         // Dark Night: faster, turbulent flow (0.008-0.012)
@@ -489,7 +489,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
         <div className="w-1/3">
           {selectedStage ? (
             (() => {
-              const stage = INSIGHT_STAGES.find((s) => s.stage === selectedStage);
+              const stage = getOuroborosStageByNumber(selectedStage);
               return stage ? (
                 <div className="h-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-2 border-slate-700 rounded-2xl p-4 animate-fade-in overflow-y-auto">
                   <div className="space-y-3">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Flame, Moon, Sun, GitCompare, Brain } from 'lucide-react';
+import { Sparkles, Flame, Moon, Sun, GitCompare, Brain, Zap } from 'lucide-react';
 import { SectionDivider } from './SectionDivider.tsx';
 import { ActiveTab } from '../types.ts';
 
@@ -299,6 +299,57 @@ export default function SpiritToolsTab({ setActiveWizard, historyBigMind }: Spir
             className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
           >
             Open Insight Map
+          </button>
+        </div>
+      </section>
+
+      {/* Insight Ouroboros Visualizer */}
+      <SectionDivider />
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-100 mb-1">Interactive 3D Visualization</h2>
+          <p className="text-sm text-slate-400">Explore the 16 stages of insight in an interactive 3D sacred cycle</p>
+        </div>
+        <div className="bg-gradient-to-br from-neutral-900/30 to-neutral-900/30 border-2 border-neutral-500/40 rounded-lg p-6">
+          <div className="flex items-center gap-4 mb-3">
+            <Zap size={32} className="text-neutral-400" />
+            <h3 className="text-2xl font-bold tracking-tight text-slate-100">Insight Ouroboros</h3>
+            <span className="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-1 rounded-full font-semibold">3D Interactive</span>
+          </div>
+          <p className="text-slate-300 mb-4 leading-relaxed">
+            Visualize the 16 ñanas as an ouroboros—the ancient symbol of a snake eating its tail. This 3D interactive map
+            shows the asymmetric narrative arc of insight: the sharp descent into the Dark Night stages and the gradual
+            ascent through High Equanimity. Click any stage node to explore its characteristics in the side panel.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">16</div>
+              <div className="text-xs text-slate-400 mt-1">Ñanas</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">3D</div>
+              <div className="text-xs text-slate-400 mt-1">Interactive</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">🐍</div>
+              <div className="text-xs text-slate-400 mt-1">Sacred Cycle</div>
+            </div>
+            <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className="text-2xl font-bold text-accent">✨</div>
+              <div className="text-xs text-slate-400 mt-1">Visual Map</div>
+            </div>
+          </div>
+          <p className="text-sm text-slate-400 mb-5 italic">
+            Based on Mahasi Sayadaw's Progress of Insight. A stunning 3D visualization with particle flow,
+            asymmetric narrative arc, and interactive node selection. Perfect for practitioners wanting
+            to see the full journey through vipassana meditation at a glance.
+          </p>
+          <button
+            onClick={() => setActiveWizard('insight-ouroboros')}
+            className="btn-luminous px-6 py-2 rounded-md font-semibold transition text-sm"
+          >
+            Open Ouroboros
           </button>
         </div>
       </section>
