@@ -570,26 +570,34 @@ export default function App() {
     }
   };
 
-  const handleSaveBiasSession = async (session: BiasDetectiveSession) => {
-    setHistoryBias(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setDraftBias(null);
-    navigateBack();
-    const report = `# Bias Detective: ${session.decisionText}\n- Diagnosis: ${session.diagnosis}\n- Takeaway: ${session.oneThingToRemember}`;
-    const summary = `Identified bias in decision: ${session.decisionText}`;
-    try {
-      const insight = await generateInsightAndRefreshGuidance({
-        wizardType: 'Bias Detective',
-        sessionId: session.id,
-        sessionName: 'Bias Detective Session',
-        sessionReport: report,
-        sessionSummary: summary,
-        userId,
-        availablePractices: Object.values(corePractices).flat(),
-        userProfile
-      });
+const handleSaveBiasSession = async (session: BiasDetectiveSession) => {
+    const fullReport = `
+# Bias Detective Session Report
+
+**Timestamp:** ${new Date(session.timestamp).toLocaleString()}
+**Bias Identified:** ${session.biasType}
+**Initial Situation:** ${session.situation}
+**Emotional Response:** ${session.emotionalResponse}
+**Automatic Thought:** ${session.automaticThought}
+**Evidence For:** ${session.evidenceFor}
+**Evidence Against:** ${session.evidenceAgainst}
+**Alternative Thought:** ${session.alternativeThought}
+    `;
+
+    const sessionWithReport: BiasDetectiveSession = {
+      ...session,
+      wizardType: 'Bias Detective',
+      fullReport,
+    };
+
+    const newHistory = [...historyBias, sessionWithReport];
+    setHistoryBias(newHistory);
+setDraftBias(null);
+    setActiveWizard(null);
+
+    const insight = await generateInsightFromSession(sessionWithReport);
+    if (insight) {
       setIntegratedInsights(prev => [...prev, insight]);
-    } catch (err) {
-      console.error('[Bias Detective] Failed to generate insight:', err);
     }
   };
 
@@ -686,11 +694,21 @@ export default function App() {
     }
   };
 
-  const handleSaveKeganSession = async (session: KeganAssessmentSession) => {
-    setHistoryKegan(prev => [...prev.filter(s => s.id !== session.id), session]);
+const handleSaveKeganSession = async (session: KeganAssessmentSession) => {
+    const report = `# Kegan Assessment
+- Stage: ${session.overallInterpretation?.centerOfGravity || 'Pending'}
+- Key Insights: ${JSON.stringify(session.responses).substring(0, 200)}`;
+
+    const sessionWithReport: KeganAssessmentSession = {
+      ...session,
+      wizardType: 'Kegan Assessment',
+      fullReport: report,
+    };
+
+    setHistoryKegan(prev => [...prev.filter(s => s.id !== session.id), sessionWithReport]);
     setDraftKegan(null);
     navigateBack();
-    const report = `# Kegan Assessment\n- Stage: ${session.overallInterpretation?.centerOfGravity || 'Pending'}\n- Key Insights: ${JSON.stringify(session.responses).substring(0, 200)}`;
+
     const summary = `Development stage assessed: ${session.overallInterpretation?.centerOfGravity || 'Assessment completed'}`;
     try {
       const insight = await generateInsightAndRefreshGuidance({
@@ -709,12 +727,23 @@ export default function App() {
     }
   };
 
-  const handleSaveAttachmentAssessment = async (session: AttachmentAssessmentSession) => {
-    setHistoryAttachment(prev => [...prev.filter(s => s.id !== session.id), session]);
+const handleSaveAttachmentAssessment = async (session: AttachmentAssessmentSession) => {
+    const report = `# Attachment Assessment
+- Style: ${session.style}
+- Anxiety Score: ${session.scores.anxiety}
+- Avoidance Score: ${session.scores.avoidance}
+- Assessment Notes: ${session.notes || session.description}`;
+
+    const sessionWithReport: AttachmentAssessmentSession = {
+      ...session,
+      wizardType: 'Attachment Assessment',
+      fullReport: report,
+    };
+
+    setHistoryAttachment(prev => [...prev.filter(s => s.id !== session.id), sessionWithReport]);
     setDraftAttachment(null);
     navigateBack();
 
-    const report = `# Attachment Assessment\n- Style: ${session.style}\n- Anxiety Score: ${session.scores.anxiety}\n- Avoidance Score: ${session.scores.avoidance}\n- Assessment Notes: ${session.notes || session.description}`;
     const summary = `Attachment style assessed: ${session.style} (anxiety: ${session.scores.anxiety}, avoidance: ${session.scores.avoidance})`;
 
     try {
@@ -734,11 +763,20 @@ export default function App() {
     }
   };
 
-  const handleSaveRelationalSession = async (session: RelationalPatternSession) => {
-    setHistoryRelational(prev => [...prev.filter(s => s.id !== session.id), session]);
+const handleSaveRelationalSession = async (session: RelationalPatternSession) => {
+    const report = `# Relational Pattern
+- Context: ${session.conversation.slice(-3).map(m => m.text).join(' ')}`;
+
+    const sessionWithReport: RelationalPatternSession = {
+      ...session,
+      wizardType: 'Relational Pattern',
+      fullReport: report,
+    };
+
+    setHistoryRelational(prev => [...prev.filter(s => s.id !== session.id), sessionWithReport]);
     setDraftRelational(null);
     navigateBack();
-    const report = `# Relational Pattern\n- Context: ${session.conversation.slice(-3).map(m => m.text).join(' ')}`;
+
     const summary = `Relational pattern explored through dialogue`;
     try {
       const insight = await generateInsightAndRefreshGuidance({
@@ -757,11 +795,7 @@ export default function App() {
     }
   };
 
-  const handleSaveRoleAlignmentSession = async (session: RoleAlignmentSession) => {
-    setHistoryRoleAlignment(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setDraftRoleAlignment(null);
-    navigateBack();
-
+const handleSaveRoleAlignmentSession = async (session: RoleAlignmentSession) => {
     const rolesText = session.roles
       .filter(r => r.name.trim())
       .map(r => `### ${r.name}
@@ -791,6 +825,16 @@ ${session.aiIntegralReflection.quadrantConnections}
 ### Recommendations
 ${session.aiIntegralReflection.recommendations.map(r => `- ${r}`).join('\n')}` : ''}`;
 
+    const sessionWithReport: RoleAlignmentSession = {
+      ...session,
+      wizardType: 'Role Alignment',
+      fullReport: report,
+    };
+
+    setHistoryRoleAlignment(prev => [...prev.filter(s => s.id !== session.id), sessionWithReport]);
+    setDraftRoleAlignment(null);
+    navigateBack();
+
     const avgScore = session.roles.filter(r => r.name.trim()).reduce((sum, r) => sum + r.valueScore, 0) /
                      Math.max(1, session.roles.filter(r => r.name.trim()).length);
     const summary = `Assessed role alignment across ${session.roles.filter(r => r.name.trim()).length} life roles (avg alignment: ${avgScore.toFixed(1)}/10)`;
@@ -812,10 +856,7 @@ ${session.aiIntegralReflection.recommendations.map(r => `- ${r}`).join('\n')}` :
     }
   };
 
-  const handleSaveJhanaSession = async (session: JhanaSession) => {
-    setHistoryJhana(prev => [...prev.filter(s => s.id !== session.id), session]);
-    navigateBack();
-
+const handleSaveJhanaSession = async (session: JhanaSession) => {
     const report = `# Jhana Guide: ${session.practice}
 - Duration: ${session.duration} minutes
 - Jhana Level Reached: ${session.jhanaLevel}
@@ -833,6 +874,15 @@ ${session.aiIntegralReflection.recommendations.map(r => `- ${r}`).join('\n')}` :
 - Mind Quality: ${session.mindQuality}
 - Hindrances: ${session.hindrances?.join(', ') || 'None noted'}
 ${session.comparison ? `\n- Progress: ${session.comparison}` : ''}`;
+
+    const sessionWithReport: JhanaSession = {
+      ...session,
+      wizardType: 'Jhana Guide',
+      fullReport: report,
+    };
+
+    setHistoryJhana(prev => [...prev.filter(s => s.id !== session.id), sessionWithReport]);
+    navigateBack();
 
     const summary = `Meditated on ${session.practice} for ${session.duration}min, reached ${session.jhanaLevel} jhana`;
 
@@ -979,9 +1029,7 @@ ${session.integrationNote}
     }
   };
 
-  const handleSaveSomaticPractice = async (session: SomaticPracticeSession) => {
-    setSomaticPracticeHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
-
+const handleSaveSomaticPractice = async (session: SomaticPracticeSession) => {
     const report = `# Somatic Generator: ${session.title}
 - Practice Type: ${session.practiceType}
 - Duration: ${session.duration} minutes
@@ -991,6 +1039,14 @@ ${session.integrationNote}
 ${session.safetyNotes ? `\n## Safety Notes\n${session.safetyNotes.map(n => `- ${n}`).join('\n')}` : ''}
 
 ## Practice Segments: ${session.script.length} components`;
+
+    const sessionWithReport: SomaticPracticeSession = {
+      ...session,
+      wizardType: 'Somatic Practice',
+      fullReport: report,
+    };
+
+    setSomaticPracticeHistory(prev => [...prev.filter(s => s.id !== session.id), sessionWithReport]);
 
     const summary = `Generated somatic practice: ${session.title} (${session.duration}min, ${session.practiceType})`;
 
@@ -1014,8 +1070,34 @@ ${session.safetyNotes ? `\n## Safety Notes\n${session.safetyNotes.map(n => `- ${
     setActiveTab('library');
   };
 
-  const handleSaveIntegralBodyPlan = async (plan: IntegralBodyPlan) => {
-    setIntegralBodyPlans(prev => [...prev.filter(p => p.id !== plan.id), plan]);
+const handleSaveIntegralBodyPlan = async (plan: IntegralBodyPlan) => {
+    const report = `# Integral Body Plan: ${plan.goalStatement}
+- Week Starting: ${plan.weekStartDate}
+- Daily Targets:
+  - Protein: ${plan.dailyTargets.proteinGrams}g
+  - Sleep: ${plan.dailyTargets.sleepHours}h
+  - Workouts: ${plan.dailyTargets.workoutDays} days
+  - Yin Practice: ${plan.dailyTargets.yinPracticeMinutes} min
+
+## Yang Constraints
+- Strength Focus: ${plan.yangConstraints.strengthFocus || 'N/A'}
+- Cardio Preference: ${plan.yangConstraints.cardioPreference || 'N/A'}
+- Available Days: ${plan.yangConstraints.availableDays}/week
+
+## Yin Preferences
+- Primary: ${plan.yinPreferences.primary || 'N/A'}
+- Secondary: ${plan.yinPreferences.secondary || 'N/A'}
+
+## Weekly Summary
+${plan.weekSummary}`;
+
+    const sessionWithReport = {
+      ...plan,
+      wizardType: 'Integral Body Plan',
+      fullReport: report,
+    };
+
+    setIntegralBodyPlans(prev => [...prev.filter(p => p.id !== plan.id), sessionWithReport]);
 
     // Initialize history entry if it doesn't exist
     setIntegralBodyPlanHistory(prev => {
@@ -1052,26 +1134,6 @@ ${session.safetyNotes ? `\n## Safety Notes\n${session.safetyNotes.map(n => `- ${
     }));
 
     // Generate insight from embodied development plan
-    const report = `# Integral Body Plan: ${plan.goalStatement}
-- Week Starting: ${plan.weekStartDate}
-- Daily Targets:
-  - Protein: ${plan.dailyTargets.proteinGrams}g
-  - Sleep: ${plan.dailyTargets.sleepHours}h
-  - Workouts: ${plan.dailyTargets.workoutDays} days
-  - Yin Practice: ${plan.dailyTargets.yinPracticeMinutes} min
-
-## Yang Constraints
-- Strength Focus: ${plan.yangConstraints.strengthFocus || 'N/A'}
-- Cardio Preference: ${plan.yangConstraints.cardioPreference || 'N/A'}
-- Available Days: ${plan.yangConstraints.availableDays}/week
-
-## Yin Preferences
-- Primary: ${plan.yinPreferences.primary || 'N/A'}
-- Secondary: ${plan.yinPreferences.secondary || 'N/A'}
-
-## Weekly Summary
-${plan.weekSummary}`;
-
     const summary = `Created ${plan.dailyTargets.workoutDays}-day embodied development plan: ${plan.goalStatement}`;
 
     try {
@@ -1213,11 +1275,7 @@ ${plan.weekSummary}`;
     }
   }, [activeWizard, integralBodyPlanHistory, generatePersonalizationSummary]);
 
-  const handleSaveBigMindSession = async (session: BigMindSession) => {
-    setHistoryBigMind(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setDraftBigMind(null);
-    navigateBack();
-
+const handleSaveBigMindSession = async (session: BigMindSession) => {
     // Generate comprehensive report from Big Mind session
     if (session.summary) {
       const voicesText = session.voices.map(v => `- **${v.name}** (${v.archetype}): "${v.quality}"`).join('\n');
@@ -1243,6 +1301,16 @@ ${messagesText}
 ## Recommended Practices
 ${session.summary.recommendedPractices.map(p => `- **${p.practiceName}**: ${p.rationale}`).join('\n')}`;
 
+      const sessionWithReport: BigMindSession = {
+        ...session,
+        wizardType: 'Big Mind Process',
+        fullReport: report,
+      };
+
+      setHistoryBigMind(prev => [...prev.filter(s => s.id !== session.id), sessionWithReport]);
+      setDraftBigMind(null);
+      navigateBack();
+
       const summary = `Explored ${session.voices.length} voices through Big Mind process, reached witness consciousness`;
 
       try {
@@ -1263,11 +1331,7 @@ ${session.summary.recommendedPractices.map(p => `- **${p.practiceName}**: ${p.ra
     }
   };
 
-  const handleSaveEightZonesSession = async (session: EightZonesSession) => {
-    setEightZonesHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setDraftEightZones(null);
-    navigateBack();
-
+const handleSaveEightZonesSession = async (session: EightZonesSession) => {
     // Build rich report from zone analyses and connection dialogues
     const zoneAnalysesText = Object.values(session.zoneAnalyses || {})
       .sort((a, b) => a.zoneNumber - b.zoneNumber)
@@ -1302,6 +1366,16 @@ ${session.novelInsights?.map(insight => `- ${insight}`).join('\n') || '- None id
 ### Recommendations
 ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identified'}`;
 
+    const sessionWithReport: EightZonesSession = {
+      ...session,
+      wizardType: 'Eight Zones',
+      fullReport: sessionReport,
+    };
+
+    setEightZonesHistory(prev => [...prev.filter(s => s.id !== session.id), sessionWithReport]);
+    setDraftEightZones(null);
+    navigateBack();
+
     // Generate integrated insight for Journal
     if (session.synthesisReport) {
       try {
@@ -1323,7 +1397,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     }
   };
 
-  const handleSaveAdaptiveCycleSession = async (session: AdaptiveCycleSession) => {
+const handleSaveAdaptiveCycleSession = async (session: AdaptiveCycleSession) => {
     console.log('🔄 [Adaptive Cycle] handleSaveAdaptiveCycleSession called with session:', session);
 
     const formatPoints = (points: string[]) =>
@@ -1360,6 +1434,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     const sessionWithReport: AdaptiveCycleSession = {
       ...session,
       fullReport: sessionReport,
+      wizardType: 'Adaptive Cycle Lens',
     };
 
     setAdaptiveCycleHistory((prev) => [...prev.filter((s) => s.id !== sessionWithReport.id), sessionWithReport]);
@@ -1439,12 +1514,7 @@ ${session.recommendations?.map(rec => `- ${rec}`).join('\n') || '- None identifi
     // For now, just keep this handler available for future expansion
   };
 
-  const handleSaveWorkoutProgram = async (program: WorkoutProgram) => {
-    setWorkoutPrograms(prev => [...prev.filter(p => p.id !== program.id), program]);
-    // Clear handoff source after saving
-    setWorkoutHandoffSource(null);
-    navigateBack();
-
+const handleSaveWorkoutProgram = async (program: WorkoutProgram) => {
     const report = `# Workout Program: ${program.title}
 - Generated: ${program.date}
 - Workouts: ${program.workouts.length} sessions
@@ -1457,6 +1527,17 @@ ${program.progressionRecommendations?.map(r => `- ${r}`).join('\n') || '- Standa
 
 ## Personalization Notes
 ${program.personalizationNotes || 'Standard customization applied'}`;
+
+    const sessionWithReport = {
+      ...program,
+      wizardType: 'Workout Program',
+      fullReport: report,
+    };
+
+    setWorkoutPrograms(prev => [...prev.filter(p => p.id !== program.id), sessionWithReport]);
+    // Clear handoff source after saving
+    setWorkoutHandoffSource(null);
+    navigateBack();
 
     const summary = `Created ${program.workouts.length}-workout personalized program: ${program.title}`;
 
@@ -1479,17 +1560,26 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
     alert(`Your personalized workout program has been saved!`);
   };
 
-  const handleSaveMemoryReconSession = async (session: MemoryReconsolidationSession) => {
-    setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), session]);
-    setDraftMemoryRecon(null);
-    navigateBack();
-
+const handleSaveMemoryReconSession = async (session: MemoryReconsolidationSession) => {
     const selectedBelief = session.implicitBeliefs[0];
     const shiftPercentage = session.completionSummary?.intensityShift
       ? Math.round((session.completionSummary.intensityShift / session.baselineIntensity) * -100)
       : 0;
 
-    const report = `# Memory Reconsolidation: ${selectedBelief?.belief || 'N/A'}\n- Intensity Shift: ${shiftPercentage}%\n- Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceName).join(', ')}`;
+    const report = `# Memory Reconsolidation: ${selectedBelief?.belief || 'N/A'}
+- Intensity Shift: ${shiftPercentage}%
+- Integration: ${session.completionSummary?.selectedPractices.map(p => p.practiceName).join(', ')}`;
+
+    const sessionWithReport: MemoryReconsolidationSession = {
+      ...session,
+      wizardType: 'Memory Reconsolidation',
+      fullReport: report,
+    };
+
+    setMemoryReconHistory(prev => [...prev.filter(s => s.id !== session.id), sessionWithReport]);
+    setDraftMemoryRecon(null);
+    navigateBack();
+
     const summary = `Reconsolidated belief shift: ${shiftPercentage}%`;
 
     try {
