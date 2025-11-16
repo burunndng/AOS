@@ -54,7 +54,7 @@ Create something that feels like a real tarot card from the ${style} tradition.`
 
 /**
  * Generate a tarot card image using the backend API
- * Backend handles Imagen API with Stable Diffusion fallback
+ * Supports local development (localhost:3001) and Vercel serverless functions
  */
 export async function generateTarotCard(request: TarotCardRequest): Promise<TarotCardResponse> {
   try {
@@ -66,12 +66,11 @@ export async function generateTarotCard(request: TarotCardRequest): Promise<Taro
 
     console.log('Generating tarot card via backend API...');
 
-    // Determine API base - support both production and development
-    const apiBase = typeof window !== 'undefined'
-      ? window.location.origin + '/api'
-      : process.env.VITE_API_BASE || 'http://localhost:3001/api';
+    // Determine API endpoint based on environment
+    const apiEndpoint = getImageGenerationEndpoint();
+    console.log('Using API endpoint:', apiEndpoint);
 
-    const response = await fetch(`${apiBase}/images/generate`, {
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -85,6 +84,15 @@ export async function generateTarotCard(request: TarotCardRequest): Promise<Taro
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
       console.error('Backend API error:', errorData);
+
+      // Provide helpful error message
+      if (response.status === 405) {
+        return {
+          success: false,
+          error: 'Image generation endpoint not configured. Deploy the backend to Vercel.'
+        };
+      }
+
       return {
         success: false,
         error: errorData.error || `API error: ${response.status}`
@@ -109,6 +117,32 @@ export async function generateTarotCard(request: TarotCardRequest): Promise<Taro
       error: error instanceof Error ? error.message : 'Failed to generate tarot card'
     };
   }
+}
+
+/**
+ * Determine the correct API endpoint based on environment
+ * Priority: Environment variable > localhost (dev) > Vercel (prod)
+ */
+function getImageGenerationEndpoint(): string {
+  // 1. Check environment variable first
+  const envEndpoint = import.meta.env.VITE_IMAGE_API_ENDPOINT;
+  if (envEndpoint) {
+    return envEndpoint;
+  }
+
+  // 2. Local development (localhost)
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:3001/api/images/generate';
+  }
+
+  // 3. Production: Vercel serverless function
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin;
+    return `${origin}/api/generate-image`;
+  }
+
+  // Fallback for SSR
+  return 'http://localhost:3001/api/images/generate';
 }
 
 /**
