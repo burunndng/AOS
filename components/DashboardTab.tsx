@@ -10,15 +10,18 @@ interface DashboardTabProps {
 }
 
 export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab }: DashboardTabProps) {
-  const [showVideo] = useState(true);
-  const [videoMuted, setVideoMuted] = useState(true);
-  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const audioRef = React.useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
 
-  const unmute = () => {
-    setVideoMuted(false);
-    if (videoRef.current) {
-      videoRef.current.muted = false;
-      videoRef.current.volume = 1;
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current.play();
+        setIsPlaying(true);
+      }
     }
   };
 
@@ -113,47 +116,18 @@ export default function DashboardTab({ openGuidedPracticeGenerator, setActiveTab
         </div>
       </div>
 
-      {/* Autoplay Video Section - positioned well below the Body • Mind • Spirit • Shadow */}
-      {showVideo && (
-        <div className="w-full mt-32 px-6 mb-20 animate-fade-in" style={{ animationDelay: '400ms' }}>
-          <div className="max-w-2xl mx-auto">
-            {/* Video container */}
-            <div className="relative bg-black/40 border border-purple-500/30 rounded-2xl overflow-hidden backdrop-blur shadow-2xl" style={{
-              boxShadow: '0 25px 50px -12px rgba(147, 51, 234, 0.5), 0 0 100px rgba(147, 51, 234, 0.3)'
-            }}>
-              <video
-                ref={videoRef}
-                autoPlay
-                muted={videoMuted}
-                loop
-                playsInline
-                controls
-                className="w-full h-auto display-block"
-              >
-                <source src="https://files.catbox.moe/fpwjc2.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+      {/* Background Audio - plays automatically on dashboard load */}
+      <audio ref={audioRef} autoPlay loop>
+        <source src="https://files.catbox.moe/kbn0ap.mp3" type="audio/mpeg" />
+      </audio>
 
-              {/* Unmute Button Overlay */}
-              {videoMuted && (
-                <button
-                  onClick={unmute}
-                  className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/20 transition-all duration-300 group cursor-pointer"
-                >
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                      <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </div>
-                    <span className="text-white font-bold text-lg drop-shadow-lg">Click to Unmute</span>
-                  </div>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Pause Control Line - thin horizontal line at bottom */}
+      <button
+        onClick={togglePlayPause}
+        className="fixed bottom-0 left-0 right-0 h-1 bg-black hover:bg-gray-800 transition-colors cursor-pointer z-40"
+        title={isPlaying ? "Click to pause" : "Click to play"}
+        aria-label={isPlaying ? "Pause audio" : "Play audio"}
+      />
     </div>
   );
 }
