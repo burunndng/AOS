@@ -186,7 +186,7 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
     }
   };
 
-  // Create and play ambient 432Hz oracle presence
+  // Create and play ambient 432Hz oracle presence with breathing modulation
   const startAmbientAudio = () => {
     try {
       if (audioContextRef.current) return; // Already playing
@@ -197,43 +197,86 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
 
       // Master gain for overall volume control
       const masterGain = audioContext.createGain();
-      masterGain.gain.setValueAtTime(0.15, now); // Subtle volume
+      masterGain.gain.setValueAtTime(0.12, now);
       masterGain.connect(audioContext.destination);
 
-      // Oscillator 1: 432Hz base frequency (healing frequency)
+      // ===== LFO (Low Frequency Oscillators) for modulation =====
+
+      // LFO 1: Very slow breathing (0.25Hz - 4 second cycle)
+      const lfo1 = audioContext.createOscillator();
+      const lfoGain1 = audioContext.createGain();
+      lfo1.frequency.setValueAtTime(0.25, now);
+      lfo1.type = 'sine';
+      lfoGain1.gain.setValueAtTime(8, now); // 8Hz variation
+      lfo1.connect(lfoGain1);
+
+      // LFO 2: Slower breathing (0.15Hz - 6.5 second cycle, different phase)
+      const lfo2 = audioContext.createOscillator();
+      const lfoGain2 = audioContext.createGain();
+      lfo2.frequency.setValueAtTime(0.15, now);
+      lfo2.type = 'sine';
+      lfoGain2.gain.setValueAtTime(5, now); // 5Hz variation
+      lfo2.connect(lfoGain2);
+
+      // LFO 3: Volume breathing (0.3Hz - 3.3 second cycle)
+      const lfo3 = audioContext.createOscillator();
+      const lfoGain3 = audioContext.createGain();
+      lfo3.frequency.setValueAtTime(0.3, now);
+      lfo3.type = 'sine';
+      lfoGain3.gain.setValueAtTime(0.04, now); // Volume variation 0.04 around base
+      lfo3.connect(lfoGain3);
+
+      // ===== Main tone oscillators with modulation =====
+
+      // Oscillator 1: 432Hz base (modulated by LFO1)
       const osc1 = audioContext.createOscillator();
       const gain1 = audioContext.createGain();
       osc1.type = 'sine';
       osc1.frequency.setValueAtTime(432, now);
-      gain1.gain.setValueAtTime(0.3, now);
+      lfoGain1.connect(osc1.frequency); // Connect LFO to frequency
+      gain1.gain.setValueAtTime(0.25, now);
       osc1.connect(gain1);
       gain1.connect(masterGain);
 
-      // Oscillator 2: Perfect fifth harmonic (648Hz = 432 * 1.5)
+      // Oscillator 2: Perfect fifth (648Hz = 432 * 1.5, modulated by LFO2)
       const osc2 = audioContext.createOscillator();
       const gain2 = audioContext.createGain();
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(648, now);
-      gain2.gain.setValueAtTime(0.2, now);
+      lfoGain2.connect(osc2.frequency); // Different LFO for richer modulation
+      gain2.gain.setValueAtTime(0.18, now);
       osc2.connect(gain2);
       gain2.connect(masterGain);
 
-      // Oscillator 3: Major third harmonic (540Hz = 432 * 1.25)
+      // Oscillator 3: Major third (540Hz = 432 * 1.25, modulated by LFO1 but with slight offset)
       const osc3 = audioContext.createOscillator();
       const gain3 = audioContext.createGain();
       osc3.type = 'sine';
       osc3.frequency.setValueAtTime(540, now);
-      gain3.gain.setValueAtTime(0.15, now);
+      lfoGain1.connect(osc3.frequency); // Modulated by same LFO as osc1 but different gain
+      gain3.gain.setValueAtTime(0.12, now);
       osc3.connect(gain3);
       gain3.connect(masterGain);
 
-      // Start all oscillators
+      // Apply volume breathing to master gain
+      lfoGain3.connect(masterGain.gain);
+
+      // Start all oscillators (LFOs + main tones)
+      lfo1.start(now);
+      lfo2.start(now);
+      lfo3.start(now);
       osc1.start(now);
       osc2.start(now);
       osc3.start(now);
 
-      // Store nodes for cleanup
-      audioNodesRef.current = [osc1, osc2, osc3, gain1, gain2, gain3, masterGain];
+      // Store all nodes for cleanup
+      audioNodesRef.current = [
+        lfo1, lfo2, lfo3,
+        lfoGain1, lfoGain2, lfoGain3,
+        osc1, osc2, osc3,
+        gain1, gain2, gain3,
+        masterGain
+      ];
     } catch (e) {
       console.log('Audio context not available:', e);
     }
