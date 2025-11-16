@@ -5,8 +5,8 @@ import { INSIGHT_OUROBOROS_STAGES, getOuroborosStageByNumber } from '../services
 import { Zap } from 'lucide-react';
 
 interface InsightOuroborosVisualizerProps {
-  selectedStage: number | null;
-  onSelectStage: (stage: number) => void;
+  selectedStage?: number | null;
+  onSelectStage?: (stage: number) => void;
 }
 
 // Color code by phase - elegant desaturated colors
@@ -25,7 +25,13 @@ interface StagePoint {
   mesh: THREE.Mesh;
 }
 
-export default function InsightOuroborosVisualizer({ selectedStage, onSelectStage }: InsightOuroborosVisualizerProps) {
+export default function InsightOuroborosVisualizer({ selectedStage: externalSelectedStage, onSelectStage: externalOnSelectStage }: InsightOuroborosVisualizerProps = {}) {
+  const [selectedStage, setSelectedStage] = React.useState<number | null>(externalSelectedStage || null);
+
+  const handleSelectStage = (stage: number) => {
+    setSelectedStage(stage);
+    externalOnSelectStage?.(stage);
+  };
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
@@ -228,7 +234,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
         ctx.font = 'bold 40px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(stage.number.toString(), 32, 32);
+        ctx.fillText(String(stage.stage), 32, 32);
       }
       const texture = new THREE.CanvasTexture(canvas);
       const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
@@ -239,7 +245,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       ouroborosGroup.add(sprite);
 
       stagePointsRef.current.push({
-        number: stage.number,
+        number: stage.stage,
         name: stage.name,
         phase: stage.phase,
         position: position.clone(),
@@ -320,7 +326,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
             // Camera will revert to OrbitControls which handles free exploration
           } else {
             // Focus on the selected stage
-            onSelectStage(selectedPoint.number);
+            handleSelectStage(selectedPoint.number);
 
             // Calculate focus target: positioned to view the stage from a good angle
             // Position camera outside the circle, slightly above the stage
@@ -468,7 +474,7 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       particleGeometry.dispose();
       particleMaterial.dispose();
     };
-  }, [selectedStage, onSelectStage]);
+  }, [selectedStage]);
 
   return (
     <div className="w-full space-y-6">
@@ -557,8 +563,8 @@ export default function InsightOuroborosVisualizer({ selectedStage, onSelectStag
       {/* Phase Legend */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Object.entries(PHASE_COLORS).map(([phase, color]) => {
-          if (!color) return null;
-          const colorHex = typeof color === 'number' ? color.toString(16).padStart(6, '0') : color;
+          if (color === null || color === undefined) return null;
+          const colorHex = typeof color === 'number' ? color.toString(16).padStart(6, '0') : String(color);
           return (
             <div key={phase} className="flex items-center gap-2 text-xs p-2 rounded bg-slate-800/50">
               <div
