@@ -205,9 +205,9 @@ const PRACTICE_PRESETS: PracticePreset[] = [
   },
   {
     module: 'spirit',
-    name: 'Sacred Silence Descent',
+    name: 'Deep Meditation',
     icon: '🤫',
-    template: 'Create a 20-minute descent into sacred silence and formless awareness. Include: settling through layers of mind toward silence, dissolving boundaries of self and other, touching the void beyond thought, resting in the ground of being. Minimal instruction, maximum space. Tone: reverent, minimal, pointing beyond words.',
+    template: 'Create a 20-minute meditation practice moving toward silence and stillness. Include: settling through layers of mind toward quiet, releasing the sense of separation, moving beyond conceptual thinking, resting in formless awareness. Minimal instruction, maximum space. Tone: calm, minimal, using silence and space.',
   },
   {
     module: 'spirit',
@@ -217,9 +217,9 @@ const PRACTICE_PRESETS: PracticePreset[] = [
   },
   {
     module: 'spirit',
-    name: 'Transcendent Gratitude',
+    name: 'Gratitude Practice',
     icon: '🙏',
-    template: 'Create a 11-minute practice of gratitude as a spiritual path to transcendence. Include: appreciation of existence itself, gratitude for challenges as teachers, invoking abundance consciousness, opening to grace, expressing devotion to life. Tone: rapturous, overflow, surrender.',
+    template: 'Create a 11-minute practice of gratitude as a path to deeper well-being. Include: appreciation of existence, gratitude for challenges as learning opportunities, opening to abundance, expressing appreciation for life. Tone: warm, appreciative, grounded.',
   },
 ];
 

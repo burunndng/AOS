@@ -5,7 +5,7 @@ export const journeyRegions: JourneyRegion[] = [
     id: 'core',
     name: 'The Trailhead',
     emoji: '🥾',
-    description: 'Start your journey into Integral Life Practice',
+    description: 'Begin exploring Integral Life Practice',
     cards: [
       {
         id: 'core-1',
@@ -159,7 +159,7 @@ export const journeyRegions: JourneyRegion[] = [
       {
         id: 'shadow-2',
         title: 'The 3-2-1 Process',
-        description: 'The 3-2-1 process is a transformative technique. First, you face the trigger or person who provokes you. Second, you dialogue with them as if they are within you. Third, you become them—embodying that quality. Fourth, you integrate what you discovered.',
+        description: 'The 3-2-1 process is a technique for integration. First, you face the trigger or person who provokes you. Second, you dialogue with them as if they are within you. Third, you become them—embodying that quality. Fourth, you integrate what you discovered.',
         imageUrl: 'https://images.unsplash.com/photo-1523821741446-edb2b68bb7a0?w=800&h=400&fit=crop',
         interactionType: 'quiz',
         quizQuestion: {
@@ -247,7 +247,7 @@ export const journeyBadges = {
   },
   'spirit-complete': {
     name: 'Spirit Seeker',
-    description: 'You\'ve accessed deeper consciousness',
+    description: 'You\'ve explored contemplative practice',
     emoji: '✨',
   },
   'shadow-complete': {
