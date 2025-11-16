@@ -4,7 +4,7 @@
 // services/geminiService.ts
 // FIX: Add `ThreeTwoOneSession` and `CustomPractice` to type imports.
 import { GoogleGenAI, Type, Modality, Blob, Content } from "@google/genai";
-import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey, IntegratedInsight, KeganResponse, KeganStage, KeganDomain, KeganAssessmentSession, KeganProbeExchange, RelationshipContext, RelationshipType } from '../types.ts';
+import { Practice, IdentifiedBias, Perspective, AqalReportData, ThreeTwoOneSession, CustomPractice, ModuleKey, IntegratedInsight, KeganResponse, KeganStage, KeganDomain, KeganAssessmentSession, KeganProbeExchange, RelationshipContext, RelationshipType, IntelligenceContext } from '../types.ts';
 import { practices as corePractaces } from '../constants.ts';
 import { AttachmentStyle, getRecommendedPracticesBySystem } from '../data/attachmentMappings.ts';
 
@@ -429,20 +429,82 @@ export async function generateRecommendations(context: string): Promise<string[]
     return JSON.parse(response.text);
 }
 
-// Function for AqalTab.tsx
-export async function generateAqalReport(context: string): Promise<AqalReportData> {
-     const prompt = `Analyze the user's ILP context through the AQAL (All Quadrants, All Levels) lens.
-    Context:
-    ---
-    ${context}
-    ---
-    Provide an AQAL report.
-    - summary: A 2-3 sentence overview of their practice's balance.
-    - quadrantInsights: An object with keys I, It, We, Its. For each, provide a 1-2 sentence insight on how their practice addresses that quadrant.
-    - recommendations: An array of 2-3 strings with specific suggestions to create a more balanced, integral practice.
+// Wizard to AQAL Quadrant Mapping (MVP)
+const WIZARD_QUADRANT_MAP: Record<string, string> = {
+  'keganAssessment': 'I',
+  'threeTwoOne': 'I',
+  'ifsSession': 'I',
+  'bigMindSession': 'I',
+  'attachmentAssessment': 'We',
+  'relationalPatterns': 'We',
+  'roleAlignment': 'We',
+  'integralBodyArchitect': 'It',
+  'somaticPractices': 'It',
+  'adaptiveCycle': 'Its',
+  'eightZones': 'Its',
+  'polarityMapper': 'Its',
+  'biasDetective': 'Its',
+};
 
-    Return a JSON object matching this structure.
-    Return ONLY the JSON object.`;
+// Function for AqalTab.tsx
+export async function generateAqalReport(context: IntelligenceContext): Promise<AqalReportData> {
+    // Format rich context for AI
+    const practiceList = context.currentPracticeStack.map(p => `- ${p.name}`).join('\n');
+    const completionCount = context.completionHistory.filter(c => c.completed).length;
+    const wizardSummary = context.wizardSessions.slice(0, 5).map(s =>
+      `${s.type} (${s.date}): ${s.keyInsights.slice(0, 2).join('; ')}`
+    ).join('\n');
+    const insightsSummary = context.integratedInsights.slice(0, 3).map(i => i.detectedPattern).join('; ');
+
+    // Map wizards to quadrants for balance analysis
+    const quadrantActivity = { I: 0, It: 0, We: 0, Its: 0 };
+    context.wizardSessions.forEach(s => {
+      const quadrant = WIZARD_QUADRANT_MAP[s.type];
+      if (quadrant) quadrantActivity[quadrant as keyof typeof quadrantActivity]++;
+    });
+
+    const prompt = `Analyze this user's integral practice through the AQAL (All Quadrants, All Levels) lens.
+
+CURRENT PRACTICES:
+${practiceList || 'No practices in stack yet - encourage building a practice stack'}
+
+COMPLETION: ${completionCount}/${context.currentPracticeStack.length} practices completed
+
+RECENT WIZARD SESSIONS & INSIGHTS:
+${wizardSummary || 'No wizard sessions yet - this is a new user starting their journey'}
+
+IDENTIFIED PATTERNS:
+${insightsSummary || 'No patterns detected yet'}
+
+DEVELOPMENTAL CONTEXT:
+- Stage: ${context.developmentalStage || 'Not yet assessed'}
+- Attachment: ${context.attachmentStyle || 'Not yet assessed'}
+
+QUADRANT ACTIVITY (from wizards):
+- I (Interior-Individual): ${quadrantActivity.I} sessions
+- It (Exterior-Individual): ${quadrantActivity.It} sessions
+- We (Interior-Collective): ${quadrantActivity.We} sessions
+- Its (Exterior-Collective): ${quadrantActivity.Its} sessions
+
+AVAILABLE TOOLS TO RECOMMEND:
+- I (thoughts, feelings, consciousness): Kegan Assessment, 3-2-1 Process, IFS, Big Mind
+- It (body, behaviors, physiology): Integral Body Architect, Somatic Practices
+- We (culture, relationships): Relational Patterns, Role Alignment, Attachment Work
+- Its (systems, environments): Adaptive Cycle, Eight Zones, Polarity Mapper, Bias Detective
+
+INSTRUCTIONS:
+${totalSessions === 0
+    ? '- This user is just starting. Give encouraging, welcoming insights and suggest 1-2 beginner-friendly tools from each quadrant.'
+    : '- Analyze their quadrant balance. Identify strengths and gaps. Suggest specific tools from the list above for neglected quadrants.'}
+- Be warm, supportive, and specific.
+- If a quadrant has 0 sessions, explicitly note it needs attention and recommend a tool.
+
+Provide:
+- summary: 2-3 sentence overview of their current quadrant balance
+- quadrantInsights: For each quadrant (I, It, We, Its), 1-2 sentences on their development or potential
+- recommendations: 2-3 specific, actionable suggestions with tool names from the list above
+
+Return ONLY the JSON object.`;
 
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-pro',
@@ -473,7 +535,33 @@ export async function generateAqalReport(context: string): Promise<AqalReportDat
         }
     });
 
-    return JSON.parse(response.text);
+    const report = JSON.parse(response.text);
+
+    // Calculate quadrant scores (0-10) based on wizard activity and practice engagement
+    // Score formula: Base on absolute activity (each session worth ~2-3 points, capped at 10)
+    const calculateScore = (activity: number, totalActivity: number): number => {
+        if (totalActivity === 0) return 0; // No data yet
+        // Give credit for absolute activity (1 session = 2 points, 5+ sessions = 10 points)
+        const absoluteScore = Math.min(10, activity * 2);
+        // Bonus for balanced distribution (penalty if this quadrant is neglected relative to others)
+        const proportion = activity / totalActivity;
+        const balanceBonus = proportion >= 0.15 ? 2 : 0; // Bonus if at least 15% of total activity
+        return Math.min(10, absoluteScore + balanceBonus);
+    };
+
+    const totalSessions = Object.values(quadrantActivity).reduce((a, b) => a + b, 0);
+    const quadrantScores = {
+        I: calculateScore(quadrantActivity.I, totalSessions),
+        It: calculateScore(quadrantActivity.It, totalSessions),
+        We: calculateScore(quadrantActivity.We, totalSessions),
+        Its: calculateScore(quadrantActivity.Its, totalSessions),
+    };
+
+    return {
+        ...report,
+        quadrantScores,
+        generatedAt: new Date().toISOString(),
+    };
 }
 
 // --- Functions for CustomPracticeModal ---

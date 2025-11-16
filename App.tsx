@@ -476,7 +476,14 @@ export default function App() {
     setAiLoading(true);
     setAiError(null);
     try {
-      const report = await geminiService.generateAqalReport(getContextForAI());
+      // Use rich context instead of basic practice list
+      const richContext = aggregateUserContext(
+        practiceStack,
+        practiceNotes,
+        integratedInsights,
+        completedToday
+      );
+      const report = await geminiService.generateAqalReport(richContext);
       setAqalReport(report);
     } catch (e) {
       setAiError(e instanceof Error ? e.message : "Failed to generate AQAL report.");

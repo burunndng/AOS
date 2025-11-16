@@ -222,7 +222,14 @@ export interface AqalReportData {
         We: string;
         Its: string;
     };
+    quadrantScores?: {
+        I: number;
+        It: number;
+        We: number;
+        Its: number;
+    };
     recommendations: string[];
+    generatedAt?: string;
 }
 
 export interface DiscoveryAnswers {

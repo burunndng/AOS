@@ -54,7 +54,14 @@ export default function AqalTab({ report, isLoading, error, onGenerate }: AqalTa
       {report && (
         <section className="space-y-6 animate-fade-in">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-100 mb-3">Overall Summary</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-100">Overall Summary</h2>
+              {report.generatedAt && (
+                <span className="text-xs text-slate-500">
+                  Generated {new Date(report.generatedAt).toLocaleDateString()}
+                </span>
+              )}
+            </div>
             <div className="bg-slate-800/50 border border-slate-800 rounded-lg p-5 card-luminous-hover">
               <p className="text-slate-300 leading-relaxed">{report.summary}</p>
             </div>
@@ -63,20 +70,72 @@ export default function AqalTab({ report, isLoading, error, onGenerate }: AqalTa
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-slate-100 mb-3">Quadrant Insights</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-800/50 border border-slate-800 rounded-lg p-5 card-luminous-hover">
-                <h3 className="text-xl font-bold text-blue-300 mb-2">I (Subjective)</h3>
+              <div className={`bg-slate-800/50 border ${report.quadrantScores && report.quadrantScores.I <= 2 ? 'border-orange-500/50' : 'border-slate-800'} rounded-lg p-5 card-luminous-hover`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-blue-300">I (Subjective)</h3>
+                  {report.quadrantScores && (
+                    <span className={`text-xs ${report.quadrantScores.I <= 2 ? 'text-orange-400 font-semibold' : 'text-slate-400'}`}>
+                      {report.quadrantScores.I}/10 {report.quadrantScores.I <= 2 && '⚠️'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 italic mb-2">Interior-Individual: thoughts, feelings, consciousness</p>
+                {report.quadrantScores && (
+                  <div className="w-full bg-slate-700 rounded-full h-1.5 mb-3">
+                    <div className="bg-blue-400 h-1.5 rounded-full" style={{ width: `${report.quadrantScores.I * 10}%` }}></div>
+                  </div>
+                )}
                 <p className="text-slate-300 text-sm leading-relaxed">{report.quadrantInsights.I}</p>
               </div>
-              <div className="bg-slate-800/50 border border-slate-800 rounded-lg p-5 card-luminous-hover">
-                <h3 className="text-xl font-bold text-green-300 mb-2">It (Objective)</h3>
+              <div className={`bg-slate-800/50 border ${report.quadrantScores && report.quadrantScores.It <= 2 ? 'border-orange-500/50' : 'border-slate-800'} rounded-lg p-5 card-luminous-hover`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-green-300">It (Objective)</h3>
+                  {report.quadrantScores && (
+                    <span className={`text-xs ${report.quadrantScores.It <= 2 ? 'text-orange-400 font-semibold' : 'text-slate-400'}`}>
+                      {report.quadrantScores.It}/10 {report.quadrantScores.It <= 2 && '⚠️'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 italic mb-2">Exterior-Individual: body, behaviors, physiology</p>
+                {report.quadrantScores && (
+                  <div className="w-full bg-slate-700 rounded-full h-1.5 mb-3">
+                    <div className="bg-green-400 h-1.5 rounded-full" style={{ width: `${report.quadrantScores.It * 10}%` }}></div>
+                  </div>
+                )}
                 <p className="text-slate-300 text-sm leading-relaxed">{report.quadrantInsights.It}</p>
               </div>
-              <div className="bg-slate-800/50 border border-slate-800 rounded-lg p-5 card-luminous-hover">
-                <h3 className="text-xl font-bold text-amber-300 mb-2">We (Intersubjective)</h3>
+              <div className={`bg-slate-800/50 border ${report.quadrantScores && report.quadrantScores.We <= 2 ? 'border-orange-500/50' : 'border-slate-800'} rounded-lg p-5 card-luminous-hover`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-amber-300">We (Intersubjective)</h3>
+                  {report.quadrantScores && (
+                    <span className={`text-xs ${report.quadrantScores.We <= 2 ? 'text-orange-400 font-semibold' : 'text-slate-400'}`}>
+                      {report.quadrantScores.We}/10 {report.quadrantScores.We <= 2 && '⚠️'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 italic mb-2">Interior-Collective: culture, relationships, shared meaning</p>
+                {report.quadrantScores && (
+                  <div className="w-full bg-slate-700 rounded-full h-1.5 mb-3">
+                    <div className="bg-amber-400 h-1.5 rounded-full" style={{ width: `${report.quadrantScores.We * 10}%` }}></div>
+                  </div>
+                )}
                 <p className="text-slate-300 text-sm leading-relaxed">{report.quadrantInsights.We}</p>
               </div>
-              <div className="bg-slate-800/50 border border-slate-800 rounded-lg p-5 card-luminous-hover">
-                <h3 className="text-xl font-bold text-red-300 mb-2">Its (Interobjective)</h3>
+              <div className={`bg-slate-800/50 border ${report.quadrantScores && report.quadrantScores.Its <= 2 ? 'border-orange-500/50' : 'border-slate-800'} rounded-lg p-5 card-luminous-hover`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-red-300">Its (Interobjective)</h3>
+                  {report.quadrantScores && (
+                    <span className={`text-xs ${report.quadrantScores.Its <= 2 ? 'text-orange-400 font-semibold' : 'text-slate-400'}`}>
+                      {report.quadrantScores.Its}/10 {report.quadrantScores.Its <= 2 && '⚠️'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 italic mb-2">Exterior-Collective: systems, environments, structures</p>
+                {report.quadrantScores && (
+                  <div className="w-full bg-slate-700 rounded-full h-1.5 mb-3">
+                    <div className="bg-red-400 h-1.5 rounded-full" style={{ width: `${report.quadrantScores.Its * 10}%` }}></div>
+                  </div>
+                )}
                 <p className="text-slate-300 text-sm leading-relaxed">{report.quadrantInsights.Its}</p>
               </div>
             </div>
