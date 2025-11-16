@@ -92,7 +92,7 @@ Start your response with \`## Where You Are\` (no preamble). Use these exact sec
 1. \`## Where You Are\` - 2-3 sentences MAX, cite specific data
 2. \`## Primary Focus\` - 1-2 sentences identifying growth edge
 3. \`## Recommended Next Steps\` - Embed a JSON code block (see schema below)
-4. \`## How It All Connects\` - Subsections: \`### What I Noticed:\` and \`### Connections:\`
+4. \`## How It All Connects\` - Subsections: \`### What I Noticed:\` (bullet list) and \`### Connections:\` (bullet list with cross-session patterns)
 5. \`## Cautions\` - Predictive warnings with evidence
 
 ### WRITING STYLE RULES:
@@ -155,6 +155,27 @@ Embed this exact JSON structure in a code block under "## Recommended Next Steps
   }
 }
 \`\`\`
+
+---
+
+## HOW IT ALL CONNECTS - DETAILED STRUCTURE (REQUIRED)
+
+This section synthesizes patterns across sessions and practices. Use this exact format:
+
+\`\`\`
+### What I Noticed:
+- [Specific observation from completed wizard work]
+- [Pattern connecting multiple practices in stack]
+- [Developmental progression identified across sessions]
+
+### Connections:
+- [How wizard insight A connects to practice B to support growth edge]
+- [Cross-tool pattern: This emotional pattern showed up in IFS → Polarity → 3-2-1]
+- [Practice stack synergy: Meditation + IFS + Shadow Journaling creating reinforcement loop]
+- [Long-term trajectory: Progressing from reactive patterns toward integrated response]
+\`\`\`
+
+**CRITICAL:** This section must include AT LEAST 2-3 connections showing how different wizards or practices reinforce each other. Otherwise leave empty.
 
 ---
 
@@ -303,7 +324,14 @@ function buildUserPrompt(context: IntelligenceContext): string {
   // Request
   parts.push('---');
   parts.push('');
-  parts.push('Based on ALL of this data, provide comprehensive guidance as JSON.');
+  parts.push('Based on ALL of this data, provide comprehensive guidance.');
+  parts.push('');
+  parts.push('IMPORTANT: For "How It All Connects", identify cross-tool patterns:');
+  parts.push('- How insights from different wizards reinforce each other');
+  parts.push('- How practices in the stack support the identified growth edge');
+  parts.push('- Developmental arc: where they were vs. where growth is heading');
+  parts.push('');
+  parts.push('If insufficient data (fewer than 2 wizard sessions OR fewer than 5 practices), keep this section minimal.');
 
   return parts.join('\n');
 }
@@ -397,21 +425,35 @@ function extractSection(text: string, heading: string): string {
 }
 
 /**
- * Extract list items from a subsection
+ * Extract list items from a subsection (handles both bullet points and prose)
  */
 function extractListItems(sectionText: string, subheading: string): string[] {
   const regex = new RegExp(`${subheading}\\s*\\n([\\s\\S]*?)(?=\\n###|$)`, 'i');
   const match = sectionText.match(regex);
   if (!match) return [];
 
-  // Extract bullet points or numbered items
-  const items = match[1]
+  const content = match[1].trim();
+  if (!content) return [];
+
+  // Try to extract bullet points or numbered items first
+  const bulletItems = content
     .split('\n')
     .map(line => line.trim())
     .filter(line => line.startsWith('-') || line.startsWith('•') || /^\d+\./.test(line))
     .map(line => line.replace(/^[-•]\s*/, '').replace(/^\d+\.\s*/, ''));
 
-  return items;
+  // If bullet points found, return them
+  if (bulletItems.length > 0) {
+    return bulletItems;
+  }
+
+  // Otherwise, split prose by sentence or paragraph
+  const sentences = content
+    .split(/(?<=[.!?])\s+|(?=\n\n)/g)
+    .map(s => s.trim())
+    .filter(s => s.length > 10); // Only keep meaningful segments
+
+  return sentences.length > 0 ? sentences : [content];
 }
 
 /**
