@@ -7,9 +7,10 @@ interface FlabbergasterPortalProps {
   onClose: () => void;
   hasUnlocked?: boolean;
   onHiddenModeDiscovered?: () => void;
+  onStartGeometricGame?: () => void;
 }
 
-export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHiddenModeDiscovered }: FlabbergasterPortalProps) {
+export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHiddenModeDiscovered, onStartGeometricGame }: FlabbergasterPortalProps) {
   const [messages, setMessages] = useState<FlabbergasterMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -247,7 +248,7 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
 
         {/* Input Area */}
         <div className="relative z-10 p-6 border-t border-purple-500/30 flex-shrink-0">
-          <div className="flex gap-3">
+          <div className="flex gap-3 mb-3">
             <input
               ref={inputRef}
               type="text"
@@ -277,7 +278,21 @@ export default function FlabbergasterPortal({ isOpen, onClose, hasUnlocked, onHi
               <span className="hidden sm:inline">Send</span>
             </button>
           </div>
-          
+
+          {/* Game Launch Button */}
+          {onStartGeometricGame && (
+            <button
+              onClick={onStartGeometricGame}
+              className="w-full bg-gradient-to-r from-cyan-600/40 to-purple-600/40 hover:from-cyan-600/60 hover:to-purple-600/60 border border-cyan-500/30 rounded-lg px-4 py-2 text-cyan-200 text-sm font-medium transition-all flex items-center justify-center gap-2"
+              style={{
+                boxShadow: '0 4px 15px rgba(0, 217, 255, 0.2)'
+              }}
+            >
+              <span className="text-lg">🔮</span>
+              Enter the Geometric Resonance Game
+            </button>
+          )}
+
           {/* Mystical hint text */}
           <p className="text-purple-400/60 text-xs italic mt-3 text-center">
             "Whisper your questions to the cosmos, and the Oracle shall answer..."
