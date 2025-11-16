@@ -118,29 +118,40 @@ ${toneInstructions}
 ✓ Fill all four stack areas (Body/Mind/Spirit/Shadow) unless explicitly contra-indicated.
 ✓ Sequence practices over 1-8 weeks, not all at once.
 
-## JSON RESPONSE BLOCK
+## JSON RESPONSE BLOCK (REQUIRED FORMAT)
+
+Respond with VALID JSON. Example:
 
 \`\`\`json
 {
   "nextWizard": {
-    "type": "Bias Detective|IFS|Subject-Object|3-2-1|Somatic|Kegan|Memory Recon|Relational|Big Mind|Polarity|Eight Zones|Adaptive Cycle|Perspective Shifter|Role Alignment|Attachment|Insight Map",
-    "reason": "Why this wizard addresses their growth edge",
-    "focus": "Specific area this wizard will explore",
-    "priority": "high|medium|low",
-    "confidence": 0.0-1.0
+    "type": "IFS",
+    "reason": "You're experiencing internal conflict around perfectionism vs. self-compassion",
+    "focus": "Dialogue between the critical inner voice and your vulnerable parts",
+    "priority": "high",
+    "confidence": 0.85
   },
   "practiceChanges": {
-    "add": [{"practiceName": "...", "reason": "...", "startTiming": "now|next week|week 3", "timeCommitment": "X min/day", "sequenceWeek": 1-8}],
-    "remove": [{"practiceName": "...", "reason": "..."}],
-    "modify": [{"practiceName": "...", "adjustment": "..."}]
+    "add": [
+      {"practiceName": "Loving-Kindness Meditation", "reason": "Builds self-compassion to soften critical parts", "startTiming": "now", "timeCommitment": "15 min/day", "sequenceWeek": 1},
+      {"practiceName": "Somatic Tracking", "reason": "Helps you feel the body sensations of the critical voice", "startTiming": "week 2", "timeCommitment": "10 min/day", "sequenceWeek": 2}
+    ],
+    "remove": [],
+    "modify": []
   },
   "insightWork": {
-    "pattern": "The specific pattern to work with",
-    "approachSuggestion": "Concrete approach suggestion"
+    "pattern": "Harsh inner critic driving perfectionism and self-criticism",
+    "approachSuggestion": "Use IFS to identify which part carries the critic voice, dialogue with it to understand its protective function"
   },
-  "stackBalance": {"body": 25, "mind": 30, "spirit": 25, "shadow": 20}
+  "stackBalance": {"body": 25, "mind": 35, "spirit": 20, "shadow": 20}
 }
 \`\`\`
+
+REQUIRED RULES:
+- type: ONE wizard name only (must exist in WIZARD CHOICE GUIDE)
+- priority: "high" OR "medium" OR "low" (not multiple)
+- startTiming: "now" OR "next week" OR "week X" (specific, not ranges)
+- sequenceWeek: number 1-8 (when to introduce the practice)
 
 ## WIZARD CHOICE GUIDE
 
