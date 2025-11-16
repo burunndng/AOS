@@ -2,17 +2,111 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Volume2, VolumeX, RotateCw } from 'lucide-react';
 import * as THREE from 'three';
 
-// Post-processing effects setup
-class UnrealBloomPass {
-  constructor(resolution: THREE.Vector2, strength: number, radius: number, threshold: number) {
-    this.strength = strength;
-    this.radius = radius;
-    this.threshold = threshold;
+// Bloom shader for post-processing
+const bloomVertexShader = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
-  strength: number;
-  radius: number;
-  threshold: number;
-}
+`;
+
+const bloomFragmentShader = `
+  uniform sampler2D tDiffuse;
+  uniform float strength;
+  uniform float threshold;
+  varying vec2 vUv;
+
+  void main() {
+    vec4 texel = texture2D(tDiffuse, vUv);
+    float luminance = dot(texel.rgb, vec3(0.299, 0.587, 0.114));
+
+    if (luminance > threshold) {
+      gl_FragColor = vec4(texel.rgb * strength, texel.a);
+    } else {
+      gl_FragColor = texel;
+    }
+  }
+`;
+
+// Chromatic aberration shader
+const chromaticVertexShader = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const chromaticFragmentShader = `
+  uniform sampler2D tDiffuse;
+  uniform vec2 amount;
+  varying vec2 vUv;
+
+  void main() {
+    vec2 offset = amount * 0.01;
+    float r = texture2D(tDiffuse, vUv + offset).r;
+    float g = texture2D(tDiffuse, vUv).g;
+    float b = texture2D(tDiffuse, vUv - offset).b;
+    gl_FragColor = vec4(r, g, b, 1.0);
+  }
+`;
+
+// Nebula shader with Simplex-like noise
+const nebulaVertexShader = `
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+  void main() {
+    vPosition = position;
+    vNormal = normalize(normalMatrix * normal);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const nebulaFragmentShader = `
+  uniform float uTime;
+  uniform float uResonance;
+  varying vec3 vPosition;
+  varying vec3 vNormal;
+
+  // Simple hash function
+  float hash(vec3 p) {
+    return fract(sin(dot(p, vec3(12.9898, 78.233, 45.164))) * 43758.5453);
+  }
+
+  // Noise function
+  float noise(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+
+    float n = mix(
+      mix(mix(hash(i), hash(i + vec3(1, 0, 0)), f.x), mix(hash(i + vec3(0, 1, 0)), hash(i + vec3(1, 1, 0)), f.x), f.y),
+      mix(mix(hash(i + vec3(0, 0, 1)), hash(i + vec3(1, 0, 1)), f.x), mix(hash(i + vec3(0, 1, 1)), hash(i + vec3(1, 1, 1)), f.x), f.y),
+      f.z
+    );
+    return n;
+  }
+
+  void main() {
+    vec3 pos = vPosition + uTime * 0.1;
+    float n = noise(pos);
+
+    // Create swirling nebula effect
+    float swirl = sin(length(vPosition) * 2.0 - uTime) * 0.5 + 0.5;
+    float intensity = mix(n, swirl, 0.5);
+
+    // Color gradient from purple to cyan
+    vec3 color1 = vec3(0.6, 0.2, 1.0); // Purple
+    vec3 color2 = vec3(0.0, 0.8, 1.0); // Cyan
+    vec3 color = mix(color1, color2, intensity);
+
+    // Resonance affects the glow
+    color *= (1.0 + uResonance * 0.5);
+
+    gl_FragColor = vec4(color, intensity * 0.6);
+  }
+`;
 
 interface GeometricResonanceGameProps {
   isOpen: boolean;
@@ -39,6 +133,11 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   const sceneGroupRef = useRef<THREE.Group | null>(null);
   const backgroundRef = useRef<THREE.Group | null>(null);
   const composerRef = useRef<any>(null);
+  const bloomMaterialRef = useRef<THREE.ShaderMaterial | null>(null);
+  const chromaticMaterialRef = useRef<THREE.ShaderMaterial | null>(null);
+  const nebulaShaderRef = useRef<THREE.ShaderMaterial | null>(null);
+  const instancedMeshRef = useRef<THREE.InstancedMesh | null>(null);
+  const elapsedTimeRef = useRef(0);
 
   const [gameMode, setGameMode] = useState<GameMode>('menu');
   const [score, setScore] = useState(0);
@@ -153,41 +252,73 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     scene.add(bg);
     backgroundRef.current = bg;
 
-    // Create particles for nebula effect
-    const particleCount = 500;
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const sizes = new Float32Array(particleCount);
-    const colors = new Float32Array(particleCount * 3);
-
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 40;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 40;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 40;
-      sizes[i] = Math.random() * 0.5;
-
-      // Purple to cyan gradient
-      const hue = Math.random() * 0.3 + 0.65; // Purple to cyan range
-      const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    const material = new THREE.PointsMaterial({
-      size: 0.1,
-      sizeAttenuation: true,
+    // Create a large sphere with shader-based nebula
+    const geometry = new THREE.SphereGeometry(50, 32, 32);
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uResonance: { value: 0 },
+      },
+      vertexShader: nebulaVertexShader,
+      fragmentShader: nebulaFragmentShader,
       transparent: true,
-      opacity: 0.4,
-      vertexColors: true,
+      depthWrite: false,
+      side: THREE.BackSide,
     });
 
-    const particles = new THREE.Points(geometry, material);
+    nebulaShaderRef.current = material;
+    const nebula = new THREE.Mesh(geometry, material);
+    bg.add(nebula);
+
+    // Add additional particle layer for depth
+    const particleCount = 300;
+    const particleGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 80;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 80;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 80;
+    }
+
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const particleMaterial = new THREE.PointsMaterial({
+      color: 0xc77dff,
+      size: 0.3,
+      sizeAttenuation: true,
+      transparent: true,
+      opacity: 0.2,
+    });
+
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
     bg.add(particles);
+  };
+
+  const createInstancedGeometryBurst = (parentGroup: THREE.Group) => {
+    // Create base geometry (small tetrahedron)
+    const geometry = new THREE.TetrahedronGeometry(0.15, 1);
+    const material = new THREE.MeshPhongMaterial({
+      color: 0xffd700,
+      emissive: 0xffaa00,
+      emissiveIntensity: 0.8,
+    });
+
+    // Create instanced mesh with many instances
+    const count = 500;
+    const instancedMesh = new THREE.InstancedMesh(geometry, material, count);
+
+    // Initialize positions far off-screen
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < count; i++) {
+      dummy.position.set(1000, 1000, 1000);
+      dummy.updateMatrix();
+      instancedMesh.setMatrixAt(i, dummy.matrix);
+    }
+    instancedMesh.instanceMatrix.needsUpdate = true;
+
+    parentGroup.add(instancedMesh);
+    instancedMeshRef.current = instancedMesh;
   };
 
   // Initialize Three.js scene
@@ -248,6 +379,9 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
     // Create background nebula
     createNebulaBackground(scene);
 
+    // Create instanced geometry burst system
+    createInstancedGeometryBurst(sceneGroup);
+
     // Create player's geometric shape (starts as cube)
     const playerShape = createGeometricShape('cube', 0xff6b9d);
     playerShape.position.set(-3, 0, 0);
@@ -281,10 +415,22 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
 
     window.addEventListener('resize', handleResize);
 
+    // Burst animation state
+    let burstActive = false;
+    let burstStartTime = 0;
+    const burstDuration = 2000; // 2 seconds
+
     // Animation loop
     let animationId: number;
     const animate = () => {
       animationId = requestAnimationFrame(animate);
+      elapsedTimeRef.current += 0.016;
+
+      // Update shader uniforms
+      if (nebulaShaderRef.current) {
+        nebulaShaderRef.current.uniforms.uTime.value = elapsedTimeRef.current;
+        nebulaShaderRef.current.uniforms.uResonance.value = resonanceLevel;
+      }
 
       if (gameMode !== 'menu' && gameActive) {
         // Rotate player shape based on keyboard input
@@ -316,7 +462,54 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
         cyanLight.intensity = 1.2 + Math.sin(Date.now() * 0.0025) * 0.3;
       }
 
+      // Handle burst animation
+      if (burstActive && instancedMeshRef.current) {
+        const elapsed = Date.now() - burstStartTime;
+        const progress = Math.min(elapsed / burstDuration, 1);
+
+        if (progress < 1) {
+          const dummy = new THREE.Object3D();
+          const count = 500;
+          const goldenRatio = (1 + Math.sqrt(5)) / 2;
+
+          for (let i = 0; i < count; i++) {
+            const t = (i / count + progress) % 1;
+            const angle = t * Math.PI * 12; // Spiral rotation
+            const radius = Math.pow(t, 1.5) * 8; // Expanding spiral
+
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            const z = (t - 0.5) * 6;
+
+            dummy.position.set(x, y, z);
+            dummy.scale.set(1 - progress * 0.5, 1 - progress * 0.5, 1 - progress * 0.5);
+            dummy.rotation.x = t * Math.PI * 4;
+            dummy.rotation.y = t * Math.PI * 6;
+            dummy.updateMatrix();
+
+            instancedMeshRef.current.setMatrixAt(i, dummy.matrix);
+          }
+          instancedMeshRef.current.instanceMatrix.needsUpdate = true;
+        } else {
+          // Reset burst
+          burstActive = false;
+          const dummy = new THREE.Object3D();
+          dummy.position.set(1000, 1000, 1000);
+          for (let i = 0; i < 500; i++) {
+            dummy.updateMatrix();
+            instancedMeshRef.current.setMatrixAt(i, dummy.matrix);
+          }
+          instancedMeshRef.current.instanceMatrix.needsUpdate = true;
+        }
+      }
+
       renderer.render(scene, camera);
+    };
+
+    // Expose burst trigger for global access
+    (window as any).__triggerBurst = () => {
+      burstActive = true;
+      burstStartTime = Date.now();
     };
 
     animate();
@@ -495,33 +688,37 @@ const GeometricResonanceGame: React.FC<GeometricResonanceGameProps> = ({
   };
 
   const triggerResonanceBurst = () => {
+    // Trigger the spectacular cascading burst animation
+    if ((window as any).__triggerBurst) {
+      (window as any).__triggerBurst();
+    }
+
+    // Also trigger particle burst for dual-layer effect
     if (!sceneGroupRef.current || !particleSystemRef.current) return;
 
-    const burstCount = 300;
-    const goldenRatio = (1 + Math.sqrt(5)) / 2;
+    const burstCount = 200;
     const positions = particleSystemRef.current.geometry.attributes.position.array as Float32Array;
     const velocities = particleSystemRef.current.geometry.attributes.velocity.array as Float32Array;
 
-    // Create golden spiral burst pattern
+    // Create golden spiral burst pattern for particle layer
     for (let i = 0; i < burstCount; i++) {
       const idx = i * 3;
 
-      // Golden spiral pattern
+      // Golden spiral pattern with exponential growth
       const t = i / burstCount;
-      const angle = t * Math.PI * 8; // Multiple spirals
-      const radius = t * 2; // Expands outward
-      const spiralStrength = 3;
+      const angle = t * Math.PI * 10; // Spiral rotations
+      const radius = Math.pow(t, 1.3) * 3; // Exponential expansion
 
-      positions[idx] = Math.cos(angle) * radius * 0.3;
-      positions[idx + 1] = Math.sin(angle) * radius * 0.3;
-      positions[idx + 2] = (t - 0.5) * 2;
+      positions[idx] = Math.cos(angle) * radius * 0.4;
+      positions[idx + 1] = Math.sin(angle) * radius * 0.4;
+      positions[idx + 2] = (t - 0.5) * 3;
 
-      // Velocity following golden spiral
+      // Velocity following spiral trajectory
       const vAngle = angle + Math.PI / 2;
-      const speed = 0.4 + t * 0.3;
+      const speed = 0.5 + t * 0.4;
       velocities[idx] = Math.cos(vAngle) * speed;
       velocities[idx + 1] = Math.sin(vAngle) * speed;
-      velocities[idx + 2] = (Math.random() - 0.5) * speed * 0.5;
+      velocities[idx + 2] = (Math.random() - 0.5) * speed * 0.3;
     }
 
     particleSystemRef.current.geometry.attributes.position.needsUpdate = true;
