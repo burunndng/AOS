@@ -71,26 +71,26 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
   const isOrbitingStageRef = useRef(false);
   const orbitingStageRef = useRef<number | null>(null);
 
-  // Helper function to create simple rope spiral - 2.5 concentric circles going upward
+  // Helper function to create simple rope forming concentric circles
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
-    const numPoints = 250;
+    const numCircles = 2.5; // 2.5 complete circles
+    const pointsPerCircle = 100;
+    const totalPoints = Math.floor(numCircles * pointsPerCircle);
+    const radius = 10;
 
-    for (let i = 0; i <= numPoints; i++) {
-      const t = i / numPoints;
+    for (let i = 0; i <= totalPoints; i++) {
+      const t = i / totalPoints; // 0 to 1
 
-      // Simple constant radius - like a rope
-      const baseRadius = 10;
+      // Height increases as we complete circles
+      const y = t * 12;
 
-      // Just 2.5 full rotations (circles)
-      const spiralAngle = t * Math.PI * 5;
+      // Full rotation for each complete circle
+      const angle = t * numCircles * Math.PI * 2;
 
-      // Gentle upward movement
-      const y = t * 8; // Simple linear upward ascent
-
-      // Apply the spiral position
-      const x = Math.cos(spiralAngle) * baseRadius;
-      const z = Math.sin(spiralAngle) * baseRadius;
+      // Simple circle at constant radius
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
 
       points.push(new THREE.Vector3(x, y, z));
     }
