@@ -81,62 +81,22 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
   const headMeshRef = useRef<THREE.Mesh | null>(null);
   const tailMeshRef = useRef<THREE.Mesh | null>(null);
 
-  // Helper function to create serpent biting its tail (ouroboros) - a true spiral shape spiraling upward
+  // Helper function to create serpent biting its tail (ouroboros) - a simple circle
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
-    const numPoints = 250;
+    const numPoints = 120;
+    const radius = 12;
 
-    for (let i = 0; i <= numPoints; i++) {
-      const t = i / numPoints;
-      const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const y = 0; // Flat circle at y=0
 
-      // Create a spiral that represents the meditation journey
-      // Outer spiral for Pre-Vipassana (wide), tightens for Dark Night (narrow/deep), widens again for High Equanimity
-      let radiusMultiplier = 1;
-
-      if (stageIndex < 4) {
-        // Pre-Vipassana: outer spiral (widest point)
-        radiusMultiplier = 1 + (stageIndex / 4) * 0.2;
-      } else if (stageIndex >= 4 && stageIndex < 10) {
-        // Vipassana/Dark Night: spiral inward (narrowest point)
-        const darkProgress = (stageIndex - 4) / 6;
-        radiusMultiplier = 1.2 - darkProgress * 0.5; // From 1.2 down to 0.7
-      } else {
-        // High Equanimity: spiral outward again
-        const eqProgress = (stageIndex - 10) / 6;
-        radiusMultiplier = 0.7 + eqProgress * 0.4; // From 0.7 up to 1.1
-      }
-
-      // Spiral angle - creates the coil effect with multiple rotations
-      const spiralAngle = t * Math.PI * 6; // 3 full rotations as we progress through all stages
-      const baseRadius = 10 * radiusMultiplier;
-
-      // Vertical modulation for depth - spiral rises more prominently
-      let y = t * 8; // Overall upward spiral progression (starts at 0, ends at 8)
-
-      if (stageIndex >= 4 && stageIndex < 10) {
-        // Dark Night: steep descent from the rising spiral
-        const darkNightProgress = (stageIndex - 4) / 6;
-        const descent = Math.sin(darkNightProgress * Math.PI);
-        y -= Math.pow(descent, 1.8) * 6; // Sharp dip down during dark night
-      } else if (stageIndex >= 10) {
-        // High Equanimity: continue rising
-        const equanimityProgress = (stageIndex - 10) / 6;
-        const ascent = Math.sin(equanimityProgress * Math.PI);
-        y += Math.pow(ascent, 0.7) * 3; // Additional lift during equanimity
-      }
-
-      // Apply the spiral position
-      const x = Math.cos(spiralAngle) * baseRadius;
-      const z = Math.sin(spiralAngle) * baseRadius;
-
-      // Add subtle undulation for serpent-like movement
-      const undulate = Math.sin(spiralAngle * 0.5) * 0.3;
-
-      points.push(new THREE.Vector3(x, y + undulate, z));
+      points.push(new THREE.Vector3(x, y, z));
     }
 
-    return new THREE.CatmullRomCurve3(points);
+    return new THREE.CatmullRomCurve3(points, true); // true = closed loop
   }
 
   useEffect(() => {
@@ -148,11 +108,11 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     scene.fog = new THREE.Fog(0x0a0e27, 100, 200);
     sceneRef.current = scene;
 
-    // Camera setup - positioned for interactive exploration
+    // Camera setup - positioned above the circular ouroboros
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(20, 8, 20);
+    camera.position.set(0, 25, 0); // Directly above the circle
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
@@ -181,7 +141,8 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
     controls.minDistance = 15;
-    controls.maxDistance = 100;
+    controls.maxDistance = 50;
+    controls.maxPolarAngle = Math.PI / 2.5; // Limit rotation to keep view from below
     controls.autoRotate = false; // User controls rotation
     controlsRef.current = controls;
 
@@ -209,13 +170,13 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     // Create ouroboros path curve (used for both tube geometry and particles)
     const ouroborosPath = createOuroborosPath();
 
-    // Create ouroboros using TubeGeometry following the serpent's path
+    // Create ouroboros using TubeGeometry following the serpent's circular path
     const tubeGeometry = new THREE.TubeGeometry(
       ouroborosPath,
-      250,  // more segments for smoother curves
-      0.7,  // thicker tube radius for more prominent serpent
-      20,   // more segments around circumference for smoother look
-      true  // closed
+      120,  // segments for smooth circle
+      0.6,  // tube radius
+      16,   // segments around circumference
+      true  // closed loop
     );
     const tubeMaterial = new THREE.MeshStandardMaterial({
       color: 0x3d5a5f,        // Rich serpent teal with more depth
@@ -267,6 +228,21 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     tailMesh.receiveShadow = true;
     ouroborosGroup.add(tailMesh);
     tailMeshRef.current = tailMesh;
+
+    // Create center sphere to fill the empty gap inside the circle
+    const centerGeometry = new THREE.SphereGeometry(2.5, 32, 32);
+    const centerMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.6,
+      metalness: 0.3,
+      roughness: 0.2,
+    });
+    const centerMesh = new THREE.Mesh(centerGeometry, centerMaterial);
+    centerMesh.position.set(0, 0, 0);
+    centerMesh.castShadow = true;
+    centerMesh.receiveShadow = true;
+    ouroborosGroup.add(centerMesh);
 
     // Create stage nodes positioned along the serpent's body
     INSIGHT_OUROBOROS_STAGES.forEach((stage, index) => {
@@ -577,6 +553,8 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       headMaterial.dispose();
       tailGeometry.dispose();
       tailMaterial.dispose();
+      centerGeometry.dispose();
+      centerMaterial.dispose();
       particleGeometry.dispose();
       particleMaterial.dispose();
     };
@@ -587,7 +565,7 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       {/* Title */}
       <div className="text-center space-y-2">
         <h3 className="text-3xl font-bold text-slate-100">The Insight Ouroboros</h3>
-        <p className="text-sm text-slate-400">The 16 stages of insight meditation in a sacred cycle. Click on any stage to explore.</p>
+        <p className="text-sm text-slate-400">A serpent biting its tail - the 16 stages of insight in one sacred circle. Click any stage to explore.</p>
       </div>
 
       {/* Two-column layout: Canvas (left) and Info Panel (right) */}
