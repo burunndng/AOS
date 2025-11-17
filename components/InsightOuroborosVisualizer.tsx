@@ -229,6 +229,21 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     ouroborosGroup.add(tailMesh);
     tailMeshRef.current = tailMesh;
 
+    // Create center sphere to fill the empty gap inside the circle
+    const centerGeometry = new THREE.SphereGeometry(2.5, 32, 32);
+    const centerMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.6,
+      metalness: 0.3,
+      roughness: 0.2,
+    });
+    const centerMesh = new THREE.Mesh(centerGeometry, centerMaterial);
+    centerMesh.position.set(0, 0, 0);
+    centerMesh.castShadow = true;
+    centerMesh.receiveShadow = true;
+    ouroborosGroup.add(centerMesh);
+
     // Create stage nodes positioned along the serpent's body
     INSIGHT_OUROBOROS_STAGES.forEach((stage, index) => {
       // Position nodes along the ouroborosPath at equal intervals
@@ -538,6 +553,8 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       headMaterial.dispose();
       tailGeometry.dispose();
       tailMaterial.dispose();
+      centerGeometry.dispose();
+      centerMaterial.dispose();
       particleGeometry.dispose();
       particleMaterial.dispose();
     };
