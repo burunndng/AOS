@@ -4,7 +4,7 @@ export interface HealingAudio {
   description: string;
   url: string;
   duration?: string;
-  category: 'grounding' | 'breathing' | 'hypnosis' | 'nervous-system';
+  category: 'grounding' | 'breathing' | 'hypnosis' | 'nervous-system' | 'meditation-practice';
   symbol: string; // Occult/alchemical symbol
   goal?: string;
   mechanism?: string;
@@ -115,6 +115,26 @@ export const healingAudios: HealingAudio[] = [
     goal: 'Cultivate self-compassion and resilience during stress',
     mechanism: '(C) Self-Compassion & Acceptance',
   },
+  {
+    id: 'vipassana-guided',
+    title: 'Vipassana: Guided Insight Meditation',
+    description: 'A comprehensive guided practice in Vipassana meditation, developing insight into the nature of reality through systematic body scanning and mindful observation of sensations and mental phenomena.',
+    url: 'https://files.catbox.moe/9ubobv.m4a',
+    category: 'meditation-practice',
+    symbol: '🝐', // Alchemical insight/consciousness symbol
+    goal: 'Develop insight and equanimity through direct observation',
+    mechanism: '(M) Vipassana - Insight Meditation',
+  },
+  {
+    id: 'metta-guided',
+    title: 'Metta: Guided Loving-Kindness Meditation',
+    description: 'A complete guided practice in Metta meditation, cultivating unconditional goodwill and compassion toward yourself and all sentient beings through systematic loving-kindness phrases.',
+    url: 'https://files.catbox.moe/ryh654.m4a',
+    category: 'meditation-practice',
+    symbol: '🝥', // Alchemical heart/compassion symbol
+    goal: 'Cultivate loving-kindness and compassion for all beings',
+    mechanism: '(M) Metta - Loving-Kindness Meditation',
+  },
 ];
 
 export const audioCategories = {
@@ -122,4 +142,5 @@ export const audioCategories = {
   'breathing': 'Breathing Techniques',
   'hypnosis': 'Self-Hypnosis Journeys',
   'nervous-system': 'Nervous System Practices',
+  'meditation-practice': 'Guided Meditation Practices',
 };

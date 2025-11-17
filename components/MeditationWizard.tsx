@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ArrowRight, ArrowLeft, Check, BookOpen, Users, Clock, Target, Sparkles, Info, Star, TrendingUp } from 'lucide-react';
+import { X, ArrowRight, ArrowLeft, Check, BookOpen, Users, Clock, Target, Sparkles, Info, Star, TrendingUp, Video } from 'lucide-react';
 import meditationPractices, { MeditationPractice } from '../data/meditationPractices.ts';
 import {
   assessmentQuestions,
@@ -10,6 +10,7 @@ import {
   UserProfile
 } from '../data/meditationAssessment.ts';
 import meditationRecommender, { RecommendationReport } from '../services/meditationRecommender.ts';
+import MeditationIntroductionScreens from './MeditationIntroductionScreens';
 
 interface MeditationWizardProps {
   onClose: () => void;
@@ -23,6 +24,7 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [recommendations, setRecommendations] = useState<RecommendationReport | null>(null);
   const [selectedPractice, setSelectedPractice] = useState<MeditationPractice | null>(null);
+  const [showIntroScreens, setShowIntroScreens] = useState(false);
 
   const questionsBySection = getQuestionsBySection();
   const currentSection = sectionOrder[currentSectionIndex];
@@ -122,7 +124,7 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
         </div>
       </div>
 
-      <div className="text-center mt-8">
+      <div className="flex flex-col gap-4 items-center mt-8">
         <button
           onClick={() => setStep('assessment')}
           className="btn-luminous px-8 py-3 rounded-lg font-semibold text-lg transition inline-flex items-center gap-2"
@@ -130,6 +132,17 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
           Start Assessment
           <ArrowRight size={20} />
         </button>
+
+        <div className="relative w-full max-w-md">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-700/0 via-slate-700/20 to-slate-700/0 rounded-lg"></div>
+          <button
+            onClick={() => setShowIntroScreens(true)}
+            className="relative w-full px-6 py-3 rounded-lg font-semibold border-2 border-slate-600 text-slate-200 hover:border-slate-500 hover:bg-slate-800/50 transition inline-flex items-center justify-center gap-2"
+          >
+            <Video size={20} />
+            Learn About Meditation Types
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -587,34 +600,39 @@ export default function MeditationWizard({ onClose }: MeditationWizardProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-        {/* Header */}
-        <div className="flex-shrink-0 border-b border-slate-700 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Sparkles size={28} className="text-accent" />
-              <h1 className="text-2xl font-bold text-slate-100">
-                {step === 'welcome' && 'Meditation Practice Finder'}
-                {step === 'assessment' && 'Assessment'}
-                {step === 'results' && 'Your Recommendations'}
-                {step === 'practice-details' && 'Practice Details'}
-              </h1>
+    <>
+      {showIntroScreens && (
+        <MeditationIntroductionScreens onClose={() => setShowIntroScreens(false)} />
+      )}
+      <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+          {/* Header */}
+          <div className="flex-shrink-0 border-b border-slate-700 p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Sparkles size={28} className="text-accent" />
+                <h1 className="text-2xl font-bold text-slate-100">
+                  {step === 'welcome' && 'Meditation Practice Finder'}
+                  {step === 'assessment' && 'Assessment'}
+                  {step === 'results' && 'Your Recommendations'}
+                  {step === 'practice-details' && 'Practice Details'}
+                </h1>
+              </div>
+              <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition">
+                <X size={24} className="text-slate-400" />
+              </button>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg transition">
-              <X size={24} className="text-slate-400" />
-            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {step === 'welcome' && renderWelcome()}
+            {step === 'assessment' && renderAssessment()}
+            {step === 'results' && renderResults()}
+            {step === 'practice-details' && renderPracticeDetails()}
           </div>
         </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {step === 'welcome' && renderWelcome()}
-          {step === 'assessment' && renderAssessment()}
-          {step === 'results' && renderResults()}
-          {step === 'practice-details' && renderPracticeDetails()}
-        </div>
       </div>
-    </div>
+    </>
   );
 }
