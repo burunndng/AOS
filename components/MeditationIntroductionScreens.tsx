@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, ArrowLeft, ArrowRight, Play, Pause } from 'lucide-react';
 
 interface IntroductionScreen {
@@ -7,6 +7,7 @@ interface IntroductionScreen {
   subtitle: string;
   description: string;
   videoUrl: string;
+  audioUrl: string;
   keyPoints: string[];
   benefits: string[];
 }
@@ -18,6 +19,7 @@ const introductionScreens: IntroductionScreen[] = [
     subtitle: 'Insight Meditation',
     description: 'Vipassana, meaning "to see clearly," is an ancient meditation technique that develops insight into the nature of reality through careful observation of physical sensations and mental phenomena. This practice cultivates mindfulness and equanimity, leading to profound understanding of impermanence, suffering, and non-self.',
     videoUrl: 'https://files.catbox.moe/p9ctae.mp4',
+    audioUrl: 'https://files.catbox.moe/9ubobv.m4a',
     keyPoints: [
       'Focus on direct observation of bodily sensations and mental states',
       'Systematic body scanning technique from head to toe',
@@ -37,6 +39,7 @@ const introductionScreens: IntroductionScreen[] = [
     subtitle: 'Loving-Kindness Meditation',
     description: 'Metta, or loving-kindness, is a practice of cultivating unconditional goodwill and compassion toward yourself and all beings. By systematically directing waves of loving-kindness first toward yourself, then loved ones, neutral people, difficult people, and finally all sentient beings, this practice opens the heart and dissolves barriers.',
     videoUrl: 'https://files.catbox.moe/winwhh.mp4',
+    audioUrl: 'https://files.catbox.moe/ryh654.m4a',
     keyPoints: [
       'Systematic cultivation of goodwill toward self and others',
       'Use of phrases like "May I be happy, may I be healthy"',
@@ -56,6 +59,7 @@ const introductionScreens: IntroductionScreen[] = [
     subtitle: 'Concentration Meditation',
     description: 'Samatha, meaning "tranquility," develops deep mental focus and concentration through sustained attention on a single object. By training the mind to settle on a chosen point of focus—such as the breath—practitioners cultivate profound calm, clarity, and stability. This foundation supports all other meditation practices.',
     videoUrl: 'https://files.catbox.moe/p9ctae.mp4',
+    audioUrl: 'https://files.catbox.moe/9ubobv.m4a',
     keyPoints: [
       'Sustained focus on a single object (breath, mantra, visual focus)',
       'Gentle return to focus whenever attention wanders',
@@ -77,21 +81,43 @@ interface MeditationIntroductionScreensProps {
 
 export default function MeditationIntroductionScreens({ onClose }: MeditationIntroductionScreensProps) {
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const currentScreen = introductionScreens[currentScreenIndex];
 
   const handleNext = () => {
     if (currentScreenIndex < introductionScreens.length - 1) {
       setCurrentScreenIndex(prev => prev + 1);
-      setIsPlaying(false);
+      setIsVideoPlaying(false);
+      setIsAudioPlaying(false);
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
     }
   };
 
   const handleBack = () => {
     if (currentScreenIndex > 0) {
       setCurrentScreenIndex(prev => prev - 1);
-      setIsPlaying(false);
+      setIsVideoPlaying(false);
+      setIsAudioPlaying(false);
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    }
+  };
+
+  const toggleAudio = () => {
+    if (audioRef.current) {
+      if (isAudioPlaying) {
+        audioRef.current.pause();
+        setIsAudioPlaying(false);
+      } else {
+        audioRef.current.play();
+        setIsAudioPlaying(true);
+      }
     }
   };
 
@@ -127,30 +153,73 @@ export default function MeditationIntroductionScreens({ onClose }: MeditationInt
               <p className="text-xl text-slate-400">{currentScreen.subtitle}</p>
             </div>
 
-            {/* Video */}
-            <div className="relative w-full bg-black rounded-lg overflow-hidden">
-              <video
-                className="w-full h-auto max-h-[400px] object-cover"
-                muted
-                controls={false}
-                autoPlay={false}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-              >
-                <source src={currentScreen.videoUrl} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-              {!isPlaying && (
-                <button
-                  onClick={(e) => {
-                    const video = (e.currentTarget.parentElement?.querySelector('video') as HTMLVideoElement);
-                    video?.play();
-                  }}
-                  className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition"
-                >
-                  <Play size={64} className="text-white" fill="white" />
-                </button>
-              )}
+            {/* Split Layout: Video (Left) and Audio (Right) */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Video Section - Left Side */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-bold text-slate-100">Video</h3>
+                <div className="relative w-full bg-black rounded-lg overflow-hidden aspect-video">
+                  <video
+                    className="w-full h-full object-cover"
+                    muted
+                    controls={false}
+                    autoPlay={false}
+                    onPlay={() => setIsVideoPlaying(true)}
+                    onPause={() => setIsVideoPlaying(false)}
+                  >
+                    <source src={currentScreen.videoUrl} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                  {!isVideoPlaying && (
+                    <button
+                      onClick={(e) => {
+                        const video = (e.currentTarget.parentElement?.querySelector('video') as HTMLVideoElement);
+                        video?.play();
+                      }}
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition"
+                    >
+                      <Play size={48} className="text-white" fill="white" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Audio Section - Right Side */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-bold text-slate-100">Guided Audio</h3>
+                <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-slate-700 rounded-lg p-6 h-[200px] flex flex-col items-center justify-center space-y-4">
+                  <div className="text-center space-y-2">
+                    <p className="text-sm text-slate-400">Listen to a guided</p>
+                    <p className="text-xl font-semibold text-slate-100">{currentScreen.subtitle}</p>
+                    <p className="text-xs text-slate-500">Meditation Practice</p>
+                  </div>
+
+                  <button
+                    onClick={toggleAudio}
+                    className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+                      isAudioPlaying
+                        ? 'bg-accent text-slate-900 scale-110'
+                        : 'bg-slate-700 text-slate-100 hover:bg-slate-600'
+                    }`}
+                  >
+                    {isAudioPlaying ? (
+                      <Pause size={32} fill="currentColor" />
+                    ) : (
+                      <Play size={32} fill="currentColor" />
+                    )}
+                  </button>
+
+                  <audio
+                    ref={audioRef}
+                    onPlay={() => setIsAudioPlaying(true)}
+                    onPause={() => setIsAudioPlaying(false)}
+                    onEnded={() => setIsAudioPlaying(false)}
+                  >
+                    <source src={currentScreen.audioUrl} type="audio/mp4" />
+                    Your browser does not support the audio tag.
+                  </audio>
+                </div>
+              </div>
             </div>
 
             {/* Description */}
