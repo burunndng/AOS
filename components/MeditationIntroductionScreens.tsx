@@ -94,6 +94,7 @@ export default function MeditationIntroductionScreens({ onClose }: MeditationInt
       setIsAudioPlaying(false);
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
     }
   };
@@ -105,6 +106,7 @@ export default function MeditationIntroductionScreens({ onClose }: MeditationInt
       setIsAudioPlaying(false);
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
     }
   };
@@ -160,6 +162,7 @@ export default function MeditationIntroductionScreens({ onClose }: MeditationInt
                 <h3 className="text-lg font-bold text-slate-100">Video</h3>
                 <div className="relative w-full bg-black rounded-lg overflow-hidden aspect-video">
                   <video
+                    key={currentScreen.id}
                     className="w-full h-full object-cover"
                     muted
                     controls={false}
@@ -210,6 +213,7 @@ export default function MeditationIntroductionScreens({ onClose }: MeditationInt
                   </button>
 
                   <audio
+                    key={`audio-${currentScreen.id}`}
                     ref={audioRef}
                     onPlay={() => setIsAudioPlaying(true)}
                     onPause={() => setIsAudioPlaying(false)}
