@@ -58,8 +58,8 @@ const introductionScreens: IntroductionScreen[] = [
     title: 'Samatha',
     subtitle: 'Concentration Meditation',
     description: 'Samatha, meaning "tranquility," develops deep mental focus and concentration through sustained attention on a single object. By training the mind to settle on a chosen point of focus—such as the breath—practitioners cultivate profound calm, clarity, and stability. This foundation supports all other meditation practices.',
-    videoUrl: 'https://files.catbox.moe/p9ctae.mp4',
-    audioUrl: 'https://files.catbox.moe/9ubobv.m4a',
+    videoUrl: 'https://files.catbox.moe/vdzqjj.mp4',
+    audioUrl: 'https://files.catbox.moe/a49o2i.m4a',
     keyPoints: [
       'Sustained focus on a single object (breath, mantra, visual focus)',
       'Gentle return to focus whenever attention wanders',
