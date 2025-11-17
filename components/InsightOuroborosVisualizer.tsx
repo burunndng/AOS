@@ -72,14 +72,12 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
   const ouroborosGroupRef = useRef<THREE.Group | null>(null);
   const particlesRef = useRef<THREE.Points | null>(null);
   const tubeMeshRef = useRef<THREE.Mesh | null>(null);
-  const isCameraFocusingRef = useRef(false);
-  const cameraFocusTargetRef = useRef(new THREE.Vector3());
   const controlsRef = useRef<OrbitControls | null>(null);
   const particleDataRef = useRef<{ t: number; speed: number; phaseColor: number }[]>([]);
-  const isOrbitingStageRef = useRef(false);
-  const orbitingStageRef = useRef<number | null>(null);
   const headMeshRef = useRef<THREE.Mesh | null>(null);
   const tailMeshRef = useRef<THREE.Mesh | null>(null);
+  const cameraTargetRef = useRef(new THREE.Vector3(0, 0, 0));
+  const controlsTargetRef = useRef(new THREE.Vector3(0, 0, 0));
 
   // Helper function to create serpent biting its tail (ouroboros) - a simple circle
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
@@ -138,12 +136,13 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     // Initialize OrbitControls for interactive camera control
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+    controls.dampingFactor = 0.1; // Higher for smoother deceleration
     controls.screenSpacePanning = false;
-    controls.minDistance = 15;
+    controls.minDistance = 10;
     controls.maxDistance = 50;
-    controls.maxPolarAngle = Math.PI / 2.5; // Limit rotation to keep view from below
-    controls.autoRotate = false; // User controls rotation
+    controls.maxPolarAngle = Math.PI / 2.2; // Limit rotation to keep view from below
+    controls.autoRotate = false;
+    controls.enablePan = true;
     controlsRef.current = controls;
 
     // Elegant lighting
@@ -367,7 +366,7 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     // Store particle data for animation
     particleDataRef.current = particleData;
 
-    // Mouse click handler - stage selection or return to overview
+    // Mouse click handler - stage selection with smooth camera transition
     const onMouseClick = (event: MouseEvent) => {
       if (!containerRef.current) return;
 
@@ -384,29 +383,28 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
         const clickedMesh = intersects[0].object;
         const selectedPoint = stagePointsRef.current.find((p) => p.mesh === clickedMesh);
         if (selectedPoint) {
-          // If already focusing this stage, return to overview
-          if (isOrbitingStageRef.current && orbitingStageRef.current === selectedPoint.number) {
-            isOrbitingStageRef.current = false;
-            orbitingStageRef.current = null;
-            // Camera will revert to OrbitControls which handles free exploration
-          } else {
-            // Focus on the selected stage
-            handleSelectStage(selectedPoint.number);
+          // Select the stage
+          handleSelectStage(selectedPoint.number);
 
-            // Calculate focus target: positioned to view the stage from a good angle
-            // Position camera outside the circle, slightly above the stage
-            const outwardDir = selectedPoint.position.clone().normalize();
-            const targetPos = outwardDir.multiplyScalar(18).add(new THREE.Vector3(0, 3, 0));
-            cameraFocusTargetRef.current.copy(targetPos);
-            isCameraFocusingRef.current = true;
-            isOrbitingStageRef.current = false;
-            orbitingStageRef.current = selectedPoint.number;
-          }
+          // Set camera target - position to look at stage from nice angle
+          const stagePos = selectedPoint.position.clone();
+          const distance = 20;
+          const angle = Math.atan2(stagePos.z, stagePos.x);
+
+          // Position camera outside circle, elevated, looking at stage
+          cameraTargetRef.current.set(
+            Math.cos(angle) * distance,
+            12,
+            Math.sin(angle) * distance
+          );
+
+          // Set controls target to the stage position
+          controlsTargetRef.current.copy(stagePos);
         }
       } else {
         // Click on background: return to overview
-        isOrbitingStageRef.current = false;
-        orbitingStageRef.current = null;
+        cameraTargetRef.current.set(0, 25, 0);
+        controlsTargetRef.current.set(0, 0, 0);
       }
     };
 
@@ -418,69 +416,28 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       animationIdRef.current = requestAnimationFrame(animate);
       animationTime += 0.002;
 
-      // --- CAMERA LOGIC: OrbitControls with optional focus transition ---
-      // Smooth focus transition and orbit behavior when clicking a stage
-      if (isCameraFocusingRef.current) {
-        // Disable OrbitControls during camera transition for smoother movement
-        if (controlsRef.current) {
-          controlsRef.current.enabled = false;
+      // --- CAMERA LOGIC: Smooth transitions using easing ---
+      // Easing function for smooth acceleration/deceleration (ease-out cubic)
+      const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+      // Smoothly animate camera position
+      const cameraDist = camera.position.distanceTo(cameraTargetRef.current);
+      if (cameraDist > 0.01) {
+        // Use eased lerp factor based on distance for natural deceleration
+        const baseLerpFactor = 0.08;
+        const easedFactor = baseLerpFactor * easeOutCubic(Math.min(cameraDist / 10, 1));
+        camera.position.lerp(cameraTargetRef.current, easedFactor);
+      }
+
+      // Smoothly animate OrbitControls target
+      if (controlsRef.current) {
+        const targetDist = controlsRef.current.target.distanceTo(controlsTargetRef.current);
+        if (targetDist > 0.01) {
+          const baseLerpFactor = 0.08;
+          const easedFactor = baseLerpFactor * easeOutCubic(Math.min(targetDist / 10, 1));
+          controlsRef.current.target.lerp(controlsTargetRef.current, easedFactor);
         }
-
-        const currentPos = camera.position;
-        const targetPos = cameraFocusTargetRef.current;
-        const lerpFactor = 0.03; // Slower, smoother transition
-
-        currentPos.lerp(targetPos, lerpFactor);
-
-        // Smoothly look at the selected stage
-        const selectedPoint = stagePointsRef.current.find(p => p.number === selectedStage);
-        if (selectedPoint) {
-          // Smooth lookAt using quaternion slerp for buttery smooth rotation
-          const targetQuaternion = new THREE.Quaternion();
-          const lookAtMatrix = new THREE.Matrix4();
-          lookAtMatrix.lookAt(camera.position, selectedPoint.position, camera.up);
-          targetQuaternion.setFromRotationMatrix(lookAtMatrix);
-          camera.quaternion.slerp(targetQuaternion, 0.05);
-        }
-
-        // Enter orbit mode when close enough to target
-        if (currentPos.distanceTo(targetPos) < 0.5) {
-          isCameraFocusingRef.current = false;
-          isOrbitingStageRef.current = true;
-          // Re-enable OrbitControls
-          if (controlsRef.current) {
-            controlsRef.current.enabled = true;
-          }
-        }
-      } else if (isOrbitingStageRef.current && orbitingStageRef.current !== null) {
-        // Gentle slow orbit around the selected stage during focus mode
-        const selectedPoint = stagePointsRef.current.find(p => p.number === orbitingStageRef.current);
-        if (selectedPoint) {
-          const orbitCenter = selectedPoint.position;
-          const currentPos = camera.position;
-
-          // Very slow orbit around the stage
-          const orbitSpeed = 0.003; // Reduced from 0.01 for ultra-smooth rotation
-          const orbitAxis = new THREE.Vector3(0, 1, 0);
-
-          // Apply rotation to camera position
-          const offset = currentPos.clone().sub(orbitCenter);
-          offset.applyAxisAngle(orbitAxis, orbitSpeed);
-          camera.position.copy(orbitCenter.clone().add(offset));
-
-          // Smooth lookAt
-          const targetQuaternion = new THREE.Quaternion();
-          const lookAtMatrix = new THREE.Matrix4();
-          lookAtMatrix.lookAt(camera.position, orbitCenter, camera.up);
-          targetQuaternion.setFromRotationMatrix(lookAtMatrix);
-          camera.quaternion.slerp(targetQuaternion, 0.1);
-        }
-      } else {
-        // Normal mode - enable OrbitControls
-        if (controlsRef.current) {
-          controlsRef.current.enabled = true;
-          controlsRef.current.update();
-        }
+        controlsRef.current.update();
       }
 
       // --- PARTICLE SYSTEM: Phase-aware dynamic flow along ouroboros ---
