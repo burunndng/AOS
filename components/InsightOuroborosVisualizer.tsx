@@ -177,11 +177,12 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       true  // closed
     );
     const tubeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x4a6b6b,        // Dark teal-green rope color
-      emissive: 0x1a3a3a,     // Subtle glow only
-      metalness: 0.5,         // Slightly reflective
-      roughness: 0.4,         // More textured rope appearance
-      envMapIntensity: 0.8,   // Minimal environmental reflection
+      color: 0x2a4a4a,        // Deep organic teal-green base
+      emissive: 0x3a7a7a,     // Soft teal aura glow
+      emissiveIntensity: 0.3, // Subtle glow effect
+      metalness: 0.7,         // More metallic shine
+      roughness: 0.25,        // Smoother for metallic appearance
+      envMapIntensity: 1.2,   // Stronger environmental reflection for organic look
     });
     const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
     tubeMesh.castShadow = true;
