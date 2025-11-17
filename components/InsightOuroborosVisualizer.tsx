@@ -9,25 +9,25 @@ interface InsightOuroborosVisualizerProps {
   onSelectStage?: (stage: number) => void;
 }
 
-// Color palette for each stage (16 unique colors representing the journey)
-// Pre-Vipassana: Cool grounded purples → Vipassana: Warm coppers → Dark Night: Deep reds/oranges → High Equanimity: Bright teals/golds
+// Color palette for each stage (16 unique vibrant colors representing the journey)
+// Pre-Vipassana: Brilliant purples → Vipassana: Warm golds/coppers → Dark Night: Deep reds/oranges → High Equanimity: Bright teals/cyans/golds
 const STAGE_COLORS: Record<number, number> = {
-  1: 0x9d8fc7,   // Muted purple - Mind and Body
-  2: 0x8b7fc4,   // Purple - Discerning Cause
-  3: 0x7a6bc0,   // Deeper purple - Three Characteristics
-  4: 0x6b5cbd,   // Rich purple - Arising and Passing
-  5: 0xd4a574,   // Warm copper - Dissolution
-  6: 0xe0b8a0,   // Soft copper - Fear
-  7: 0xc85c5c,   // Deep red - Misery
-  8: 0xb84545,   // Dark red - Disgust
-  9: 0xa85252,   // Deep burgundy - Desire for Deliverance
-  10: 0x9a6b6b,  // Muted mauve-red - Re-observation
-  11: 0x6b9aa8,  // Muted blue - Equanimity
-  12: 0x5ca8c8,  // Teal blue - Conformity
-  13: 0x4db8d4,  // Bright teal - Change of Lineage
-  14: 0x5cd4a5,  // Teal-green - Path
-  15: 0x7dd4a5,  // Green-teal - Fruition
-  16: 0xa8d456,  // Gold-green - Reviewing Consciousness
+  1: 0xb8a8ff,   // Vibrant lavender - Mind and Body
+  2: 0xa688ff,   // Bright purple - Discerning Cause
+  3: 0x9068ff,   // Rich purple - Three Characteristics
+  4: 0x7848ff,   // Deep violet - Arising and Passing
+  5: 0xff9f43,   // Vibrant amber - Dissolution
+  6: 0xffc266,   // Golden orange - Fear
+  7: 0xff6b6b,   // Bright red - Misery
+  8: 0xff5252,   // Vivid red - Disgust
+  9: 0xff4757,   // Intense coral - Desire for Deliverance
+  10: 0xe74c3c,  // Deep coral-red - Re-observation
+  11: 0x00d4ff,  // Vibrant cyan - Equanimity (FIXED - NOW BRIGHT)
+  12: 0x00e5ff,  // Bright aqua - Conformity
+  13: 0x1dd1a1,  // Vivid turquoise - Change of Lineage
+  14: 0x48dbfb,  // Bright cyan - Path
+  15: 0x74b9ff,  // Sky blue - Fruition
+  16: 0xffd93d,  // Bright gold - Reviewing Consciousness
 };
 
 // Phase colors for legend
@@ -74,7 +74,7 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
   // Helper function to create serpent biting its tail (ouroboros) - a true spiral shape
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
-    const numPoints = 250;
+    const numPoints = 350;
 
     for (let i = 0; i <= numPoints; i++) {
       const t = i / numPoints;
@@ -86,41 +86,45 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
 
       if (stageIndex < 4) {
         // Pre-Vipassana: outer spiral (widest point)
-        radiusMultiplier = 1 + (stageIndex / 4) * 0.2;
+        radiusMultiplier = 1.1 + (stageIndex / 4) * 0.3;
       } else if (stageIndex >= 4 && stageIndex < 10) {
         // Vipassana/Dark Night: spiral inward (narrowest point)
         const darkProgress = (stageIndex - 4) / 6;
-        radiusMultiplier = 1.2 - darkProgress * 0.5; // From 1.2 down to 0.7
+        radiusMultiplier = 1.4 - darkProgress * 0.7; // From 1.4 down to 0.7 - more dramatic
       } else {
         // High Equanimity: spiral outward again
         const eqProgress = (stageIndex - 10) / 6;
-        radiusMultiplier = 0.7 + eqProgress * 0.4; // From 0.7 up to 1.1
+        radiusMultiplier = 0.7 + eqProgress * 0.5; // From 0.7 up to 1.2
       }
 
-      // Spiral angle - creates the coil effect with multiple rotations
-      const spiralAngle = t * Math.PI * 6; // 3 full rotations as we progress through all stages
+      // Spiral angle - creates the coil effect with more rotations for serpent appearance
+      const spiralAngle = t * Math.PI * 9; // 4.5 full rotations as we progress through all stages
       const baseRadius = 10 * radiusMultiplier;
 
-      // Vertical modulation for depth
+      // Vertical modulation - stronger upward spiral
       let y = 0;
-      if (stageIndex >= 4 && stageIndex < 10) {
-        // Dark Night: steep descent
+      if (stageIndex < 4) {
+        // Pre-Vipassana: gradual ascent
+        const preProgress = stageIndex / 4;
+        y = preProgress * 2;
+      } else if (stageIndex >= 4 && stageIndex < 10) {
+        // Dark Night: descent but then transition to ascent
         const darkNightProgress = (stageIndex - 4) / 6;
         const descent = Math.sin(darkNightProgress * Math.PI);
-        y = -Math.pow(descent, 1.8) * 5; // Deeper descent for more visual impact
-      } else if (stageIndex >= 10) {
-        // High Equanimity: gradual ascent back up
+        y = 2 - Math.pow(descent, 1.5) * 7; // Deeper descent from elevation
+      } else {
+        // High Equanimity: strong ascent back up and beyond
         const equanimityProgress = (stageIndex - 10) / 6;
         const ascent = Math.sin(equanimityProgress * Math.PI);
-        y = Math.pow(ascent, 0.7) * 4; // Gentle ascent
+        y = -5 + Math.pow(ascent, 0.8) * 10; // Strong ascent to higher elevation
       }
 
       // Apply the spiral position
       const x = Math.cos(spiralAngle) * baseRadius;
       const z = Math.sin(spiralAngle) * baseRadius;
 
-      // Add subtle undulation for serpent-like movement
-      const undulate = Math.sin(spiralAngle * 0.5) * 0.4;
+      // Add more pronounced undulation for serpent-like movement
+      const undulate = Math.sin(spiralAngle * 0.7) * 0.6;
 
       points.push(new THREE.Vector3(x, y + undulate, z));
     }
@@ -137,12 +141,12 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     scene.fog = new THREE.Fog(0x0a0e27, 100, 200);
     sceneRef.current = scene;
 
-    // Camera setup - positioned for interactive exploration
+    // Camera setup - positioned for interactive exploration with better spiral view
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(20, 8, 20);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(25, 5, 25);  // Higher horizontal positioning to see spiral better
+    camera.lookAt(0, 2, 0);  // Look at center with slight upward bias
     cameraRef.current = camera;
 
     // Renderer setup
@@ -174,21 +178,26 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     controls.autoRotate = false; // User controls rotation
     controlsRef.current = controls;
 
-    // Elegant lighting
-    const ambientLight = new THREE.AmbientLight(0xc9b9e8, 0.5);
+    // Enhanced lighting for vibrant color display
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xe8d4b8, 0.6);
-    keyLight.position.set(30, 40, 30);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    keyLight.position.set(35, 50, 30);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.width = 2048;
     keyLight.shadow.mapSize.height = 2048;
     keyLight.shadow.camera.far = 200;
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0x8ab8e1, 0.3);
-    fillLight.position.set(-20, 20, -30);
+    const fillLight = new THREE.DirectionalLight(0x4db9ff, 0.4);
+    fillLight.position.set(-25, 25, -35);
     scene.add(fillLight);
+
+    // Additional accent light for depth
+    const accentLight = new THREE.DirectionalLight(0xff6b9d, 0.3);
+    accentLight.position.set(20, -10, -30);
+    scene.add(accentLight);
 
     // Create ouroboros group
     const ouroborosGroup = new THREE.Group();
@@ -201,17 +210,17 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     // Create ouroboros using TubeGeometry following the serpent's path
     const tubeGeometry = new THREE.TubeGeometry(
       ouroborosPath,
-      250,  // more segments for smoother curves
-      0.7,  // thicker tube radius for more prominent serpent
-      20,   // more segments around circumference for smoother look
+      320,  // even more segments for smoother curves
+      0.85, // even thicker tube radius for more prominent serpent
+      24,   // more segments around circumference for smoother look
       true  // closed
     );
     const tubeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x4a6b6b,        // Dark teal-green like serpent scales
-      emissive: 0x2a3a3a,     // Subtle green glow
-      metalness: 0.7,         // Slightly metallic for scale effect
-      roughness: 0.3,         // A bit more texture for scale appearance
-      envMapIntensity: 1.4,
+      color: 0x1a1a2e,        // Deep dark blue base
+      emissive: 0x6b9aa8,     // Stronger teal aura glow
+      metalness: 0.6,         // More reflective for ethereal quality
+      roughness: 0.2,         // Smoother for more vibrant appearance
+      envMapIntensity: 1.8,   // Stronger environmental reflection
     });
     const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
     tubeMesh.castShadow = true;
@@ -242,16 +251,27 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       mesh.receiveShadow = true;
       ouroborosGroup.add(mesh);
 
-      // Subtle aura
-      const auraGeometry = new THREE.IcosahedronGeometry(0.9, 4);
+      // Enhanced aura with pulsing glow
+      const auraGeometry = new THREE.IcosahedronGeometry(1.2, 4);
       const auraMaterial = new THREE.MeshBasicMaterial({
         color: stageColor,
         transparent: true,
-        opacity: 0.2,
+        opacity: 0.35,
       });
       const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
       auraMesh.position.copy(position);
       ouroborosGroup.add(auraMesh);
+
+      // Second outer aura layer for more prominent glow effect
+      const outerAuraGeometry = new THREE.IcosahedronGeometry(1.5, 3);
+      const outerAuraMaterial = new THREE.MeshBasicMaterial({
+        color: stageColor,
+        transparent: true,
+        opacity: 0.15,
+      });
+      const outerAuraMesh = new THREE.Mesh(outerAuraGeometry, outerAuraMaterial);
+      outerAuraMesh.position.copy(position);
+      ouroborosGroup.add(outerAuraMesh);
 
       // Stage number label (using billboard technique)
       const canvas = document.createElement('canvas');
@@ -317,10 +337,10 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
 
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMaterial = new THREE.PointsMaterial({
-      color: 0xa8c8e1,
-      size: 0.12,
+      color: 0x00ffff,  // Vibrant cyan for better visibility and aura
+      size: 0.15,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.7,
       sizeAttenuation: true,
       blending: THREE.AdditiveBlending, // Additive blending for glow effect
     });
