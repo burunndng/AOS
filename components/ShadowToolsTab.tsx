@@ -167,22 +167,15 @@ export default function ShadowToolsTab({
         </div>
       )}
 
-      {/* Easter Egg: Shadow Tools Tab */}
-      <div className="border-t border-slate-700 pt-8">
+      {/* Easter Egg: Energy Work Guide */}
+      <div className="border-t border-slate-700 pt-6 mt-6">
         <button
           onClick={onOpenEnergyWorkGuide}
           className="w-full group"
         >
-          <div className="bg-gradient-to-br from-purple-900/20 to-indigo-900/20 border border-purple-500/30 hover:border-purple-500/60 rounded-lg p-6 flex flex-col transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20">
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="text-2xl font-bold tracking-tight text-purple-300 group-hover:text-purple-200 transition">Shadow Tools Tab</h3>
-            </div>
-            <p className="text-slate-300 mb-3 text-left">Coming Soon</p>
-            <p className="text-slate-400 text-sm text-left flex-grow">Future spiritual tools in development</p>
-            <div className="mt-4 pt-4 border-t border-purple-500/20">
-              <p className="text-purple-300 font-semibold group-hover:text-purple-200 transition text-left">Energy Work Guide</p>
-              <p className="text-slate-400 text-sm text-left">Coming soon...</p>
-            </div>
+          <div className="bg-gradient-to-br from-purple-900/20 to-indigo-900/20 border border-purple-500/30 hover:border-purple-500/60 rounded-lg p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20">
+            <p className="text-purple-300 font-semibold group-hover:text-purple-200 transition text-left text-sm">Energy Work Guide</p>
+            <p className="text-slate-400 text-xs text-left">Coming soon...</p>
           </div>
         </button>
       </div>
