@@ -256,10 +256,10 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       const material = new THREE.MeshStandardMaterial({
         color: stageColor,
         emissive: stageColor,
-        emissiveIntensity: 0.4,
-        metalness: 0.85,
-        roughness: 0.15,
-        envMapIntensity: 1.5,
+        emissiveIntensity: 0.7, // Increased for more saturated, glowing appearance
+        metalness: 0.3,         // Reduced for more solid, less reflective look
+        roughness: 0.6,         // Increased for more matte, solid appearance
+        envMapIntensity: 1.0,
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.position.copy(position);
@@ -272,7 +272,7 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       const auraMaterial = new THREE.MeshBasicMaterial({
         color: stageColor,
         transparent: true,
-        opacity: 0.35, // Increased from 0.2 for more visible aura
+        opacity: 0.5, // Increased for more solid, visible aura
       });
       const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
       auraMesh.position.copy(position);
@@ -419,29 +419,38 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       animationTime += 0.002;
 
       // --- CAMERA LOGIC: OrbitControls with optional focus transition ---
-      // Update OrbitControls (handles damping and smooth rotation)
-      if (controlsRef.current) {
-        controlsRef.current.update();
-      }
-
       // Smooth focus transition and orbit behavior when clicking a stage
       if (isCameraFocusingRef.current) {
+        // Disable OrbitControls during camera transition for smoother movement
+        if (controlsRef.current) {
+          controlsRef.current.enabled = false;
+        }
+
         const currentPos = camera.position;
         const targetPos = cameraFocusTargetRef.current;
-        const lerpFactor = 0.05;
+        const lerpFactor = 0.03; // Slower, smoother transition
 
         currentPos.lerp(targetPos, lerpFactor);
 
-        // Look at the selected stage
+        // Smoothly look at the selected stage
         const selectedPoint = stagePointsRef.current.find(p => p.number === selectedStage);
         if (selectedPoint) {
-          camera.lookAt(selectedPoint.position);
+          // Smooth lookAt using quaternion slerp for buttery smooth rotation
+          const targetQuaternion = new THREE.Quaternion();
+          const lookAtMatrix = new THREE.Matrix4();
+          lookAtMatrix.lookAt(camera.position, selectedPoint.position, camera.up);
+          targetQuaternion.setFromRotationMatrix(lookAtMatrix);
+          camera.quaternion.slerp(targetQuaternion, 0.05);
         }
 
         // Enter orbit mode when close enough to target
-        if (currentPos.distanceTo(targetPos) < 0.2) {
+        if (currentPos.distanceTo(targetPos) < 0.5) {
           isCameraFocusingRef.current = false;
           isOrbitingStageRef.current = true;
+          // Re-enable OrbitControls
+          if (controlsRef.current) {
+            controlsRef.current.enabled = true;
+          }
         }
       } else if (isOrbitingStageRef.current && orbitingStageRef.current !== null) {
         // Gentle slow orbit around the selected stage during focus mode
@@ -449,19 +458,28 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
         if (selectedPoint) {
           const orbitCenter = selectedPoint.position;
           const currentPos = camera.position;
-          const toCenter = orbitCenter.clone().sub(currentPos).normalize();
-          const right = new THREE.Vector3(0, 1, 0).cross(toCenter).normalize();
-          const orbitAxis = new THREE.Vector3(0, 1, 0);
 
-          // Slow orbit around the stage (0.01 radians per frame ≈ 5 degrees per second)
-          const orbitSpeed = 0.01;
-          const radius = currentPos.distanceTo(orbitCenter);
+          // Very slow orbit around the stage
+          const orbitSpeed = 0.003; // Reduced from 0.01 for ultra-smooth rotation
+          const orbitAxis = new THREE.Vector3(0, 1, 0);
 
           // Apply rotation to camera position
           const offset = currentPos.clone().sub(orbitCenter);
           offset.applyAxisAngle(orbitAxis, orbitSpeed);
           camera.position.copy(orbitCenter.clone().add(offset));
-          camera.lookAt(orbitCenter);
+
+          // Smooth lookAt
+          const targetQuaternion = new THREE.Quaternion();
+          const lookAtMatrix = new THREE.Matrix4();
+          lookAtMatrix.lookAt(camera.position, orbitCenter, camera.up);
+          targetQuaternion.setFromRotationMatrix(lookAtMatrix);
+          camera.quaternion.slerp(targetQuaternion, 0.1);
+        }
+      } else {
+        // Normal mode - enable OrbitControls
+        if (controlsRef.current) {
+          controlsRef.current.enabled = true;
+          controlsRef.current.update();
         }
       }
 
@@ -511,10 +529,10 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
         if (point.number === selectedStage) {
           const scale = 1.3 + Math.sin(animationTime * 6) * 0.15;
           point.mesh.scale.set(scale, scale, scale);
-          (point.mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.6 + Math.sin(animationTime * 4) * 0.2;
+          (point.mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.9 + Math.sin(animationTime * 4) * 0.1;
         } else {
           point.mesh.scale.set(1, 1, 1);
-          (point.mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.3;
+          (point.mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.7;
         }
       });
 
