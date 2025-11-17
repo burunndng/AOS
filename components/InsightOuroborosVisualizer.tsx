@@ -71,62 +71,28 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
   const isOrbitingStageRef = useRef(false);
   const orbitingStageRef = useRef<number | null>(null);
 
-  // Helper function to create serpent biting its tail (ouroboros) - a true spiral shape
+  // Helper function to create simple rope spiral - 2.5 concentric circles going upward
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
-    const numPoints = 350;
+    const numPoints = 250;
 
     for (let i = 0; i <= numPoints; i++) {
       const t = i / numPoints;
-      const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
 
-      // Create a spiral that represents the meditation journey
-      // Outer spiral for Pre-Vipassana (wide), tightens for Dark Night (narrow/deep), widens again for High Equanimity
-      let radiusMultiplier = 1;
+      // Simple constant radius - like a rope
+      const baseRadius = 10;
 
-      if (stageIndex < 4) {
-        // Pre-Vipassana: outer spiral (widest point)
-        radiusMultiplier = 1.1 + (stageIndex / 4) * 0.3;
-      } else if (stageIndex >= 4 && stageIndex < 10) {
-        // Vipassana/Dark Night: spiral inward (narrowest point)
-        const darkProgress = (stageIndex - 4) / 6;
-        radiusMultiplier = 1.4 - darkProgress * 0.7; // From 1.4 down to 0.7 - more dramatic
-      } else {
-        // High Equanimity: spiral outward again
-        const eqProgress = (stageIndex - 10) / 6;
-        radiusMultiplier = 0.7 + eqProgress * 0.5; // From 0.7 up to 1.2
-      }
+      // Just 2.5 full rotations (circles)
+      const spiralAngle = t * Math.PI * 5;
 
-      // Spiral angle - creates the coil effect with more rotations for serpent appearance
-      const spiralAngle = t * Math.PI * 9; // 4.5 full rotations as we progress through all stages
-      const baseRadius = 10 * radiusMultiplier;
-
-      // Vertical modulation - stronger upward spiral
-      let y = 0;
-      if (stageIndex < 4) {
-        // Pre-Vipassana: gradual ascent
-        const preProgress = stageIndex / 4;
-        y = preProgress * 2;
-      } else if (stageIndex >= 4 && stageIndex < 10) {
-        // Dark Night: descent but then transition to ascent
-        const darkNightProgress = (stageIndex - 4) / 6;
-        const descent = Math.sin(darkNightProgress * Math.PI);
-        y = 2 - Math.pow(descent, 1.5) * 7; // Deeper descent from elevation
-      } else {
-        // High Equanimity: strong ascent back up and beyond
-        const equanimityProgress = (stageIndex - 10) / 6;
-        const ascent = Math.sin(equanimityProgress * Math.PI);
-        y = -5 + Math.pow(ascent, 0.8) * 10; // Strong ascent to higher elevation
-      }
+      // Gentle upward movement
+      const y = t * 8; // Simple linear upward ascent
 
       // Apply the spiral position
       const x = Math.cos(spiralAngle) * baseRadius;
       const z = Math.sin(spiralAngle) * baseRadius;
 
-      // Add more pronounced undulation for serpent-like movement
-      const undulate = Math.sin(spiralAngle * 0.7) * 0.6;
-
-      points.push(new THREE.Vector3(x, y + undulate, z));
+      points.push(new THREE.Vector3(x, y, z));
     }
 
     return new THREE.CatmullRomCurve3(points);
@@ -178,26 +144,21 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     controls.autoRotate = false; // User controls rotation
     controlsRef.current = controls;
 
-    // Enhanced lighting for vibrant color display
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // Modest lighting for clean appearance
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
-    const keyLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    keyLight.position.set(35, 50, 30);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    keyLight.position.set(30, 30, 30);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.width = 2048;
     keyLight.shadow.mapSize.height = 2048;
     keyLight.shadow.camera.far = 200;
     scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0x4db9ff, 0.4);
-    fillLight.position.set(-25, 25, -35);
+    const fillLight = new THREE.DirectionalLight(0x8ab8e1, 0.2);
+    fillLight.position.set(-20, 20, -30);
     scene.add(fillLight);
-
-    // Additional accent light for depth
-    const accentLight = new THREE.DirectionalLight(0xff6b9d, 0.3);
-    accentLight.position.set(20, -10, -30);
-    scene.add(accentLight);
 
     // Create ouroboros group
     const ouroborosGroup = new THREE.Group();
@@ -210,17 +171,17 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     // Create ouroboros using TubeGeometry following the serpent's path
     const tubeGeometry = new THREE.TubeGeometry(
       ouroborosPath,
-      320,  // even more segments for smoother curves
-      0.85, // even thicker tube radius for more prominent serpent
-      24,   // more segments around circumference for smoother look
+      250,  // smooth segments
+      0.6,  // modest rope radius
+      16,   // good circumference segments
       true  // closed
     );
     const tubeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1a1a2e,        // Deep dark blue base
-      emissive: 0x6b9aa8,     // Stronger teal aura glow
-      metalness: 0.6,         // More reflective for ethereal quality
-      roughness: 0.2,         // Smoother for more vibrant appearance
-      envMapIntensity: 1.8,   // Stronger environmental reflection
+      color: 0x4a6b6b,        // Dark teal-green rope color
+      emissive: 0x1a3a3a,     // Subtle glow only
+      metalness: 0.5,         // Slightly reflective
+      roughness: 0.4,         // More textured rope appearance
+      envMapIntensity: 0.8,   // Minimal environmental reflection
     });
     const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
     tubeMesh.castShadow = true;
@@ -251,27 +212,16 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       mesh.receiveShadow = true;
       ouroborosGroup.add(mesh);
 
-      // Enhanced aura with pulsing glow
-      const auraGeometry = new THREE.IcosahedronGeometry(1.2, 4);
+      // Subtle aura glow
+      const auraGeometry = new THREE.IcosahedronGeometry(0.85, 3);
       const auraMaterial = new THREE.MeshBasicMaterial({
-        color: stageColor,
-        transparent: true,
-        opacity: 0.35,
-      });
-      const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
-      auraMesh.position.copy(position);
-      ouroborosGroup.add(auraMesh);
-
-      // Second outer aura layer for more prominent glow effect
-      const outerAuraGeometry = new THREE.IcosahedronGeometry(1.5, 3);
-      const outerAuraMaterial = new THREE.MeshBasicMaterial({
         color: stageColor,
         transparent: true,
         opacity: 0.15,
       });
-      const outerAuraMesh = new THREE.Mesh(outerAuraGeometry, outerAuraMaterial);
-      outerAuraMesh.position.copy(position);
-      ouroborosGroup.add(outerAuraMesh);
+      const auraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
+      auraMesh.position.copy(position);
+      ouroborosGroup.add(auraMesh);
 
       // Stage number label (using billboard technique)
       const canvas = document.createElement('canvas');
@@ -337,12 +287,12 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
 
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMaterial = new THREE.PointsMaterial({
-      color: 0x00ffff,  // Vibrant cyan for better visibility and aura
-      size: 0.15,
+      color: 0x6b9aa8,  // Subtle teal to match rope
+      size: 0.08,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.2,  // Very subtle
       sizeAttenuation: true,
-      blending: THREE.AdditiveBlending, // Additive blending for glow effect
+      blending: THREE.NormalBlending,
     });
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     ouroborosGroup.add(particles);
