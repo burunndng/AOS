@@ -71,62 +71,85 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
   const isOrbitingStageRef = useRef(false);
   const orbitingStageRef = useRef<number | null>(null);
 
-  // Helper function to create serpent biting its tail (ouroboros) - a true spiral shape spiraling upward
+  // Helper function to create serpent forming concentric circles (ouroboros)
+  // The serpent forms 3 connected rings representing the meditation journey
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
-    const numPoints = 250;
 
-    for (let i = 0; i <= numPoints; i++) {
-      const t = i / numPoints;
-      const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
+    // Define ring groups with their radii and stage ranges
+    const ringGroups = [
+      { stages: [1, 2, 3, 4], radius: 6, height: 0 },         // Inner: Pre-Vipassana (stages 1-4)
+      { stages: [5, 6, 7, 8, 9, 10], radius: 10, height: -2 }, // Middle: Vipassana/Dark Night (stages 5-10)
+      { stages: [11, 12, 13, 14, 15, 16], radius: 14, height: 1 }, // Outer: High Equanimity (stages 11-16)
+    ];
 
-      // Create a spiral that represents the meditation journey
-      // Outer spiral for Pre-Vipassana (wide), tightens for Dark Night (narrow/deep), widens again for High Equanimity
-      let radiusMultiplier = 1;
+    // Points per stage for smooth curves
+    const pointsPerStage = 15;
 
-      if (stageIndex < 4) {
-        // Pre-Vipassana: outer spiral (widest point)
-        radiusMultiplier = 1 + (stageIndex / 4) * 0.2;
-      } else if (stageIndex >= 4 && stageIndex < 10) {
-        // Vipassana/Dark Night: spiral inward (narrowest point)
-        const darkProgress = (stageIndex - 4) / 6;
-        radiusMultiplier = 1.2 - darkProgress * 0.5; // From 1.2 down to 0.7
-      } else {
-        // High Equanimity: spiral outward again
-        const eqProgress = (stageIndex - 10) / 6;
-        radiusMultiplier = 0.7 + eqProgress * 0.4; // From 0.7 up to 1.1
+    ringGroups.forEach((ring, ringIndex) => {
+      const numStages = ring.stages.length;
+      const numPointsInRing = numStages * pointsPerStage;
+
+      for (let i = 0; i < numPointsInRing; i++) {
+        // Angle around the circle (full 360° rotation)
+        const angle = (i / numPointsInRing) * Math.PI * 2;
+
+        // Position on the ring
+        const x = Math.cos(angle) * ring.radius;
+        const z = Math.sin(angle) * ring.radius;
+
+        // Height variation for visual interest and phase representation
+        let y = ring.height;
+
+        // Add subtle wave undulation for serpent-like movement
+        const undulate = Math.sin(angle * 3) * 0.2;
+        y += undulate;
+
+        points.push(new THREE.Vector3(x, y, z));
       }
 
-      // Spiral angle - creates the coil effect with multiple rotations
-      const spiralAngle = t * Math.PI * 6; // 3 full rotations as we progress through all stages
-      const baseRadius = 10 * radiusMultiplier;
+      // Add transition points between rings (smooth connection)
+      if (ringIndex < ringGroups.length - 1) {
+        const nextRing = ringGroups[ringIndex + 1];
+        const transitionPoints = 10;
 
-      // Vertical modulation for depth - spiral rises more prominently
-      let y = t * 8; // Overall upward spiral progression (starts at 0, ends at 8)
+        for (let i = 0; i < transitionPoints; i++) {
+          const t = i / transitionPoints;
+          // Transition angle (connect end of current ring to start of next ring)
+          const fromAngle = Math.PI * 2;
+          const toAngle = 0;
+          const angle = fromAngle + (toAngle - fromAngle) * t;
 
-      if (stageIndex >= 4 && stageIndex < 10) {
-        // Dark Night: steep descent from the rising spiral
-        const darkNightProgress = (stageIndex - 4) / 6;
-        const descent = Math.sin(darkNightProgress * Math.PI);
-        y -= Math.pow(descent, 1.8) * 6; // Sharp dip down during dark night
-      } else if (stageIndex >= 10) {
-        // High Equanimity: continue rising
-        const equanimityProgress = (stageIndex - 10) / 6;
-        const ascent = Math.sin(equanimityProgress * Math.PI);
-        y += Math.pow(ascent, 0.7) * 3; // Additional lift during equanimity
+          // Interpolate radius and height
+          const radius = ring.radius + (nextRing.radius - ring.radius) * t;
+          const height = ring.height + (nextRing.height - ring.height) * t;
+
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+
+          points.push(new THREE.Vector3(x, height, z));
+        }
       }
+    });
 
-      // Apply the spiral position
-      const x = Math.cos(spiralAngle) * baseRadius;
-      const z = Math.sin(spiralAngle) * baseRadius;
+    // Close the loop - connect back to the beginning
+    const closePoints = 10;
+    const lastRing = ringGroups[ringGroups.length - 1];
+    const firstRing = ringGroups[0];
 
-      // Add subtle undulation for serpent-like movement
-      const undulate = Math.sin(spiralAngle * 0.5) * 0.3;
+    for (let i = 0; i < closePoints; i++) {
+      const t = i / closePoints;
+      const angle = Math.PI * 2 * (1 - t);
+      const radius = lastRing.radius + (firstRing.radius - lastRing.radius) * t;
+      const height = lastRing.height + (firstRing.height - lastRing.height) * t;
 
-      points.push(new THREE.Vector3(x, y + undulate, z));
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+
+      points.push(new THREE.Vector3(x, height, z));
     }
 
-    return new THREE.CatmullRomCurve3(points);
+    return new THREE.CatmullRomCurve3(points, true); // true = closed loop
   }
 
   useEffect(() => {
@@ -138,11 +161,11 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     scene.fog = new THREE.Fog(0x0a0e27, 100, 200);
     sceneRef.current = scene;
 
-    // Camera setup - positioned for interactive exploration
+    // Camera setup - positioned for interactive exploration of concentric rings
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(20, 8, 20);
+    camera.position.set(18, 12, 18); // Higher and angled to view all three rings
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
@@ -170,8 +193,8 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
-    controls.minDistance = 15;
-    controls.maxDistance = 100;
+    controls.minDistance = 10; // Closer min distance for concentric rings
+    controls.maxDistance = 80;
     controls.autoRotate = false; // User controls rotation
     controlsRef.current = controls;
 
@@ -199,13 +222,13 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     // Create ouroboros path curve (used for both tube geometry and particles)
     const ouroborosPath = createOuroborosPath();
 
-    // Create ouroboros using TubeGeometry following the serpent's path
+    // Create ouroboros using TubeGeometry following the serpent's path through concentric rings
     const tubeGeometry = new THREE.TubeGeometry(
       ouroborosPath,
-      250,  // more segments for smoother curves
-      0.7,  // thicker tube radius for more prominent serpent
-      20,   // more segments around circumference for smoother look
-      true  // closed
+      350,  // more segments for smoother curves across multiple rings
+      0.5,  // tube radius - slightly thinner for better visibility of distinct rings
+      16,   // segments around circumference
+      true  // closed loop
     );
     const tubeMaterial = new THREE.MeshStandardMaterial({
       color: 0x3d5a5f,        // Rich serpent teal with more depth
@@ -512,7 +535,7 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       {/* Title */}
       <div className="text-center space-y-2">
         <h3 className="text-3xl font-bold text-slate-100">The Insight Ouroboros</h3>
-        <p className="text-sm text-slate-400">The 16 stages of insight meditation in a sacred cycle. Click on any stage to explore.</p>
+        <p className="text-sm text-slate-400">A serpent forming concentric circles - the 16 stages of insight in three sacred rings. Click any stage to explore.</p>
       </div>
 
       {/* Two-column layout: Canvas (left) and Info Panel (right) */}
