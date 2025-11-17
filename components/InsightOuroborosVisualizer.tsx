@@ -10,32 +10,40 @@ interface InsightOuroborosVisualizerProps {
 }
 
 // Color palette for each stage (16 unique colors representing the journey)
-// Pre-Vipassana: Cool grounded purples → Vipassana: Warm coppers → Dark Night: Deep reds/oranges → High Equanimity: Bright teals/golds
+// Refined palette with smoother transitions for visual cohesion
+// Pre-Vipassana: Cool grounded blues → Vipassana: Warm earth tones → Dark Night: Deep rich tones → High Equanimity: Ethereal teals/golds
 const STAGE_COLORS: Record<number, number> = {
-  1: 0x9d8fc7,   // Muted purple - Mind and Body
-  2: 0x8b7fc4,   // Purple - Discerning Cause
-  3: 0x7a6bc0,   // Deeper purple - Three Characteristics
-  4: 0x6b5cbd,   // Rich purple - Arising and Passing
-  5: 0xd4a574,   // Warm copper - Dissolution
-  6: 0xe0b8a0,   // Soft copper - Fear
-  7: 0xc85c5c,   // Deep red - Misery
-  8: 0xb84545,   // Dark red - Disgust
-  9: 0xa85252,   // Deep burgundy - Desire for Deliverance
-  10: 0x9a6b6b,  // Muted mauve-red - Re-observation
-  11: 0x6b9aa8,  // Muted blue - Equanimity
-  12: 0x5ca8c8,  // Teal blue - Conformity
-  13: 0x4db8d4,  // Bright teal - Change of Lineage
-  14: 0x5cd4a5,  // Teal-green - Path
-  15: 0x7dd4a5,  // Green-teal - Fruition
-  16: 0xa8d456,  // Gold-green - Reviewing Consciousness
+  // Pre-Vipassana: Cool, grounded tones (Stages 1-4)
+  1: 0x8c9eb5,   // Desaturated Blue-Gray - Mind and Body
+  2: 0x7a8c9e,   // Desaturated Blue - Discerning Cause
+  3: 0x6b7a8c,   // Desaturated Blue-Gray - Three Characteristics
+  4: 0x5c6b7a,   // Deep Blue-Gray - Arising and Passing
+
+  // Vipassana Begins: Transition to warm, earthy tones (Stages 5-6)
+  5: 0xd4a574,   // Soft Copper - Dissolution
+  6: 0xe0b8a0,   // Warm Peach/Rose - Fear
+
+  // Dark Night: Deep, rich, earthy tones (Stages 7-10)
+  7: 0xa85252,   // Deep Rust - Misery
+  8: 0x8b4545,   // Dark Burgundy - Disgust
+  9: 0x9a6b6b,   // Muted Mauve-Red - Desire for Deliverance
+  10: 0x8f7a7a,  // Earthy Brown-Gray - Re-observation
+
+  // High Equanimity: Bright, sophisticated teals and greens (Stages 11-16)
+  11: 0x6b9aa8,  // Muted Teal-Blue - Equanimity
+  12: 0x5ca8c8,  // Soft Cyan - Conformity
+  13: 0x4db8d4,  // Bright Sky Blue - Change of Lineage
+  14: 0x5cd4a5,  // Soft Jade Green - Path
+  15: 0x7dd4a5,  // Light Mint Green - Fruition
+  16: 0xa8d456,  // Warm Gold-Green - Reviewing Consciousness
 };
 
-// Phase colors for legend
+// Phase colors for legend - refined for visual cohesion
 const PHASE_COLORS: Record<string, number> = {
-  'Pre-Vipassana': 0x9d8fc7,           // Muted purple
-  'Vipassana Begins': 0xe0b8a0,        // Soft copper
-  'Dark Night': 0xa8a8c8,              // Muted blue-gray
-  'High Equanimity': 0xa0d4d0,         // Soft teal
+  'Pre-Vipassana': 0x8c9eb5,           // Desaturated Blue-Gray
+  'Vipassana Begins': 0xd4a574,        // Soft Copper
+  'Dark Night': 0x8f7a7a,              // Earthy Brown-Gray
+  'High Equanimity': 0x5cd4a5,         // Soft Jade Green
 };
 
 interface StagePoint {
@@ -67,81 +75,68 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
   const isCameraFocusingRef = useRef(false);
   const cameraFocusTargetRef = useRef(new THREE.Vector3());
   const controlsRef = useRef<OrbitControls | null>(null);
-  const particleDataRef = useRef<{ t: number; speed: number }[]>([]);
+  const particleDataRef = useRef<{ t: number; speed: number; phaseColor: number }[]>([]);
   const isOrbitingStageRef = useRef(false);
   const orbitingStageRef = useRef<number | null>(null);
+  const headMeshRef = useRef<THREE.Mesh | null>(null);
+  const tailMeshRef = useRef<THREE.Mesh | null>(null);
 
-  // Helper function to create serpent forming concentric circles (ouroboros)
-  // The serpent forms 3 connected rings representing the meditation journey
+  // Helper function to create serpent biting its tail (ouroboros) - a true spiral shape spiraling upward
   function createOuroborosPath(): THREE.CatmullRomCurve3 {
     const points: THREE.Vector3[] = [];
+    const numPoints = 250;
 
-    // Define ring groups with their radii and stage ranges
-    const ringGroups = [
-      { stages: [1, 2, 3, 4], radius: 6, height: 0 },         // Inner: Pre-Vipassana (stages 1-4)
-      { stages: [5, 6, 7, 8, 9, 10], radius: 10, height: -2 }, // Middle: Vipassana/Dark Night (stages 5-10)
-      { stages: [11, 12, 13, 14, 15, 16], radius: 14, height: 1 }, // Outer: High Equanimity (stages 11-16)
-    ];
+    for (let i = 0; i <= numPoints; i++) {
+      const t = i / numPoints;
+      const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
 
-    // Create exactly 3 circles - one for each ring, with smooth transitions
-    const pointsPerRing = 30; // Reduced to prevent over-wrapping
+      // Create a spiral that represents the meditation journey
+      // Outer spiral for Pre-Vipassana (wide), tightens for Dark Night (narrow/deep), widens again for High Equanimity
+      let radiusMultiplier = 1;
 
-    ringGroups.forEach((ring, ringIndex) => {
-      // Create one complete circle for this ring
-      for (let i = 0; i < pointsPerRing; i++) {
-        // Angle goes from 0 to 2π (exactly one full circle)
-        const angle = (i / pointsPerRing) * Math.PI * 2;
-
-        // Position on the ring
-        const x = Math.cos(angle) * ring.radius;
-        const z = Math.sin(angle) * ring.radius;
-
-        // Height with subtle undulation
-        const undulate = Math.sin(angle * 3) * 0.15;
-        const y = ring.height + undulate;
-
-        points.push(new THREE.Vector3(x, y, z));
+      if (stageIndex < 4) {
+        // Pre-Vipassana: outer spiral (widest point)
+        radiusMultiplier = 1 + (stageIndex / 4) * 0.2;
+      } else if (stageIndex >= 4 && stageIndex < 10) {
+        // Vipassana/Dark Night: spiral inward (narrowest point)
+        const darkProgress = (stageIndex - 4) / 6;
+        radiusMultiplier = 1.2 - darkProgress * 0.5; // From 1.2 down to 0.7
+      } else {
+        // High Equanimity: spiral outward again
+        const eqProgress = (stageIndex - 10) / 6;
+        radiusMultiplier = 0.7 + eqProgress * 0.4; // From 0.7 up to 1.1
       }
 
-      // Add transition to next ring (if not the last ring)
-      if (ringIndex < ringGroups.length - 1) {
-        const nextRing = ringGroups[ringIndex + 1];
-        const transitionSteps = 8;
+      // Spiral angle - creates the coil effect with multiple rotations
+      const spiralAngle = t * Math.PI * 6; // 3 full rotations as we progress through all stages
+      const baseRadius = 10 * radiusMultiplier;
 
-        for (let i = 1; i <= transitionSteps; i++) {
-          const t = i / (transitionSteps + 1);
+      // Vertical modulation for depth - spiral rises more prominently
+      let y = t * 8; // Overall upward spiral progression (starts at 0, ends at 8)
 
-          // Spiral transition - gradually move from current ring to next
-          const angle = Math.PI * 2 + (Math.PI * 0.5) * t; // Quarter turn during transition
-          const radius = ring.radius + (nextRing.radius - ring.radius) * t;
-          const height = ring.height + (nextRing.height - ring.height) * t;
-
-          const x = Math.cos(angle) * radius;
-          const z = Math.sin(angle) * radius;
-
-          points.push(new THREE.Vector3(x, height, z));
-        }
+      if (stageIndex >= 4 && stageIndex < 10) {
+        // Dark Night: steep descent from the rising spiral
+        const darkNightProgress = (stageIndex - 4) / 6;
+        const descent = Math.sin(darkNightProgress * Math.PI);
+        y -= Math.pow(descent, 1.8) * 6; // Sharp dip down during dark night
+      } else if (stageIndex >= 10) {
+        // High Equanimity: continue rising
+        const equanimityProgress = (stageIndex - 10) / 6;
+        const ascent = Math.sin(equanimityProgress * Math.PI);
+        y += Math.pow(ascent, 0.7) * 3; // Additional lift during equanimity
       }
-    });
 
-    // Close the loop - connect outer ring back to inner ring
-    const lastRing = ringGroups[ringGroups.length - 1];
-    const firstRing = ringGroups[0];
-    const closeSteps = 12;
+      // Apply the spiral position
+      const x = Math.cos(spiralAngle) * baseRadius;
+      const z = Math.sin(spiralAngle) * baseRadius;
 
-    for (let i = 1; i <= closeSteps; i++) {
-      const t = i / (closeSteps + 1);
-      const angle = Math.PI * 2.5 + (Math.PI * 0.5) * t; // Smooth arc back
-      const radius = lastRing.radius + (firstRing.radius - lastRing.radius) * t;
-      const height = lastRing.height + (firstRing.height - lastRing.height) * t;
+      // Add subtle undulation for serpent-like movement
+      const undulate = Math.sin(spiralAngle * 0.5) * 0.3;
 
-      const x = Math.cos(angle) * radius;
-      const z = Math.sin(angle) * radius;
-
-      points.push(new THREE.Vector3(x, height, z));
+      points.push(new THREE.Vector3(x, y + undulate, z));
     }
 
-    return new THREE.CatmullRomCurve3(points, true); // true = closed loop
+    return new THREE.CatmullRomCurve3(points);
   }
 
   useEffect(() => {
@@ -153,11 +148,11 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     scene.fog = new THREE.Fog(0x0a0e27, 100, 200);
     sceneRef.current = scene;
 
-    // Camera setup - positioned for interactive exploration of concentric rings
+    // Camera setup - positioned for interactive exploration
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(18, 12, 18); // Higher and angled to view all three rings
+    camera.position.set(20, 8, 20);
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
@@ -185,8 +180,8 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = false;
-    controls.minDistance = 10; // Closer min distance for concentric rings
-    controls.maxDistance = 80;
+    controls.minDistance = 15;
+    controls.maxDistance = 100;
     controls.autoRotate = false; // User controls rotation
     controlsRef.current = controls;
 
@@ -214,27 +209,64 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     // Create ouroboros path curve (used for both tube geometry and particles)
     const ouroborosPath = createOuroborosPath();
 
-    // Create ouroboros using TubeGeometry following the serpent's path through concentric rings
+    // Create ouroboros using TubeGeometry following the serpent's path
     const tubeGeometry = new THREE.TubeGeometry(
       ouroborosPath,
-      200,  // segments along the path - enough for smoothness but not over-wrapped
-      0.45,  // tube radius - thin for clean ring visibility
-      12,   // segments around circumference
-      true  // closed loop
+      250,  // more segments for smoother curves
+      0.7,  // thicker tube radius for more prominent serpent
+      20,   // more segments around circumference for smoother look
+      true  // closed
     );
     const tubeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1a1a1a,        // Dark organic black/charcoal
-      emissive: 0x2a4a2a,     // Subtle radioactive green glow
-      emissiveIntensity: 0.15, // Minimal but present - almost radioactive
-      metalness: 0.95,        // Very metallic for dark organic metal
-      roughness: 0.4,         // Some texture for organic feel
-      envMapIntensity: 0.8,
+      color: 0x3d5a5f,        // Rich serpent teal with more depth
+      emissive: 0x4a7d85,     // Stronger glow in teal
+      emissiveIntensity: 0.25, // More noticeable glow
+      metalness: 0.8,         // More metallic for iridescent effect
+      roughness: 0.2,         // Smoother, more polished scales
+      envMapIntensity: 1.6,
     });
     const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
     tubeMesh.castShadow = true;
     tubeMesh.receiveShadow = true;
     ouroborosGroup.add(tubeMesh);
     tubeMeshRef.current = tubeMesh;
+
+    // Create Serpent Head - positioned at the end of the path (stage 16)
+    const headGeometry = new THREE.ConeGeometry(1.0, 2.0, 16);
+    const headMaterial = new THREE.MeshStandardMaterial({
+      color: 0x4a5a5f,
+      emissive: 0x2a3a3f,
+      emissiveIntensity: 0.3,
+      metalness: 0.9,
+      roughness: 0.3,
+    });
+    const headMesh = new THREE.Mesh(headGeometry, headMaterial);
+    const headPosition = ouroborosPath.getPointAt(0.99);
+    headMesh.position.copy(headPosition);
+    // Orient head along path tangent (looking forward along the path)
+    const headTangent = ouroborosPath.getTangentAt(0.99);
+    headMesh.lookAt(headPosition.clone().add(headTangent));
+    headMesh.rotateX(Math.PI / 2); // Rotate to align cone tip with forward direction
+    headMesh.castShadow = true;
+    headMesh.receiveShadow = true;
+    ouroborosGroup.add(headMesh);
+    headMeshRef.current = headMesh;
+
+    // Create Serpent Tail - positioned at the start of the path (near stage 1)
+    const tailGeometry = new THREE.SphereGeometry(0.8, 16, 16);
+    const tailMaterial = new THREE.MeshStandardMaterial({
+      color: 0x4a5a5f,
+      emissive: 0x2a3a3f,
+      emissiveIntensity: 0.3,
+      metalness: 0.9,
+      roughness: 0.3,
+    });
+    const tailMesh = new THREE.Mesh(tailGeometry, tailMaterial);
+    tailMesh.position.copy(ouroborosPath.getPointAt(0.01));
+    tailMesh.castShadow = true;
+    tailMesh.receiveShadow = true;
+    ouroborosGroup.add(tailMesh);
+    tailMeshRef.current = tailMesh;
 
     // Create stage nodes positioned along the serpent's body
     INSIGHT_OUROBOROS_STAGES.forEach((stage, index) => {
@@ -303,15 +335,19 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     const particleCount = 800;
     const particleGeometry = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
-    const particleData: { t: number; speed: number }[] = [];
+    const particleColors = new Float32Array(particleCount * 3);
+    const particleData: { t: number; speed: number; phaseColor: number }[] = [];
 
     for (let i = 0; i < particleCount; i++) {
       const t = Math.random();
       const pos = ouroborosPath.getPointAt(t);
 
-      // Phase-aware speed: Dark Night (t: 0.25-0.625) flows faster/turbulent, High Equanimity (t: 0.625-1.0) flows slower/smooth
-      const stageIndex = t * INSIGHT_OUROBOROS_STAGES.length;
+      // Phase-aware speed and color: different phases have different speeds and colors
+      const stageIndex = Math.floor(t * INSIGHT_OUROBOROS_STAGES.length);
+      const currentStage = INSIGHT_OUROBOROS_STAGES[stageIndex];
+      const phaseColor = PHASE_COLORS[currentStage.phase];
       let speed = 0;
+
       if (stageIndex >= 4 && stageIndex < 10) {
         // Dark Night: faster, turbulent flow (0.008-0.012)
         speed = 0.008 + Math.random() * 0.004;
@@ -328,13 +364,20 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       particlePositions[i * 3 + 1] = pos.y;
       particlePositions[i * 3 + 2] = pos.z;
 
+      // Set particle color based on phase
+      const color = new THREE.Color(phaseColor);
+      particleColors[i * 3] = color.r;
+      particleColors[i * 3 + 1] = color.g;
+      particleColors[i * 3 + 2] = color.b;
+
       // Store particle data for animation
-      particleData.push({ t, speed });
+      particleData.push({ t, speed, phaseColor });
     }
 
     particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    particleGeometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
     const particleMaterial = new THREE.PointsMaterial({
-      color: 0xa8c8e1,
+      vertexColors: true,
       size: 0.12,
       transparent: true,
       opacity: 0.5,
@@ -449,6 +492,7 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       // --- PARTICLE SYSTEM: Phase-aware dynamic flow along ouroboros ---
       if (particlesRef.current && particleDataRef.current.length > 0) {
         const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+        const colors = particlesRef.current.geometry.attributes.color.array as Float32Array;
         const particleData = particleDataRef.current;
         const ouroborosPath = createOuroborosPath();
 
@@ -460,8 +504,20 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
           positions[i * 3] = pos.x;
           positions[i * 3 + 1] = pos.y;
           positions[i * 3 + 2] = pos.z;
+
+          // Update particle color based on new position's phase
+          const stageIndex = Math.floor(particleData[i].t * INSIGHT_OUROBOROS_STAGES.length);
+          const currentStage = INSIGHT_OUROBOROS_STAGES[stageIndex];
+          const newPhaseColor = PHASE_COLORS[currentStage.phase];
+          particleData[i].phaseColor = newPhaseColor;
+
+          const color = new THREE.Color(newPhaseColor);
+          colors[i * 3] = color.r;
+          colors[i * 3 + 1] = color.g;
+          colors[i * 3 + 2] = color.b;
         }
         particlesRef.current.geometry.attributes.position.needsUpdate = true;
+        particlesRef.current.geometry.attributes.color.needsUpdate = true;
       }
 
       // --- TUBE BREATHING EFFECT ---
@@ -517,6 +573,10 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       renderer.dispose();
       tubeGeometry.dispose();
       tubeMaterial.dispose();
+      headGeometry.dispose();
+      headMaterial.dispose();
+      tailGeometry.dispose();
+      tailMaterial.dispose();
       particleGeometry.dispose();
       particleMaterial.dispose();
     };
@@ -527,7 +587,7 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       {/* Title */}
       <div className="text-center space-y-2">
         <h3 className="text-3xl font-bold text-slate-100">The Insight Ouroboros</h3>
-        <p className="text-sm text-slate-400">A serpent forming concentric circles - the 16 stages of insight in three sacred rings. Click any stage to explore.</p>
+        <p className="text-sm text-slate-400">The 16 stages of insight meditation in a sacred cycle. Click on any stage to explore.</p>
       </div>
 
       {/* Two-column layout: Canvas (left) and Info Panel (right) */}
