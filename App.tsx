@@ -35,6 +35,7 @@ const PracticeExplanationModal = lazy(() => import('./components/PracticeExplana
 const PracticeCustomizationModal = lazy(() => import('./components/PracticeCustomizationModal.tsx'));
 const CustomPracticeModal = lazy(() => import('./components/CustomPracticeModal.tsx'));
 const GuidedPracticeGenerator = lazy(() => import('./components/GuidedPracticeGenerator.tsx'));
+const EnergyWorkGuideModal = lazy(() => import('./components/EnergyWorkGuideModal.tsx'));
 
 // Lazy-loaded Wizard Components
 const ThreeTwoOneWizard = lazy(() => import('./components/ThreeTwoOneWizard.tsx'));
@@ -244,6 +245,7 @@ export default function App() {
   const [customizationModalPractice, setCustomizationModalPractice] = useState<Practice | null>(null);
   const [isCustomPracticeModalOpen, setIsCustomPracticeModalOpen] = useState(false);
   const [isGuidedPracticeGeneratorOpen, setIsGuidedPracticeGeneratorOpen] = useState(false);
+  const [isEnergyWorkGuideOpen, setIsEnergyWorkGuideOpen] = useState(false);
   const [bodyArchitectHandoff, setBodyArchitectHandoff] = useState<{ type: 'yin' | 'yang'; payload: any } | null>(null);
   const [workoutHandoffSource, setWorkoutHandoffSource] = useState<'integral-body' | 'standalone' | null>(null);
   
@@ -1688,6 +1690,7 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
         setDraftIFS={setDraftIFS}
         partsLibrary={partsLibrary}
         markInsightAsAddressed={markInsightAsAddressed}
+        onOpenEnergyWorkGuide={() => setIsEnergyWorkGuideOpen(true)}
       />;
       case 'body-tools': return <BodyToolsTab
         setActiveWizard={setActiveWizardAndLink}
@@ -2081,6 +2084,11 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
       {isGuidedPracticeGeneratorOpen && (
         <Suspense fallback={<ModalLoadingFallback />}>
           <GuidedPracticeGenerator isOpen={isGuidedPracticeGeneratorOpen} onClose={() => setIsGuidedPracticeGeneratorOpen(false)} onLogPractice={() => alert('Practice logged!')} />
+        </Suspense>
+      )}
+      {isEnergyWorkGuideOpen && (
+        <Suspense fallback={<ModalLoadingFallback />}>
+          <EnergyWorkGuideModal isOpen={isEnergyWorkGuideOpen} onClose={() => setIsEnergyWorkGuideOpen(false)} />
         </Suspense>
       )}
       <Suspense fallback={<WizardLoadingFallback />}>

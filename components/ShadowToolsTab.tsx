@@ -25,6 +25,7 @@ interface ShadowToolsTabProps {
   partsLibrary: IFSPart[];
   markInsightAsAddressed: (insightId: string, shadowToolType: string, shadowSessionId: string) => void; // NEW
   draftMemoryRecon?: MemoryReconsolidationSession | null;
+  onOpenEnergyWorkGuide: () => void;
 }
 
 const ToolCard = ({ icon, title, description, onStart, onResume, hasDraft, draftLinkedInsightId }: { icon: React.ReactNode, title: string, description: string, onStart: () => void, onResume: (linkedInsightId?: string) => void, hasDraft: boolean, draftLinkedInsightId?: string }) => (
@@ -61,6 +62,7 @@ export default function ShadowToolsTab({
   draft321Session,
   draftIFSSession,
   draftMemoryRecon,
+  onOpenEnergyWorkGuide,
 }: ShadowToolsTabProps) {
 
   return (
@@ -164,6 +166,19 @@ export default function ShadowToolsTab({
           </div>
         </div>
       )}
+
+      {/* Easter Egg: Energy Work Guide */}
+      <div className="border-t border-slate-700 pt-6 mt-6">
+        <button
+          onClick={onOpenEnergyWorkGuide}
+          className="w-full group"
+        >
+          <div className="bg-gradient-to-br from-purple-900/20 to-indigo-900/20 border border-purple-500/30 hover:border-purple-500/60 rounded-lg p-4 flex flex-col transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20">
+            <p className="text-purple-300 font-semibold group-hover:text-purple-200 transition text-left text-sm">Energy Work Guide</p>
+            <p className="text-slate-400 text-xs text-left">Coming soon...</p>
+          </div>
+        </button>
+      </div>
     </div>
   );
 }
