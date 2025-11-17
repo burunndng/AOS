@@ -83,44 +83,36 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       { stages: [11, 12, 13, 14, 15, 16], radius: 14, height: 1 }, // Outer: High Equanimity (stages 11-16)
     ];
 
-    // Points per stage for smooth curves
-    const pointsPerStage = 15;
+    // Create exactly 3 circles - one for each ring, with smooth transitions
+    const pointsPerRing = 30; // Reduced to prevent over-wrapping
 
     ringGroups.forEach((ring, ringIndex) => {
-      const numStages = ring.stages.length;
-      const numPointsInRing = numStages * pointsPerStage;
-
-      for (let i = 0; i < numPointsInRing; i++) {
-        // Angle around the circle (full 360° rotation)
-        const angle = (i / numPointsInRing) * Math.PI * 2;
+      // Create one complete circle for this ring
+      for (let i = 0; i < pointsPerRing; i++) {
+        // Angle goes from 0 to 2π (exactly one full circle)
+        const angle = (i / pointsPerRing) * Math.PI * 2;
 
         // Position on the ring
         const x = Math.cos(angle) * ring.radius;
         const z = Math.sin(angle) * ring.radius;
 
-        // Height variation for visual interest and phase representation
-        let y = ring.height;
-
-        // Add subtle wave undulation for serpent-like movement
-        const undulate = Math.sin(angle * 3) * 0.2;
-        y += undulate;
+        // Height with subtle undulation
+        const undulate = Math.sin(angle * 3) * 0.15;
+        const y = ring.height + undulate;
 
         points.push(new THREE.Vector3(x, y, z));
       }
 
-      // Add transition points between rings (smooth connection)
+      // Add transition to next ring (if not the last ring)
       if (ringIndex < ringGroups.length - 1) {
         const nextRing = ringGroups[ringIndex + 1];
-        const transitionPoints = 10;
+        const transitionSteps = 8;
 
-        for (let i = 0; i < transitionPoints; i++) {
-          const t = i / transitionPoints;
-          // Transition angle (connect end of current ring to start of next ring)
-          const fromAngle = Math.PI * 2;
-          const toAngle = 0;
-          const angle = fromAngle + (toAngle - fromAngle) * t;
+        for (let i = 1; i <= transitionSteps; i++) {
+          const t = i / (transitionSteps + 1);
 
-          // Interpolate radius and height
+          // Spiral transition - gradually move from current ring to next
+          const angle = Math.PI * 2 + (Math.PI * 0.5) * t; // Quarter turn during transition
           const radius = ring.radius + (nextRing.radius - ring.radius) * t;
           const height = ring.height + (nextRing.height - ring.height) * t;
 
@@ -132,14 +124,14 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
       }
     });
 
-    // Close the loop - connect back to the beginning
-    const closePoints = 10;
+    // Close the loop - connect outer ring back to inner ring
     const lastRing = ringGroups[ringGroups.length - 1];
     const firstRing = ringGroups[0];
+    const closeSteps = 12;
 
-    for (let i = 0; i < closePoints; i++) {
-      const t = i / closePoints;
-      const angle = Math.PI * 2 * (1 - t);
+    for (let i = 1; i <= closeSteps; i++) {
+      const t = i / (closeSteps + 1);
+      const angle = Math.PI * 2.5 + (Math.PI * 0.5) * t; // Smooth arc back
       const radius = lastRing.radius + (firstRing.radius - lastRing.radius) * t;
       const height = lastRing.height + (firstRing.height - lastRing.height) * t;
 
@@ -225,18 +217,18 @@ export default function InsightOuroborosVisualizer({ selectedStage: externalSele
     // Create ouroboros using TubeGeometry following the serpent's path through concentric rings
     const tubeGeometry = new THREE.TubeGeometry(
       ouroborosPath,
-      350,  // more segments for smoother curves across multiple rings
-      0.5,  // tube radius - slightly thinner for better visibility of distinct rings
-      16,   // segments around circumference
+      200,  // segments along the path - enough for smoothness but not over-wrapped
+      0.45,  // tube radius - thin for clean ring visibility
+      12,   // segments around circumference
       true  // closed loop
     );
     const tubeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x3d5a5f,        // Rich serpent teal with more depth
-      emissive: 0x4a7d85,     // Stronger glow in teal
-      emissiveIntensity: 0.25, // More noticeable glow
-      metalness: 0.8,         // More metallic for iridescent effect
-      roughness: 0.2,         // Smoother, more polished scales
-      envMapIntensity: 1.6,
+      color: 0x1a1a1a,        // Dark organic black/charcoal
+      emissive: 0x2a4a2a,     // Subtle radioactive green glow
+      emissiveIntensity: 0.15, // Minimal but present - almost radioactive
+      metalness: 0.95,        // Very metallic for dark organic metal
+      roughness: 0.4,         // Some texture for organic feel
+      envMapIntensity: 0.8,
     });
     const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
     tubeMesh.castShadow = true;
