@@ -159,7 +159,7 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
       case 'CONTRADICTION_MINING':
         return session.contradictionInsights.length > 0;
       case 'JUXTAPOSITION':
-        return currentCycleIndex >= Math.min(3, session.juxtapositionCycles.length) - 1 && currentCycleStep === 'complete';
+        return true;
       case 'GROUNDING':
         return postIntensity !== null && emotionalNotes.trim().length > 0;
       case 'INTEGRATION':
@@ -662,10 +662,10 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
               </p>
             </div>
 
-            {currentCycle && (
+            {currentCycle ? (
               <div className="space-y-6 mt-6">
                 {/* Old Truth Panel */}
-                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-500 ${
+                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-500 min-h-24 flex flex-col justify-center ${
                   currentCycleStep === 'old-truth'
                     ? 'border-red-500/50 opacity-100 scale-100'
                     : 'border-slate-700 opacity-50 scale-95'
@@ -675,7 +675,7 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
                 </div>
 
                 {/* New Truth Panel */}
-                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-500 ${
+                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-500 min-h-24 flex flex-col justify-center ${
                   currentCycleStep === 'new-truth'
                     ? 'border-emerald-500/50 opacity-100 scale-100'
                     : 'border-slate-700 opacity-50 scale-95'
@@ -688,10 +688,10 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
 
                 {/* User Control Buttons */}
                 {currentCycleStep !== 'complete' ? (
-                  <div className="flex flex-col gap-4 items-center pt-4">
+                  <div className="flex flex-col gap-3 pt-6 border-t border-slate-700">
                     <button
                       onClick={() => setCurrentCycleStep(currentCycleStep === 'old-truth' ? 'new-truth' : 'old-truth')}
-                      className="btn-luminous px-8 py-3 rounded-lg font-semibold text-lg w-full"
+                      className="px-8 py-3 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 rounded-lg font-semibold text-lg w-full text-white shadow-lg transition"
                     >
                       Switch Perspective
                     </button>
@@ -754,6 +754,11 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
                     )}
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg p-6 text-center">
+                <p className="text-amber-100 text-lg mb-2">Loading juxtaposition cycles...</p>
+                <p className="text-amber-200 text-sm">If this persists, try going back to refresh the contradictions.</p>
               </div>
             )}
           </div>
