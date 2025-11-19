@@ -154,35 +154,45 @@ export default function PracticeChatbot({
       const sessionPromise = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         callbacks: {
-          onopen: () => {
+          onopen: async () => {
             console.debug('Practice voice session opened');
 
-            // Resolve session promise to cache the session object
-            sessionPromiseRef.current?.then((session: any) => {
+            // Wait for the session promise to resolve before setting up audio
+            try {
+              const session = await sessionPromiseRef.current;
               activeSessionRef.current = session;
+
+              if (!isMountedRef.current) return;
+
+              const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
+              const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
+
+              scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
+                if (isMuted || !activeSessionRef.current) return;
+
+                const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
+                const pcmBlob = createBlob(inputData);
+
+                // Use cached session object instead of promise for better performance
+                activeSessionRef.current.sendRealtimeInput({ media: pcmBlob });
+              };
+
+              source.connect(scriptProcessor);
+              // REMOVED: scriptProcessor.connect(inputAudioContextRef.current!.destination);
+              // This was causing audio feedback loop - don't connect microphone to speakers
+              scriptProcessorRef.current = scriptProcessor;
+              mediaStreamSourceRef.current = source;
+
               if (isMountedRef.current) {
                 setConnectionState('connected');
               }
-            });
-
-            const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
-            const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
-
-            scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
-              if (isMuted || !activeSessionRef.current) return;
-
-              const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
-              const pcmBlob = createBlob(inputData);
-
-              // Use cached session object instead of promise for better performance
-              activeSessionRef.current.sendRealtimeInput({ media: pcmBlob });
-            };
-
-            source.connect(scriptProcessor);
-            // REMOVED: scriptProcessor.connect(inputAudioContextRef.current!.destination);
-            // This was causing audio feedback loop - don't connect microphone to speakers
-            scriptProcessorRef.current = scriptProcessor;
-            mediaStreamSourceRef.current = source;
+            } catch (err) {
+              console.error('Error in onopen:', err);
+              if (isMountedRef.current) {
+                setError(`Failed to establish session: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                setConnectionState('error');
+              }
+            }
           },
 
           onmessage: async (message: LiveServerMessage) => {
