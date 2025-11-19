@@ -48,7 +48,9 @@ function createBlob(data: Float32Array): Blob {
   const l = data.length;
   const int16 = new Int16Array(l);
   for (let i = 0; i < l; i++) {
-    int16[i] = data[i] * 32768;
+    // Clamp values to prevent overflow/distortion
+    const sample = Math.max(-1, Math.min(1, data[i]));
+    int16[i] = sample < 0 ? sample * 32768 : sample * 32767;
   }
   return {
     data: encode(new Uint8Array(int16.buffer)),
@@ -81,6 +83,7 @@ export default function PracticeChatbot({
   const [error, setError] = useState('');
 
   const sessionPromiseRef = useRef<Promise<any> | null>(null);
+  const activeSessionRef = useRef<any>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -89,6 +92,7 @@ export default function PracticeChatbot({
   const audioSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const nextStartTimeRef = useRef(0);
   const startTimeRef = useRef<number>(Date.now());
+  const isMountedRef = useRef(true);
 
   const currentInputTranscriptionRef = useRef('');
   const currentOutputTranscriptionRef = useRef('');
@@ -96,6 +100,8 @@ export default function PracticeChatbot({
   const promptConfig = getPracticePrompt(practice.id, attachmentStyle, anxietyScore, avoidanceScore);
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     // Scroll to top and prevent body scroll
     window.scrollTo({ top: 0, behavior: 'smooth' });
     document.body.style.overflow = 'hidden';
@@ -105,10 +111,13 @@ export default function PracticeChatbot({
 
     // Update session duration every second
     const durationInterval = setInterval(() => {
-      setSessionDuration(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      if (isMountedRef.current) {
+        setSessionDuration(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      }
     }, 1000);
 
     return () => {
+      isMountedRef.current = false;
       document.body.style.overflow = '';
       clearInterval(durationInterval);
       cleanup();
@@ -130,6 +139,14 @@ export default function PracticeChatbot({
       inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
 
+      // Handle browser autoplay policy - resume context if suspended
+      if (inputAudioContextRef.current!.state === 'suspended') {
+        await inputAudioContextRef.current!.resume();
+      }
+      if (outputAudioContextRef.current!.state === 'suspended') {
+        await outputAudioContextRef.current!.resume();
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
 
@@ -142,34 +159,45 @@ export default function PracticeChatbot({
         callbacks: {
           onopen: () => {
             console.debug('Practice voice session opened');
-            setConnectionState('connected');
+
+            // Resolve session promise to cache the session object
+            sessionPromiseRef.current?.then((session: any) => {
+              activeSessionRef.current = session;
+              if (isMountedRef.current) {
+                setConnectionState('connected');
+              }
+            });
 
             const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
 
             scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
-              if (isMuted) return;
+              if (isMuted || !activeSessionRef.current) return;
 
               const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
               const pcmBlob = createBlob(inputData);
 
-              sessionPromiseRef.current?.then((session: { sendRealtimeInput: (arg0: { media: Blob }) => any }) => {
-                session.sendRealtimeInput({ media: pcmBlob });
-              });
+              // Use cached session object instead of promise for better performance
+              activeSessionRef.current.sendRealtimeInput({ media: pcmBlob });
             };
 
             source.connect(scriptProcessor);
-            scriptProcessor.connect(inputAudioContextRef.current!.destination);
+            // REMOVED: scriptProcessor.connect(inputAudioContextRef.current!.destination);
+            // This was causing audio feedback loop - don't connect microphone to speakers
             scriptProcessorRef.current = scriptProcessor;
             mediaStreamSourceRef.current = source;
           },
 
           onmessage: async (message: LiveServerMessage) => {
+            if (!isMountedRef.current) return;
+
             // Handle output transcription
             if (message.serverContent?.outputTranscription) {
               const text = message.serverContent.outputTranscription.text;
               currentOutputTranscriptionRef.current += text;
-              setIsAISpeaking(true);
+              if (isMountedRef.current) {
+                setIsAISpeaking(true);
+              }
             }
 
             // Handle input transcription
@@ -197,7 +225,7 @@ export default function PracticeChatbot({
                 source.connect(audioCtx.destination);
                 source.addEventListener('ended', () => {
                   audioSourcesRef.current.delete(source);
-                  if (audioSourcesRef.current.size === 0) {
+                  if (audioSourcesRef.current.size === 0 && isMountedRef.current) {
                     setIsAISpeaking(false);
                   }
                 });
@@ -214,7 +242,9 @@ export default function PracticeChatbot({
               audioSourcesRef.current.forEach(source => source.stop());
               audioSourcesRef.current.clear();
               nextStartTimeRef.current = 0;
-              setIsAISpeaking(false);
+              if (isMountedRef.current) {
+                setIsAISpeaking(false);
+              }
             }
 
             // Update transcript on turn complete
@@ -222,16 +252,18 @@ export default function PracticeChatbot({
               const userFullTurn = currentInputTranscriptionRef.current;
               const botFullTurn = currentOutputTranscriptionRef.current;
 
-              setTranscript(prev => {
-                const newTranscript = [...prev];
-                if (userFullTurn) {
-                  newTranscript.push({ role: 'user', text: userFullTurn });
-                }
-                if (botFullTurn) {
-                  newTranscript.push({ role: 'bot', text: botFullTurn });
-                }
-                return newTranscript;
-              });
+              if (isMountedRef.current) {
+                setTranscript(prev => {
+                  const newTranscript = [...prev];
+                  if (userFullTurn) {
+                    newTranscript.push({ role: 'user', text: userFullTurn });
+                  }
+                  if (botFullTurn) {
+                    newTranscript.push({ role: 'bot', text: botFullTurn });
+                  }
+                  return newTranscript;
+                });
+              }
 
               currentInputTranscriptionRef.current = '';
               currentOutputTranscriptionRef.current = '';
@@ -240,17 +272,21 @@ export default function PracticeChatbot({
 
           onerror: (e: ErrorEvent) => {
             console.error('Practice voice session error:', e);
-            setError(`Connection error: ${e.message}`);
-            setConnectionState('error');
+            if (isMountedRef.current) {
+              setError(`Connection error: ${e.message}`);
+              setConnectionState('error');
+            }
           },
 
           onclose: (e: CloseEvent) => {
             console.debug('Practice voice session closed', e);
-            if (e.code !== 1000) {
-              setError(`Session closed unexpectedly: ${e.reason || 'unknown error'}`);
-              setConnectionState('error');
-            } else {
-              setConnectionState('idle');
+            if (isMountedRef.current) {
+              if (e.code !== 1000) {
+                setError(`Session closed unexpectedly: ${e.reason || 'unknown error'}`);
+                setConnectionState('error');
+              } else {
+                setConnectionState('idle');
+              }
             }
           },
         },
@@ -272,8 +308,10 @@ export default function PracticeChatbot({
 
     } catch (error: any) {
       console.error('Error starting microphone:', error);
-      setError(`Failed to connect: ${error.message}`);
-      setConnectionState('error');
+      if (isMountedRef.current) {
+        setError(`Failed to connect: ${error.message}`);
+        setConnectionState('error');
+      }
     }
   };
 

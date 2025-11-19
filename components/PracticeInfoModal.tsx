@@ -12,9 +12,11 @@ interface PracticeInfoModalProps {
   // FIX: Add props to handle AI-powered explanation and personalization.
   onExplainClick: (practice: Practice) => void;
   onPersonalizeClick: (practice: Practice) => void;
+  onPracticeWithAI?: (practice: Practice) => void;
+  hasAttachmentAssessment?: boolean;
 }
 
-export default function PracticeInfoModal({ practice, onClose, onAdd, isInStack, onExplainClick, onPersonalizeClick }: PracticeInfoModalProps) {
+export default function PracticeInfoModal({ practice, onClose, onAdd, isInStack, onExplainClick, onPersonalizeClick, onPracticeWithAI, hasAttachmentAssessment }: PracticeInfoModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Lock body scroll when modal opens
@@ -60,6 +62,12 @@ export default function PracticeInfoModal({ practice, onClose, onAdd, isInStack,
   const handlePersonalize = () => {
     onPersonalizeClick(practice);
     onClose();
+  };
+
+  const handlePracticeWithAI = () => {
+    if (onPracticeWithAI && practice) {
+      onPracticeWithAI(practice);
+    }
   };
 
   return (
@@ -129,6 +137,15 @@ export default function PracticeInfoModal({ practice, onClose, onAdd, isInStack,
             >
               <Lightbulb size={16} /> <span className="hidden sm:inline">Explain with AI</span><span className="sm:hidden">Explain</span>
             </button>
+            {hasAttachmentAssessment && (
+              <button
+                onClick={handlePracticeWithAI}
+                className="flex-1 bg-purple-600/80 hover:bg-purple-600 text-white font-medium py-2 px-3 sm:py-3 sm:px-4 rounded-lg flex items-center justify-center gap-2 transition text-sm sm:text-base"
+                title="Practice with AI guide using your attachment style"
+              >
+                <Sparkles size={16} /> <span className="hidden sm:inline">Practice with AI</span><span className="sm:hidden">AI Guide</span>
+              </button>
+            )}
             {practice.customizationQuestion && (
               <button
                 onClick={handlePersonalize}
