@@ -1,10 +1,11 @@
 
 
 import React, { useState } from 'react';
-import { Practice, ModuleKey, AllPractice } from '../types.ts';
+import { Practice, ModuleKey, AllPractice, AttachmentAssessmentSession } from '../types.ts';
 import { practices, modules } from '../constants.ts';
 import { Check, Plus, Search } from 'lucide-react';
 import PracticeInfoModal from './PracticeInfoModal.tsx';
+import PracticeChatbot from './PracticeChatbot.tsx';
 import { SectionDivider } from './SectionDivider.tsx';
 
 interface BrowseTabProps {
@@ -16,10 +17,12 @@ interface BrowseTabProps {
   highlightPracticeId?: string;
   linkedInsightId?: string;
   markInsightAsAddressedByPractice?: (insightId: string, practiceId: string, practiceName: string) => void;
+  attachmentAssessment?: AttachmentAssessmentSession;
 }
 
-export default function BrowseTab({ practiceStack, addToStack, onExplainClick, onPersonalizeClick, highlightPracticeId, linkedInsightId, markInsightAsAddressedByPractice }: BrowseTabProps) {
+export default function BrowseTab({ practiceStack, addToStack, onExplainClick, onPersonalizeClick, highlightPracticeId, linkedInsightId, markInsightAsAddressedByPractice, attachmentAssessment }: BrowseTabProps) {
   const [selectedPractice, setSelectedPractice] = useState<Practice | null>(null);
+  const [practiceForAI, setPracticeForAI] = useState<Practice | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Auto-open practice if highlightPracticeId is provided
@@ -127,7 +130,26 @@ export default function BrowseTab({ practiceStack, addToStack, onExplainClick, o
         isInStack={!!selectedPractice && stackIds.has(selectedPractice.id)}
         onExplainClick={onExplainClick}
         onPersonalizeClick={onPersonalizeClick}
+        onPracticeWithAI={(p) => {
+          setPracticeForAI(p);
+          setSelectedPractice(null);
+        }}
+        hasAttachmentAssessment={!!attachmentAssessment}
       />
+
+      {practiceForAI && attachmentAssessment && (
+        <PracticeChatbot
+          practice={practiceForAI}
+          attachmentStyle={attachmentAssessment.style}
+          anxietyScore={attachmentAssessment.scores.anxiety}
+          avoidanceScore={attachmentAssessment.scores.avoidance}
+          onClose={() => setPracticeForAI(null)}
+          onComplete={(sessionNotes) => {
+            setPracticeForAI(null);
+            addToStack(practiceForAI);
+          }}
+        />
+      )}
     </div>
   );
 }
