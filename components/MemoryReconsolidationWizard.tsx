@@ -255,28 +255,52 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
           beliefs: session.implicitBeliefs.map(b => ({ id: b.id, belief: b.belief })),
           beliefIds: session.implicitBeliefs.map(b => b.id)
         };
-        
+
         const response = await mineContradictions(payload);
-        
+
         // Generate juxtaposition cycles from contradictions
-        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, idx) => {
-          // Ensure anchors exists and is an array before slicing
-          const anchors = Array.isArray(insight.anchors) ? insight.anchors : [];
-          return anchors.slice(0, 5).map((anchor, anchorIdx) => ({
-            id: `cycle-${idx}-${anchorIdx}`,
-            beliefId: insight.beliefId,
-            cycleNumber: idx * 5 + anchorIdx + 1,
-            steps: response.juxtapositionCyclePrompts.map((prompt, stepNum) => ({
-              stepNumber: stepNum + 1,
-              prompt,
-              timestamp: new Date().toISOString()
-            })),
-            intensity: {
-              baselineIntensity: session.baselineIntensity
-            }
-          }));
-        });
-        
+        // Create one cycle per new truth (up to 5 cycles total)
+        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, insightIdx) => {
+          const newTruths = Array.isArray(insight.newTruths) ? insight.newTruths : [insight.newTruths || 'Alternative perspective'];
+
+          // Create up to 5 cycles total across all insights
+          return newTruths.slice(0, 5).map((newTruth, truthIdx) => {
+            const cycleNumber = insightIdx * 5 + truthIdx + 1;
+            const correspondingAnchor = Array.isArray(insight.anchors) && insight.anchors[truthIdx]
+              ? insight.anchors[truthIdx]
+              : Array.isArray(insight.anchors) && insight.anchors[0]
+              ? insight.anchors[0]
+              : 'Lived evidence that contradicts the old belief';
+
+            return {
+              id: `cycle-${insightIdx}-${truthIdx}`,
+              beliefId: insight.beliefId,
+              cycleNumber,
+              steps: [
+                {
+                  stepNumber: 1,
+                  prompt: `Hold the old belief: "${session.implicitBeliefs.find(b => b.id === insight.beliefId)?.belief || ''}"`,
+                  timestamp: new Date().toISOString()
+                },
+                {
+                  stepNumber: 2,
+                  prompt: `Now hold the contradiction: "${correspondingAnchor}"`,
+                  timestamp: new Date().toISOString()
+                },
+                {
+                  stepNumber: 3,
+                  prompt: `Experience both simultaneously. Let your nervous system feel the mismatch.`,
+                  timestamp: new Date().toISOString()
+                }
+              ],
+              intensity: {
+                baselineIntensity: session.baselineIntensity
+              },
+              notes: `New truth: ${newTruth}`
+            };
+          });
+        }).slice(0, 5); // Cap total cycles at 5
+
         updateSession({ contradictionInsights: response.contradictions, juxtapositionCycles: cycles });
         nextStep = 'JUXTAPOSITION';
       } else if (session.currentStep === 'INTEGRATION') {
@@ -689,8 +713,8 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
             {currentCycle && (
               <div className="space-y-6 mt-6">
                 <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-1000 ${
-                  (prefersReducedMotion || currentCycleStep === 'old-truth' || currentCycleStep === 'pause') 
-                    ? 'border-red-500/50 opacity-100' 
+                  (prefersReducedMotion || currentCycleStep === 'old-truth' || currentCycleStep === 'pause')
+                    ? 'border-red-500/50 opacity-100'
                     : 'border-red-500/20 opacity-40'
                 }`}>
                   <div className="text-sm font-semibold text-red-300 mb-2">OLD TRUTH</div>
@@ -702,13 +726,13 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
                 </div>
 
                 <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-1000 ${
-                  (prefersReducedMotion || currentCycleStep === 'new-truth' || currentCycleStep === 'complete') 
-                    ? 'border-emerald-500/50 opacity-100' 
+                  (prefersReducedMotion || currentCycleStep === 'new-truth' || currentCycleStep === 'complete')
+                    ? 'border-emerald-500/50 opacity-100'
                     : 'border-emerald-500/20 opacity-40'
                 }`}>
                   <div className="text-sm font-semibold text-emerald-300 mb-2">NEW TRUTH</div>
                   <div className="text-lg text-slate-100">
-                    {insight?.newTruths?.[0] || 'Generating...'}
+                    {currentCycle.notes?.replace('New truth: ', '') || insight?.newTruths?.[currentCycleIndex % (insight?.newTruths?.length || 1)] || 'Generating...'}
                   </div>
                 </div>
 
