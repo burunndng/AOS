@@ -106,9 +106,6 @@ export default function PracticeChatbot({
     window.scrollTo({ top: 0, behavior: 'smooth' });
     document.body.style.overflow = 'hidden';
 
-    // Auto-start voice connection
-    startMicrophone();
-
     // Update session duration every second
     const durationInterval = setInterval(() => {
       if (isMountedRef.current) {
@@ -157,35 +154,45 @@ export default function PracticeChatbot({
       const sessionPromise = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         callbacks: {
-          onopen: () => {
+          onopen: async () => {
             console.debug('Practice voice session opened');
 
-            // Resolve session promise to cache the session object
-            sessionPromiseRef.current?.then((session: any) => {
+            // Wait for the session promise to resolve before setting up audio
+            try {
+              const session = await sessionPromiseRef.current;
               activeSessionRef.current = session;
+
+              if (!isMountedRef.current) return;
+
+              const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
+              const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
+
+              scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
+                if (isMuted || !activeSessionRef.current) return;
+
+                const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
+                const pcmBlob = createBlob(inputData);
+
+                // Use cached session object instead of promise for better performance
+                activeSessionRef.current.sendRealtimeInput({ media: pcmBlob });
+              };
+
+              source.connect(scriptProcessor);
+              // REMOVED: scriptProcessor.connect(inputAudioContextRef.current!.destination);
+              // This was causing audio feedback loop - don't connect microphone to speakers
+              scriptProcessorRef.current = scriptProcessor;
+              mediaStreamSourceRef.current = source;
+
               if (isMountedRef.current) {
                 setConnectionState('connected');
               }
-            });
-
-            const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
-            const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
-
-            scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
-              if (isMuted || !activeSessionRef.current) return;
-
-              const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
-              const pcmBlob = createBlob(inputData);
-
-              // Use cached session object instead of promise for better performance
-              activeSessionRef.current.sendRealtimeInput({ media: pcmBlob });
-            };
-
-            source.connect(scriptProcessor);
-            // REMOVED: scriptProcessor.connect(inputAudioContextRef.current!.destination);
-            // This was causing audio feedback loop - don't connect microphone to speakers
-            scriptProcessorRef.current = scriptProcessor;
-            mediaStreamSourceRef.current = source;
+            } catch (err) {
+              console.error('Error in onopen:', err);
+              if (isMountedRef.current) {
+                setError(`Failed to establish session: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                setConnectionState('error');
+              }
+            }
           },
 
           onmessage: async (message: LiveServerMessage) => {
@@ -395,7 +402,22 @@ ${transcript.map(t => `${t.role.toUpperCase()}: ${t.text}`).join('\n\n')}
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8 bg-slate-900">
-          {connectionState === 'connecting' ? (
+          {connectionState === 'idle' ? (
+            <div className="text-center space-y-6">
+              <div>
+                <h3 className="text-2xl font-bold text-slate-100 mb-3">Ready to Practice?</h3>
+                <p className="text-slate-400 mb-2">You're about to start a personalized voice session with an AI guide.</p>
+                <p className="text-sm text-slate-500">Your guide will adapt to your {attachmentStyle} attachment style</p>
+              </div>
+              <button
+                onClick={startMicrophone}
+                className="btn-luminous px-8 py-4 rounded-lg font-bold text-lg hover:scale-105 transition-transform"
+              >
+                🎤 Start Voice Session
+              </button>
+              <p className="text-xs text-slate-500">You'll be asked to allow microphone access</p>
+            </div>
+          ) : connectionState === 'connecting' ? (
             <div className="text-center space-y-4">
               <Loader size={48} className="animate-spin text-accent mx-auto" />
               <p className="text-slate-300">Connecting to your voice guide...</p>
