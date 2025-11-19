@@ -12,7 +12,7 @@ import {
   SessionCompletionSummary,
   IntegrationChoiceType
 } from '../types.ts';
-import { X, ArrowRight, Play, Pause, Download, Copy, Search, CheckCircle } from 'lucide-react';
+import { X, ArrowRight, Download, Copy, Search, CheckCircle } from 'lucide-react';
 import { 
   extractImplicitBeliefs, 
   mineContradictions,
@@ -103,11 +103,9 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
   
   // Juxtaposition state
   const [currentCycleIndex, setCurrentCycleIndex] = useState(0);
-  const [currentCycleStep, setCurrentCycleStep] = useState<'old-truth' | 'pause' | 'new-truth' | 'complete'>('old-truth');
+  const [currentCycleStep, setCurrentCycleStep] = useState<'old-truth' | 'new-truth' | 'complete'>('old-truth');
   const [cycleIntensities, setCycleIntensities] = useState<Record<number, IntensityReading>>({});
-  const [isPaused, setIsPaused] = useState(false);
   const [cycleNotes, setCycleNotes] = useState<Record<number, string>>({});
-  const animationTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Post check-in state
   const [postIntensity, setPostIntensity] = useState<number | null>(null);
@@ -133,11 +131,6 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
 
   useEffect(() => {
     setPrefersReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    return () => {
-      if (animationTimerRef.current) {
-        clearTimeout(animationTimerRef.current);
-      }
-    };
   }, []);
 
   // Initialize postIntensity when entering GROUNDING step
@@ -166,7 +159,7 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
       case 'CONTRADICTION_MINING':
         return session.contradictionInsights.length > 0;
       case 'JUXTAPOSITION':
-        return currentCycleIndex >= Math.min(5, session.juxtapositionCycles.length);
+        return currentCycleIndex >= Math.min(3, session.juxtapositionCycles.length) - 1 && currentCycleStep === 'complete';
       case 'GROUNDING':
         return postIntensity !== null && emotionalNotes.trim().length > 0;
       case 'INTEGRATION':
@@ -210,33 +203,6 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
     }
   };
 
-  const startJuxtapositionCycle = (cycleNum: number) => {
-    if (prefersReducedMotion || isPaused) return;
-    
-    setCurrentCycleStep('old-truth');
-    animationTimerRef.current = setTimeout(() => {
-      setCurrentCycleStep('pause');
-      animationTimerRef.current = setTimeout(() => {
-        setCurrentCycleStep('new-truth');
-        animationTimerRef.current = setTimeout(() => {
-          setCurrentCycleStep('complete');
-        }, 8000);
-      }, 3000);
-    }, 8000);
-  };
-
-  const pauseJuxtaposition = () => {
-    setIsPaused(true);
-    if (animationTimerRef.current) {
-      clearTimeout(animationTimerRef.current);
-      animationTimerRef.current = null;
-    }
-  };
-
-  const resumeJuxtaposition = () => {
-    setIsPaused(false);
-    startJuxtapositionCycle(currentCycleIndex);
-  };
 
   const handleNext = async () => {
     setIsLoading(true);
@@ -255,28 +221,52 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
           beliefs: session.implicitBeliefs.map(b => ({ id: b.id, belief: b.belief })),
           beliefIds: session.implicitBeliefs.map(b => b.id)
         };
-        
+
         const response = await mineContradictions(payload);
-        
+
         // Generate juxtaposition cycles from contradictions
-        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, idx) => {
-          // Ensure anchors exists and is an array before slicing
-          const anchors = Array.isArray(insight.anchors) ? insight.anchors : [];
-          return anchors.slice(0, 5).map((anchor, anchorIdx) => ({
-            id: `cycle-${idx}-${anchorIdx}`,
-            beliefId: insight.beliefId,
-            cycleNumber: idx * 5 + anchorIdx + 1,
-            steps: response.juxtapositionCyclePrompts.map((prompt, stepNum) => ({
-              stepNumber: stepNum + 1,
-              prompt,
-              timestamp: new Date().toISOString()
-            })),
-            intensity: {
-              baselineIntensity: session.baselineIntensity
-            }
-          }));
-        });
-        
+        // Create one cycle per new truth (up to 3 cycles total)
+        const cycles: JuxtapositionCycle[] = response.contradictions.flatMap((insight, insightIdx) => {
+          const newTruths = Array.isArray(insight.newTruths) ? insight.newTruths : [insight.newTruths || 'Alternative perspective'];
+
+          // Create up to 3 cycles total across all insights
+          return newTruths.slice(0, 3).map((newTruth, truthIdx) => {
+            const cycleNumber = insightIdx * 3 + truthIdx + 1;
+            const correspondingAnchor = Array.isArray(insight.anchors) && insight.anchors[truthIdx]
+              ? insight.anchors[truthIdx]
+              : Array.isArray(insight.anchors) && insight.anchors[0]
+              ? insight.anchors[0]
+              : 'Lived evidence that contradicts the old belief';
+
+            return {
+              id: `cycle-${insightIdx}-${truthIdx}`,
+              beliefId: insight.beliefId,
+              cycleNumber,
+              steps: [
+                {
+                  stepNumber: 1,
+                  prompt: `Hold the old belief: "${session.implicitBeliefs.find(b => b.id === insight.beliefId)?.belief || ''}"`,
+                  timestamp: new Date().toISOString()
+                },
+                {
+                  stepNumber: 2,
+                  prompt: `Now hold the contradiction: "${correspondingAnchor}"`,
+                  timestamp: new Date().toISOString()
+                },
+                {
+                  stepNumber: 3,
+                  prompt: `Experience both simultaneously. Let your nervous system feel the mismatch.`,
+                  timestamp: new Date().toISOString()
+                }
+              ],
+              intensity: {
+                baselineIntensity: session.baselineIntensity
+              },
+              notes: `New truth: ${newTruth}`
+            };
+          });
+        }).slice(0, 3); // Cap total cycles at 3
+
         updateSession({ contradictionInsights: response.contradictions, juxtapositionCycles: cycles });
         nextStep = 'JUXTAPOSITION';
       } else if (session.currentStep === 'INTEGRATION') {
@@ -642,9 +632,14 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
 
       case 'JUXTAPOSITION':
         const currentCycle = session.juxtapositionCycles[currentCycleIndex];
-        const totalCycles = Math.min(5, session.juxtapositionCycles.length);
+        const totalCycles = Math.min(3, session.juxtapositionCycles.length);
         const belief = session.implicitBeliefs.find(b => b.id === currentCycle?.beliefId);
         const insight = session.contradictionInsights.find(c => c.beliefId === currentCycle?.beliefId);
+
+        // Reset cycle step when moving to a new cycle
+        useEffect(() => {
+          setCurrentCycleStep('old-truth');
+        }, [currentCycleIndex]);
 
         return (
           <div className="space-y-6">
@@ -652,68 +647,64 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
               <h3 className="text-2xl font-bold font-mono text-slate-100">Juxtaposition Experience</h3>
               <div className="text-slate-400">Cycle {currentCycleIndex + 1} of {totalCycles}</div>
             </div>
-            
+
             <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
               <p className="text-cyan-100 font-medium mb-2">What You're Doing:</p>
               <p className="text-slate-300 text-sm leading-relaxed">
-                This is the core reconsolidation moment. You'll hold your old belief and the contradictory truth in 
-                awareness simultaneously. Your nervous system needs to experience both as <em>real</em> at the same time—this 
-                mismatch triggers memory reconsolidation, allowing the old neural pattern to update.
+                Hold each truth in your awareness. Feel it in your body. When you feel ready, switch to the other.
+                The goal is to experience the mismatch between these two realities at the same time.
               </p>
             </div>
 
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
               <p className="text-amber-100 text-sm">
-                💡 Stay present with whatever arises—confusion, discomfort, or relief. All of it is part of the process.
+                💡 There's no "right" amount of time to spend with each perspective. Go at your own pace.
               </p>
             </div>
-            
-            {prefersReducedMotion ? (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4">
-                <p className="text-amber-200 text-sm">
-                  Animations disabled due to your reduced motion preference. Cycle content is displayed statically below.
-                </p>
-              </div>
-            ) : (
-              <div className="flex gap-4">
-                <button
-                  onClick={() => isPaused ? resumeJuxtaposition() : pauseJuxtaposition()}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 transition"
-                >
-                  {isPaused ? <Play size={18} /> : <Pause size={18} />}
-                  {isPaused ? 'Resume' : 'Pause'}
-                </button>
-              </div>
-            )}
 
             {currentCycle && (
               <div className="space-y-6 mt-6">
-                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-1000 ${
-                  (prefersReducedMotion || currentCycleStep === 'old-truth' || currentCycleStep === 'pause') 
-                    ? 'border-red-500/50 opacity-100' 
-                    : 'border-red-500/20 opacity-40'
+                {/* Old Truth Panel */}
+                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-500 ${
+                  currentCycleStep === 'old-truth'
+                    ? 'border-red-500/50 opacity-100 scale-100'
+                    : 'border-slate-700 opacity-50 scale-95'
                 }`}>
                   <div className="text-sm font-semibold text-red-300 mb-2">OLD TRUTH</div>
                   <div className="text-lg text-slate-100">{belief?.belief}</div>
                 </div>
 
-                <div className="flex justify-center">
-                  <div className="w-0.5 h-16 bg-gradient-to-b from-red-500/50 via-cyan-500/50 to-emerald-500/50"></div>
-                </div>
-
-                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-1000 ${
-                  (prefersReducedMotion || currentCycleStep === 'new-truth' || currentCycleStep === 'complete') 
-                    ? 'border-emerald-500/50 opacity-100' 
-                    : 'border-emerald-500/20 opacity-40'
+                {/* New Truth Panel */}
+                <div className={`bg-slate-800/60 border-2 rounded-xl p-6 transition-all duration-500 ${
+                  currentCycleStep === 'new-truth'
+                    ? 'border-emerald-500/50 opacity-100 scale-100'
+                    : 'border-slate-700 opacity-50 scale-95'
                 }`}>
                   <div className="text-sm font-semibold text-emerald-300 mb-2">NEW TRUTH</div>
                   <div className="text-lg text-slate-100">
-                    {insight?.newTruths?.[0] || 'Generating...'}
+                    {currentCycle.notes?.replace('New truth: ', '') || 'Alternative perspective'}
                   </div>
                 </div>
 
-                {currentCycleStep === 'complete' && (
-                  <div className="space-y-4 animate-fade-in-up">
+                {/* User Control Buttons */}
+                {currentCycleStep !== 'complete' ? (
+                  <div className="flex flex-col gap-4 items-center pt-4">
+                    <button
+                      onClick={() => setCurrentCycleStep(currentCycleStep === 'old-truth' ? 'new-truth' : 'old-truth')}
+                      className="btn-luminous px-8 py-3 rounded-lg font-semibold text-lg w-full"
+                    >
+                      Switch Perspective
+                    </button>
+                    <button
+                      onClick={() => setCurrentCycleStep('complete')}
+                      className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 transition text-sm w-full"
+                    >
+                      I'm ready to reflect on this cycle
+                    </button>
+                  </div>
+                ) : (
+                  /* Reflection UI */
+                  <div className="space-y-4 animate-fade-in-up pt-4 border-t border-slate-700">
                     <label className="block">
                       <span className="text-slate-300 text-sm font-medium mb-2 block">
                         Felt Shift (1-10):
@@ -748,7 +739,6 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
                         onClick={() => {
                           setCurrentCycleIndex(prev => prev + 1);
                           setCurrentCycleStep('old-truth');
-                          if (!prefersReducedMotion) startJuxtapositionCycle(currentCycleIndex + 1);
                         }}
                         className="btn-luminous px-6 py-2 rounded-lg font-semibold w-full"
                       >
@@ -765,18 +755,6 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
                   </div>
                 )}
               </div>
-            )}
-
-            {!prefersReducedMotion && currentCycleStep !== 'complete' && currentCycle && (
-              <button
-                onClick={() => {
-                  if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
-                  startJuxtapositionCycle(currentCycleIndex);
-                }}
-                className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-200 transition w-full"
-              >
-                Restart Cycle
-              </button>
             )}
           </div>
         );
