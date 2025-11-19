@@ -322,18 +322,39 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
   const handleCompleteWithRAG = async (finalSession: IFSSession) => {
     setRagSyncing(true);
     try {
-      // Extract identified parts
-      const identifiedParts = finalSession.identifiedParts?.map(p => p.name) || [];
+      // Build identified parts from session data
+      // Combine main part with any additional identified parts
+      const identifiedPartsArray: Array<{ name: string; role?: string }> = [];
 
-      // Summarize conversations
+      // Add the main part worked with in this session
+      if (finalSession.partName) {
+        identifiedPartsArray.push({
+          name: finalSession.partName,
+          role: finalSession.partRole,
+        });
+      }
+
+      // Add any additional identified parts from the session
+      if (finalSession.identifiedParts && finalSession.identifiedParts.length > 0) {
+        const existingNames = new Set(identifiedPartsArray.map(p => p.name));
+        finalSession.identifiedParts.forEach(part => {
+          if (!existingNames.has(part.name)) {
+            identifiedPartsArray.push(part);
+          }
+        });
+      }
+
+      const identifiedPartNames = identifiedPartsArray.map(p => p.name);
+
+      // Summarize conversations from transcript
       const conversations: Record<string, string> = {};
-      finalSession.dialogueHistory?.forEach((entry, idx) => {
+      finalSession.transcript.forEach((entry, idx) => {
         conversations[`exchange_${idx}`] = entry.text;
       });
 
       // Generate RAG insights
       const insights = await ragService.generateIFSInsights(userId, {
-        identifiedParts,
+        identifiedParts: identifiedPartNames,
         conversations,
       });
 
@@ -343,9 +364,9 @@ const IFSWizard: React.FC<IFSWizardProps> = ({ isOpen, onClose, onSaveSession, d
         userId: userId,
         type: 'ifs_work',
         content: {
-          identifiedParts,
-          voicesIdentified: finalSession.identifiedParts?.length || 0,
-          dialogueCount: finalSession.dialogueHistory?.length || 0,
+          identifiedParts: identifiedPartNames,
+          voicesIdentified: identifiedPartsArray.length,
+          dialogueCount: finalSession.transcript.length,
           summary: summaryData?.summary || '',
         },
         insights: insights.metadata?.insights || [],

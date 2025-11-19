@@ -212,6 +212,7 @@ export interface IFSSession {
   summary?: string;
   aiIndications?: string[];
   linkedInsightId?: string;
+  identifiedParts?: Array<{ name: string; role?: string }>;
 }
 
 export interface AqalReportData {
