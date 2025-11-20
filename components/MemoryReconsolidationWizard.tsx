@@ -140,6 +140,13 @@ export default function MemoryReconsolidationWizard({ onClose, onSave, session: 
     }
   }, [session.currentStep, session.baselineIntensity, postIntensity]);
 
+  // Reset cycle step when moving to a new cycle in JUXTAPOSITION
+  useEffect(() => {
+    if (session.currentStep === 'JUXTAPOSITION') {
+      setCurrentCycleStep('old-truth');
+    }
+  }, [currentCycleIndex, session.currentStep]);
+
   const handleSaveDraftAndClose = () => {
     setDraft({ ...session, sessionNotes: beliefContext });
     onClose();
@@ -635,11 +642,6 @@ Integration: ${(session.completionSummary?.selectedPractices || []).map(p => p.p
         const totalCycles = Math.min(3, session.juxtapositionCycles.length);
         const belief = session.implicitBeliefs.find(b => b.id === currentCycle?.beliefId);
         const insight = session.contradictionInsights.find(c => c.beliefId === currentCycle?.beliefId);
-
-        // Reset cycle step when moving to a new cycle
-        useEffect(() => {
-          setCurrentCycleStep('old-truth');
-        }, [currentCycleIndex]);
 
         return (
           <div className="space-y-6">
