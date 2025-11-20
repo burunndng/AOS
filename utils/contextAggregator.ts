@@ -212,7 +212,7 @@ Respond with the JSON object.`;
         messages,
         undefined, // no streaming
         {
-          model: 'x-ai/grok-4-fast',
+          model: 'x-ai/grok-4.1-fast',
           maxTokens: 200,
           temperature: 0.2,
         }

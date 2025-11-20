@@ -303,7 +303,7 @@ ${JSON.stringify(WORKOUT_RESPONSE_SCHEMA, null, 2)}`;
   // Use executeWithFallback for automatic fallback handling
   const responseText = await executeWithFallback(
     'DynamicWorkoutArchitect',
-    'x-ai/grok-4-fast',
+    'x-ai/grok-4.1-fast',
     async (primaryModel) => {
       try {
         const apiPromise = getOpenRouterClient().chat.completions.create({

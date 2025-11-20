@@ -198,14 +198,14 @@ CRITICAL: Respond in 30-40 words MAX. Be direct, warm, and grounded.
         throw new Error('OPENROUTER_API_KEY environment variable is not set');
       }
 
-      // Try primary model first, fallback to grok-4-fast if it fails
+      // Try primary model first, fallback to grok-4.1-fast if it fails
       let openrouterResponse: Response;
       try {
         openrouterResponse = await callOpenRouter('deepseek/deepseek-v3.2-exp', apiKey);
       } catch (primaryError) {
         console.warn('[Coach API] Primary model failed, trying fallback:', primaryError);
-        console.log('[Coach API] Falling back to grok-4-fast');
-        openrouterResponse = await callOpenRouter('grok-4-fast', apiKey);
+        console.log('[Coach API] Falling back to grok-4.1-fast');
+        openrouterResponse = await callOpenRouter('grok-4.1-fast', apiKey);
       }
 
       if (!openrouterResponse.body) {

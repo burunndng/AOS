@@ -114,7 +114,7 @@ export async function generateInsightFromSession(
         messages,
         undefined,
         {
-          model: 'x-ai/grok-4-fast',
+          model: 'x-ai/grok-4.1-fast',
           maxTokens: 1500,
           temperature: 0.7,
         }
