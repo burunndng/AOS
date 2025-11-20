@@ -45,23 +45,23 @@ export default defineConfig(({ mode }) => {
             start_url: base,
             icons: [
               {
-                src: 'pwa-64x64.svg',
+                src: `${base}pwa-64x64.svg`,
                 sizes: '64x64',
                 type: 'image/svg+xml'
               },
               {
-                src: 'pwa-192x192.svg',
+                src: `${base}pwa-192x192.svg`,
                 sizes: '192x192',
                 type: 'image/svg+xml'
               },
               {
-                src: 'pwa-512x512.svg',
+                src: `${base}pwa-512x512.svg`,
                 sizes: '512x512',
                 type: 'image/svg+xml',
                 purpose: 'any'
               },
               {
-                src: 'maskable-icon-512x512.svg',
+                src: `${base}maskable-icon-512x512.svg`,
                 sizes: '512x512',
                 type: 'image/svg+xml',
                 purpose: 'maskable'
@@ -99,7 +99,9 @@ export default defineConfig(({ mode }) => {
                   }
                 }
               }
-            ]
+            ],
+            skipWaiting: true,
+            clientsClaim: true
           },
           devOptions: {
             enabled: true,
