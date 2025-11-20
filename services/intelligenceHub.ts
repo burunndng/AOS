@@ -67,7 +67,7 @@ async function generateGuidance(context: IntelligenceContext, userProfile?: User
       messages,
       undefined, // no streaming
       {
-        model: 'x-ai/grok-4-fast',
+        model: 'x-ai/grok-4.1-fast',
         maxTokens: 3500,  // Increased from 2000 to ensure complete output
         temperature: 0.3,
       }

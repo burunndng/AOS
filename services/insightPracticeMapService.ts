@@ -482,7 +482,7 @@ export async function askGrokAboutInsight(
 
   const requestBody: GrokChatRequest = {
     messages,
-    model: 'grok-4-fast-non-reasoning',
+    model: 'grok-4.1-fast-non-reasoning',
     stream: false,
     temperature: 0.7
   };

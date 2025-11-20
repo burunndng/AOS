@@ -3,8 +3,8 @@
  * Manages fallback models for wizards and key features
  *
  * Fallback Rules:
- * - DeepSeek --> Fallback to: xai/grok-4-fast (Coach primary model)
- * - Grok --> Fallback to: xai/grok-4-fast
+ * - DeepSeek --> Fallback to: xai/grok-4.1-fast (Coach primary model)
+ * - Grok --> Fallback to: xai/grok-4.1-fast
  * - Gemini Model --> Fallback to: gpt-oss-120:exacto (via OpenRouter, bf16 quantization)
  */
 
@@ -45,7 +45,7 @@ export function isGeminiModel(model: string): boolean {
  * Get the fallback model for a given primary model
  *
  * Rules:
- * - DeepSeek / Grok --> xai/grok-4-fast (OpenRouter)
+ * - DeepSeek / Grok --> xai/grok-4.1-fast (OpenRouter)
  * - Gemini --> gpt-oss-120:exacto (OpenRouter)
  * - Other --> returns the original model
  */
@@ -54,7 +54,7 @@ export function getFallbackModel(primaryModel: string): FallbackConfig {
     return {
       model: primaryModel,
       provider: 'openrouter',
-      fallbackModel: 'xai/grok-4-fast',
+      fallbackModel: 'xai/grok-4.1-fast',
       fallbackProvider: 'openrouter',
     };
   }
