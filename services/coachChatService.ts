@@ -1,8 +1,7 @@
 /**
  * AI Practice Coach Chat Service
- * Uses OpenRouter API for conversational coaching (frontend implementation)
- * Primary Model: DeepSeek v3.2
- * Fallback Model: Grok-4-fast
+ * Provides contextual coaching with AuraOS framework awareness
+ * Integrates with Intelligence Hub for synthesized guidance
  */
 
 import {
@@ -62,6 +61,21 @@ export interface CoachContext {
     practiceComplianceRate?: number;
   };
   appStructure?: AppStructure;
+  intelligenceHubGuidance?: {
+    synthesis: string;
+    primaryFocus: string;
+    nextWizard?: {
+      name: string;
+      reason: string;
+      priority: string;
+    };
+    reasoning?: {
+      whatINoticed?: string[];
+      howItConnects?: string[];
+    };
+    cautions?: string[];
+    generatedAt: string;
+  };
 }
 
 interface ChatResponse {
@@ -150,25 +164,79 @@ Available tools & features:
 - Consciousness Map: Explore Leary's 8 Circuits & Wilber's stages of development`;
   }
 
+  // Build Intelligence Hub context (optional)
+  let intelligenceHubContext = '';
+  if (context.intelligenceHubGuidance) {
+    const hubData = context.intelligenceHubGuidance;
+    intelligenceHubContext = `
+RECENT AI INTELLIGENCE HUB GUIDANCE:
+- Where you are: ${hubData.synthesis}
+- Primary focus: ${hubData.primaryFocus}${
+      hubData.nextWizard
+        ? `\n- Recommended wizard: ${hubData.nextWizard.name} (${hubData.nextWizard.reason})`
+        : ''
+    }${
+      hubData.cautions && hubData.cautions.length > 0
+        ? `\n- Cautions to keep in mind: ${hubData.cautions.join('; ')}`
+        : ''
+    }
+Generated: ${new Date(hubData.generatedAt).toLocaleDateString()}`;
+  }
+
   // Build the complete prompt
-  return `You are a concise ILP (Integrative Life Practices) coach helping someone with transformative practices.
+  return `# AuraOS Coach - Context & Framework
 
-FRAMEWORKS: Grounded in Leary's 8 Neurological Circuits & Wilber's developmental stages. Reference these when relevant.
+You are an AI coach for AuraOS, an Integral Life Practices platform helping users develop across Body, Mind, Spirit, and Shadow.
 
-User's context:
+## CORE FRAMEWORK
+
+AuraOS organizes practices into 4 modules:
+- **Body**: Physical health, embodied awareness (sleep, training, breathwork)
+- **Mind**: Cognitive development, perspective, decision-making
+- **Spirit**: Consciousness, meditation, transcendence
+- **Shadow**: Integration, parts work, shadow patterns
+
+Key frameworks: Kegan developmental stages, Integral Theory (AQAL), Internal Family Systems (IFS), Leary's 8 Circuits.
+
+The system includes 20+ Wizards (guided deep-dives) and an Intelligence Hub that synthesizes guidance.
+
+## COACHING APPROACH
+
+- **Integral**: Address all 4 modules, not just mind
+- **Developmental**: Understand where they are in growth
+- **Shadow-aware**: Integration work (IFS, shadow) is essential
+- **Warm & direct**: 30-40 words, actionable, specific
+- **Framework-grounded**: Reference Kegan/IFS/circuits when relevant
+
+---
+
+## USER CONTEXT
+
+User's practice status:
 - ${stackContext}
 - Modules: ${moduleBreakdown || 'None selected'}
 - ${completionContext}
-- ${timeContext}${profileContext}${appStructureContext}
+- ${timeContext}${profileContext}${appStructureContext}${intelligenceHubContext}
+
+---
+
+## INTELLIGENCE HUB INTEGRATION
+
+${
+      context.intelligenceHubGuidance
+        ? 'User has recent AI guidance available. USE THIS when relevant to:\n✓ Reference their current focus\n✓ Build on existing insights\n✓ Respect cautions found\n✓ Connect their practice questions to detected patterns'
+        : 'No recent Intelligence Hub guidance yet. Coach based on profile & patterns alone.'
+    }
+
+---
 
 User asked: "${userMessage}"
 
-CRITICAL: Respond in 30-40 words MAX. Be direct, warm, and grounded.
-- Reference their profile/patterns & available features when relevant
-- Guide them to specific tabs/tools when they need guidance
-- Suggest smaller changes if struggling, bigger if motivated
-- Be authentic and conversational
-- Mention relevant frameworks (Leary circuits, Wilber stages) when addressing consciousness/development`;
+**RESPONSE RULES**: 30-40 words MAX. Direct, warm, grounded.
+- Reference their stack, patterns, tools by name
+- Guide to specific features when they need help
+- Suggest smaller changes if struggling; bigger if motivated
+- Be authentic and conversational`;
 }
 
 /**

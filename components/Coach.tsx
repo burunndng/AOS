@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, Send, X, ChevronsDown, Sparkles } from 'lucide-react';
-import { CoachMessage, Practice, ModuleKey, ModuleInfo, AllPractice } from '../types.ts';
+import { CoachMessage, Practice, ModuleKey, ModuleInfo, AllPractice, IntelligentGuidance } from '../types.ts';
 import { practices } from '../constants.ts';
 import { MerkabaIcon } from './MerkabaIcon.tsx';
 import { generateCoachResponse, CoachContext, AppStructure } from '../services/coachChatService.ts';
@@ -24,6 +24,7 @@ interface CoachProps {
     commonBlockers?: string[];
     practiceComplianceRate?: number;
   };
+  intelligentGuidance?: IntelligentGuidance;
 }
 
 interface SuggestedPractice {
@@ -56,6 +57,7 @@ export default function Coach({
   practiceNotes,
   dailyNotes,
   userProfile,
+  intelligentGuidance,
 }: CoachProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
@@ -144,6 +146,22 @@ export default function Coach({
             wilberStages: 'Developmental stages: Archaic → Magic/Power → Mythic/Rational → Pluralistic → Systemic → Integral',
           },
         },
+        ...(intelligentGuidance && {
+          intelligenceHubGuidance: {
+            synthesis: intelligentGuidance.synthesis,
+            primaryFocus: intelligentGuidance.primaryFocus,
+            nextWizard: intelligentGuidance.recommendations?.nextWizard
+              ? {
+                  name: intelligentGuidance.recommendations.nextWizard.name || intelligentGuidance.recommendations.nextWizard.type,
+                  reason: intelligentGuidance.recommendations.nextWizard.reason,
+                  priority: intelligentGuidance.recommendations.nextWizard.priority,
+                }
+              : undefined,
+            reasoning: intelligentGuidance.reasoning,
+            cautions: intelligentGuidance.cautions,
+            generatedAt: intelligentGuidance.generatedAt,
+          },
+        }),
       };
 
       // Stream the coach's response

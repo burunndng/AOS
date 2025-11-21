@@ -2059,6 +2059,7 @@ ${program.personalizationNotes || 'Standard customization applied'}`;
             practiceNotes={practiceNotes}
             dailyNotes={dailyNotes}
             userProfile={userProfile}
+            intelligentGuidance={intelligentGuidance || undefined}
         />
       </Suspense>
       {infoModalPractice && (
