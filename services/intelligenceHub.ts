@@ -106,8 +106,8 @@ ${toneInstructions}
 **## Where You Are** - 2-3 sentences. Ground in specific data (session counts, practice patterns, observed growth).
 **## Primary Focus** - 1-2 sentences. Identify the highest-leverage growth edge based on evidence.
 **## Recommended Next Steps** - JSON block (see below) + 2-3 sentence explanation.
-**## How It All Connects** - Show cross-pattern relationships and developmental trajectory.
-**## Cautions** - 3-5 specific warnings with evidence: Pattern Title | Evidence | Signal | Response.
+**## How It All Connects** - Include subsections with specific headers as defined below.
+**## Cautions** - Format as bullet points (3-5 max), each one concise and specific (max 1-2 sentences per caution).
 
 ## CRITICAL REQUIREMENTS
 
@@ -185,10 +185,26 @@ Pick ONE wizard based on the dominant growth edge:
 
 ## HOW-IT-CONNECTS NARRATIVE
 
-Show three layers:
-1. **What you're doing**: Summarize their wizard work + current practice stack
-2. **What patterns emerge**: Cross-session themes, reinforcing cycles, growth trajectory
-3. **Why this matters**: Link to their developmental growth edge`;
+Format this section with TWO subsections (use these exact headers):
+
+### What I Noticed:
+- 2-3 key observations about their work (bullet points only, concise)
+- Each observation should be a single sentence
+
+### Connections:
+- 2-3 connections between their wizard work, practices, and growth edge (bullet points only, concise)
+- Each connection should be a single sentence showing how different elements reinforce each other
+
+Example format:
+### What I Noticed:
+- You're doing consistent inner critic work (IFS, Perfectionism wizard)
+- Your practice stack emphasizes self-compassion practices
+- Recent completions show commitment to emotional work
+
+### Connections:
+- The inner critic work directly supports why loving-kindness meditation is helpful
+- Your practice stack and wizard focus both target perfectionism from different angles
+- This work moves you from judgment toward self-acceptance`;
 }
 
 /**
@@ -426,15 +442,26 @@ function extractListItems(sectionText: string, subheading: string): string[] {
 }
 
 /**
- * Extract cautions from markdown
+ * Extract cautions from markdown as concise bullet points
  */
 function extractCautions(cautionsText: string): string[] {
   if (!cautionsText) return [];
 
-  // Look for ⚠️ or ** markers
-  const cautionBlocks = cautionsText.split(/⚠️|\*\*/).filter(block => block.trim().length > 0);
+  const lines = cautionsText.split('\n').map(line => line.trim());
+  const cautions: string[] = [];
 
-  return cautionBlocks.map(block => block.trim());
+  for (const line of lines) {
+    // Match bullet points: -, •, *, or numbered lists
+    if (line.startsWith('-') || line.startsWith('•') || line.startsWith('*') || /^\d+\./.test(line)) {
+      // Remove bullet markers and clean up
+      const caution = line.replace(/^[-•*]\s*/, '').replace(/^\d+\.\s*/, '').trim();
+      if (caution.length > 0) {
+        cautions.push(caution);
+      }
+    }
+  }
+
+  return cautions.length > 0 ? cautions : [];
 }
 
 /**
